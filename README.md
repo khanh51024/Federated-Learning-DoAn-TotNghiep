@@ -1,9 +1,10 @@
-﻿# Giai đoạn 2: Federated Learning trên PlantVillage
+# Giai đoạn 2: Federated Learning trên PlantVillage
 
 Repository này là bản chính của GĐ2: phân hoạch non-IID, FedAvg/MobileNetV3,
 Centralized/Local-only baseline, evaluate, checkpoint/resume và reporting.
 
-Code và kết quả mô phỏng non-IID của giai đoạn 2 được công bố trên nhánh`r`n`stage-2-non-iid-simulation`.
+Code và kết quả mô phỏng non-IID của giai đoạn 2 được công bố trên nhánh
+[`Stage-2-non-iid-simulation`](https://github.com/khanh51024/Federated-Learning-DoAn-TotNghiep/tree/Stage-2-non-iid-simulation).
 Dataset cùng thông tin nguồn được tách riêng trên nhánh `dataset-sources`.
 Kết quả của run FedAvg đã hoàn tất được tổng hợp tại
 [`TRAINING_RESULTS.md`](TRAINING_RESULTS.md).
