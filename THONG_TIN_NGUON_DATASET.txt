@@ -1,0 +1,178 @@
+THÔNG TIN NGUỒN VÀ KIỂM TRA BỘ DỮ LIỆU
+=======================================
+
+Ngày tải và kiểm tra: 2026-08-11 (múi giờ UTC+07:00)
+Thư mục gốc: D:\university\do-an-tot-nghiep\dataset
+Phương thức tải: archive ZIP từ GitHub Codeload, cố định theo mã commit của nhánh master.
+Lưu ý: dữ liệu ảnh và nhãn được giữ nguyên nội dung; không đổi kích thước, tái mã hóa,
+đổi lớp hoặc tự sửa nhãn. Metadata Git và archive tạm không được giữ lại sau kiểm tra.
+
+
+1. PLANTVILLAGE
+===============
+
+Mô tả
+------
+PlantVillage là bộ ảnh lá cây khỏe mạnh và bị bệnh, chủ yếu được chụp trong điều kiện
+kiểm soát với nền đơn giản. Bộ dữ liệu được dùng cho nghiên cứu nhận dạng bệnh cây
+từ ảnh và bài toán phân loại ảnh nông nghiệp.
+
+Thông tin do nguồn công bố
+--------------------------
+- 54.306 ảnh lá.
+- 14 loài cây trồng, 26 bệnh, 38 lớp kết hợp cây trồng - tình trạng bệnh/khỏe mạnh.
+- Ba biến thể: ảnh màu gốc (color), ảnh xám (grayscale) và ảnh đã tách nền
+  (segmented).
+
+Nguồn và trích dẫn
+------------------
+- Repository: https://github.com/spMohanty/PlantVillage-Dataset
+- Dataset card chính thức: https://huggingface.co/datasets/mohanty/PlantVillage
+- Commit đã tải: 7f7ecc7e1eaca78107e3affe7cb5abd9427e139a
+- Bài báo: Using Deep Learning for Image-Based Plant Disease Detection
+- Tác giả: Sharada P. Mohanty, David P. Hughes, Marcel Salathé
+- DOI: https://doi.org/10.3389/fpls.2016.01419
+- Đường dẫn cục bộ: D:\university\do-an-tot-nghiep\dataset\PlantVillage-Dataset
+
+Giấy phép
+---------
+Repository GitHub tại commit đã tải không có file LICENSE riêng. Dataset card do tài
+khoản mohanty công bố trên Hugging Face hiện khai báo CC BY-SA 3.0. Người sử dụng nên
+kiểm tra lại điều khoản tại nguồn trước khi phân phối lại hoặc dùng cho mục đích thương
+mại; không nên suy diễn giấy phép chỉ từ cụm từ "open access" trong README.
+
+Kết quả kiểm tra thực tế
+------------------------
+- raw/color: 38 lớp, 54.305 ảnh, 850.785.369 byte (811,37 MiB), 0 file rỗng.
+- raw/grayscale: 38 lớp, 54.305 ảnh, 815.955.014 byte (778,16 MiB), 0 file rỗng.
+- raw/segmented: 38 lớp, 54.306 ảnh, 513.466.925 byte (489,68 MiB), 0 file rỗng.
+- Tổng thư mục PlantVillage-Dataset, gồm metadata: 2.190.215.872 byte (2,040 GiB).
+- Tập tên tương đối của color và grayscale khớp hoàn toàn sau khi chuẩn hóa phần mở
+  rộng không phân biệt hoa/thường.
+- Tên ảnh segmented có thêm hậu tố "_final_masked". Sau khi bỏ hậu tố và phần mở rộng,
+  nguồn vẫn có 1.196 tên chỉ xuất hiện ở color và 1.197 tên chỉ xuất hiện ở segmented.
+  Đây là sai khác tên/số lượng có sẵn trong nguồn; dữ liệu không bị tự ý đổi tên để ép
+  khớp.
+- Chênh lệch 54.305/54.306 giữa các biến thể được giữ nguyên và ghi nhận minh bạch.
+- Archive metadata `leaf_grouping/Google Leaf Counts.zip` có sẵn trong nguồn đã được
+  giải nén thành 12 file XLSX trong `leaf_grouping/Google Leaf Counts/`; ZIP, `.DS_Store`
+  và metadata `__MACOSX` không được giữ lại theo yêu cầu không lưu archive/cache.
+
+Archive nguồn đã kiểm tra trước khi xóa
+--------------------------------------
+- Tên tạm: PlantVillage-Dataset-7f7ecc7e.zip
+- Kích thước: 2.516.720.132 byte
+- Số mục trong ZIP: 182.609
+- SHA-256: 43DAFA61573F658D5EEE119502D69FF8EDDEC0FAF1A40ABE6E6B0F302879E3A0
+
+
+2. PLANTDOC
+============
+
+Mô tả
+------
+PlantDoc được xây dựng từ ảnh cây ngoài điều kiện thực tế, thu thập trên Internet,
+nhằm bổ sung tính đa dạng về nền, ánh sáng, độ phân giải và góc chụp so với các bộ ảnh
+trong phòng thí nghiệm. Bản tải tại đây gồm cả dữ liệu classification đã cắt và dữ
+liệu object detection có bounding box.
+
+Thông tin do nguồn/bài báo công bố
+----------------------------------
+- 2.598 điểm dữ liệu.
+- 13 loài thực vật và tối đa 17 loại bệnh theo mô tả của bài báo/README.
+- Khoảng 300 giờ công gán nhãn ảnh thu thập từ Internet.
+
+Nguồn và trích dẫn
+------------------
+- Classification repository: https://github.com/pratikkayal/PlantDoc-Dataset
+- Classification commit: 5467f6012d78d1c446145d5f582da6096f852ae8
+- Object Detection repository:
+  https://github.com/pratikkayal/PlantDoc-Object-Detection-Dataset
+- Object Detection commit: 4730a233a555b30ee98e0879c63ad25d82407455
+- Bài báo: PlantDoc: A Dataset for Visual Plant Disease Detection
+- Tác giả: Davinder Singh, Naman Jain, Pranjali Jain, Pratik Kayal,
+  Sudhakar Kumawat, Nipun Batra
+- DOI: https://doi.org/10.1145/3371158.3371196
+- Đường dẫn classification:
+  D:\university\do-an-tot-nghiep\dataset\PlantDoc-Dataset
+- Đường dẫn object detection:
+  D:\university\do-an-tot-nghiep\dataset\PlantDoc-Object-Detection-Dataset
+
+Giấy phép
+---------
+Cả hai repository PlantDoc chứa LICENSE.txt theo giấy phép Creative Commons
+Attribution 4.0 International (CC BY 4.0). Khi sử dụng hoặc phân phối lại cần ghi công
+nguồn/tác giả theo điều khoản giấy phép.
+
+
+2.1. PlantDoc Classification
+----------------------------
+
+Cấu trúc giữ lại: train/, test/, README.md, LICENSE.txt.
+
+Kết quả kiểm tra thực tế:
+- train: 28 thư mục lớp, 2.336 ảnh, 921.973.659 byte, 0 file rỗng, 0 lớp rỗng.
+- test: 27 thư mục lớp, 236 ảnh, 73.466.894 byte, 0 file rỗng, 0 lớp rỗng.
+- Tổng: 2.572 ảnh; 2.570 JPG, 1 JPEG và 1 PNG.
+- Tổng dung lượng thư mục: 995.461.889 byte (949,35 MiB).
+- Số ảnh thực tế 2.572 thấp hơn con số 2.598 được README/bài báo công bố. Không có ảnh
+  nào được tự tạo thêm hoặc sao chép để bù chênh lệch.
+
+Archive nguồn đã kiểm tra trước khi xóa:
+- Tên tạm: PlantDoc-Dataset-5467f601.zip
+- Kích thước: 984.592.720 byte
+- Số mục trong ZIP: 2.639
+- SHA-256: 94E2B99A500A63EFBD48923ED48588FBB01F9B1DB66A2D3B5C24EED6466DA20F
+
+
+2.2. PlantDoc Object Detection
+------------------------------
+
+Cấu trúc giữ lại: TRAIN/, TEST/, train_labels.csv, test_labels.csv, README.md,
+LICENSE.txt. Nhãn XML theo cấu trúc Pascal VOC và hai CSV chứa từng bounding box.
+
+Kết quả kiểm tra thực tế:
+- TRAIN: 2.354 file ảnh, 2.346 XML, tổng 933.492.133 byte, 0 file rỗng.
+- TEST: 239 file ảnh, 237 XML, tổng 74.055.013 byte, 0 file rỗng.
+- Tổng: 2.593 ảnh và 2.583 XML.
+- Tổng dung lượng thư mục: 1.008.265.522 byte (961,56 MiB).
+- Tất cả 2.583 XML đều phân tích cú pháp thành công.
+- Kiểm tra basename: TRAIN có 2 XML không có ảnh cùng basename và 10 ảnh không có XML
+  cùng basename; TEST có 0 XML thiếu ảnh cùng basename và 2 ảnh không có XML.
+- Phát hiện 10 bounding box TRAIN và 1 bounding box TEST có xmin >= xmax hoặc
+  ymin >= ymax trong XML nguồn.
+- train_labels.csv: 8.469 dòng bounding box, 2.335 tên ảnh duy nhất, 29 lớp.
+- test_labels.csv: 452 dòng bounding box, 236 tên ảnh duy nhất, 27 lớp.
+- Hợp hai CSV có 29 tên lớp duy nhất.
+
+Cảnh báo tên file trên Windows:
+- Archive nguồn có 183 đường dẫn chứa ký tự dấu hỏi "?". Ký tự này không hợp lệ trong
+  tên file trên NTFS, vì vậy tar của Windows thay nó bằng dấu gạch dưới "_" khi giải
+  nén. Nội dung file không thay đổi, nhưng tên trong CSV/XML vẫn giữ dạng gốc.
+- Vì vậy có 85 tên ảnh TRAIN và 5 tên ảnh TEST trong CSV không khớp chính xác tên file
+  NTFS. Trong số này, 82 TRAIN và toàn bộ 5 TEST ánh xạ được chỉ bằng quy tắc thay
+  "?" thành "_".
+- Ba tham chiếu TRAIN còn lại không có ảnh tương ứng ngay cả sau quy tắc trên:
+  early-blight-1.jpg, NCLB.jpg, powdery-mildew-on-squash-leaves.jpg.
+- Các sai khác này được ghi nhận nhưng không tự sửa CSV/XML hoặc đổi tên file, nhằm
+  tuân thủ yêu cầu giữ nguyên nội dung nguồn. Khi huấn luyện trên Windows, chương trình
+  nạp dữ liệu cần áp dụng ánh xạ "?" -> "_" và xử lý ba tham chiếu thiếu nói trên.
+
+Archive nguồn đã kiểm tra trước khi xóa:
+- Tên tạm: PlantDoc-Object-Detection-Dataset-4730a233.zip
+- Kích thước: 995.128.551 byte
+- Số mục trong ZIP: 5.203
+- SHA-256: 45811CED89D3E40FAC185DBE56EB7935745AAD34C5C1402D937F0281EAE0D813
+
+
+3. KẾT LUẬN KIỂM TRA
+====================
+
+- Ba archive tải từ đúng commit đã được đọc danh mục và tính SHA-256 thành công.
+- Không có file ảnh/nhãn rỗng trong các thư mục giữ lại.
+- PlantVillage có đủ ba biến thể và đủ 38 thư mục lớp cho mỗi biến thể.
+- PlantDoc classification giữ nguyên train/test và không có lớp rỗng.
+- PlantDoc object detection có các bất nhất tên file, cặp ảnh-nhãn và bounding box như
+  đã liệt kê. Đây là vấn đề của dữ liệu nguồn và giới hạn tên file Windows, không phải
+  lỗi tải xuống; không được che giấu hoặc tự sửa trong bản lưu này.
+- Sau khi dọn dẹp, không giữ .git, archive ZIP, cache hoặc thư mục giải nén tạm.
