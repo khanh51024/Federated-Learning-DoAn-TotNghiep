@@ -1,0 +1,110 @@
+schema_version: 1
+mode: train
+run_id: 20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62
+semantic_config_hash: 71bbb9b0734ecd46323e04be8506c2a659013329694c550f6f9afa7c5060a5bc
+data:
+  dataset_root: /kaggle/input/plantvillage-dataset/color
+  partition_index: /kaggle/working/gd2_federated_learning/data/partitions_train_v1/index.json
+  partition_dir: /kaggle/working/gd2_federated_learning/data/partitions_train_v1/label_skew/label_skew__seed_42__alpha_0_1__feature_none__b3b5ed03170d
+  scenario: label_skew
+  alpha: 0.1
+  quantity_alpha: null
+  feature_skew: none
+  split_seed: 42
+  partition_config_hash: b3b5ed03170d7bc68b48e1e931034394818f9528838ce11b2241f0a5cf30c807
+  protocol_fingerprint: 34bfcf9bc89d2221c22b6218e0c29219bf64123b94f81498e2e5ff0843c8626d
+  class_names:
+  - Apple___Apple_scab
+  - Apple___Black_rot
+  - Apple___Cedar_apple_rust
+  - Apple___healthy
+  - Blueberry___healthy
+  - Cherry_(including_sour)___Powdery_mildew
+  - Cherry_(including_sour)___healthy
+  - Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot
+  - Corn_(maize)___Common_rust_
+  - Corn_(maize)___Northern_Leaf_Blight
+  - Corn_(maize)___healthy
+  - Grape___Black_rot
+  - Grape___Esca_(Black_Measles)
+  - Grape___Leaf_blight_(Isariopsis_Leaf_Spot)
+  - Grape___healthy
+  - Orange___Haunglongbing_(Citrus_greening)
+  - Peach___Bacterial_spot
+  - Peach___healthy
+  - Pepper,_bell___Bacterial_spot
+  - Pepper,_bell___healthy
+  - Potato___Early_blight
+  - Potato___Late_blight
+  - Potato___healthy
+  - Raspberry___healthy
+  - Soybean___healthy
+  - Squash___Powdery_mildew
+  - Strawberry___Leaf_scorch
+  - Strawberry___healthy
+  - Tomato___Bacterial_spot
+  - Tomato___Early_blight
+  - Tomato___Late_blight
+  - Tomato___Leaf_Mold
+  - Tomato___Septoria_leaf_spot
+  - Tomato___Spider_mites Two-spotted_spider_mite
+  - Tomato___Target_Spot
+  - Tomato___Tomato_Yellow_Leaf_Curl_Virus
+  - Tomato___Tomato_mosaic_virus
+  - Tomato___healthy
+  bundle_path: null
+model:
+  name: mobilenet_v3_small
+  num_classes: 38
+  weights: IMAGENET1K_V1
+training:
+  seed: 42
+  local_epochs: 1
+  batch_size: 16
+  eval_batch_size: 32
+  optimizer: sgd
+  lr: 0.01
+  momentum: 0.9
+  weight_decay: 0.0001
+  amp: true
+  num_workers: 2
+federation:
+  num_clients: 10
+  fraction_train: 1.0
+  min_train_nodes: 10
+  max_rounds: 100
+  timeout_seconds: 3600
+early_stopping:
+  enabled: true
+  monitor: val_loss
+  min_delta: 0.0001
+  patience_rounds: 10
+  warmup_rounds: 10
+lr_scheduler:
+  enabled: true
+  factor: 0.5
+  patience_rounds: 3
+  threshold: 0.0001
+  min_lr: 1.0e-06
+runtime:
+  client_device: cuda
+  server_device: cpu
+  max_concurrent_clients: 1
+  cpus_per_client: 2
+  object_store_memory_mb: 512
+  startup_timeout_seconds: 180
+output:
+  root: /kaggle/working/runs/fedavg
+  run_dir: /kaggle/working/runs/fedavg/20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62
+  progress: true
+  evaluate_test_after_train: true
+checkpoint:
+  every_n_rounds: 5
+  keep_last_n: 3
+diagnostics:
+  plateau_rounds: 3
+  divergence_window: 3
+  divergence_relative_increase: 0.02
+  low_recall_threshold: 0.5
+  small_client_samples: 50
+  update_norm_outlier_factor: 5.0

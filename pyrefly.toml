@@ -1,0 +1,3 @@
+search-path = ["."]
+disable-search-path-heuristics = true
+python-interpreter-path = ".venv/Scripts/python.exe"
