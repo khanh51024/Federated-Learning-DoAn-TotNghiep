@@ -1,88 +1,51 @@
-﻿# Giai đoạn 2: Federated Learning trên PlantVillage
+# Học liên kết cho phát hiện sâu bệnh cây trồng
 
-Repository này là bản chính của GĐ2: phân hoạch non-IID, FedAvg/MobileNetV3,
-Centralized/Local-only baseline, evaluate, checkpoint/resume và reporting.
+**Nghiên cứu và xây dựng hệ thống Học liên kết (Federated Learning) cho phát hiện sâu bệnh cây trồng qua ảnh trên dữ liệu phân tán, không đồng nhất.**
 
-Code và kết quả huấn luyện được công bố trên nhánh `training-code-results`.
-Dataset cùng thông tin nguồn được tách riêng trên nhánh `dataset-sources`.
-Kết quả của run FedAvg đã hoàn tất được tổng hợp tại
-[`TRAINING_RESULTS.md`](TRAINING_RESULTS.md).
+Đây là dự án tốt nghiệp nghiên cứu cách nhiều cơ sở nông nghiệp cùng huấn luyện mô hình nhận dạng bệnh cây mà vẫn giữ dữ liệu ảnh tại từng cơ sở. Các client trao đổi cập nhật trọng số với máy chủ tổng hợp để xây dựng mô hình chung.
 
-## Thiết kế dữ liệu
+## Mục tiêu nghiên cứu
 
-- PlantVillage màu: 54.305 ảnh, 38 lớp trong `../PlantVillage-Dataset/raw/color`.
-- Tách global test khoảng 20% trước khi chia client. Centralized, Federated và
-  Local-only dùng chung tập test này.
-- Mọi biên chia mặc định giữ nguyên nhóm ảnh cùng một lá từ `leaf-map.json`.
-  Leaf map chỉ phủ một phần corpus; ảnh chưa có metadata được xem là singleton,
-  vì vậy không thể chứng minh chống rò rỉ lá cho phần này.
-- Lệch nhãn: mỗi lớp dùng tỷ lệ client lấy từ `Dirichlet(alpha)`.
-- Lệch số lượng: một vector dung lượng client lấy từ
-  `Dirichlet(quantity_alpha)`, theo NIID-Bench mục IV-D.
-- Lệch đặc trưng: profile ánh sáng/màu/cảm biến xác định theo client, áp dụng lúc
-  load. Các bộ đo lệch nhãn và số lượng để `feature_skew: none`; một bộ IID riêng
-  dùng `moderate` để đo trục đặc trưng.
+Trọng tâm là đánh giá khả năng huấn luyện trên hệ thống phân tán và thu hẹp khoảng cách hiệu năng so với mô hình tập trung khi dữ liệu giữa các cơ sở không đồng nhất (non-IID).
 
-`alpha` và `quantity_alpha` càng nhỏ thì độ lệch tương ứng càng mạnh. Cấu hình cũ
-dùng `size_sigma` bị từ chối rõ ràng để tránh diễn giải nhầm LogNormal thành
-Dirichlet.
+Ba cấu hình được đặt cạnh nhau trên cùng tập kiểm thử:
 
-## Chạy
+- **Centralized:** tập hợp dữ liệu tại một nơi để tạo mốc so sánh tập trung.
+- **Federated:** các cơ sở hợp tác qua cập nhật mô hình, giữ ảnh thô tại chỗ.
+- **Local-only:** mỗi cơ sở huấn luyện riêng để đánh giá lợi ích của hợp tác.
 
-```powershell
-cd Federated-Learning-DoAn-TotNghiep
-python scripts/sweep_alpha.py
-python scripts/verify_integrity.py --all
-python scripts/verify_source_images.py
-python scripts/smoke_test_loader.py
-python -m pytest tests -q
-```
+Các tiêu chí dự kiến gồm accuracy, macro-F1, hiệu năng theo client, độ bền khi non-IID tăng, chi phí truyền thông, tính công bằng và quyền riêng tư. Giữ dữ liệu tại chỗ là đặc điểm kiến trúc; việc định lượng quyền riêng tư cần thí nghiệm riêng.
 
-Luồng huấn luyện và nghiệm thu chi tiết nằm trong [TRAINING.md](TRAINING.md).
-`smoke` và `stage2_sweep_smoke.yaml` chỉ kiểm tra code; chúng không phải kết quả
-khoa học GĐ2.
+## Kiến trúc và dữ liệu
 
-Chia một cấu hình riêng:
+Máy chủ điều phối các vòng huấn luyện và tổng hợp trọng số; client huấn luyện mô hình cục bộ rồi gửi cập nhật. Đề cương đề xuất Flower hoặc FedML cho mô phỏng và backbone nhẹ như MobileNetV3 hoặc EfficientNet-Lite.
 
-```powershell
-python scripts/partition_dataset.py --scenario label_skew --alpha 0.1
-python scripts/partition_dataset.py --scenario quantity_skew --quantity-alpha 0.1
-python scripts/partition_dataset.py --scenario iid --feature-skew moderate
-```
+PlantVillage là dữ liệu nền để mô phỏng non-IID có kiểm soát; PlantDoc bổ sung ảnh thực địa. Phân hoạch Dirichlet được dùng để mô phỏng lệch nhãn và số lượng; các kịch bản lệch đặc trưng thể hiện khác biệt điều kiện thu nhận ảnh.
 
-Mỗi thư mục trong `data/partitions_v3` có manifest client, `centralized_train.csv`,
-`global_test.csv`, thống kê, audit, provenance và `fedavg_meta.json`. Tên thư mục
-chứa scenario, seed và mọi tham số ảnh hưởng kết quả để không ghi đè thí nghiệm.
+## Lộ trình theo đề cương
 
-## Contract FedAvg và MobileNetV3
+1. **GĐ 1 - Nền tảng & mốc so sánh (tuần 1–2):** khảo sát tài liệu; huấn luyện Centralized và Local-only; thiết lập FedAvg trên Flower/FedML.
+2. **GĐ 2 - Mô phỏng non-IID (tuần 2–3):** chia dữ liệu phân tán theo Dirichlet; khảo sát lệch nhãn, số lượng và đặc trưng; đo suy giảm của FedAvg so với tập trung.
+3. **GĐ 3 - Thuật toán chịu non-IID (tuần 3–6):** triển khai và so sánh FedProx, FedBN, SCAFFOLD, MOON; nghiên cứu cải tiến để thu hẹp khoảng cách với tập trung.
+4. **GĐ 4 - Tối ưu client & mở rộng (tuần 6–8):** backbone nhẹ, lượng tử hóa cho thiết bị biên, giảm chi phí truyền thông; tùy chọn differential privacy.
+5. **GĐ 5 - Đánh giá & công bố (tuần 8–10):** thực nghiệm trên nhiều mức non-IID, phân tích phân tán so với tập trung và viết báo cáo/bài báo.
 
-```python
-from src.data import FedAvgPartition
+Đây là kế hoạch nghiên cứu, không phải xác nhận rằng mọi giai đoạn đã hoàn thành.
 
-part = FedAvgPartition("data/partitions_v3/label_skew/<partition-name>")
-client_loaders = part.all_client_loaders(batch_size=32)
-global_test = part.global_test_loader(batch_size=128)
-round_weights = part.aggregation_weights_for([0, 2, 5])
-```
+## Các nhánh của repository
 
-`n_k` là số ảnh train sau khi tách validation cục bộ. Trọng số FedAvg cho một
-vòng được chuẩn hóa trên đúng tập client tham gia. Ảnh đưa vào MobileNetV3 là
-float32 CHW, RGB, crop 224x224 và chuẩn hóa ImageNet. Evaluation dùng resize cạnh
-ngắn 256 rồi center crop 224 theo torchvision. Centralized replay đúng profile
-client của từng dòng để so sánh công bằng khi bật feature skew.
+- [`main`](https://github.com/khanh51024/Federated-Learning-DoAn-TotNghiep/tree/main): chỉ chứa README giới thiệu dự án ở phiên bản hiện tại.
+- [`Stage-2-non-iid-simulation`](https://github.com/khanh51024/Federated-Learning-DoAn-TotNghiep/tree/Stage-2-non-iid-simulation): code, cấu hình, tài liệu và kết quả huấn luyện của giai đoạn 2.
+- [`dataset-sources`](https://github.com/khanh51024/Federated-Learning-DoAn-TotNghiep/tree/dataset-sources): PlantVillage, PlantDoc và thông tin nguồn, giấy phép, kiểm tra dữ liệu.
 
-Nếu có PyTorch và torchvision, smoke test thực hiện một CPU forward qua
-`mobilenet_v3_small(weights=None, num_classes=38)` và kiểm tra output `[B, 38]`.
-Nếu thiếu hai gói này, phần NumPy/Pillow vẫn được kiểm tra và trạng thái forward
-được ghi rõ là chưa chạy.
+## Kết quả hiện có
 
-## Nguồn tham khảo
+Run FedAvg/MobileNetV3 Small được lưu trên nhánh giai đoạn 2 chạy 62/100 vòng, dừng sớm và chọn checkpoint tốt nhất ở vòng 52. Đánh giá trên 10.917 ảnh test đạt accuracy **99,0932%** và macro-F1 **98,7155%**.
 
-1. Qinbin Li, Yiqun Diao, Quan Chen, Bingsheng He (2021), *Federated Learning on
-   Non-IID Data Silos: An Experimental Study* (NIID-Bench), mục IV-D:
-   https://arxiv.org/pdf/2102.02079
-2. Brendan McMahan et al. (2017), *Communication-Efficient Learning of Deep
-   Networks from Decentralized Data*: https://proceedings.mlr.press/v54/mcmahan17a.html
-3. Torchvision, `mobilenet_v3_small` weights and preprocessing:
-   https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.mobilenet_v3_small.html
+Run có trạng thái `completed_with_warnings` và `scientific_stage2_complete: false`. Các số liệu này mô tả run đã lưu; chưa chứng minh hoàn tất giao thức đối chứng nhiều seed, nhiều kịch bản hay khoảng cách với Centralized.
 
+Xem [báo cáo kết quả và artifact](https://github.com/khanh51024/Federated-Learning-DoAn-TotNghiep/blob/Stage-2-non-iid-simulation/TRAINING_RESULTS.md) và [thông tin nguồn dataset](https://github.com/khanh51024/Federated-Learning-DoAn-TotNghiep/blob/dataset-sources/THONG_TIN_NGUON_DATASET.txt).
+
+## Tài liệu định hướng
+
+Nội dung giới thiệu và lộ trình được tổng hợp từ đề cương **“Nghiên cứu và xây dựng hệ thống Học liên kết (Federated Learning) cho phát hiện sâu bệnh cây trồng qua ảnh trên dữ liệu phân tán, không đồng nhất.pdf”**, đặc biệt các mục Trọng tâm của đề tài, Mục tiêu, Kiến trúc hệ thống phân tán và Lộ trình thực hiện.

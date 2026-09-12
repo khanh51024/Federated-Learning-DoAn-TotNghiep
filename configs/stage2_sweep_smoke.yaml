@@ -1,8 +1,0 @@
-schema_version: 1
-sweep_id: stage2_smoke
-base_config: configs/train_smoke_resume.yaml
-output_root: runs/sweeps
-modes: [centralized, local-only, fedavg]
-seeds: [42]
-conditions:
-  - {scenario: label_skew, alpha: 0.1, quantity_alpha: null, feature_skew: none, split_seed: 42}
