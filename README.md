@@ -3,7 +3,7 @@
 Repository này là bản chính của GĐ2: phân hoạch non-IID, FedAvg/MobileNetV3,
 Centralized/Local-only baseline, evaluate, checkpoint/resume và reporting.
 
-Code và kết quả huấn luyện được công bố trên nhánh `training-code-results`.
+Code và kết quả mô phỏng non-IID của giai đoạn 2 được công bố trên nhánh`r`n`stage-2-non-iid-simulation`.
 Dataset cùng thông tin nguồn được tách riêng trên nhánh `dataset-sources`.
 Kết quả của run FedAvg đã hoàn tất được tổng hợp tại
 [`TRAINING_RESULTS.md`](TRAINING_RESULTS.md).
@@ -85,4 +85,5 @@ Nếu thiếu hai gói này, phần NumPy/Pillow vẫn được kiểm tra và t
    Networks from Decentralized Data*: https://proceedings.mlr.press/v54/mcmahan17a.html
 3. Torchvision, `mobilenet_v3_small` weights and preprocessing:
    https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.mobilenet_v3_small.html
+
 
