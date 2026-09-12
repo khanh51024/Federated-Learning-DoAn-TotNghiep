@@ -10,4 +10,5 @@ Thông tin commit nguồn, trích dẫn, giấy phép, checksum archive và kế
 chi tiết nằm trong [`THONG_TIN_NGUON_DATASET.txt`](THONG_TIN_NGUON_DATASET.txt).
 Dữ liệu được chia thành nhiều commit để mỗi lần truyền lên GitHub nhỏ hơn 2 GB.
 
-Code và kết quả huấn luyện nằm riêng trên nhánh `training-code-results`.
+Code và kết quả mô phỏng non-IID của giai đoạn 2 nằm riêng trên nhánh`r`n`stage-2-non-iid-simulation`.
+
