@@ -1,0 +1,2 @@
+"""Flower FedAvg baseline."""
+
