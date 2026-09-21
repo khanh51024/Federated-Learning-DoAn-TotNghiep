@@ -258,5 +258,7 @@ async def run_dual_inference(file: UploadFile = File(...)) -> Dict[str, Any]:
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 if __name__ == "__main__":
+    import os
     import uvicorn
-    uvicorn.run("web.app:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.environ.get("PORT", 8088))
+    uvicorn.run("web.app:app", host="0.0.0.0", port=port, reload=True)

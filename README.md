@@ -46,9 +46,9 @@ python -m train.server --smoke --rounds 2 --num-clients 5
 
 ### Bước 5: Khởi động Giao diện Web Dashboard & Chẩn Đoán Ảnh
 ```powershell
-python -m uvicorn web.app:app --host 0.0.0.0 --port 8000
+python -m uvicorn web.app:app --host 0.0.0.0 --port 8088
 ```
-Truy cập trình duyệt tại: **`http://localhost:8000`** để trải nghiệm đầy đủ 6 màn hình:
+Truy cập trình duyệt tại: **`http://localhost:8088`** để trải nghiệm đầy đủ 6 màn hình:
 1. **Dashboard**: Giám sát KPIs toàn cục, đường cong hội tụ, phân phối dữ liệu.
 2. **Centralized Baseline**: Điều khiển và quan sát baseline tập trung.
 3. **Huấn Luyện FedAvg**: Cấu hình và kích hoạt các vòng huấn luyện liên hợp.
