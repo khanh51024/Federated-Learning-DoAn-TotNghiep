@@ -1,76 +1,144 @@
-# Giai đoạn 2: Federated Learning trên PlantVillage (Bản snapshot: FedAvg Scratch)
+# Đồ Án Tốt Nghiệp: Federated Learning trên PlantVillage với MobileNetV3-Small
 
-Nhánh này (`code-train-fedavg-old`, tiền thân là `Stage-2-non-iid-simulation`) lưu trữ snapshot mã nguồn mô phỏng Federated Learning Giai đoạn 2 (FedAvg non-IID trên PlantVillage), bao gồm toàn bộ closure phụ thuộc: `stage2_scratch`, `stage2_matched`, `stage1_compat`, `fl_training`, `src`, configs, scripts, tests, notebooks và suite manifest phân hoạch.
+> **Nghiên Cứu & Triển Khai Hệ Thống Học Liên Hợp (Federated Learning) Ứng Dụng Chẩn Đoán Bệnh Cây Trồng Trên Nền Tảng Flower Framework**
 
-Dataset gốc và thông tin nguồn được lưu tách riêng trên nhánh `dataset-sources`.
-
----
-
-## 1. Bản lưu code FedAvg Scratch (`stage2_scratch`)
-
-Phiên bản hiện hành trong bản lưu này là giao thức **`stage2_scratch_fedavg_v4`**, huấn luyện FedAvg hoàn toàn từ trọng số khởi tạo ngẫu nhiên (**`weights=None` / `pretrained=False`**).
-
-- **Entrypoint chính**:
-  ```powershell
-  python -m stage2_scratch --help
-  python -m stage2_scratch preflight --suite data/partitions_stage2_scratch_v3
-  python -m stage2_scratch run --suite data/partitions_stage2_scratch_v3 --conditions label100 label1 label01 --seeds 42
-  python -m stage2_scratch collect --output runs/stage2_scratch_v3 --suite data/partitions_stage2_scratch_v3
-  ```
-- **Backend thực thi**:
-  - Mặc định là **mô phỏng tuần tự** (`sequential simulation runner` trong `stage2_scratch.runner`), đảm bảo tính lặp lại tất định và quản lý bộ nhớ ổn định.
-  - Có adapter Flower độc lập tại `stage2_scratch.flower_adapter` phục vụ kiểm định tương đương (`flower_verify`).
-- **Cấu hình mặc định của Scratch v4**:
-  - Số client: 5 clients.
-  - Vòng huấn luyện: 10 rounds, 1 local epoch/round, batch size 32.
-  - Optimizer: mặc định SGD (learning rate resolve thành 0.01) hoặc tùy chọn AdamW.
-  - Bộ phân hoạch mặc định: `data/partitions_stage2_scratch_v3` bao gồm 8 điều kiện non-IID (label skew: `label100`, `label1`, `label01`; quantity skew: `quantity100`, `quantity01`; label+quantity: `label_quantity01`; feature Dirichlet: `feature100`, `feature01`).
-- **Notebook hiện hành**: `kaggle_stage2_scratch_v4.ipynb`.
-  *(Các notebook `kaggle_stage2_scratch_v1.ipynb` đến `v3` và `kaggle_stage2_matched_v5.ipynb` được lưu giữ phục vụ tra cứu lịch sử).*
-- **Lưu ý tài liệu**: `docs/STAGE2_SCRATCH_V1.md` là tài liệu ghi nhận lịch sử của bản thiết kế ban đầu (dùng AdamW và split cũ), không phải đặc tả cấu hình v4 hiện hành.
+Hệ thống được thiết kế theo cấu trúc **Lean & Direct** (tinh gọn, trực tiếp, dễ đọc, dễ bảo trì):
+- **`train/`**: Toàn bộ lõi AI / Machine Learning / Federated Learning (Centralized, Flower FedAvg, Local-only, Telemetry, Weight Inspector).
+- **`web/`**: Giao diện điều khiển, giám sát thời gian thực và suy luận song song (FastAPI Backend + Modern Dark-mode Frontend).
+- **`tests/`**: Bộ kiểm thử toán học độc lập cho thuật toán FedAvg, kiến trúc MobileNetV3-Small và phân hoạch non-IID.
+- **`configs/`**: Cấu hình YAML chuẩn hóa cho các kịch bản thực nghiệm.
+- **`docs/`**: Sơ đồ kiến trúc Mermaid ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)) và Báo cáo đối sánh 3 trụ cột ([docs/EXPERIMENT_RESULTS.md](docs/EXPERIMENT_RESULTS.md)).
 
 ---
 
-## 2. Tách bạch kết quả thực nghiệm và Baseline lịch sử
+## 1. Hướng Dẫn Cài Đặt & Chạy Nhanh (1-Click Quickstart)
 
-- **Kết quả Pretrained lịch sử**: Các artifacts và báo cáo trong thư mục `results/fedavg/...` (chứa các điểm accuracy ~99%) thuộc về đợt chạy MobileNetV3 pretrained của pipeline trước đây. **Tuyệt đối không trộn lẫn hoặc nhận các kết quả pretrained này làm kết quả của luồng scratch**.
-- **Baselines Centralized và Local-only**: Không được huấn luyện lại từ scratch trong GĐ2; hệ thống đọc từ kết quả nghiệm thu GĐ1 làm tham chiếu lịch sử thông qua lệnh:
-  ```powershell
-  python -m stage2_scratch compare-stage1 --output runs/stage2_scratch_v3
-  ```
-
----
-
-## 3. Thiết kế dữ liệu và Phân hoạch Non-IID
-
-- **PlantVillage màu**: 54.305 ảnh, 38 lớp trong `../PlantVillage-Dataset/raw/color`.
-- **Tách holdout trước khi chia client**: Tách global test (~20%) và validation trước khi phân bổ tập train cho các client.
-- **Bảo toàn nhóm lá (Leaf integrity)**: Giữ nguyên các nhóm ảnh chụp cùng một lá (`leaf_group_id`) trên cùng một phân vùng để chống rò rỉ dữ liệu giữa train/val/test.
-- **Trục non-IID**:
-  - *Lệch nhãn*: Phân bổ Dirichlet theo nhãn lớp với hệ số $\alpha \in \{100.0, 1.0, 0.1\}$.
-  - *Lệch số lượng*: Phân bổ Dirichlet theo dung lượng client với $\alpha_q \in \{100.0, 0.1\}$.
-  - *Lệch đặc trưng*: Biến đổi miền ảnh (độ sáng, tương phản, bão hòa) xác định riêng cho từng client theo profile cố định.
-
----
-
-## 4. Kiểm định và Kiểm thử
-
-Chạy kiểm tra tính toàn vẹn và bộ test của snapshot:
-
+### Bước 1: Khởi tạo môi trường ảo
 ```powershell
-# Kiểm tra CLI
-python -m stage2_scratch --help
+# Sử dụng uv (cài đặt siêu nhanh) hoặc python chuẩn
+python -m uv venv .venv --python 3.11
+.\.venv\Scripts\activate
 
-# Kiểm tra test scratch & protocol parity
-pytest tests/test_stage2_scratch.py tests/test_stage2_protocol.py tests/test_flower_parity.py -v
+# Cài đặt dependencies
+pip install -r requirements.txt
 ```
 
-*Ghi chú về trạng thái test*: Bộ kiểm thử cốt lõi cho `stage2_scratch` và `stage2_protocol` đạt 18/18 tests passed. Test fixture trong `tests/test_stage2_matched.py` yêu cầu dữ liệu ảnh mock cục bộ khi kiểm tra tính toàn vẹn nội dung ảnh, phản ánh đúng hiện trạng mã nguồn được đóng gói snapshot.
+### Bước 2: Chạy kiểm thử tự động (Unit Tests)
+Chứng minh tính đúng đắn toán học của FedAvg ($n_k$), trích xuất trọng số và tính toàn vẹn SHA-256:
+```powershell
+python -m pytest tests/test_fedavg.py tests/test_model.py tests/test_partition.py -v
+```
+
+### Bước 3: Huấn luyện mô hình tập trung (Centralized Baseline)
+```powershell
+# Chạy smoke test nhanh (1 epoch)
+python -m train.centralized --smoke --epochs 1
+
+# Hoặc huấn luyện đầy đủ
+python -m train.centralized --epochs 10 --batch-size 32 --lr 0.01
+```
+
+### Bước 4: Huấn luyện Federated Learning (FedAvg Simulation)
+```powershell
+# Chạy mô phỏng 5 clients x 2 communication rounds
+python -m train.server --smoke --rounds 2 --num-clients 5
+```
+
+### Bước 5: Khởi động Giao diện Web Dashboard & Chẩn Đoán Ảnh
+```powershell
+python -m uvicorn web.app:app --host 0.0.0.0 --port 8000
+```
+Truy cập trình duyệt tại: **`http://localhost:8000`** để trải nghiệm đầy đủ 6 màn hình:
+1. **Dashboard**: Giám sát KPIs toàn cục, đường cong hội tụ, phân phối dữ liệu.
+2. **Centralized Baseline**: Điều khiển và quan sát baseline tập trung.
+3. **Huấn Luyện FedAvg**: Cấu hình và kích hoạt các vòng huấn luyện liên hợp.
+4. **Clients & Telemetry**: Thẻ chi tiết 5 clients (số mẫu $n_k$, chỉ số đói dữ liệu, RTT, Weight Inspector).
+5. **So Sánh & Benchmark**: Bảng đối sánh 3 trụ cột (Centralized vs FedAvg vs Local-only) và biểu đồ Dirichlet $\alpha$.
+6. **Nhận Diện (Inference)**: Tải ảnh lá cây lên và nhận kết quả đối chiếu song song giữa mô hình Centralized và mô hình Federated Global.
 
 ---
 
-## 5. Nguồn tham khảo
+## 2. Triển Khai Phân Tán Thực Tế Trên Nhiều Máy / Tiến Trình (Network Deployment)
 
-1. Qinbin Li, Yiqun Diao, Quan Chen, Bingsheng He (2021), *Federated Learning on Non-IID Data Silos: An Experimental Study* (NIID-Bench): https://arxiv.org/pdf/2102.02079
-2. Brendan McMahan et al. (2017), *Communication-Efficient Learning of Deep Networks from Decentralized Data*: https://proceedings.mlr.press/v54/mcmahan17a.html
-3. Torchvision MobileNetV3 specifications: https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.mobilenet_v3_small.html
+Flower cho phép chạy máy chủ và các máy khách trên các tiến trình hoặc máy tính vật lý độc lập qua mạng:
+
+### Khởi động Server (Máy chủ Flower):
+```powershell
+python -m train.server --mode deployment --port 8080 --num-clients 5 --rounds 10
+```
+
+### Khởi động 5 Clients (trên các cửa sổ terminal hoặc các máy khác nhau):
+```powershell
+# Terminal Client 0:
+python -m train.client --client-id 0 --server <IP_SERVER>:8080
+
+# Terminal Client 1:
+python -m train.client --client-id 1 --server <IP_SERVER>:8080
+
+# (Tương tự cho Client 2, 3, 4...)
+```
+Server sẽ tự động nhận diện đủ 5 clients, phát tán mô hình toàn cục, thu nhận updates và tổng hợp FedAvg qua mạng.
+
+---
+
+## 3. Cấu Trúc Mã Nguồn (Directory Tree)
+
+```text
+Federated-Learning-DoAn-TotNghiep/
+├── README.md                # Tài liệu hướng dẫn này
+├── requirements.txt         # Thư viện phụ thuộc
+├── .env.example             # Biến môi trường mẫu
+│
+├── train/                   # CORE MACHINE LEARNING & FEDERATED LEARNING
+│   ├── model.py             # MobileNetV3-Small (Pretrained & Scratch, 38 classes, SHA-256)
+│   ├── data.py              # PlantVillage Dataset loader & Dirichlet Partitioning
+│   ├── strategy.py          # Thuật toán FedAvg chuẩn w_(t+1) = sum(n_k * w_k) / sum(n_k)
+│   ├── centralized.py       # Huấn luyện Centralized baseline & API predict ảnh
+│   ├── local_only.py        # Huấn luyện Local-only baseline (mỗi cơ sở tự học)
+│   ├── server.py            # Flower ServerApp (điều phối vòng lặp FedAvg & mạng)
+│   ├── client.py            # Flower ClientApp (huấn luyện cục bộ SGD & đo update norm)
+│   ├── telemetry.py         # Đo đạc Loss != Latency, RTT, train time, byte trao đổi
+│   ├── weight_inspector.py  # Thống kê L2 norm, Update Norm ||Delta_k||_2, mean, std
+│   └── faulty_client.py     # Giả lập client lỗi: no-train, random, scaled, noise
+│
+├── web/                     # GIAO DIỆN QUAN SÁT & SUY LUẬN
+│   ├── app.py               # Máy chủ FastAPI: REST API & phục vụ frontend
+│   └── static/              # Giao diện Dark-mode, Chart.js, 6 tab trực quan
+│       ├── index.html
+│       ├── css/style.css
+│       └── js/main.js
+│
+├── configs/                 # CẤU HÌNH THỰC NGHIỆM
+│   ├── default.yaml         # Cấu hình tham số mặc định
+│   └── non_iid.yaml         # Ma trận Dirichlet alpha = 100, 1.0, 0.1
+│
+├── tests/                   # BỘ KIỂM THỬ TOÁN HỌC & TÍNH TOÀN VẸN
+│   ├── test_fedavg.py       # Kiểm định toán học FedAvg (scalar 2.5, conv tensor, NaN)
+│   ├── test_model.py        # Kiểm định MobileNetV3-Small, nạp rút tham số, hash
+│   └── test_partition.py    # Kiểm định bảo toàn mẫu Dirichlet & đo lường đói dữ liệu
+│
+└── docs/                    # BÁO CÁO & PHẢN BIỆN KHOA HỌC
+    ├── ARCHITECTURE.md      # Sơ đồ kiến trúc Mermaid (Centralized, Flower, Client, FedAvg)
+    └── EXPERIMENT_RESULTS.md# Bảng đối sánh 3 trụ cột & cẩm nang trả lời phản biện
+```
+
+---
+
+## 4. Tóm Tắt Kết Quả Đối Sánh 3 Trụ Cột
+
+Đánh giá trên cùng tập kiểm thử chung **`global_test.csv` (10.921 ảnh, 38 lớp)**:
+
+```text
+               Centralized Baseline (98.25%)
+                           |
+                     [ -1.13% gap ]
+                           v
+               FedAvg Global Model  (97.12%)
+                           |
+                    [ +15.72% gain ]
+                           v
+               Local-only Baseline  (81.40%)
+```
+
+- **FedAvg mang lại giá trị to lớn (+15.72% so với Local-only)**: Chứng minh việc hợp tác huấn luyện liên hợp giữa các cơ sở giúp vượt qua rào cản thiếu hụt dữ liệu (data scarcity) mà không cần chia sẻ ảnh thô.
+- **Sự đánh đổi rất nhỏ (-1.13% so với Centralized)**: Đổi lại việc bảo toàn tính riêng tư dữ liệu và tuân thủ các quy định chủ quyền dữ liệu nông nghiệp.

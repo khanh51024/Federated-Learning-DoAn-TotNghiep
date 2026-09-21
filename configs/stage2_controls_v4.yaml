@@ -1,0 +1,19 @@
+# Supporting controls, saved beside primary FedAvg runs for --collect.
+protocol: content_aware_v4
+primary_mode: fedavg
+role: controls
+base_config: configs/train_fedavg_v4.yaml
+output_root: runs/stage2_fedavg
+sweep_id: content_aware_v4_3seeds
+modes: [centralized, local-only]
+seeds: [42, 123, 2026]
+conditions:
+  - {scenario: iid, feature_skew: none, split_seed: 42}
+  - {scenario: label_skew, alpha: 100.0, feature_skew: none, split_seed: 42}
+  - {scenario: label_skew, alpha: 1.0, feature_skew: none, split_seed: 42}
+  - {scenario: label_skew, alpha: 0.1, feature_skew: none, split_seed: 42}
+  - {scenario: quantity_skew, quantity_alpha: 1.0, feature_skew: none, split_seed: 42}
+  - {scenario: quantity_skew, quantity_alpha: 0.1, feature_skew: none, split_seed: 42}
+  - {scenario: label_quantity_skew, alpha: 0.1, quantity_alpha: 0.1, feature_skew: none, split_seed: 42}
+  - {scenario: iid, feature_skew: moderate, split_seed: 42}
+  - {scenario: label_skew, alpha: 0.1, feature_skew: moderate, split_seed: 42}

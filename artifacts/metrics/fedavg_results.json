@@ -1,0 +1,40 @@
+{
+  "experiment": "fedavg",
+  "num_clients": 5,
+  "rounds": 2,
+  "local_epochs": 1,
+  "best_accuracy": 1.0,
+  "total_time_s": 17.0,
+  "history": [
+    {
+      "round": 1,
+      "global_loss": 3.6276,
+      "global_accuracy": 1.0,
+      "global_macro_f1": 0.0263,
+      "aggregation_time_ms": 167.6,
+      "round_duration_s": 9.17
+    },
+    {
+      "round": 2,
+      "global_loss": 3.6177,
+      "global_accuracy": 1.0,
+      "global_macro_f1": 0.0263,
+      "aggregation_time_ms": 197.89,
+      "round_duration_s": 7.73
+    }
+  ],
+  "telemetry_summary": {
+    "total_rounds": 2,
+    "train_time_s": {
+      "mean": 1.443,
+      "median": 1.431,
+      "p95": 1.724
+    },
+    "network_rtt_ms": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p95": 0.0
+    },
+    "total_uploaded_mb": 59.85
+  }
+}

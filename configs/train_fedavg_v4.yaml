@@ -1,0 +1,57 @@
+# FedAvg pilot trên split content-aware v4. Dùng để kiểm tra trước Kaggle.
+schema_version: 1
+data:
+  dataset_root: ../PlantVillage-Dataset/raw/color
+  partition_index: data/partitions_train_v4_content_aware/index.json
+  scenario: label_skew
+  alpha: 0.1
+  quantity_alpha: null
+  feature_skew: none
+  split_seed: 42
+model:
+  name: mobilenet_v3_small
+  num_classes: 38
+  weights: IMAGENET1K_V1
+training:
+  seed: 42
+  local_epochs: 1
+  batch_size: 16
+  eval_batch_size: 32
+  optimizer: sgd
+  lr: 0.01
+  momentum: 0.9
+  weight_decay: 0.0001
+  amp: true
+  num_workers: 2
+federation:
+  num_clients: 10
+  fraction_train: 1.0
+  min_train_nodes: 10
+  max_rounds: 20
+  timeout_seconds: 3600
+early_stopping:
+  enabled: false
+  monitor: val_loss
+  min_delta: 0.0001
+  patience_rounds: 10
+  warmup_rounds: 10
+lr_scheduler:
+  enabled: true
+  factor: 0.5
+  patience_rounds: 3
+  threshold: 0.0001
+  min_lr: 0.000001
+runtime:
+  client_device: auto
+  server_device: cpu
+  max_concurrent_clients: 1
+  cpus_per_client: 2
+  object_store_memory_mb: 512
+  startup_timeout_seconds: 180
+output:
+  root: runs/fedavg_v4
+  progress: true
+  evaluate_test_after_train: true
+checkpoint:
+  every_n_rounds: 1
+  keep_last_n: 3

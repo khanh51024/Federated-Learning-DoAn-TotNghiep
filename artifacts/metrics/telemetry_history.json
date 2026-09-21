@@ -1,0 +1,154 @@
+[
+  {
+    "round_num": 1,
+    "aggregation_time_ms": 167.6,
+    "total_round_time_s": 9.17,
+    "clients_participating": 5,
+    "global_loss": 3.6276,
+    "global_accuracy": 1.0,
+    "global_macro_f1": 0.0263,
+    "client_metrics": [
+      {
+        "client_id": 0,
+        "round_num": 1,
+        "local_train_time_s": 1.35,
+        "download_time_ms": 0.0,
+        "upload_time_ms": 0.0,
+        "network_rtt_ms": 0.0,
+        "bytes_downloaded": 6275944,
+        "bytes_uploaded": 6275944,
+        "loss": 3.6318,
+        "accuracy": 0.0,
+        "num_examples": 32
+      },
+      {
+        "client_id": 1,
+        "round_num": 1,
+        "local_train_time_s": 1.65,
+        "download_time_ms": 0.0,
+        "upload_time_ms": 0.0,
+        "network_rtt_ms": 0.0,
+        "bytes_downloaded": 6275944,
+        "bytes_uploaded": 6275944,
+        "loss": 3.6318,
+        "accuracy": 0.0312,
+        "num_examples": 32
+      },
+      {
+        "client_id": 2,
+        "round_num": 1,
+        "local_train_time_s": 1.695,
+        "download_time_ms": 0.0,
+        "upload_time_ms": 0.0,
+        "network_rtt_ms": 0.0,
+        "bytes_downloaded": 6275944,
+        "bytes_uploaded": 6275944,
+        "loss": 3.6323,
+        "accuracy": 0.0,
+        "num_examples": 32
+      },
+      {
+        "client_id": 3,
+        "round_num": 1,
+        "local_train_time_s": 1.748,
+        "download_time_ms": 0.0,
+        "upload_time_ms": 0.0,
+        "network_rtt_ms": 0.0,
+        "bytes_downloaded": 6275944,
+        "bytes_uploaded": 6275944,
+        "loss": 3.6326,
+        "accuracy": 0.0,
+        "num_examples": 32
+      },
+      {
+        "client_id": 4,
+        "round_num": 1,
+        "local_train_time_s": 1.466,
+        "download_time_ms": 0.0,
+        "upload_time_ms": 0.0,
+        "network_rtt_ms": 0.0,
+        "bytes_downloaded": 6275944,
+        "bytes_uploaded": 6275944,
+        "loss": 3.6339,
+        "accuracy": 0.0625,
+        "num_examples": 32
+      }
+    ]
+  },
+  {
+    "round_num": 2,
+    "aggregation_time_ms": 197.89,
+    "total_round_time_s": 7.73,
+    "clients_participating": 5,
+    "global_loss": 3.6177,
+    "global_accuracy": 1.0,
+    "global_macro_f1": 0.0263,
+    "client_metrics": [
+      {
+        "client_id": 0,
+        "round_num": 2,
+        "local_train_time_s": 1.141,
+        "download_time_ms": 0.0,
+        "upload_time_ms": 0.0,
+        "network_rtt_ms": 0.0,
+        "bytes_downloaded": 6275944,
+        "bytes_uploaded": 6275944,
+        "loss": 3.6157,
+        "accuracy": 0.8438,
+        "num_examples": 32
+      },
+      {
+        "client_id": 1,
+        "round_num": 2,
+        "local_train_time_s": 1.228,
+        "download_time_ms": 0.0,
+        "upload_time_ms": 0.0,
+        "network_rtt_ms": 0.0,
+        "bytes_downloaded": 6275944,
+        "bytes_uploaded": 6275944,
+        "loss": 3.6141,
+        "accuracy": 0.9062,
+        "num_examples": 32
+      },
+      {
+        "client_id": 2,
+        "round_num": 2,
+        "local_train_time_s": 1.489,
+        "download_time_ms": 0.0,
+        "upload_time_ms": 0.0,
+        "network_rtt_ms": 0.0,
+        "bytes_downloaded": 6275944,
+        "bytes_uploaded": 6275944,
+        "loss": 3.6158,
+        "accuracy": 0.8438,
+        "num_examples": 32
+      },
+      {
+        "client_id": 3,
+        "round_num": 2,
+        "local_train_time_s": 1.397,
+        "download_time_ms": 0.0,
+        "upload_time_ms": 0.0,
+        "network_rtt_ms": 0.0,
+        "bytes_downloaded": 6275944,
+        "bytes_uploaded": 6275944,
+        "loss": 3.6143,
+        "accuracy": 0.9062,
+        "num_examples": 32
+      },
+      {
+        "client_id": 4,
+        "round_num": 2,
+        "local_train_time_s": 1.263,
+        "download_time_ms": 0.0,
+        "upload_time_ms": 0.0,
+        "network_rtt_ms": 0.0,
+        "bytes_downloaded": 6275944,
+        "bytes_uploaded": 6275944,
+        "loss": 3.6147,
+        "accuracy": 0.75,
+        "num_examples": 32
+      }
+    ]
+  }
+]

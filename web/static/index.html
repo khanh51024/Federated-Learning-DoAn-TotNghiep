@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Federated Learning — Giám Sát & Chẩn Đoán Bệnh Lá Cây</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">🌿</div>
+        <div>
+          <h2 class="brand-title">CropFed FL</h2>
+          <span class="brand-subtitle">MobileNetV3 &middot; PlantVillage</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="tab-dashboard">
+          <span class="nav-icon">📊</span> Tổng Quan (Dashboard)
+        </button>
+        <button class="nav-item" data-tab="tab-centralized">
+          <span class="nav-icon">🖥️</span> Centralized Baseline
+        </button>
+        <button class="nav-item" data-tab="tab-federated">
+          <span class="nav-icon">🌐</span> Huấn Luyện FedAvg
+        </button>
+        <button class="nav-item" data-tab="tab-clients">
+          <span class="nav-icon">👥</span> Clients & Telemetry
+        </button>
+        <button class="nav-item" data-tab="tab-experiments">
+          <span class="nav-icon">📈</span> So Sánh & Benchmark
+        </button>
+        <button class="nav-item" data-tab="tab-inference">
+          <span class="nav-icon">🔍</span> Nhận Diện (Inference)
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="status-indicator">
+          <span class="pulse-dot"></span>
+          <span id="server-status-text">Server: Online</span>
+        </div>
+        <div class="system-chip" id="system-device">Device: CPU / CUDA</div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <header class="top-header">
+        <div>
+          <h1 id="page-title" class="page-title">Tổng Quan Hệ Thống</h1>
+          <p id="page-desc" class="page-desc">Theo dõi tiến trình huấn luyện phân tán và hiệu năng toàn cục</p>
+        </div>
+        <div class="header-actions">
+          <div class="status-badge" id="task-badge">Hệ thống sẵn sàng</div>
+        </div>
+      </header>
+
+      <!-- TAB 1: DASHBOARD -->
+      <section id="tab-dashboard" class="tab-pane active">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <span class="kpi-label">Độ Chính Xác Toàn Cục</span>
+            <span class="kpi-value text-emerald" id="dash-acc">97.12%</span>
+            <span class="kpi-sub">FedAvg (Test Set 10.921 ảnh)</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">Hàm Mất Mát (Loss)</span>
+            <span class="kpi-value text-sky" id="dash-loss">0.112</span>
+            <span class="kpi-sub">CrossEntropy Loss</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">Số Clients Tham Gia</span>
+            <span class="kpi-value text-purple" id="dash-clients">5 / 5</span>
+            <span class="kpi-sub">Kết nối đồng thời</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label">Độ Trễ Mạng (RTT)</span>
+            <span class="kpi-value text-amber" id="dash-rtt">85.4 ms</span>
+            <span class="kpi-sub">Trung bình P95: 92.1 ms</span>
+          </div>
+        </div>
+
+        <div class="grid-2col mt-6">
+          <div class="panel">
+            <h3 class="panel-title">Đường Cong Hội Tụ Qua Các Vòng (FedAvg)</h3>
+            <div class="chart-container">
+              <canvas id="chart-dashboard-convergence"></canvas>
+            </div>
+          </div>
+          <div class="panel">
+            <h3 class="panel-title">Phân Bổ Dữ Liệu Các Client (Dirichlet non-IID)</h3>
+            <div class="chart-container">
+              <canvas id="chart-dashboard-distribution"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: CENTRALIZED -->
+      <section id="tab-centralized" class="tab-pane">
+        <div class="panel">
+          <div class="panel-header-flex">
+            <div>
+              <h3 class="panel-title">Điều Khiển Centralized Baseline (Mốc giới hạn trên)</h3>
+              <p class="panel-desc">Huấn luyện MobileNetV3-Small tập trung trên toàn bộ 38.984 ảnh train.</p>
+            </div>
+            <button class="btn btn-primary" id="btn-train-centralized" onclick="triggerCentralizedTrain()">
+              🚀 Bắt Đầu Huấn Luyện
+            </button>
+          </div>
+
+          <div class="grid-3col mt-4">
+            <div class="metric-box">
+              <span class="metric-box-title">Test Accuracy</span>
+              <span class="metric-box-val" id="cent-acc">98.25%</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-box-title">Macro-F1</span>
+              <span class="metric-box-val" id="cent-f1">0.9781</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-box-title">Test Loss</span>
+              <span class="metric-box-val" id="cent-loss">0.0842</span>
+            </div>
+          </div>
+
+          <div class="chart-container mt-6">
+            <canvas id="chart-centralized-history"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: FEDERATED -->
+      <section id="tab-federated" class="tab-pane">
+        <div class="panel">
+          <div class="panel-header-flex">
+            <div>
+              <h3 class="panel-title">Cấu Hình Huấn Luyện Federated Learning (FedAvg)</h3>
+              <p class="panel-desc">Phát tán mô hình, nhận updates từ 5 clients, tổng hợp theo trọng số n_k.</p>
+            </div>
+            <button class="btn btn-primary" id="btn-train-federated" onclick="triggerFederatedTrain()">
+              ⚡ Khởi Động Vòng FedAvg
+            </button>
+          </div>
+
+          <div class="form-row mt-4">
+            <div class="form-group">
+              <label>Số Vòng Giao Tiếp (Rounds)</label>
+              <input type="number" id="fl-rounds" value="5" min="1" max="50" class="input-field">
+            </div>
+            <div class="form-group">
+              <label>Số Epoch Cục Bộ (E)</label>
+              <input type="number" id="fl-epochs" value="1" min="1" max="10" class="input-field">
+            </div>
+            <div class="form-group">
+              <label>Mức độ Non-IID (Dirichlet &alpha;)</label>
+              <select id="fl-alpha" class="input-field">
+                <option value="100.0">IID (&alpha; = 100.0)</option>
+                <option value="1.0" selected>Moderate non-IID (&alpha; = 1.0)</option>
+                <option value="0.1">Severe non-IID (&alpha; = 0.1)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="chart-container mt-6">
+            <canvas id="chart-federated-history"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: CLIENTS & TELEMETRY -->
+      <section id="tab-clients" class="tab-pane">
+        <div class="clients-cards-grid" id="clients-container">
+          <!-- Client Cards injected via JS -->
+        </div>
+
+        <div class="panel mt-6">
+          <div class="panel-header-flex">
+            <h3 class="panel-title">Weight Inspector — Phân Tích Thống Kê Trọng Số</h3>
+            <select id="layer-selector" class="input-field select-layer" onchange="loadLayerStats()">
+              <!-- Layer options injected via JS -->
+            </select>
+          </div>
+
+          <div class="table-responsive mt-4">
+            <table class="data-table" id="layer-stats-table">
+              <thead>
+                <tr>
+                  <th>Layer Name</th>
+                  <th>Tensor Shape</th>
+                  <th>Tham Số</th>
+                  <th>L2 Norm</th>
+                  <th>Update Norm ||&Delta;<sub>k</sub>||<sub>2</sub></th>
+                  <th>Mean &plusmn; Std</th>
+                  <th>Sample Values</th>
+                </tr>
+              </thead>
+              <tbody id="layer-stats-body">
+                <tr><td colspan="7">Đang tải thống kê layer...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: EXPERIMENTS & BENCHMARKS -->
+      <section id="tab-experiments" class="tab-pane">
+        <div class="panel">
+          <h3 class="panel-title">Bảng Đối Sánh 3 Trụ Cột (Centralized vs FedAvg vs Local-only)</h3>
+          <p class="panel-desc">Chứng minh giá trị gia tăng của Federated Learning so với tự học và sự đánh đổi so với tập trung.</p>
+
+          <div class="table-responsive mt-4">
+            <table class="data-table" id="compare-table">
+              <thead>
+                <tr>
+                  <th>Chỉ số (Metric)</th>
+                  <th>Centralized (Tập trung)</th>
+                  <th>FedAvg (Federated)</th>
+                  <th>Local-only (Tự học)</th>
+                </tr>
+              </thead>
+              <tbody id="compare-body">
+                <!-- Data injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid-2col mt-6">
+          <div class="panel">
+            <h3 class="panel-title">Suy Giảm Accuracy Theo Mức Non-IID (&alpha;)</h3>
+            <div class="chart-container">
+              <canvas id="chart-alpha-degradation"></canvas>
+            </div>
+          </div>
+          <div class="panel">
+            <h3 class="panel-title">Tác Động Của Client Lỗi Đến FedAvg (Faulty Client)</h3>
+            <div class="chart-container">
+              <canvas id="chart-faulty-impact"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 6: INFERENCE -->
+      <section id="tab-inference" class="tab-pane">
+        <div class="panel">
+          <h3 class="panel-title">Chẩn Đoán Bệnh Lá Cây Song Song (Dual-Model Inference)</h3>
+          <p class="panel-desc">Tải ảnh lá cây lên để đối chiếu kết quả dự đoán đồng thời giữa mô hình Centralized và mô hình Federated Global.</p>
+
+          <div class="upload-zone" id="upload-dropzone">
+            <input type="file" id="leaf-image-input" accept="image/*" class="file-input" onchange="handleImageSelected(this)">
+            <div class="upload-placeholder">
+              <div class="upload-icon">📸</div>
+              <p class="upload-text">Kéo thả ảnh lá cây vào đây hoặc bấm để chọn file</p>
+              <span class="upload-sub">Hỗ trợ JPG, PNG (tự động tiền xử lý chuẩn 224&times;224)</span>
+            </div>
+            <img id="preview-image" class="preview-thumb hidden" alt="Ảnh đã chọn">
+          </div>
+
+          <div class="action-center mt-4">
+            <button class="btn btn-primary" id="btn-diagnose" onclick="submitInference()" disabled>
+              🔬 Chạy Chẩn Đoán Song Song
+            </button>
+          </div>
+
+          <!-- DUAL RESULT CARDS -->
+          <div class="dual-results-grid mt-6" id="dual-results" style="display: none;">
+            <div class="diagnosis-card card-centralized">
+              <div class="card-badge badge-centralized">Centralized Model</div>
+              <h4 class="diag-disease" id="cent-disease">—</h4>
+              <div class="diag-confidence-meter">
+                <div class="diag-confidence-bar" id="cent-conf-bar" style="width: 0%"></div>
+              </div>
+              <div class="diag-meta-row">
+                <span>Độ tin cậy: <b id="cent-conf-val">0%</b></span>
+                <span>Model Test Acc: <b id="cent-test-acc">—</b></span>
+              </div>
+              <div class="top3-box mt-3">
+                <span class="top3-title">Top-3 Xác Suất Cao Nhất:</span>
+                <ul id="cent-top3-list" class="top3-list"></ul>
+              </div>
+            </div>
+
+            <div class="diagnosis-card card-federated">
+              <div class="card-badge badge-federated">Federated Global Model</div>
+              <h4 class="diag-disease" id="fed-disease">—</h4>
+              <div class="diag-confidence-meter">
+                <div class="diag-confidence-bar bar-fed" id="fed-conf-bar" style="width: 0%"></div>
+              </div>
+              <div class="diag-meta-row">
+                <span>Độ tin cậy: <b id="fed-conf-val">0%</b></span>
+                <span>Model Test Acc: <b id="fed-test-acc">—</b></span>
+              </div>
+              <div class="top3-box mt-3">
+                <span class="top3-title">Top-3 Xác Suất Cao Nhất:</span>
+                <ul id="fed-top3-list" class="top3-list"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/js/main.js"></script>
+</body>
+</html>

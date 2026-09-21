@@ -1,0 +1,16 @@
+# Ma trận thực nghiệm non-IID Dirichlet (PlantVillage 38 lớp)
+conditions:
+  - name: "IID (alpha=100)"
+    condition: "label100"
+    alpha: 100.0
+    partition_dir: "data/partitions_stage2_scratch_v3/label100"
+
+  - name: "Moderate non-IID (alpha=1.0)"
+    condition: "label1"
+    alpha: 1.0
+    partition_dir: "data/partitions_stage2_scratch_v3/label1"
+
+  - name: "Severe non-IID (alpha=0.1)"
+    condition: "label01"
+    alpha: 0.1
+    partition_dir: "data/partitions_stage2_scratch_v3/label01"

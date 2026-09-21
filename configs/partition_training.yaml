@@ -1,0 +1,63 @@
+# ---------------------------------------------------------------------------
+# Cấu hình chuẩn bị dữ liệu huấn luyện GĐ2 (train/val/test split)
+# Ngày lập: 09/09/2026
+# ---------------------------------------------------------------------------
+# Tách stratified group-aware: test_ratio=0.20, val_ratio=0.10, client_val_ratio=0.0
+# Tỷ lệ thực tế xấp xỉ 70% train / 10% val / 20% test.
+# Sinh vào data/partitions_train_v1, tuyệt đối không ghi đè partitions_v3.
+
+dataset:
+  path: "../PlantVillage-Dataset/raw/color"
+  leaf_map_path: "../PlantVillage-Dataset/leaf-map.json"
+  group_aware: true
+  test_ratio: 0.20
+  val_ratio: 0.10
+
+partition:
+  num_clients: 10
+  scenario: "label_skew"
+  alpha: 0.1
+  quantity_alpha: 0.1
+  feature_skew: "none"
+  seed: 42
+  min_samples_per_client: 10
+  max_retries: 20
+  rare_class_threshold: 500
+
+client_val_ratio: 0.0
+
+output:
+  base_dir: "data/partitions_train_v1"
+  index_path: "data/partitions_train_v1/index.json"
+  source_cache_path: "data/source_content_cache.json"
+  reference_test_hash: "340198e0b2f8945a1f2730b211aacd9ddcbd5b9c46404249771c69a77637e79e"
+
+# Ma trận pilot GĐ2: mỗi cấu hình chỉ thay đổi một trục so với đối chứng.
+target_scenarios:
+  - scenario: "iid"
+    seed: 42
+    feature_skew: "none"
+  - scenario: "label_skew"
+    seed: 42
+    alpha: 0.1
+    feature_skew: "none"
+  - scenario: "label_skew"
+    seed: 42
+    alpha: 1.0
+    feature_skew: "none"
+  - scenario: "label_skew"
+    seed: 42
+    alpha: 100.0
+    feature_skew: "none"
+  - scenario: "quantity_skew"
+    seed: 42
+    quantity_alpha: 0.1
+    feature_skew: "none"
+  - scenario: "quantity_skew"
+    seed: 42
+    quantity_alpha: 1.0
+    feature_skew: "none"
+  - scenario: "label_skew"
+    seed: 42
+    alpha: 0.1
+    feature_skew: "moderate"
