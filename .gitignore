@@ -1,4 +1,4 @@
-﻿__pycache__/
+__pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
@@ -7,14 +7,34 @@
 .venv/
 venv/
 .runtime/
-data/
+.stage2_scratch_runtime/
+.stage2_matched_runtime/
 runs/
+output/
+tmp/
+scratch/
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+kernel-metadata.json
+dataset-metadata.json
+
+# Archive / compressed bundles
+*.zip
+*.tar.gz
+
+# Data directories: ignore by default, allow scratch v3 suite and root verification JSONs
+data/*
+!data/partitions_stage2_scratch_v3/
+!data/*.json
+
+# Generic kaggle/upload patterns ignored, with narrow exceptions for tracked files
 *kaggle*
 *KAGGLE*
 *upload*
-kernel-metadata.json
-dataset-metadata.json
+
+!kaggle_*.ipynb
+!configs/*kaggle*.yaml
+!scripts/*kaggle*.py
+!requirements-kaggle.txt

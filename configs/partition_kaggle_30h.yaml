@@ -1,0 +1,34 @@
+dataset:
+  path: "../PlantVillage-Dataset/raw/color"
+  leaf_map_path: "../PlantVillage-Dataset/leaf-map.json"
+  group_aware: true
+  test_ratio: 0.20
+  val_ratio: 0.10
+
+partition:
+  num_clients: 10
+  scenario: "iid"
+  alpha: 0.1
+  quantity_alpha: 0.1
+  feature_skew: "none"
+  seed: 42
+  min_samples_per_client: 10
+  max_retries: 20
+  rare_class_threshold: 500
+
+client_val_ratio: 0.0
+
+output:
+  # v1 remains immutable. This version adds the feature-only IID condition.
+  base_dir: "data/partitions_train_v2_30h"
+  index_path: "data/partitions_train_v2_30h/index.json"
+  source_cache_path: "data/source_content_cache_30h.json"
+  reference_test_hash: "340198e0b2f8945a1f2730b211aacd9ddcbd5b9c46404249771c69a77637e79e"
+
+target_scenarios:
+  - {scenario: iid, seed: 42, feature_skew: none}
+  - {scenario: label_skew, seed: 42, alpha: 100.0, feature_skew: none}
+  - {scenario: label_skew, seed: 42, alpha: 1.0, feature_skew: none}
+  - {scenario: label_skew, seed: 42, alpha: 0.1, feature_skew: none}
+  - {scenario: quantity_skew, seed: 42, quantity_alpha: 0.1, feature_skew: none}
+  - {scenario: iid, seed: 42, feature_skew: moderate}

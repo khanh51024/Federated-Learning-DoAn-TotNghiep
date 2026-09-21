@@ -86,9 +86,11 @@ def test_gate_d_flower_simulation_integration_smoke(tmp_path):
     run_dir.mkdir(parents=True, exist_ok=True)
 
     # Ensure smoke bundle exists
-    bundle_dir = ROOT / "data" / "partitions_train_v1" / "smoke_bundle_2c"
+    bundle_dir = ROOT / "data" / "partitions_train_v4_content_aware" / "smoke_bundle_2c"
     if not bundle_dir.exists():
-        src_partition = ROOT / "data" / "partitions_train_v1" / "label_skew" / "label_skew__seed_42__alpha_0_1__feature_none__b3b5ed03170d"
+        index = json.loads((ROOT / "data/partitions_train_v4_content_aware/index.json").read_text())
+        src_partition = ROOT / next(p['relative_dir'] for p in index['partitions'].values()
+                                    if p['scenario'] == 'label_skew' and p['alpha'] == .1 and p['feature_skew'] == 'none')
         create_smoke_bundle(src_partition, bundle_dir)
 
     os.environ["FL_TRAINING_CONFIG_PATH"] = str(ROOT / "configs" / "train_smoke.yaml")

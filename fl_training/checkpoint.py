@@ -91,6 +91,10 @@ def save_round_checkpoint(
     keep_last_n: int = 3,
     parent_run_id: Optional[str] = None,
     attempt_id: int = 1,
+    optimizer_state: Optional[Dict[str, Any]] = None,
+    amp_scaler_state: Optional[Dict[str, Any]] = None,
+    amp_scaler_policy: str = "reset_each_train_local_call",
+    best_metrics: Optional[Dict[str, Any]] = None,
 ) -> Tuple[Path, Optional[Path]]:
     """
     Save atomic last.pt and conditionally best.pt:
@@ -121,10 +125,15 @@ def save_round_checkpoint(
         "rng_state": capture_rng_state(),
         "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "extra_metrics": extra_metrics or {},
+        "best_metrics": copy.deepcopy(best_metrics if best_metrics is not None else (extra_metrics if is_best else {})),
         "parent_run_id": parent_run_id,
         "attempt_id": int(attempt_id),
     }
 
+    if optimizer_state is not None:
+        last_payload["optimizer_state"] = copy.deepcopy(optimizer_state)
+    last_payload["amp_scaler_state"] = copy.deepcopy(amp_scaler_state)
+    last_payload["amp_scaler_policy"] = str(amp_scaler_policy)
     last_path = run_dir / "last.pt"
     save_checkpoint_atomic(last_payload, last_path)
 
@@ -172,7 +181,7 @@ def materialize_best_checkpoint(checkpoint_data: Dict[str, Any], run_dir: Path) 
         "config": checkpoint_data.get("config", {}),
         "semantic_config_hash": checkpoint_data.get("semantic_config_hash", ""),
         "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "metrics": {},
+        "metrics": copy.deepcopy(checkpoint_data.get("best_metrics", {})),
     }
     save_checkpoint_atomic(best_payload, best_path)
     return best_path
@@ -234,6 +243,18 @@ def verify_checkpoint_compatibility(
     if not cp_hash or not curr_hash:
         raise ValueError("Cannot resume: checkpoint and current config must contain semantic config hashes")
     if cp_hash == curr_hash:
+        cp_source = checkpoint_data.get("config", {}).get("source_fingerprint")
+        current_source = current_config.get("source_fingerprint")
+        if current_source and cp_source != current_source:
+            raise ValueError("Cannot resume: source fingerprint mismatch or missing checkpoint provenance")
+        cp_config = checkpoint_data.get("config", {})
+        cp_mode, current_mode = cp_config.get("mode"), current_config.get("mode")
+        if cp_mode and current_mode and cp_mode != current_mode:
+            raise ValueError("Cannot resume: training mode mismatch")
+        cp_rounds = cp_config.get("federation", {}).get("max_rounds")
+        current_rounds = current_config.get("federation", {}).get("max_rounds")
+        if cp_rounds is not None and current_rounds is not None and cp_rounds != current_rounds:
+            raise ValueError("Cannot resume: fixed round budget mismatch")
         return
 
     # Version-1 checkpoints used a narrower hash.  Permit relocation only when

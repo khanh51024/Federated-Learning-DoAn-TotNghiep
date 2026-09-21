@@ -1,0 +1,11 @@
+# Keep Kaggle's CUDA-enabled torch/torchvision only when they are the tested pair
+# torch 2.6.x + torchvision 0.21.x. The notebook checks this before training.
+flwr==1.36.0
+ray==2.55.1
+numpy>=1.24
+pandas>=2.0
+Pillow>=9.1
+PyYAML>=6.0
+matplotlib>=3.7
+scikit-learn>=1.2
+tqdm>=4.64

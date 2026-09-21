@@ -1,0 +1,75 @@
+# Fixed split 42; three independent TRAINING seeds. Calibration must approve the entire matrix.
+dataset:
+  path: ../PlantVillage-Dataset/raw/color
+  leaf_map_path: ../PlantVillage-Dataset/leaf-map.json
+  group_aware: true
+  test_ratio: 0.2
+  val_ratio: 0.1
+partition:
+  num_clients: 10
+  scenario: iid
+  alpha: 0.1
+  quantity_alpha: 0.1
+  feature_skew: none
+  seed: 42
+  min_samples_per_client: 10
+  max_retries: 20
+  rare_class_threshold: 500
+client_val_ratio: 0.0
+output:
+  base_dir: data/partitions_train_v3_research
+  index_path: data/partitions_train_v3_research/index.json
+  source_cache_path: data/source_content_cache_research.json
+  reference_test_hash: 340198e0b2f8945a1f2730b211aacd9ddcbd5b9c46404249771c69a77637e79e
+target_scenarios:
+- scenario: iid
+  feature_skew: none
+  seed: 42
+- scenario: label_skew
+  alpha: 100.0
+  feature_skew: none
+  seed: 42
+- scenario: label_skew
+  alpha: 10.0
+  feature_skew: none
+  seed: 42
+- scenario: label_skew
+  alpha: 1.0
+  feature_skew: none
+  seed: 42
+- scenario: label_skew
+  alpha: 0.5
+  feature_skew: none
+  seed: 42
+- scenario: label_skew
+  alpha: 0.1
+  feature_skew: none
+  seed: 42
+- scenario: label_skew
+  alpha: 5.0
+  feature_skew: none
+  seed: 42
+- scenario: label_skew
+  alpha: 0.05
+  feature_skew: none
+  seed: 42
+- scenario: quantity_skew
+  quantity_alpha: 1.0
+  feature_skew: none
+  seed: 42
+- scenario: quantity_skew
+  quantity_alpha: 0.1
+  feature_skew: none
+  seed: 42
+- scenario: label_quantity_skew
+  alpha: 0.1
+  quantity_alpha: 0.1
+  feature_skew: none
+  seed: 42
+- scenario: iid
+  feature_skew: moderate
+  seed: 42
+- scenario: label_skew
+  alpha: 0.1
+  feature_skew: moderate
+  seed: 42

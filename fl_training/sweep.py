@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import subprocess
 import sys
@@ -57,13 +58,19 @@ def _latest_run(path: Path, seed: int, protocol_fingerprint: str,
     return max(matches, key=lambda item: item.stat().st_mtime_ns)
 
 
-def _result_row(run_dir: Path, condition: Dict[str, Any], seed: int, mode: str) -> Dict[str, Any]:
+def _result_row(run_dir: Path, condition: Dict[str, Any], seed: int, mode: str,
+                partition_dir_override: Path | None = None) -> Dict[str, Any]:
     summary = json.loads((run_dir / "summary.json").read_text(encoding="utf-8"))
     config = yaml.safe_load((run_dir / "resolved_config.yaml").read_text(encoding="utf-8"))
     if config["training"]["seed"] != seed:
         raise ValueError("Result seed differs from requested sweep seed")
     if summary.get("status") not in {"completed", "completed_with_warnings"}:
         raise ValueError("Cannot collect an incomplete/failed run")
+    expected_mode = "local-only" if mode == "local-client" else mode
+    expected_config_mode = "train" if mode == "fedavg" else expected_mode
+    if (config.get("mode") != expected_config_mode
+            or summary.get("mode", expected_mode) != expected_mode):
+        raise ValueError("Result mode differs from requested mode")
     protocol = config["data"]["protocol_fingerprint"]
     if summary.get("protocol_fingerprint") != protocol:
         raise ValueError("Result protocol differs from resolved config")
@@ -72,59 +79,142 @@ def _result_row(run_dir: Path, condition: Dict[str, Any], seed: int, mode: str) 
         if len(clients) != config["federation"]["num_clients"]:
             raise ValueError("Local-only result is missing client models")
         # Verify the underlying evaluations, not just the aggregate summary.
-        child_rows = [_result_row(run_dir / f"client_{i:02d}", condition, seed, "local-client")
+        child_rows = [_result_row(run_dir / f"client_{i:02d}", condition, seed, "local-client",
+                                  partition_dir_override)
                       for i in range(len(clients))]
+        if [row["client_id"] for row in child_rows] != list(range(len(clients))):
+            raise ValueError("Local-only client identities are incomplete or reordered")
+        for child in child_rows:
+            for field in ("semantic_config_hash", "source_fingerprint", "protocol_fingerprint"):
+                expected = protocol if field == "protocol_fingerprint" else config.get(field)
+                if child.get(field) != expected:
+                    raise ValueError(f"Local-only child differs from parent {field}")
+            if child["budget_max_rounds"] != config["federation"]["max_rounds"]:
+                raise ValueError("Local-only child budget differs from parent")
         accuracy = sum(row["accuracy"] for row in child_rows) / len(child_rows)
         macro_f1 = sum(row["macro_f1"] for row in child_rows) / len(child_rows)
         duration = sum(row["duration_seconds"] for row in child_rows)
         processed = sum(row["processed_examples"] for row in child_rows)
         steps = sum(row["optimizer_steps"] for row in child_rows)
         skipped = sum(row["skipped_optimizer_steps"] for row in child_rows)
-        payload_bytes = 0
+        payload_bytes = None
+        local_accuracy_values = pd.Series([row["accuracy"] for row in child_rows], dtype=float)
+        local_f1_values = pd.Series([row["macro_f1"] for row in child_rows], dtype=float)
+        best_val_accuracy = None
     else:
         metrics = json.loads((run_dir / "test_metrics.json").read_text(encoding="utf-8"))
-        if metrics.get("protocol_fingerprint") != protocol or metrics.get("checkpoint") != "best.pt":
+        if (metrics.get("protocol_fingerprint") != protocol or metrics.get("checkpoint") != "best.pt"
+                or metrics.get("run_id") != config.get("run_id")):
             raise ValueError(f"Evaluate best.pt with the matching protocol before collecting {run_dir}")
         from .checkpoint import load_checkpoint, model_state_sha256
-        if metrics.get("model_state_sha256") != model_state_sha256(load_checkpoint(run_dir / "best.pt")["model_state_dict"]):
+        best_payload = load_checkpoint(run_dir / "best.pt")
+        checkpoint_config = best_payload.get("config", {})
+        if (checkpoint_config.get("mode") != config.get("mode")
+                or checkpoint_config.get("training", {}).get("seed") != seed
+                or checkpoint_config.get("semantic_config_hash") != config.get("semantic_config_hash")
+                or checkpoint_config.get("client_id") != config.get("client_id")):
+            raise ValueError("Best checkpoint config identity differs from resolved config")
+        if metrics.get("model_state_sha256") != model_state_sha256(best_payload["model_state_dict"]):
             raise ValueError("Evaluation model weights differ from best checkpoint")
+        identity_payload = {key: value for key, value in metrics.items() if key != "evaluation_id"}
+        expected_evaluation_id = __import__("hashlib").sha256(
+            json.dumps(identity_payload, sort_keys=True, allow_nan=False).encode()
+        ).hexdigest()[:24]
+        if metrics.get("evaluation_id") != expected_evaluation_id:
+            raise ValueError("Evaluation identity is missing or does not match its metrics")
         history = pd.read_csv(run_dir / "history.csv")
+        best_val_accuracy = best_payload.get("metrics", {}).get("accuracy")
+        if best_val_accuracy is None and "val_accuracy" in history and "round" in history:
+            selected = history[history["round"] == best_payload.get("best_round")]
+            if len(selected) == 1:
+                best_val_accuracy = float(selected.iloc[0]["val_accuracy"])
+        if best_val_accuracy is not None and not (pd.notna(best_val_accuracy) and 0 <= best_val_accuracy <= 1):
+            raise ValueError("Invalid best validation accuracy")
         accuracy, macro_f1 = metrics["accuracy"], metrics["macro_f1"]
         duration = float(history["duration_seconds"].sum())
         processed = int(history["processed_examples"].sum())
         steps = int(history["optimizer_steps"].sum())
         skipped = int(history["skipped_optimizer_steps"].sum()) if "skipped_optimizer_steps" in history else 0
         # Round history is committed with last.pt and includes resumed rounds.
-        payload_bytes = int(history["payload_bytes"].sum()) if "payload_bytes" in history else 0
+        payload_bytes = int(history["payload_bytes"].sum()) if mode == "fedavg" and "payload_bytes" in history else None
     if not all(pd.notna(value) and 0 <= value <= 1 for value in (accuracy, macro_f1)):
         raise ValueError("Invalid accuracy/macro-F1 in sweep result")
+    partition_dir = partition_dir_override or Path(config.get("data", {}).get("partition_dir", ""))
+    diagnostics = {}
+    metadata_path = partition_dir / "partition_config.json"
+    matrix_path = partition_dir / "client_class_matrix.csv"
+    if metadata_path.exists():
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        diagnostics = {
+            "partition_summary_metrics": metadata.get("summary_metrics"),
+            "partition_repair_diagnostics": metadata.get("split_diagnostics"),
+            "leaf_map_coverage": metadata.get("leaf_group_audit"),
+        }
+    if matrix_path.exists():
+        matrix = pd.read_csv(matrix_path, index_col=0)
+        diagnostics["client_class_histogram"] = matrix.astype(int).values.tolist()
+    analysis_config = {key: config.get(key) for key in
+                       ("model", "training", "federation", "early_stopping", "lr_scheduler")}
+    analysis_config["training"] = {key: value for key, value in config.get("training", {}).items() if key != "seed"}
     return {
         "condition": _condition_name(condition), "scenario": condition["scenario"],
         "alpha": condition.get("alpha"), "quantity_alpha": condition.get("quantity_alpha"),
         "feature_skew": condition.get("feature_skew", "none"), "seed": seed,
         "mode": mode, "accuracy": accuracy, "macro_f1": macro_f1,
+        "best_val_accuracy": best_val_accuracy,
+        "analysis_config_hash": hashlib.sha256(json.dumps(analysis_config, sort_keys=True).encode()).hexdigest(),
+        "client_id": config.get("client_id"),
         "best_round": summary.get("best_round"), "completed_rounds": summary.get("completed_rounds"),
         "stop_reason": summary.get("stop_reason"), "duration_seconds": duration,
         "processed_examples": processed, "optimizer_steps": steps,
         "skipped_optimizer_steps": skipped,
-        "estimated_payload_bytes": payload_bytes, "payload_scope": "model tensor upload+download; excludes protocol overhead",
-        "local_accuracy_std": summary.get("test_accuracy_std"),
-        "local_accuracy_min": summary.get("test_accuracy_min"),
-        "local_accuracy_max": summary.get("test_accuracy_max"),
+        "payload_bytes": payload_bytes,
+        "payload_label": "measured_tensor_bytes" if mode == "fedavg" else "not_applicable",
+        "payload_scope": ("serialized model tensor upload+download by completed FedAvg rounds; excludes protocol overhead"
+                          if mode == "fedavg" else "in-process baseline; no federated model payload"),
+        "local_accuracy_std": float(local_accuracy_values.std(ddof=0)) if mode == "local-only" else None,
+        "local_accuracy_min": float(local_accuracy_values.min()) if mode == "local-only" else None,
+        "local_accuracy_max": float(local_accuracy_values.max()) if mode == "local-only" else None,
+        "local_macro_f1_std": float(local_f1_values.std(ddof=0)) if mode == "local-only" else None,
+        "local_macro_f1_min": float(local_f1_values.min()) if mode == "local-only" else None,
+        "local_macro_f1_max": float(local_f1_values.max()) if mode == "local-only" else None,
         "run_dir": str(run_dir), "protocol_fingerprint": protocol,
+        "source_fingerprint": config.get("source_fingerprint"),
         "semantic_config_hash": config.get("semantic_config_hash"),
         "budget_max_rounds": config["federation"]["max_rounds"],
+        **diagnostics,
     }
 
 
 def _write_comparison(rows: List[Dict[str, Any]], output_dir: Path) -> None:
-    frame = pd.DataFrame(rows)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    managed_patterns = (
+        "comparison.csv", "comparison.json", "comparison.md", "comparison_coverage.json",
+        "comparison_seed_statistics.csv", "comparison_accuracy.*", "comparison_macro_f1.*",
+        "accuracy_vs_*", "macro_f1_vs_*",
+    )
+    for pattern in managed_patterns:
+        for path in output_dir.glob(pattern):
+            path.unlink()
+    empty_columns = [
+        "condition", "scenario", "alpha", "quantity_alpha", "feature_skew", "seed", "mode",
+        "accuracy", "macro_f1", "client_id", "best_round", "completed_rounds", "stop_reason",
+        "duration_seconds", "processed_examples", "optimizer_steps", "skipped_optimizer_steps",
+        "payload_bytes", "payload_label", "payload_scope", "local_accuracy_std",
+        "local_accuracy_min", "local_accuracy_max", "local_macro_f1_std", "local_macro_f1_min",
+        "local_macro_f1_max", "run_dir", "protocol_fingerprint", "source_fingerprint",
+        "semantic_config_hash", "budget_max_rounds", "partition_summary_metrics",
+        "partition_repair_diagnostics", "leaf_map_coverage", "client_class_histogram",
+        "centralized_minus_accuracy_pp", "centralized_minus_macro_f1_pp",
+        "fedavg_minus_local_accuracy_pp", "fedavg_minus_local_macro_f1_pp",
+    ]
+    frame = pd.DataFrame(rows) if rows else pd.DataFrame(columns=empty_columns)
     if not frame.empty:
         if frame.duplicated(["condition", "seed", "mode"]).any():
             raise ValueError("Duplicate condition/seed/mode results")
         if (frame.groupby(["condition", "seed"])["protocol_fingerprint"].nunique() > 1).any():
             raise ValueError("Baseline/FedAvg data protocols differ; accuracy gap is invalid")
-        for field in ("semantic_config_hash", "budget_max_rounds"):
+        for field in ("semantic_config_hash", "source_fingerprint", "budget_max_rounds"):
             if (frame.groupby(["condition", "seed"])[field].nunique() > 1).any():
                 raise ValueError(f"Baseline/FedAvg {field} differs; controlled comparison is invalid")
         central = frame[frame["mode"] == "centralized"].set_index(["condition", "seed"])["accuracy"]
@@ -134,19 +224,50 @@ def _write_comparison(rows: List[Dict[str, Any]], output_dir: Path) -> None:
             else None
             for row in frame.itertuples()
         ]
+    if not frame.empty:
+        for metric in ("accuracy", "macro_f1"):
+            central_values = frame[frame["mode"] == "centralized"].set_index(["condition", "seed"])[metric]
+            local_values = frame[frame["mode"] == "local-only"].set_index(["condition", "seed"])[metric]
+            frame[f"centralized_minus_{metric}_pp"] = [
+                100 * (central_values.get((row.condition, row.seed), float("nan")) - getattr(row, metric))
+                if row.mode == "fedavg" else None for row in frame.itertuples()]
+            frame[f"fedavg_minus_local_{metric}_pp"] = [
+                100 * (getattr(row, metric) - local_values.get((row.condition, row.seed), float("nan")))
+                if row.mode == "fedavg" else None for row in frame.itertuples()]
+        coverage = frame.groupby(["condition", "seed"])["mode"].agg(
+            lambda values: {"centralized", "fedavg", "local-only"}.issubset(set(values)))
+        (output_dir / "comparison_coverage.json").write_text(json.dumps([
+            {"condition": key[0], "seed": int(key[1]), "three_modes_complete": bool(value)}
+            for key, value in coverage.items()], indent=2), encoding="utf-8")
+    seed_count = int(frame["seed"].nunique()) if not frame.empty else 0
+    lines = ["# Training comparison", "", f"Observed training seeds: {seed_count}; incomplete results are not full scientific acceptance.",
+             "Accuracy/F1 below are percentages; gaps use percentage points.",
+             "Local-only is the mean of client models on global test, not site fairness.", ""]
+    if frame.empty:
+        lines.append("No valid completed main jobs were collected. Missing or invalid jobs are listed in collection_status.json; values are not zero-filled.")
+    else:
+        lines += ["| Condition | Seed | Mode | Accuracy (%) | Macro-F1 (%) | C−F Acc (pp) | F−L Acc (pp) | Time (h) |",
+                  "|---|---:|---|---:|---:|---:|---:|---:|"]
+        def gap(value):
+            return "" if pd.isna(value) else f"{value:.4f}"
+        lines += [f"| {r.condition} | {r.seed} | {r.mode} | {r.accuracy*100:.4f} | {r.macro_f1*100:.4f} | {gap(r.centralized_minus_accuracy_pp)} | {gap(r.fedavg_minus_local_accuracy_pp)} | {r.duration_seconds/3600:.3f} |"
+                  for r in frame.itertuples()]
+    (output_dir / "comparison.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     frame.to_csv(output_dir / "comparison.csv", index=False)
     frame.to_json(output_dir / "comparison.json", orient="records", indent=2)
     if frame.empty or frame["accuracy"].dropna().empty:
         return
-    fig, axis = plt.subplots(figsize=(12, 6))
-    pivot = frame.pivot_table(index="condition", columns="mode", values="accuracy", aggfunc="mean") * 100
-    pivot.plot(kind="bar", ax=axis)
-    axis.set(title="Stage-2 test accuracy by controlled condition", ylabel="Accuracy (%)", xlabel="Condition")
-    axis.tick_params(axis="x", rotation=35)
-    fig.tight_layout()
-    fig.savefig(output_dir / "comparison_accuracy.png", dpi=180, bbox_inches="tight")
-    fig.savefig(output_dir / "comparison_accuracy.pdf", bbox_inches="tight")
-    plt.close(fig)
+    for metric, label in (("accuracy", "Accuracy"), ("macro_f1", "Macro-F1")):
+        fig, axis = plt.subplots(figsize=(12, 6))
+        pivot = frame.pivot_table(index="condition", columns="mode", values=metric, aggfunc="mean") * 100
+        pivot.plot(kind="bar", ax=axis)
+        axis.set(title=f"Stage-2 test {label} by controlled condition",
+                 ylabel=f"{label} (%)", xlabel="Condition")
+        axis.tick_params(axis="x", rotation=35)
+        fig.tight_layout()
+        fig.savefig(output_dir / f"comparison_{metric}.png", dpi=180, bbox_inches="tight")
+        fig.savefig(output_dir / f"comparison_{metric}.pdf", bbox_inches="tight")
+        plt.close(fig)
     statistics = frame.groupby(["condition", "mode"])[["accuracy", "macro_f1"]].agg(["mean", "std", "count"])
     statistics.to_csv(output_dir / "comparison_seed_statistics.csv")
     for metric in ("accuracy", "macro_f1"):
@@ -176,10 +297,16 @@ def run_sweep(sweep_config: str | Path, execute: bool = False, collect: bool = F
     base_config_path = (package_root / spec["base_config"]).resolve()
     base = yaml.safe_load(base_config_path.read_text(encoding="utf-8"))
     resolved_base = load_training_config(base_config_path, base_dir=package_root)
+    protocol_audit = None
+    if spec.get("protocol") is not None:
+        from .stage2_protocol import validate_stage2_sweep
+        protocol_audit = validate_stage2_sweep(spec, resolved_base, package_root)
     sweep_id = spec.get("sweep_id") or time.strftime("%Y%m%d_%H%M%S", time.gmtime())
     output_dir = (package_root / spec.get("output_root", "runs/sweeps") / sweep_id).resolve()
     config_dir = output_dir / "configs"
     config_dir.mkdir(parents=True, exist_ok=True)
+    if protocol_audit is not None:
+        (output_dir / "protocol_audit.json").write_text(json.dumps(protocol_audit, indent=2), encoding="utf-8")
     modes = list(spec.get("modes", ["centralized", "local-only", "fedavg"]))
     seeds = [int(seed) for seed in spec.get("seeds", [42])]
     if not modes or len(set(modes)) != len(modes) or set(modes) - {"centralized", "local-only", "fedavg"}:

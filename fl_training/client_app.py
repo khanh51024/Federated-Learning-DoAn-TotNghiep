@@ -14,6 +14,7 @@ from flwr.app import Array, ArrayRecord, ConfigRecord, MetricRecord, RecordDict
 from flwr.clientapp import ClientApp
 from flwr.common import Context, Message
 
+from .budget import check_deadline
 from .data import build_training_loader, get_client_manifest_path, get_client_sample_count
 from .model import create_mobilenet_v3_small, set_model_state_dict
 from .progress import EventLogger
@@ -21,6 +22,20 @@ from .reproducibility import derive_seed, seed_everything
 from .task import train_local
 
 app = ClientApp()
+
+
+def _apply_deadline_config(config: Any) -> None:
+    """Install runner deadlines passed explicitly in the Flower train message."""
+    for field, environment_name in (
+        ("soft_deadline_unix", "FL_TRAINING_SOFT_DEADLINE_UNIX"),
+        ("hard_deadline_unix", "FL_TRAINING_HARD_DEADLINE_UNIX"),
+    ):
+        value = config.get(field, "")
+        if value is None or str(value).strip() == "":
+            os.environ.pop(environment_name, None)
+        else:
+            os.environ[environment_name] = str(value)
+    check_deadline()
 
 
 @app.query()
@@ -51,6 +66,7 @@ def train(msg: Message, context: Context) -> Message:
     4. Return updated parameters and metrics weighted by n_k.
     """
     cfg_record = msg.content["config"]
+    _apply_deadline_config(cfg_record)
 
     round_num = int(cfg_record.get("round", 1))
     local_epochs = int(cfg_record.get("local_epochs", 1))

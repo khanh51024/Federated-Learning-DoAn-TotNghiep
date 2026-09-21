@@ -1,0 +1,8 @@
+{
+  "dataset_root": "D:\\university\\do-an-tot-nghiep\\train-gd-2\\PlantVillage-Dataset\\raw\\color",
+  "image_count": 54305,
+  "decoded_ok": 54305,
+  "failures": [],
+  "relative_paths_sha256": "0f89c1a975070e61b9f5001c2fa04af420d3b608dde09fd5a2c4cc0cd33cb2df",
+  "seconds": 785.28
+}

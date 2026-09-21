@@ -2,6 +2,18 @@
 
 Tài liệu hướng dẫn triển khai, vận hành và nghiệm thu hệ thống huấn luyện Federated Learning (FedAvg) trên bộ dữ liệu PlantVillage (38 lớp cây–bệnh) bằng Flower Message API và PyTorch.
 
+**Để so sánh với bộ train GĐ1**, dùng `python -m stage2_matched` và notebook
+`kaggle_stage2_matched_v5.ipynb`. Xem [hướng dẫn matched v5](docs/MATCHED_STAGE2_V5.md).
+Luồng này cố định K=5/AdamW/10 vòng theo GĐ1 và phân bổ Dirichlet trên split sạch.
+
+Luồng GĐ2 v4 độc lập dùng `configs/stage2_fedavg_main_v4.yaml` và notebook
+`kaggle_stage2_fedavg_v4.ipynb`. FedAvg là phương pháp chính; Centralized và
+Local-only là đối chứng. Xem phần đầu README để lập kế hoạch 27 lượt FedAvg,
+chạy đối chứng riêng và tổng hợp mà không chạy lại FedAvg.
+Các lệnh có `train_fedavg.yaml` bên dưới là cấu hình đơn lẻ; sweep chính dùng
+`train_fedavg_v4.yaml` với ngân sách chung. Kết quả cũ khác protocol chỉ dùng
+tham chiếu lịch sử, không tính trực tiếp chênh lệch GĐ1–GĐ2.
+
 ---
 
 ## 1. Môi trường và Cài đặt
@@ -11,7 +23,7 @@ Tài liệu hướng dẫn triển khai, vận hành và nghiệm thu hệ thố
 - **Python**: Python 3.11 (được khuyến nghị và đã được khóa trong `requirements-train.lock`).
 - **Phần cứng**:
   - CPU: Tối thiểu 2 core logic (máy hiện tại có 12 logical CPUs).
-  - GPU: Hỗ trợ NVIDIA GPU (CUDA) hoặc CPU fallback tự động. Đã kiểm chứng trên **NVIDIA GeForce RTX 2050 4GB**.
+  - GPU: Hỗ trợ NVIDIA GPU (CUDA) hoặc CPU fallback tự động. Phiên kiểm tra v4 local ngày 15–16/09 chỉ chạy CPU; cần kiểm chứng GPU/AMP trên Kaggle trước lượt chính.
 - **PyTorch**: 2.6.0+cu124.
 - **Flower & Ray**: Flower 1.36.0, Ray 2.55.1.
 
@@ -49,14 +61,14 @@ flowchart TD
 
 ### Bước 1: Chuẩn bị dữ liệu và phân hoạch (`prepare-data`)
 Lệnh này phân tách tập dữ liệu thành:
-- **Test set** (20%, 10.917 ảnh): Giữ nguyên 100% so với `partitions_v3` (SHA-256: `340198e0b2f8945a1f2730b211aacd9ddcbd5b9c46404249771c69a77637e79e`).
-- **Global Validation set** (10%, 5.501 ảnh): Dùng chung giữa mọi kịch bản, đầy đủ 38/38 lớp bệnh.
-- **Train pool** (37.887 ảnh): Chia theo non-IID Dirichlet cho 10 cơ sở (client).
+- **Test set v4** (10.954 ảnh): SHA-256 đường dẫn `5be56bdc8f456531387d7b7661958772747044180febcf5a9ffc72201682d8b7`.
+- **Global Validation set v4** (5.499 ảnh): Dùng chung giữa mọi kịch bản, đầy đủ 38/38 lớp bệnh.
+- **Train pool v4** (37.852 ảnh): Chia theo non-IID Dirichlet cho 10 cơ sở (client).
 - Sinh cache SHA-256 nội dung toàn bộ 54.305 ảnh nguồn (`data/source_content_cache.json`).
-- Ghi danh mục vào `data/partitions_train_v1/index.json`.
+- Ghi danh mục vào `data/partitions_train_v4_content_aware/index.json`; giữ nguyên nhóm lá đã biết và ảnh trùng byte.
 
 ```bash
-python -m fl_training.cli prepare-data --config configs/partition_training.yaml
+python -m fl_training.cli prepare-data --config configs/partition_content_aware_v4.yaml --strict
 ```
 
 ### Bước 2: Kiểm định trước huấn luyện (`preflight`)

@@ -1,0 +1,72 @@
+# Fixed split 42; three independent TRAINING seeds. Calibration must approve the entire matrix.
+schema_version: 1
+research_protocol: stage2_full_v1
+sweep_id: stage2_research_3seeds_v1
+base_config: configs/stage2_research_base.yaml
+output_root: runs/stage2_research_3seeds_v1
+seeds:
+- 42
+- 123
+- 2026
+conditions:
+- scenario: iid
+  feature_skew: none
+  split_seed: 42
+- scenario: label_skew
+  alpha: 100.0
+  feature_skew: none
+  split_seed: 42
+- scenario: label_skew
+  alpha: 10.0
+  feature_skew: none
+  split_seed: 42
+- scenario: label_skew
+  alpha: 1.0
+  feature_skew: none
+  split_seed: 42
+- scenario: label_skew
+  alpha: 0.5
+  feature_skew: none
+  split_seed: 42
+- scenario: label_skew
+  alpha: 0.1
+  feature_skew: none
+  split_seed: 42
+- scenario: label_skew
+  alpha: 5.0
+  feature_skew: none
+  split_seed: 42
+- scenario: label_skew
+  alpha: 0.05
+  feature_skew: none
+  split_seed: 42
+- scenario: quantity_skew
+  quantity_alpha: 1.0
+  feature_skew: none
+  split_seed: 42
+- scenario: quantity_skew
+  quantity_alpha: 0.1
+  feature_skew: none
+  split_seed: 42
+- scenario: label_quantity_skew
+  alpha: 0.1
+  quantity_alpha: 0.1
+  feature_skew: none
+  split_seed: 42
+- scenario: iid
+  feature_skew: moderate
+  split_seed: 42
+- scenario: label_skew
+  alpha: 0.1
+  feature_skew: moderate
+  split_seed: 42
+budget:
+  total_hours: 30
+  reserve_hours: 3
+  already_used_hours: 0
+  session_hours: 8
+  session_reserve_minutes: 15
+  calibration_rounds: 1
+  min_rounds: 10
+  max_rounds: 20
+  safety_factor: 1.5

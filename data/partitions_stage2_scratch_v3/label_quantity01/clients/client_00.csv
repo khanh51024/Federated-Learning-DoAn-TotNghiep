@@ -1,0 +1,11 @@
+relative_path,label,class_name,client_id,split,group_id,leaf_group_id,scenario,alpha,quantity_alpha,feature_skew,seed,domain_id
+Blueberry___healthy/0b7a422b-f286-42ba-8896-68352bf7acc6___RS_HL 5022.JPG,4,Blueberry___healthy,0,train,partition::00004425,Blueberry___healthy:::126,label_quantity_skew,0.1,0.1,none,42,-1
+Blueberry___healthy/163fa1ca-f6b9-4ce4-8218-771750b3043f___RS_HL 5017.JPG,4,Blueberry___healthy,0,train,partition::00004425,Blueberry___healthy:::126,label_quantity_skew,0.1,0.1,none,42,-1
+Blueberry___healthy/3b4ab949-7b1d-4127-a1d3-8f125989f495___RS_HL 5019.JPG,4,Blueberry___healthy,0,train,partition::00004425,Blueberry___healthy:::126,label_quantity_skew,0.1,0.1,none,42,-1
+Blueberry___healthy/4a1c874d-bde1-4f0d-b06a-16ea76246a9d___RS_HL 5023.JPG,4,Blueberry___healthy,0,train,partition::00004425,Blueberry___healthy:::126,label_quantity_skew,0.1,0.1,none,42,-1
+Blueberry___healthy/77999da2-2f10-4334-bbed-b406840d4c30___RS_HL 5020.JPG,4,Blueberry___healthy,0,train,partition::00004425,Blueberry___healthy:::126,label_quantity_skew,0.1,0.1,none,42,-1
+Blueberry___healthy/8ff62297-2464-4612-b5bd-9db249a21f1a___RS_HL 5021.JPG,4,Blueberry___healthy,0,train,partition::00004425,Blueberry___healthy:::126,label_quantity_skew,0.1,0.1,none,42,-1
+Blueberry___healthy/92cf5490-52b8-4159-905c-860133fdb463___RS_HL 5014.JPG,4,Blueberry___healthy,0,train,partition::00004425,Blueberry___healthy:::126,label_quantity_skew,0.1,0.1,none,42,-1
+Blueberry___healthy/c8b41c17-a557-4392-b123-49edd06cfe28___RS_HL 5016.JPG,4,Blueberry___healthy,0,train,partition::00004425,Blueberry___healthy:::126,label_quantity_skew,0.1,0.1,none,42,-1
+Blueberry___healthy/ce9e5792-2181-4b1c-8eda-a238e1eb731f___RS_HL 5018.JPG,4,Blueberry___healthy,0,train,partition::00004425,Blueberry___healthy:::126,label_quantity_skew,0.1,0.1,none,42,-1
+Blueberry___healthy/da3219a3-b0ec-43fb-ad2e-eedd7d11e212___RS_HL 5015.JPG,4,Blueberry___healthy,0,train,partition::00004425,Blueberry___healthy:::126,label_quantity_skew,0.1,0.1,none,42,-1

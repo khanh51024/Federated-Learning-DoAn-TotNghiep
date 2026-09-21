@@ -1,0 +1,41 @@
+# GĐ2 v4: split chống rò rỉ cả nhóm lá và ảnh trùng byte tuyệt đối.
+# Giữ nguyên các manifest cũ; output này là protocol mới, không so sánh trực
+# tiếp với số liệu GĐ1 nếu chưa chạy lại baseline trên cùng split.
+dataset:
+  path: "../PlantVillage-Dataset/raw/color"
+  leaf_map_path: "../PlantVillage-Dataset/leaf-map.json"
+  group_aware: true
+  content_aware: true
+  test_ratio: 0.20
+  val_ratio: 0.10
+
+partition:
+  num_clients: 10
+  scenario: label_skew
+  alpha: 0.1
+  quantity_alpha: 0.1
+  feature_skew: none
+  seed: 42
+  min_samples_per_client: 10
+  max_retries: 50
+  rare_class_threshold: 500
+
+client_val_ratio: 0.0
+
+output:
+  base_dir: "data/partitions_train_v4_content_aware"
+  index_path: "data/partitions_train_v4_content_aware/index.json"
+  source_cache_path: "data/source_content_cache.json"
+  # null means this protocol intentionally defines a new global test split.
+  reference_test_hash: null
+
+target_scenarios:
+  - {scenario: iid, seed: 42, feature_skew: none}
+  - {scenario: label_skew, seed: 42, alpha: 0.1, feature_skew: none}
+  - {scenario: label_skew, seed: 42, alpha: 1.0, feature_skew: none}
+  - {scenario: label_skew, seed: 42, alpha: 100.0, feature_skew: none}
+  - {scenario: quantity_skew, seed: 42, quantity_alpha: 0.1, feature_skew: none}
+  - {scenario: quantity_skew, seed: 42, quantity_alpha: 1.0, feature_skew: none}
+  - {scenario: label_quantity_skew, seed: 42, alpha: 0.1, quantity_alpha: 0.1, feature_skew: none}
+  - {scenario: iid, seed: 42, feature_skew: moderate}
+  - {scenario: label_skew, seed: 42, alpha: 0.1, feature_skew: moderate}

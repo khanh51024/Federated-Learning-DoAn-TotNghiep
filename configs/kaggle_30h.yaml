@@ -1,0 +1,22 @@
+schema_version: 1
+sweep_id: kaggle_stage2_30h_seed42
+base_config: configs/kaggle_30h_base.yaml
+output_root: runs/kaggle_stage2_30h
+seeds: [42]
+conditions:
+  - {scenario: iid, feature_skew: none, split_seed: 42}
+  - {scenario: label_skew, alpha: 100.0, feature_skew: none, split_seed: 42}
+  - {scenario: label_skew, alpha: 1.0, feature_skew: none, split_seed: 42}
+  - {scenario: label_skew, alpha: 0.1, feature_skew: none, split_seed: 42}
+  - {scenario: quantity_skew, quantity_alpha: 0.1, feature_skew: none, split_seed: 42}
+  - {scenario: iid, feature_skew: moderate, split_seed: 42}
+budget:
+  total_hours: 30
+  reserve_hours: 3
+  already_used_hours: 0
+  session_hours: 8
+  session_reserve_minutes: 15
+  calibration_rounds: 1
+  min_rounds: 10
+  max_rounds: 20
+  safety_factor: 1.5

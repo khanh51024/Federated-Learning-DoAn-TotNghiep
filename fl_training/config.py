@@ -158,6 +158,7 @@ class TrainingConfig:
     output: ResolvedOutputConfig
     checkpoint: ResolvedCheckpointConfig
     diagnostics: ResolvedDiagnosticsConfig
+    source_fingerprint: str
     semantic_config_hash: str
     run_id: str
     mode: str = "train"  # "train" or "smoke"
@@ -169,6 +170,7 @@ class TrainingConfig:
             "schema_version": self.schema_version,
             "mode": self.mode,
             "run_id": self.run_id,
+            "source_fingerprint": self.source_fingerprint,
             "semantic_config_hash": self.semantic_config_hash,
             "data": {
                 "dataset_root": str(self.data.dataset_root),
@@ -212,8 +214,21 @@ def _check_keys(d: Dict[str, Any], allowed: set, section_name: str) -> None:
         raise ValueError(f"Unknown keys in section '{section_name}': {sorted(unknown)}")
 
 
+def compute_source_fingerprint(package_root: Path | None = None) -> str:
+    """Hash executable Python source used by training and evaluation."""
+    root = (package_root or Path(__file__).resolve().parents[1]).resolve()
+    digest = hashlib.sha256()
+    for folder_name in ("fl_training", "src"):
+        folder = root / folder_name
+        for path in sorted(folder.rglob("*.py")):
+            digest.update(path.relative_to(root).as_posix().encode("utf-8"))
+            digest.update(path.read_bytes().replace(b"\r\n", b"\n"))
+    return digest.hexdigest()
+
+
 def compute_semantic_run_hash(
-    raw_dict: Dict[str, Any], partition_hash: str, protocol_fingerprint: str = ""
+    raw_dict: Dict[str, Any], partition_hash: str, protocol_fingerprint: str = "",
+    source_fingerprint: str = "",
 ) -> str:
     """Compute semantic hash of parameters affecting training outcome."""
     tr = raw_dict["training"]
@@ -226,6 +241,7 @@ def compute_semantic_run_hash(
     canonical = {
         "partition_hash": partition_hash,
         "protocol_fingerprint": protocol_fingerprint,
+        "source_fingerprint": source_fingerprint,
         "model_name": md["name"],
         "num_classes": md["num_classes"],
         "weights": md["weights"],
@@ -260,6 +276,7 @@ def compute_protocol_fingerprint(partition_dir: Path) -> str:
     paths = [
         partition_dir / "partition_config.json",
         partition_dir / "fedavg_meta.json",
+        partition_dir / "image_content.json",
         partition_dir / "centralized_train.csv",
         partition_dir / "global_val.csv",
         partition_dir / "global_test.csv",
@@ -553,7 +570,10 @@ def load_training_config(
         raise ValueError(f"Partition class mapping has {len(class_names)} classes, expected {num_classes}")
 
     # Semantic run hash and run id
-    semantic_hash = compute_semantic_run_hash(raw, partition_hash, protocol_fingerprint)
+    source_fingerprint = compute_source_fingerprint(pkg_root)
+    semantic_hash = compute_semantic_run_hash(
+        raw, partition_hash, protocol_fingerprint, source_fingerprint,
+    )
 
     timestamp = time.strftime("%Y%m%d_%H%M%S", time.gmtime())
     if run_id_override:
@@ -674,6 +694,7 @@ def load_training_config(
         output=resolved_output,
         checkpoint=resolved_checkpoint,
         diagnostics=diag_values,
+        source_fingerprint=source_fingerprint,
         semantic_config_hash=semantic_hash,
         run_id=run_id,
         mode=mode,

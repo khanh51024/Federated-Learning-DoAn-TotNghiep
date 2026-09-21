@@ -15,6 +15,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from .model import check_parameters_finite, get_model_state_dict_cpu
+from .budget import check_deadline
 
 
 def train_local(
@@ -62,6 +63,7 @@ def train_local(
         epoch_skipped_steps = 0
         epoch_t0 = time.time()
         for batch_idx, (images, labels) in enumerate(loader):
+            check_deadline()
             images = images.to(device, non_blocking=True)
             labels = labels.to(device, non_blocking=True)
             batch_size = images.size(0)
@@ -178,6 +180,7 @@ def evaluate_model(
 
     with torch.inference_mode():
         for images, labels in loader:
+            check_deadline()
             images = images.to(device, non_blocking=True)
             labels = labels.to(device, non_blocking=True)
             batch_size = images.size(0)

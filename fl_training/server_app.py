@@ -24,6 +24,8 @@ from .checkpoint import (
     save_round_checkpoint,
     verify_checkpoint_compatibility,
 )
+from .budget import BudgetExhausted, check_deadline
+from .budget_state import atomic_json
 from .config import TrainingConfig, load_training_config
 from .control import EarlyStoppingController, LRSchedulerController
 from .data import build_evaluation_loader, get_client_sample_count
@@ -253,6 +255,7 @@ def _run(grid: Grid, context: Context, cfg: TrainingConfig, run_dir: Path, logge
         current_lr = float(resume_payload["next_lr"])
         best_round = int(resume_payload["best_round"])
         best_loss = float(resume_payload["best_loss"])
+        best_metrics = resume_payload.get("best_metrics", {})
         es.load_state_dict(resume_payload["early_stopping_state"])
         if es.stopped:
             es.stopped, es.stop_reason, es.bad_rounds = False, None, 0
@@ -278,6 +281,7 @@ def _run(grid: Grid, context: Context, cfg: TrainingConfig, run_dir: Path, logge
     if start_round == 1:
         logger.log_phase(0, "validation")
         initial = evaluate_model(model, val_loader, cfg.runtime.server_device, 38)
+        best_metrics = initial
         best_loss, best_round = float(initial["loss"]), 0
         best_model_state = get_model_state_dict_cpu(model)
         es.init_round_0(best_loss)
@@ -302,6 +306,7 @@ def _run(grid: Grid, context: Context, cfg: TrainingConfig, run_dir: Path, logge
     }
 
     for round_num in range(start_round, cfg.federation.max_rounds + 1):
+        check_deadline()
         round_t0 = time.time()
         logger.log_phase(round_num, "client train")
         current_state = get_model_state_dict_cpu(model)
@@ -321,12 +326,15 @@ def _run(grid: Grid, context: Context, cfg: TrainingConfig, run_dir: Path, logge
                 "dataset_root": str(cfg.data.dataset_root), "client_id": client_id,
                 "run_dir": str(run_dir), "run_id": cfg.run_id,
                 "attempt_id": int(os.environ.get("FL_TRAINING_ATTEMPT_ID", "1")),
+                "soft_deadline_unix": os.environ.get("FL_TRAINING_SOFT_DEADLINE_UNIX", ""),
+                "hard_deadline_unix": os.environ.get("FL_TRAINING_HARD_DEADLINE_UNIX", ""),
             }
             messages.append(Message(
                 content=RecordDict({"arrays": arrays, "config": ConfigRecord(train_cfg)}),
                 message_type="train", dst_node_id=mapping[client_id], group_id=str(round_num),
             ))
         replies = list(grid.send_and_receive(messages, timeout=cfg.federation.timeout_seconds))
+        check_deadline()
         parsed = _parse_and_validate_replies(
             replies, selected_node_to_client, expected_counts, round_num, cfg.training.local_epochs,
             cfg.training.batch_size,
@@ -370,6 +378,7 @@ def _run(grid: Grid, context: Context, cfg: TrainingConfig, run_dir: Path, logge
         next_lr = ls.step(round_num, val_loss)
         if is_best:
             best_model_state, best_round, best_loss = get_model_state_dict_cpu(model), round_num, val_loss
+            best_metrics = val
 
         record = {
             "round": round_num, "train_loss": train_metrics["train-loss"],
@@ -395,6 +404,7 @@ def _run(grid: Grid, context: Context, cfg: TrainingConfig, run_dir: Path, logge
             run_dir, round_num, new_state, best_model_state, best_round, best_loss,
             next_lr, es.state_dict(), ls.state_dict(), history, cfg.to_dict(),
             is_best=is_best, extra_metrics=val,
+            best_metrics=best_metrics,
             checkpoint_every_n_rounds=cfg.checkpoint.every_n_rounds,
             keep_last_n=cfg.checkpoint.keep_last_n, parent_run_id=parent_run_id,
             attempt_id=attempt_id,
@@ -421,7 +431,10 @@ def _run(grid: Grid, context: Context, cfg: TrainingConfig, run_dir: Path, logge
 
     save_inference_model(run_dir, best_model_state, cfg.to_dict(), best_round, best_loss)
     summary = {
-        "schema_version": 2, "status": "completed", "run_id": cfg.run_id,
+        "schema_version": 2,
+        "status": "completed" if cfg.output.evaluate_test_after_train else "calibration_completed",
+        "artifact_scope": "main_evaluated" if cfg.output.evaluate_test_after_train else "calibration_no_test",
+        "run_id": cfg.run_id,
         "parent_run_id": parent_run_id, "completed_rounds": len(history),
         "last_round": int(history[-1]["round"]) if history else start_round - 1,
         "best_round": best_round, "best_val_loss": best_loss,
@@ -438,8 +451,7 @@ def _run(grid: Grid, context: Context, cfg: TrainingConfig, run_dir: Path, logge
         },
         "scientific_stage2_complete": False,
     }
-    with open(run_dir / "summary.json", "w", encoding="utf-8") as file:
-        json.dump(summary, file, indent=2)
+    atomic_json(run_dir / "summary.json", summary)
 
 
 @app.main()
@@ -465,10 +477,11 @@ def main(grid: Grid, context: Context) -> None:
         _run(grid, context, cfg, run_dir, logger)
     except BaseException as exc:
         logger.log_failed(0, f"{type(exc).__name__}: {exc}")
-        with open(run_dir / "summary.json", "w", encoding="utf-8") as file:
-            json.dump({
-                "schema_version": 2, "status": "failed", "run_id": cfg.run_id,
+        atomic_json(run_dir / "summary.json", {
+                "schema_version": 2,
+                "status": "paused" if isinstance(exc, BudgetExhausted) else "failed",
+                "run_id": cfg.run_id,
                 "error_type": type(exc).__name__, "error": str(exc),
                 "scientific_stage2_complete": False,
-            }, file, indent=2)
+            })
         raise

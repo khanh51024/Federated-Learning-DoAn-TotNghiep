@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 import torch
+import yaml
 
 from .checkpoint import load_checkpoint, verify_checkpoint_compatibility
 from .config import load_training_config
@@ -83,7 +84,7 @@ def run_preflight(config_path: str | Path, base_dir: Optional[str | Path] = None
         return 1
 
     try:
-        audit_res = audit_manifest_directory(part_dir, require_all_classes=cfg.data.bundle_path is None)
+        audit_res = audit_manifest_directory(part_dir, require_all_classes=cfg.data.bundle_path is None, dataset_root=cfg.data.dataset_root)
         if cfg.data.bundle_path is not None:
             print("[!] Smoke bundle: class coverage is not a benchmark acceptance criterion")
         print(f"[*] Partition Audit: PASSED (train={audit_res['train_samples']}, val={audit_res['val_samples']}, test={audit_res['test_samples']})")
@@ -196,8 +197,19 @@ def run_simulation_launcher(
     """
     cfg_file = Path(config_path).resolve()
     pkg_root = Path(__file__).resolve().parents[1]
+    if mode == "smoke":
+        data = yaml.safe_load(cfg_file.read_text(encoding="utf-8"))["data"]
+        bundle = pkg_root / data["bundle_path"]
+        if not bundle.exists():
+            index = json.loads((pkg_root / data["partition_index"]).read_text(encoding="utf-8"))
+            matches = [p for p in index["partitions"].values() if all(
+                data.get(k) is None or p.get(k) == data[k]
+                for k in ("scenario", "alpha", "quantity_alpha", "feature_skew", "split_seed"))]
+            if len(matches) != 1:
+                raise ValueError("Smoke source must resolve to exactly one partition")
+            create_smoke_bundle(pkg_root / matches[0]["relative_dir"], bundle)
     cfg = load_training_config(cfg_file, base_dir=pkg_root, mode=mode)
-    audit_manifest_directory(cfg.data.partition_dir, require_all_classes=cfg.data.bundle_path is None)
+    audit_manifest_directory(cfg.data.partition_dir, require_all_classes=cfg.data.bundle_path is None, dataset_root=cfg.data.dataset_root)
 
     run_dir = cfg.output.run_dir
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -208,13 +220,6 @@ def run_simulation_launcher(
     resume_path = Path(resume_checkpoint).resolve() if resume_checkpoint else None
     if resume_path:
         print(f"[*] Resuming training from checkpoint: {resume_path}")
-
-    # Prepare smoke bundle if in smoke mode and bundle does not exist
-    if mode == "smoke" and cfg.data.bundle_path:
-        if not cfg.data.bundle_path.exists():
-            print(f"[*] Creating smoke bundle at {cfg.data.bundle_path}...")
-            src_part = cfg.data.partition_dir
-            create_smoke_bundle(src_part, cfg.data.bundle_path)
 
     events_file = run_dir / "events.jsonl"
     log_file = run_dir / "runtime.log"
@@ -335,7 +340,8 @@ def run_simulation_launcher(
         if warnings and summary_path.exists():
             with open(summary_path, "r", encoding="utf-8") as file:
                 summary = json.load(file)
-            summary["status"] = "completed_with_warnings"
+            if summary.get("status") == "completed":
+                summary["status"] = "completed_with_warnings"
             summary["runtime_warnings"] = warnings
             with open(summary_path, "w", encoding="utf-8") as file:
                 json.dump(summary, file, indent=2)
@@ -361,13 +367,13 @@ def run_simulation_launcher(
             launcher_logger.log_phase(cfg.federation.max_rounds, "evaluate")
             renderer.poll()
             try:
-                eval_code = run_evaluation(best_pt, config_path=cfg_file)
+                eval_code = run_evaluation(best_pt, config_path=cfg_file, device=cfg.runtime.server_device)
             except Exception as exc:
                 return postprocessing_failed(f"Evaluation failed: {exc}")
             if eval_code != 0:
                 return postprocessing_failed("Evaluation/report returned a failure")
 
-    if exit_code == 0:
+    if exit_code == 0 and cfg.output.evaluate_test_after_train:
         try:
             from .reporting import generate_report
 
@@ -378,6 +384,14 @@ def run_simulation_launcher(
             print(f"[X] Report generation failed: {exc}")
             return postprocessing_failed(f"Report generation failed: {exc}")
 
+    if exit_code == 0 and not cfg.output.evaluate_test_after_train:
+        summary_path = run_dir / "summary.json"
+        if summary_path.exists():
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            summary.update(status="calibration_completed", artifact_scope="calibration_no_test",
+                           evaluation_pending=True, scientific_stage2_complete=False)
+            from .budget_state import atomic_json
+            atomic_json(summary_path, summary)
     renderer.close()
     return exit_code
 
@@ -446,6 +460,8 @@ def run_evaluation(
         return 1
 
     protocol_fingerprint = validate_evaluation_partition(payload, partition_dir)
+    from .content_audit import audit_image_content
+    audit_image_content(partition_dir, dataset_root)
 
     print(f"[*] Loading test data from: {test_csv}")
     test_loader = build_evaluation_loader(
@@ -503,12 +519,12 @@ def main_cli() -> None:
 
     # 1. prepare-data
     p_prep = subparsers.add_parser("prepare-data", help="Generate train/val/test partitions and index")
-    p_prep.add_argument("--config", type=str, default="configs/partition_training.yaml", help="Path to partition_training.yaml")
+    p_prep.add_argument("--config", type=str, default="configs/partition_content_aware_v4.yaml", help="Content-aware Stage-2 partition config")
     p_prep.add_argument("--strict", action="store_true", help="Rehash all source images strictly")
 
     # 2. preflight
     p_pref = subparsers.add_parser("preflight", help="Check hardware, environment, data partitions, and config")
-    p_pref.add_argument("--config", type=str, default="configs/train_fedavg.yaml", help="Path to train_fedavg.yaml")
+    p_pref.add_argument("--config", type=str, default="configs/train_fedavg_v4.yaml", help="Content-aware FedAvg config")
 
     # 3. smoke
     p_smoke = subparsers.add_parser("smoke", help="Run 2-client 2-round Flower integration smoke test")
@@ -517,7 +533,7 @@ def main_cli() -> None:
 
     # 4. train
     p_train = subparsers.add_parser("train", help="Run Flower simulation training")
-    p_train.add_argument("--config", type=str, default="configs/train_fedavg.yaml", help="Path to train_fedavg.yaml")
+    p_train.add_argument("--config", type=str, default="configs/train_fedavg_v4.yaml", help="Content-aware FedAvg config")
     p_train.add_argument("--resume", type=str, default=None, help="Path to last.pt checkpoint to resume from")
     p_train.add_argument("--no-progress", action="store_true", help="Disable terminal tqdm progress bar")
     p_train.add_argument("--force-resume-stopped", action="store_true", help="Explicitly continue an early-stopped checkpoint")
@@ -537,12 +553,13 @@ def main_cli() -> None:
 
     # 7. baseline
     p_baseline = subparsers.add_parser("baseline", help="Train a Centralized or Local-only baseline")
-    p_baseline.add_argument("--config", type=str, default="configs/train_fedavg.yaml")
+    p_baseline.add_argument("--config", type=str, default="configs/train_fedavg_v4.yaml")
     p_baseline.add_argument("--mode", required=True, choices=["centralized", "local-only"])
+    p_baseline.add_argument("--resume-dir", help="Resume a baseline run directory")
 
     # 8. sweep
     p_sweep = subparsers.add_parser("sweep", help="Plan or execute the controlled Stage-2 experiment matrix")
-    p_sweep.add_argument("--config", type=str, default="configs/stage2_sweep.yaml")
+    p_sweep.add_argument("--config", type=str, default="configs/stage2_fedavg_main_v4.yaml")
     p_sweep.add_argument("--execute", action="store_true", help="Actually train; default is a safe dry run")
     p_sweep.add_argument("--collect", action="store_true", help="Rebuild comparison from existing run artifacts without training")
 
@@ -574,7 +591,7 @@ def main_cli() -> None:
     elif args.command == "baseline":
         from .baselines import run_baseline
 
-        output = run_baseline(args.config, args.mode)
+        output = run_baseline(args.config, args.mode, resume_dir=args.resume_dir)
         print(f"[*] Baseline artifacts: {output}")
         code = 0
     elif args.command == "sweep":

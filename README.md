@@ -1,90 +1,76 @@
-# Giai đoạn 2: Federated Learning trên PlantVillage
+# Giai đoạn 2: Federated Learning trên PlantVillage (Bản snapshot: FedAvg Scratch)
 
-Repository này là bản chính của GĐ2: phân hoạch non-IID, FedAvg/MobileNetV3,
-Centralized/Local-only baseline, evaluate, checkpoint/resume và reporting.
+Nhánh này (`code-train-fedavg-old`, tiền thân là `Stage-2-non-iid-simulation`) lưu trữ snapshot mã nguồn mô phỏng Federated Learning Giai đoạn 2 (FedAvg non-IID trên PlantVillage), bao gồm toàn bộ closure phụ thuộc: `stage2_scratch`, `stage2_matched`, `stage1_compat`, `fl_training`, `src`, configs, scripts, tests, notebooks và suite manifest phân hoạch.
 
-Code và kết quả mô phỏng non-IID của giai đoạn 2 được công bố trên nhánh
-[`Stage-2-non-iid-simulation`](https://github.com/khanh51024/Federated-Learning-DoAn-TotNghiep/tree/Stage-2-non-iid-simulation).
-Dataset cùng thông tin nguồn được tách riêng trên nhánh `dataset-sources`.
-Kết quả của run FedAvg đã hoàn tất được tổng hợp tại
-[`TRAINING_RESULTS.md`](TRAINING_RESULTS.md).
+Dataset gốc và thông tin nguồn được lưu tách riêng trên nhánh `dataset-sources`.
 
-## Thiết kế dữ liệu
+---
 
-- PlantVillage màu: 54.305 ảnh, 38 lớp trong `../PlantVillage-Dataset/raw/color`.
-- Tách global test khoảng 20% trước khi chia client. Centralized, Federated và
-  Local-only dùng chung tập test này.
-- Mọi biên chia mặc định giữ nguyên nhóm ảnh cùng một lá từ `leaf-map.json`.
-  Leaf map chỉ phủ một phần corpus; ảnh chưa có metadata được xem là singleton,
-  vì vậy không thể chứng minh chống rò rỉ lá cho phần này.
-- Lệch nhãn: mỗi lớp dùng tỷ lệ client lấy từ `Dirichlet(alpha)`.
-- Lệch số lượng: một vector dung lượng client lấy từ
-  `Dirichlet(quantity_alpha)`, theo NIID-Bench mục IV-D.
-- Lệch đặc trưng: profile ánh sáng/màu/cảm biến xác định theo client, áp dụng lúc
-  load. Các bộ đo lệch nhãn và số lượng để `feature_skew: none`; một bộ IID riêng
-  dùng `moderate` để đo trục đặc trưng.
+## 1. Bản lưu code FedAvg Scratch (`stage2_scratch`)
 
-`alpha` và `quantity_alpha` càng nhỏ thì độ lệch tương ứng càng mạnh. Cấu hình cũ
-dùng `size_sigma` bị từ chối rõ ràng để tránh diễn giải nhầm LogNormal thành
-Dirichlet.
+Phiên bản hiện hành trong bản lưu này là giao thức **`stage2_scratch_fedavg_v4`**, huấn luyện FedAvg hoàn toàn từ trọng số khởi tạo ngẫu nhiên (**`weights=None` / `pretrained=False`**).
 
-## Chạy
+- **Entrypoint chính**:
+  ```powershell
+  python -m stage2_scratch --help
+  python -m stage2_scratch preflight --suite data/partitions_stage2_scratch_v3
+  python -m stage2_scratch run --suite data/partitions_stage2_scratch_v3 --conditions label100 label1 label01 --seeds 42
+  python -m stage2_scratch collect --output runs/stage2_scratch_v3 --suite data/partitions_stage2_scratch_v3
+  ```
+- **Backend thực thi**:
+  - Mặc định là **mô phỏng tuần tự** (`sequential simulation runner` trong `stage2_scratch.runner`), đảm bảo tính lặp lại tất định và quản lý bộ nhớ ổn định.
+  - Có adapter Flower độc lập tại `stage2_scratch.flower_adapter` phục vụ kiểm định tương đương (`flower_verify`).
+- **Cấu hình mặc định của Scratch v4**:
+  - Số client: 5 clients.
+  - Vòng huấn luyện: 10 rounds, 1 local epoch/round, batch size 32.
+  - Optimizer: mặc định SGD (learning rate resolve thành 0.01) hoặc tùy chọn AdamW.
+  - Bộ phân hoạch mặc định: `data/partitions_stage2_scratch_v3` bao gồm 8 điều kiện non-IID (label skew: `label100`, `label1`, `label01`; quantity skew: `quantity100`, `quantity01`; label+quantity: `label_quantity01`; feature Dirichlet: `feature100`, `feature01`).
+- **Notebook hiện hành**: `kaggle_stage2_scratch_v4.ipynb`.
+  *(Các notebook `kaggle_stage2_scratch_v1.ipynb` đến `v3` và `kaggle_stage2_matched_v5.ipynb` được lưu giữ phục vụ tra cứu lịch sử).*
+- **Lưu ý tài liệu**: `docs/STAGE2_SCRATCH_V1.md` là tài liệu ghi nhận lịch sử của bản thiết kế ban đầu (dùng AdamW và split cũ), không phải đặc tả cấu hình v4 hiện hành.
+
+---
+
+## 2. Tách bạch kết quả thực nghiệm và Baseline lịch sử
+
+- **Kết quả Pretrained lịch sử**: Các artifacts và báo cáo trong thư mục `results/fedavg/...` (chứa các điểm accuracy ~99%) thuộc về đợt chạy MobileNetV3 pretrained của pipeline trước đây. **Tuyệt đối không trộn lẫn hoặc nhận các kết quả pretrained này làm kết quả của luồng scratch**.
+- **Baselines Centralized và Local-only**: Không được huấn luyện lại từ scratch trong GĐ2; hệ thống đọc từ kết quả nghiệm thu GĐ1 làm tham chiếu lịch sử thông qua lệnh:
+  ```powershell
+  python -m stage2_scratch compare-stage1 --output runs/stage2_scratch_v3
+  ```
+
+---
+
+## 3. Thiết kế dữ liệu và Phân hoạch Non-IID
+
+- **PlantVillage màu**: 54.305 ảnh, 38 lớp trong `../PlantVillage-Dataset/raw/color`.
+- **Tách holdout trước khi chia client**: Tách global test (~20%) và validation trước khi phân bổ tập train cho các client.
+- **Bảo toàn nhóm lá (Leaf integrity)**: Giữ nguyên các nhóm ảnh chụp cùng một lá (`leaf_group_id`) trên cùng một phân vùng để chống rò rỉ dữ liệu giữa train/val/test.
+- **Trục non-IID**:
+  - *Lệch nhãn*: Phân bổ Dirichlet theo nhãn lớp với hệ số $\alpha \in \{100.0, 1.0, 0.1\}$.
+  - *Lệch số lượng*: Phân bổ Dirichlet theo dung lượng client với $\alpha_q \in \{100.0, 0.1\}$.
+  - *Lệch đặc trưng*: Biến đổi miền ảnh (độ sáng, tương phản, bão hòa) xác định riêng cho từng client theo profile cố định.
+
+---
+
+## 4. Kiểm định và Kiểm thử
+
+Chạy kiểm tra tính toàn vẹn và bộ test của snapshot:
 
 ```powershell
-cd Federated-Learning-DoAn-TotNghiep
-python scripts/sweep_alpha.py
-python scripts/verify_integrity.py --all
-python scripts/verify_source_images.py
-python scripts/smoke_test_loader.py
-python -m pytest tests -q
+# Kiểm tra CLI
+python -m stage2_scratch --help
+
+# Kiểm tra test scratch & protocol parity
+pytest tests/test_stage2_scratch.py tests/test_stage2_protocol.py tests/test_flower_parity.py -v
 ```
 
-Luồng huấn luyện và nghiệm thu chi tiết nằm trong [TRAINING.md](TRAINING.md).
-`smoke` và `stage2_sweep_smoke.yaml` chỉ kiểm tra code; chúng không phải kết quả
-khoa học GĐ2.
+*Ghi chú về trạng thái test*: Bộ kiểm thử cốt lõi cho `stage2_scratch` và `stage2_protocol` đạt 18/18 tests passed. Test fixture trong `tests/test_stage2_matched.py` yêu cầu dữ liệu ảnh mock cục bộ khi kiểm tra tính toàn vẹn nội dung ảnh, phản ánh đúng hiện trạng mã nguồn được đóng gói snapshot.
 
-Chia một cấu hình riêng:
+---
 
-```powershell
-python scripts/partition_dataset.py --scenario label_skew --alpha 0.1
-python scripts/partition_dataset.py --scenario quantity_skew --quantity-alpha 0.1
-python scripts/partition_dataset.py --scenario iid --feature-skew moderate
-```
+## 5. Nguồn tham khảo
 
-Mỗi thư mục trong `data/partitions_v3` có manifest client, `centralized_train.csv`,
-`global_test.csv`, thống kê, audit, provenance và `fedavg_meta.json`. Tên thư mục
-chứa scenario, seed và mọi tham số ảnh hưởng kết quả để không ghi đè thí nghiệm.
-
-## Contract FedAvg và MobileNetV3
-
-```python
-from src.data import FedAvgPartition
-
-part = FedAvgPartition("data/partitions_v3/label_skew/<partition-name>")
-client_loaders = part.all_client_loaders(batch_size=32)
-global_test = part.global_test_loader(batch_size=128)
-round_weights = part.aggregation_weights_for([0, 2, 5])
-```
-
-`n_k` là số ảnh train sau khi tách validation cục bộ. Trọng số FedAvg cho một
-vòng được chuẩn hóa trên đúng tập client tham gia. Ảnh đưa vào MobileNetV3 là
-float32 CHW, RGB, crop 224x224 và chuẩn hóa ImageNet. Evaluation dùng resize cạnh
-ngắn 256 rồi center crop 224 theo torchvision. Centralized replay đúng profile
-client của từng dòng để so sánh công bằng khi bật feature skew.
-
-Nếu có PyTorch và torchvision, smoke test thực hiện một CPU forward qua
-`mobilenet_v3_small(weights=None, num_classes=38)` và kiểm tra output `[B, 38]`.
-Nếu thiếu hai gói này, phần NumPy/Pillow vẫn được kiểm tra và trạng thái forward
-được ghi rõ là chưa chạy.
-
-## Nguồn tham khảo
-
-1. Qinbin Li, Yiqun Diao, Quan Chen, Bingsheng He (2021), *Federated Learning on
-   Non-IID Data Silos: An Experimental Study* (NIID-Bench), mục IV-D:
-   https://arxiv.org/pdf/2102.02079
-2. Brendan McMahan et al. (2017), *Communication-Efficient Learning of Deep
-   Networks from Decentralized Data*: https://proceedings.mlr.press/v54/mcmahan17a.html
-3. Torchvision, `mobilenet_v3_small` weights and preprocessing:
-   https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.mobilenet_v3_small.html
-
-
+1. Qinbin Li, Yiqun Diao, Quan Chen, Bingsheng He (2021), *Federated Learning on Non-IID Data Silos: An Experimental Study* (NIID-Bench): https://arxiv.org/pdf/2102.02079
+2. Brendan McMahan et al. (2017), *Communication-Efficient Learning of Deep Networks from Decentralized Data*: https://proceedings.mlr.press/v54/mcmahan17a.html
+3. Torchvision MobileNetV3 specifications: https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.mobilenet_v3_small.html

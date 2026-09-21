@@ -67,6 +67,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--max-retries", type=int, default=None)
     p.add_argument("--group-aware", type=str, default=None,
                    help="true/false. false splits per image (leaks near-duplicate leaves).")
+    p.add_argument("--content-aware", type=str, default=None,
+                   help="true/false. Also keep exact-byte duplicates in one partition group.")
     p.add_argument("--rare-class-threshold", type=int, default=None)
     return p
 
@@ -76,7 +78,7 @@ def alpha_tag(alpha: float) -> str:
 
 
 def default_output_dir(cfg: dict, scenario: str, alpha: float, quantity_alpha: float,
-                       feature_skew: str, seed: int, group_aware: bool) -> Path:
+                       feature_skew: str, seed: int, group_aware: bool, content_aware: bool = False) -> Path:
     base = Path(cfg.get("output", {}).get("base_dir", "data/partitions"))
     name = f"{scenario}__seed_{seed}"
     if scenario in ("label_skew", "label_quantity_skew"):
@@ -84,6 +86,8 @@ def default_output_dir(cfg: dict, scenario: str, alpha: float, quantity_alpha: f
     if scenario in ("quantity_skew", "label_quantity_skew"):
         name += f"__qalpha_{alpha_tag(quantity_alpha)}"
     name += f"__feature_{feature_skew}"
+    if content_aware:
+        name += "__content_aware"
     if not group_aware:
         name += "__image_level"
     return ROOT / base / scenario / name
@@ -108,6 +112,7 @@ def resolve_params(args: argparse.Namespace) -> dict:
         "dataset_path": pick(args.dataset_path, ds, "path", "../PlantVillage-Dataset/raw/color"),
         "leaf_map_path": pick(args.leaf_map_path, ds, "leaf_map_path", "../PlantVillage-Dataset/leaf-map.json"),
         "group_aware": _as_bool(pick(args.group_aware, ds, "group_aware", True)),
+        "content_aware": _as_bool(pick(args.content_aware, ds, "content_aware", False)),
         "test_ratio": float(pick(args.test_ratio, ds, "test_ratio", 0.20)),
         "val_ratio": float(pick(args.val_ratio, ds, "val_ratio", 0.0)),
         "client_val_ratio": float(pick(args.client_val_ratio, cfg, "client_val_ratio", 0.0)),
@@ -128,7 +133,7 @@ def resolve_params(args: argparse.Namespace) -> dict:
     else:
         params["output_dir"] = str(default_output_dir(
             {"output": out}, params["scenario"], params["alpha"], params["quantity_alpha"],
-            params["feature_skew"], params["seed"], params["group_aware"]
+            params["feature_skew"], params["seed"], params["group_aware"], params["content_aware"]
         ))
     return params
 

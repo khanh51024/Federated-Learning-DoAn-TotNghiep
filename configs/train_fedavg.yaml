@@ -1,7 +1,7 @@
 schema_version: 1
 data:
   dataset_root: ../PlantVillage-Dataset/raw/color
-  partition_index: data/partitions_train_v1/index.json
+  partition_index: data/partitions_train_v4_content_aware/index.json
   scenario: label_skew
   alpha: 0.1
   quantity_alpha: null

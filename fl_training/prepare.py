@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-import yaml
+import yaml  # type: ignore
 from PIL import Image
 
 from src.data.dirichlet_split import partition as run_partition
@@ -64,6 +64,7 @@ def compute_semantic_config_hash(params: Dict[str, Any]) -> str:
     canonical = {
         "alpha": float(params["alpha"]),
         "client_val_ratio": float(params.get("client_val_ratio", 0.0)),
+        "content_aware": bool(params.get("content_aware", False)),
         "feature_skew": str(params.get("feature_skew", "none")),
         "group_aware": bool(params.get("group_aware", True)),
         "max_retries": int(params.get("max_retries", 20)),
@@ -155,7 +156,8 @@ def build_or_update_source_content_cache(
 
 
 def audit_manifest_directory(partition_dir: Path, total_source_images: int = 54305,
-                             require_all_classes: bool = True) -> Dict[str, Any]:
+                             require_all_classes: bool = True,
+                             dataset_root: Optional[Path] = None) -> Dict[str, Any]:
     """
     Comprehensive audit of a partition directory:
     - train/val/test disjoint by relative_path and by group_id
@@ -281,8 +283,15 @@ def audit_manifest_directory(partition_dir: Path, total_source_images: int = 543
             f"Total partitioned images ({total_manifest_images}) != source images ({total_source_images})"
         )
 
+    content_audit = None
+    if dataset_root is not None:
+        from .content_audit import audit_image_content
+        expected_hashes = json.loads((partition_dir / "image_content.json").read_text(encoding="utf-8")) if (partition_dir / "image_content.json").exists() else None
+        content_audit = audit_image_content(partition_dir, Path(dataset_root), hashes=expected_hashes)
+
     return {
         "audited_ok": True,
+        "content_audit": content_audit,
         "num_clients": len(client_files),
         "train_samples": len(all_train_paths),
         "val_samples": len(val_paths),
@@ -332,7 +341,7 @@ def prepare_data(
     source_cache = build_or_update_source_content_cache(
         dataset_full_path=dataset_full_path,
         cache_path=source_cache_full,
-        strict=strict_cache,
+        strict=strict_cache or bool(ds_cfg.get("content_aware", False)),
     )
     total_source_images = source_cache["total_images"]
 
@@ -346,6 +355,7 @@ def prepare_data(
     min_samples = int(pt_cfg.get("min_samples_per_client", 10))
     max_retries = int(pt_cfg.get("max_retries", 20))
     rare_thresh = int(pt_cfg.get("rare_class_threshold", 500))
+    content_aware = bool(ds_cfg.get("content_aware", False))
 
     base_partitioner = DatasetPartitioner(
         dataset_path=dataset_rel_path,
@@ -360,6 +370,8 @@ def prepare_data(
         min_samples_per_client=min_samples,
         max_retries=max_retries,
         rare_class_threshold=rare_thresh,
+        content_aware=content_aware,
+        content_hashes=source_cache.get("images", {}) if content_aware else None,
     )
     base_partitioner.scan_dataset()
 
@@ -370,7 +382,7 @@ def prepare_data(
     test_paths = [s["relative_path"] for s in test_samples]
     test_hash = compute_relative_paths_hash(test_paths)
     ref_test_hash = out_cfg.get("reference_test_hash", REFERENCE_TEST_HASH_V3)
-    if test_hash != ref_test_hash:
+    if ref_test_hash and test_hash != ref_test_hash:
         raise AssertionError(
             f"Test set mismatch! Got {test_hash}, expected reference {ref_test_hash}. "
             f"Test set must remain strictly identical to partitions_v3."
@@ -386,6 +398,10 @@ def prepare_data(
 
     output_base_dir = pkg_root / out_cfg.get("base_dir", "data/partitions_train_v1")
     index_file = pkg_root / out_cfg.get("index_path", "data/partitions_train_v1/index.json")
+    if index_file.exists():
+        previous = json.loads(index_file.read_text(encoding="utf-8"))
+        if previous.get("test_paths_sha256") != test_hash or previous.get("val_paths_sha256") != val_hash:
+            raise ValueError("Existing index pins different validation/test sets; use a new versioned output directory")
 
     index_data: Dict[str, Any] = {
         "schema_version": 1,
@@ -423,6 +439,7 @@ def prepare_data(
             "test_ratio": test_ratio,
             "val_ratio": val_ratio,
             "client_val_ratio": client_val_ratio,
+            "content_aware": content_aware,
             "group_aware": group_aware,
             "min_samples_per_client": min_samples,
             "max_retries": max_retries,
@@ -531,6 +548,7 @@ def prepare_data(
             "dataset_path": dataset_rel_path,
             "leaf_map_path": leaf_map_rel_path,
             "group_aware": group_aware,
+            "content_aware": content_aware,
             "total_images": total_source_images,
             "total_classes": len(base_partitioner.class_names),
             "class_names": base_partitioner.class_names,
@@ -570,6 +588,9 @@ def prepare_data(
         DatasetPartitioner._write_fedavg_meta(
             part_dir, config_data, n_k, {}, pkg_root
         )
+        if content_aware:
+            inventory = {key: value["sha256"] for key, value in source_cache["images"].items()}
+            (part_dir / "image_content.json").write_text(json.dumps(inventory, sort_keys=True), encoding="utf-8")
 
         # Audit directory
         audit_res = audit_manifest_directory(part_dir, total_source_images=total_source_images)
@@ -632,7 +653,7 @@ def create_smoke_bundle(
 
     rng = np.random.default_rng(seed)
 
-    def select_groups(manifest_csv: Path, target_count: int) -> List[Dict[str, Any]]:
+    def select_groups(manifest_csv: Path, target_count: int, stratified: bool = False) -> List[Dict[str, Any]]:
         with open(manifest_csv, "r", encoding="utf-8") as f:
             rows = list(csv.DictReader(f))
 
@@ -641,13 +662,24 @@ def create_smoke_bundle(
             groups.setdefault(r["group_id"], []).append(r)
 
         sorted_gids = sorted(groups.keys())
-        shuffled_gids = [sorted_gids[i] for i in rng.permutation(len(sorted_gids))]
+        # Holdout sampling must not depend on the preceding client distributions.
+        selection_rng = np.random.default_rng(np.random.SeedSequence([
+            seed, int.from_bytes(hashlib.sha256(manifest_csv.name.encode()).digest()[:4], 'little')
+        ])) if stratified else rng
+        shuffled_gids = [sorted_gids[i] for i in selection_rng.permutation(len(sorted_gids))]
 
         selected: List[Dict[str, Any]] = []
+        chosen = set()
+        if stratified:
+            for label in sorted({r["label"] for r in rows}, key=int):
+                gid = next(g for g in shuffled_gids if groups[g][0]["label"] == label)
+                selected.extend(groups[gid])
+                chosen.add(gid)
         for gid in shuffled_gids:
-            selected.extend(groups[gid])
             if len(selected) >= target_count:
                 break
+            if gid not in chosen:
+                selected.extend(groups[gid])
         return selected
 
     # 1. Client 0 & 1
@@ -662,24 +694,28 @@ def create_smoke_bundle(
     DatasetPartitioner._write_csv(dst_dir / "centralized_train.csv", centralized)
 
     # 3. Global Val
-    val_rows = select_groups(src_dir / "global_val.csv", target_val_images)
+    val_rows = select_groups(src_dir / "global_val.csv", target_val_images, stratified=True)
     DatasetPartitioner._write_csv(dst_dir / "global_val.csv", val_rows)
 
-    # 4. Global Test (reference copy)
-    with open(src_dir / "global_test.csv", "r", encoding="utf-8") as f:
-        test_rows = list(csv.DictReader(f))
-    DatasetPartitioner._write_csv(dst_dir / "global_test.csv", test_rows[:100])
+    # Smoke evaluation covers every source class without breaking groups.
+    test_rows = select_groups(src_dir / "global_test.csv", target_val_images, stratified=True)
+    DatasetPartitioner._write_csv(dst_dir / "global_test.csv", test_rows)
 
     n_k = [len(c0_rows), len(c1_rows)]
     source_names = []
+    source_meta = {}
     for filename in ("partition_config.json", "fedavg_meta.json"):
         if (src_dir / filename).exists():
-            source_names = json.loads((src_dir / filename).read_text(encoding="utf-8")).get("class_names", [])
+            source_meta = json.loads((src_dir / filename).read_text(encoding="utf-8"))
+            source_names = source_meta.get("class_names", [])
             if source_names:
                 break
     meta = {
         "schema_version": 3,
         "smoke": True,
+        "content_aware": source_meta.get("content_aware", False),
+        "feature_skew": source_meta.get("feature_skew", "none"),
+        "client_profiles": source_meta.get("client_profiles", [])[:2],
         "num_clients": 2,
         "class_names": source_names,
         "total_train_samples": sum(n_k),
@@ -691,5 +727,17 @@ def create_smoke_bundle(
     }
     with open(dst_dir / "fedavg_meta.json", "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2)
+    # Training loaders read profiles from partition_config.json, not fedavg_meta.
+    (dst_dir / "partition_config.json").write_text(json.dumps({
+        **meta, "seed": source_meta.get("seed", seed),
+        "scenario": source_meta.get("scenario", "label_skew"),
+        "group_aware": source_meta.get("group_aware", True),
+        "source_partition": str(src_dir),
+    }, indent=2), encoding="utf-8")
+    if (src_dir / "image_content.json").exists():
+        inventory = json.loads((src_dir / "image_content.json").read_text(encoding="utf-8"))
+        keys = ['/'.join(r['relative_path'].replace('\\', '/').split('/')[-2:])
+                for r in centralized + val_rows + test_rows]
+        (dst_dir / "image_content.json").write_text(json.dumps({k: inventory[k] for k in keys}, sort_keys=True), encoding="utf-8")
 
     return dst_dir
