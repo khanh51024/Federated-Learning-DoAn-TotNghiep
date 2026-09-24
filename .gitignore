@@ -38,3 +38,7 @@ data/*
 !configs/*kaggle*.yaml
 !scripts/*kaggle*.py
 !requirements-kaggle.txt
+
+# Allow namespaced stage2 training and provenance snapshots
+!training/**
+!provenance/**

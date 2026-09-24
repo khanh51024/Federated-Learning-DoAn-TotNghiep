@@ -1,0 +1,1709 @@
+{
+  "schema_version": "1.0.0",
+  "repository": "https://github.com/khanh51024/Federated-Learning-DoAn-TotNghiep.git",
+  "branch": "code-train-fedavg-old",
+  "note": "Portable manifest with repository-relative paths (no absolute host paths).",
+  "total_files": 282,
+  "total_bytes": 96726446,
+  "scientific_stage2_complete": false,
+  "partitions_suite": {
+    "relative_path": "data/partitions_stage2_scratch_v3",
+    "files_count": 84,
+    "bytes": 264037275,
+    "tree_sha256": "eea84a26962845f64141803c81eee82aa1cc3841a0dacdc7e94c8fcbac772c15"
+  },
+  "files": [
+    {
+      "path": "training/stage2_scratch_v4/.gitattributes",
+      "bytes": 329,
+      "sha256": "5df1285eb823d690e3028432293c90ca1794333f14a9eb1aed14c46d1b744700",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/.gitignore",
+      "bytes": 502,
+      "sha256": "0734d0cfb72d13596f07e84e713c2801e15cacae354d762ba762385a75c43287",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/README.md",
+      "bytes": 6153,
+      "sha256": "a39d2ab261b51a0eacd7dc95ddbbbc683b030e96ee40b7a2999be320910e80f8",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/configs/README.md",
+      "bytes": 1591,
+      "sha256": "ec616fad40999b4a211fc1a2dd7109e6937c850cc8d74e33a26f281171ca571a",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/configs/stage2_controls_v4.yaml",
+      "bytes": 1011,
+      "sha256": "8473b2015237409b27eeead14bbcfa354cadb02bd6d32bfa4a31978ccaf7f973",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/configs/stage2_fedavg_main_v4.yaml",
+      "bytes": 1070,
+      "sha256": "c814e5f3a55160ac8d9f0ff2ea77a8c5a339b03a59779cf766bd3837ad2b3d83",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/configs/sweep_content_aware_v4.yaml",
+      "bytes": 1028,
+      "sha256": "1223a2d60401ef5e23434277a33b22d4209b37ff9acd3550ef7a1621007a25c4",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/configs/train_smoke.yaml",
+      "bytes": 1356,
+      "sha256": "3c1e3bb02f66215985e553ed00b4dd4fec4249c58b8374381976fabaede71191",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/data/README.md",
+      "bytes": 9781,
+      "sha256": "d1485da6bbf1b82b3f06d576d87f63581e2f154edf79e14e78784a123469fd23",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/data/duplicate_review.json",
+      "bytes": 921507,
+      "sha256": "53bbb477f71e0512535f58d17835e77cd727c65f4354e034ec1761120f0c2f74",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/data/four_visually_verified_pairs.json",
+      "bytes": 1720,
+      "sha256": "b1f5dd3a448ef7cd5e3c087e9267f1bfff1a2162571bc594369f2b308427d492",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/data/visually_verified_pairs.json",
+      "bytes": 2608,
+      "sha256": "257cbcc1b8a77af1c59ab26eff71e191c0763db0cb6c1b5050e2019500a626f1",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/__init__.py",
+      "bytes": 114,
+      "sha256": "e97931e2f21e49d752e78406b97ef4065cf3adb621978846f9311e4121c8283a",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/budget.py",
+      "bytes": 1492,
+      "sha256": "de77dbaf134622cba196605dce384b9ddc41f3abd0ca0733341d1330dc26e036",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/budget_state.py",
+      "bytes": 8838,
+      "sha256": "8af4885dba6197c71d0fee89649ec946012b20d47b4e321897dfa382ad40bed3",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/checkpoint.py",
+      "bytes": 11994,
+      "sha256": "8896769954c60c8923101e47d6b2e2ceaadac4c0f64a16405825c5f7126c8914",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/client_app.py",
+      "bytes": 7349,
+      "sha256": "95fea78c346649bc98b1a126f987cfccc098a3519c26c757440da8e33507c8f3",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/config.py",
+      "bytes": 28110,
+      "sha256": "c34dbc8e4598c95693ffc3ea2b4ec48dfe2588b634d02e192b4d1fb55ae88da2",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/content_audit.py",
+      "bytes": 4097,
+      "sha256": "248a76ed94406309df65bf3456444d5b1f6f3ddcd9e9e38ab0d70655be59f59f",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/control.py",
+      "bytes": 7201,
+      "sha256": "5d21b3c9f1c4133e246739e661d6695d944cebe50969e5b904d7889a41126441",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/data.py",
+      "bytes": 10651,
+      "sha256": "6bab5b358e3e4ebde9257d0fa04eb58b4e582ec2c98cb240ded642ea6de5fbf6",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/evaluation_artifacts.py",
+      "bytes": 2669,
+      "sha256": "79f715421819df5c393592225d29ab7437de16c5c3ada4f800883d93390f221f",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/kaggle_budget.py",
+      "bytes": 28011,
+      "sha256": "6719368161790d73e6ee36ec90d03ef7d7bed6ce4fa788e3debe05f82c8b59bb",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/model.py",
+      "bytes": 3135,
+      "sha256": "d2f29f48804808542089eef159f4d35f9908c3d7c55ce5a16d1e386da3b68db5",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/package_verify.py",
+      "bytes": 4724,
+      "sha256": "3102ae5f66c629f6f9789e4109903d644d21848050ed1bb413bf658b1c572419",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/prepare.py",
+      "bytes": 31743,
+      "sha256": "b536dc0921c3cb82e1f64f8f643f6dbb0044c27d3bc1fbaf39bee937e09f4448",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/progress.py",
+      "bytes": 10473,
+      "sha256": "6b088e223ddc5fc75256ca312b58b8e90b718965c7b24c2825adf1a3fcf9d6ea",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/reporting.py",
+      "bytes": 15382,
+      "sha256": "0336ba59467c03d4864ee3d06b6a1beb0ad2e3242f5df33b4702b51a86a5cfcd",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/reproducibility.py",
+      "bytes": 1110,
+      "sha256": "af55ed21faa4fde47553205359e7f7a58a969f13c0e84b11cdb5c5a5771dc699",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/research_reporting.py",
+      "bytes": 10153,
+      "sha256": "1b576e451fce2d7c0b65ff4f767be3e797bfc7c5086bb214c66ec1158d58ad35",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/server_app.py",
+      "bytes": 25951,
+      "sha256": "c0b3441df9261d07cf3afa52560812a70c2724dd2b0eab4e152d2e41cb8ae0c2",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/stage2_protocol.py",
+      "bytes": 4672,
+      "sha256": "057acee5c8d4db4d84dec1d09df3c24a90861204e2c3f6d32054fdeb799560e0",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/strategy.py",
+      "bytes": 10288,
+      "sha256": "a11d2d10f33b6d033727690b852c0c3ed1527b389aec666d6b957100e6d116fe",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/sweep.py",
+      "bytes": 25319,
+      "sha256": "d6dd90633e1293e170f3ce476dad3f728d66fb5823138c6b5c207f04ee0a5fd4",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/fl_training/task.py",
+      "bytes": 10564,
+      "sha256": "085396c1b010f01e4924ee8bf545a5e492ccc17d53c59088e3573a3644bf6900",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/notebooks/fedavg_stage2_scratch_v4.ipynb",
+      "bytes": 17102,
+      "sha256": "b21615753f0b6d6fef9bd832055f2de908e6c0e640ddd5d4228daa3c123f4c13",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/pyproject.toml",
+      "bytes": 1057,
+      "sha256": "e7a13d4c3afcf4d048400113657b236955627dc66bc3e62fdef545004d7c4288",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/requirements-stage1.txt",
+      "bytes": 198,
+      "sha256": "c50e1f5915cc290b4e6ecff4a43c414bd39940352e186c6ce09b1dfcd0e24d70",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/requirements-stage2-matched.txt",
+      "bytes": 57,
+      "sha256": "9a3f4b24ba213c69eca5ae8d50abf77ce29d5d7ccc782aa129a691b4e5d6bc14",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/requirements.txt",
+      "bytes": 265,
+      "sha256": "8cd210b49341d2297898ba7e5a71ed1fa387430979988e9adc173bba4bb344a1",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/scripts/acquire_internal_suite.py",
+      "bytes": 22640,
+      "sha256": "f507da92e4d284f96125d1d464edf4499a5e4a168c2745ffdebc73bd08fbbb16",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/scripts/package_release_v4.py",
+      "bytes": 28130,
+      "sha256": "e4f145cf1dc31925c915bcba67f341f9813122809483baaab41c726a71d4dbb8",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/scripts/partition_dataset.py",
+      "bytes": 9358,
+      "sha256": "8ee3642d816d3e147fe115bb8136dd3d0be55f7b19086e4636642357d79104de",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/scripts/sweep_alpha.py",
+      "bytes": 17840,
+      "sha256": "2b407d7a76372a04aca61cc8830595f4e620f02d62d5c6093597e040687738fa",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/scripts/verify_integrity.py",
+      "bytes": 19054,
+      "sha256": "70afe914f1e8cad22c54ef36e06a74eb3a65a53d6b48888d7ed79af2f3872faf",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/src/__init__.py",
+      "bytes": 46,
+      "sha256": "ed2f51645bafcec92855593ae9bb94c873b26b4854b6b75ea87c2c00cd96fb63",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/src/data/__init__.py",
+      "bytes": 2493,
+      "sha256": "b7ad8129d05afb119db1f48b323688d3c8d74ce8d20805c8ba1effebfa0737b3",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/src/data/dataset.py",
+      "bytes": 12157,
+      "sha256": "6b94958dd77118181f3515b1ca4d09e01a20ccb10d7cee6d0952f37037211991",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/src/data/dirichlet_split.py",
+      "bytes": 17476,
+      "sha256": "9510d85fc763d99e0ab68ba2be605d7b6d026acd9049d2413e238fea1f00c540",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/src/data/fedavg.py",
+      "bytes": 18282,
+      "sha256": "5a1fafda7e17ccc922f8d2757ba6fff947d903cea3999c03bbf127674b385d8e",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/src/data/leaf_groups.py",
+      "bytes": 10577,
+      "sha256": "41e1e0ae63293a951b4cf1b98a8be5f5bd6db14d3c11e4745a92e9e0b2c6fb4f",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/src/data/metrics.py",
+      "bytes": 15608,
+      "sha256": "65994dc58287b7f51cb403ba5a277fcdc754ed49846f0c44d39b3f1971d5e314",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/src/data/partitioner.py",
+      "bytes": 28670,
+      "sha256": "26995ac9d57ae857daf016a01819c57a5e0f36834ec0293a60b1281e0d9456f8",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/src/data/transforms.py",
+      "bytes": 14917,
+      "sha256": "ebf50357899adf1e37be07d80cad72727ecddf3fb86b83f582778f5919be6d7b",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/__init__.py",
+      "bytes": 233,
+      "sha256": "3ef0621163e92b6386234b6280c7a1010605fcdfb31ad425de9cbd4a21872d79",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/accounting.py",
+      "bytes": 9062,
+      "sha256": "a99fd1331f350ea0c699ec416492c25bf2cd665f6e5e077f9b2e219398c088cc",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/artifacts.py",
+      "bytes": 3648,
+      "sha256": "74ee5101a2d0a44ca6a6ec4dc02a344337ef3966044deb997147690d665ccb6c",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/baselines.py",
+      "bytes": 10339,
+      "sha256": "3e32270410e7c4c7b90752199a8183b3613cdd567baaeafb10e16e96abb58bc1",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/budget.py",
+      "bytes": 12553,
+      "sha256": "8ec5ef96c1bb14728c9785cd419a23f5e0a1ecdc79042c21b7ed25635c7cd011",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/calibrate.py",
+      "bytes": 5175,
+      "sha256": "b24213b370f73a78790c6b03e6326762206e1549514abebb44f6edfc63c0626e",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/checkpoint.py",
+      "bytes": 6441,
+      "sha256": "6785e4cd7e0daa3d7e2c0f824e11647e81686c8a06eb242b0809ca55ad4713b8",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/collector.py",
+      "bytes": 15980,
+      "sha256": "6cee33017722df85b763e1389f89dd8e053577862e5697c0513d641727a1ac66",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/config.py",
+      "bytes": 3271,
+      "sha256": "01662f10973185fe5c7386aeb01fc19989170a127872a8a881de7e02731aaa06",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/constants.py",
+      "bytes": 1382,
+      "sha256": "ef0e3a1a6a46bbb09dcf4601c1f7656df02f1ddf24d03b9829bc8010a8866739",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/data.py",
+      "bytes": 6718,
+      "sha256": "d1995ec1e0db0652e814c258062bd11ef1551658a445549ab70aa414abdda3b6",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/dry_run.py",
+      "bytes": 4386,
+      "sha256": "d535be7e5e5cb19217a612de3f4c893b5bb8fbd5e93aafb545ffd2d2b381b832",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/identity.py",
+      "bytes": 3943,
+      "sha256": "ec18c4f80d087c31f485252a3217a78b75a24e7df60617f79fcfbf87ebcbb8f6",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/integrity.py",
+      "bytes": 1998,
+      "sha256": "5cab84409c11e1639036755fb307436dfaea7682654d6d16c6195c66d58a6a95",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/launcher.py",
+      "bytes": 6819,
+      "sha256": "dca9054fe0a34d0ae3f01068d9003946565b4d4a2835752d593777877c8a1fe8",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/models.py",
+      "bytes": 727,
+      "sha256": "aeb4bd41ef5b3254d5f257d141a924d2a358c63044e091f0d4e3646ade7ded3c",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/preflight.py",
+      "bytes": 13067,
+      "sha256": "875de3c69986ec46bfaa5657c1ead5f6dd775842e29dcc21b632add9d1f46f9f",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/runner.py",
+      "bytes": 25258,
+      "sha256": "cccd3046b91e015ea5907525884ee51bebb3c2343526085c585980539829c9e7",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/README.md",
+      "bytes": 2906,
+      "sha256": "ea661a8094595ab707c04fd995252b761a6334e8e1b19d42e7401ab3ec2c0c57",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/centralized/train_centralized.py",
+      "bytes": 3369,
+      "sha256": "daa7ba4289ea47bbadbaa2ef5ab19977637b91045289a0dcf9eb5c3e5bc1e10d",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/experiments/compare_results.py",
+      "bytes": 2013,
+      "sha256": "6551a5a439a365c5a611099082b0a7fa643d2c2f262d432d80efed6c7a76f40b",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/experiments/partitions/plantvillage_alpha100_clients5_seed42.json",
+      "bytes": 539541,
+      "sha256": "f207b244cd09bc33b8003828df664547afc47bda98785c7853caa6eb048ef0b8",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/experiments/partitions/plantvillage_alpha1_clients5_seed42.json",
+      "bytes": 539490,
+      "sha256": "b97725cd5f0f8e984c7ddba1a100bd9a0faee73f208345ba4e0f5c36d4f637c8",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/experiments/report_stage2.py",
+      "bytes": 8128,
+      "sha256": "85dd82eed56948dfbe10d319fd7d6af41ae240af1e05fdc731a0707df002586a",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/experiments/results/centralized_metrics.json",
+      "bytes": 2664,
+      "sha256": "4d613e91923b60094d95a4df10a69c75ebf2edf25f42c1bd6615d7b9d7e25cb8",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/experiments/results/centralized_seed42_metrics.json",
+      "bytes": 2664,
+      "sha256": "4d613e91923b60094d95a4df10a69c75ebf2edf25f42c1bd6615d7b9d7e25cb8",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/experiments/results/dataset_inspection.json",
+      "bytes": 3265,
+      "sha256": "ba572dde0ce6028a4b36373773e27252e8cc2a0a0e55328a9feda39ac4768efe",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/experiments/results/fedavg_alpha1_seed42.json",
+      "bytes": 6039,
+      "sha256": "e8aa2daef3dcf18980590881faf8c2d6263211edaf0cb093e639494bcd9c2e25",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/experiments/results/fedavg_metrics.json",
+      "bytes": 6039,
+      "sha256": "e8aa2daef3dcf18980590881faf8c2d6263211edaf0cb093e639494bcd9c2e25",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/experiments/results/local_only_alpha100_seed42.json",
+      "bytes": 4861,
+      "sha256": "83a04dd1a60c734dc8c7d83b618e52add532fcd2e3f5b2302a1cd3af26dbd13f",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/experiments/results/local_only_alpha1_seed42.json",
+      "bytes": 4809,
+      "sha256": "4d13dd7767eab28c7a2f7dc2d30cbafc1b47ced0d6675d8da6c92b2d0b3798c1",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/experiments/results/local_only_metrics.json",
+      "bytes": 4809,
+      "sha256": "4d13dd7767eab28c7a2f7dc2d30cbafc1b47ced0d6675d8da6c92b2d0b3798c1",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/experiments/splits/plantvillage_seed42.json",
+      "bytes": 369118,
+      "sha256": "fa44b69cb8509a6af7562f2becd17b06315e4237e652382dd1ea8b5399eb1cc3",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/experiments/splits/plantvillage_train0.72_val0.08_seed42.json",
+      "bytes": 369188,
+      "sha256": "0af343233b632776973f3666dfc886424ad593ef7c402c01aa0c8be875385d9f",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/federated/__init__.py",
+      "bytes": 31,
+      "sha256": "ccabfd71d660a91f44c581cb67e5d4665c4eb9eb60db48bd6c29a63be3cd78d1",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/federated/run_simulation.py",
+      "bytes": 12683,
+      "sha256": "74e54ee772e99a01841aa45078de35efeaff5ac1ca0df874ee2ce83209131ea4",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/local_only/train_local.py",
+      "bytes": 4277,
+      "sha256": "5d13a445cb8667013f59a4ad9caafca01aa78e4faa8cab63558bcf8698a74f88",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/models/__init__.py",
+      "bytes": 73,
+      "sha256": "54b651ae6bd6ab39eaedd3a1383cd9900428219e42ddaa5d77f0074249c3a63e",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/models/mobilenetv3.py",
+      "bytes": 421,
+      "sha256": "c7214939837e7ca971b9f01bbdb4dfebe35524acd53254f13f43725ff51db1b4",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/requirements.txt",
+      "bytes": 138,
+      "sha256": "1b98692323cb698a9ab43527ff92025eb09f82c2eecd9c39427b07227c398455",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/test_setup.py",
+      "bytes": 682,
+      "sha256": "6664d088edc0a7b69e3964af5747f6f3b20fedf1cb0c130693fb230c7d20046f",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/utils/__init__.py",
+      "bytes": 65,
+      "sha256": "0de9a7d8f2c259fb63d8a06984392e94134f00d33c9ebdf24d83c83322512f68",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/utils/config.py",
+      "bytes": 639,
+      "sha256": "517e8f623d0960788d7da2b032ab076a61f5c62e3a8ff7cdf7a7acb18fee5a68",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/utils/data_partition.py",
+      "bytes": 3923,
+      "sha256": "1e594ea8930eb21734714bfa5f81602bea6702058457236b6aa502e81877b7bc",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/utils/data_utils.py",
+      "bytes": 5207,
+      "sha256": "c88b0a71ca4cd310fd7ff4684bd2e5ca710421ad242dcb0a3266edc6c5e2b0c8",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/utils/evaluate.py",
+      "bytes": 1824,
+      "sha256": "74d6000175def8d691fc20398e0cded95f286c61c77430c632c83d635d2b937b",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/utils/plotting.py",
+      "bytes": 2031,
+      "sha256": "533a640f3b3fcc156e894720996c516f8d7d928066fc9374b53a058da1ea3479",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream/utils/reproducibility.py",
+      "bytes": 284,
+      "sha256": "ded81666d8af8e0c029232fee966aa8b015da4edc5551202ff50569c1e39a19b",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream_loader.py",
+      "bytes": 2183,
+      "sha256": "bd7ad13c3e7f137de9ec9a7de5eccaa3a7480902f37bd895e9404529aa69d669",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage1_compat/upstream_manifest.json",
+      "bytes": 3423,
+      "sha256": "0ed324013f785f2aec3ca5e2d5cf345f75affe61b0a923696ca1c101372a6679",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage2_matched/__init__.py",
+      "bytes": 75,
+      "sha256": "6e4d6a86f660039e9f6adee9ce3d20b4349ffb44a66228b14540d462b31e2f08",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage2_matched/data.py",
+      "bytes": 21881,
+      "sha256": "27c2a88c91f8699f0542890b65accf6b2f980641d32d3c165a9e9e421b37491c",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage2_scratch/__init__.py",
+      "bytes": 83,
+      "sha256": "de6a538dae1097128c305a8f88fadae2ee236d335368278703d23c37ecab8392",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage2_scratch/__main__.py",
+      "bytes": 8730,
+      "sha256": "009f9ffe66bc8f95559ef493fd4d329609a4b0daae3d699b92a6bbd4344c9d3c",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage2_scratch/aggregation.py",
+      "bytes": 3536,
+      "sha256": "1ee9b441e8ee3998754932c746ddd85cd075c1e3890f977b5362e1acf766eda3",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage2_scratch/baselines.py",
+      "bytes": 2172,
+      "sha256": "d7fa141b3418c92c2473e42d2be030343e80e1586c651c300cc485b482730107",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage2_scratch/experiment.py",
+      "bytes": 24316,
+      "sha256": "edb18bd9fd359861af6edc7fa91052723f3b85305ff2b536a2b8e9a227d487c1",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage2_scratch/flower_adapter.py",
+      "bytes": 11247,
+      "sha256": "c2cce8340e450901d49071465a67328b96285e62a8c30d9e24560b130a998694",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/stage2_scratch/runner.py",
+      "bytes": 17415,
+      "sha256": "8ce3dcb5e3655b6dceffe8f781206a3962841850c9b8a77c7800d29c538db9f2",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/fixtures/kaggle_calibration_20260914.json",
+      "bytes": 2762,
+      "sha256": "fd9d89c2cfa27a2f4422b0dd66ab516e158707f7082db8719d7bf78d928afa1e",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_acquire_internal_suite.py",
+      "bytes": 57994,
+      "sha256": "e879eff166289c8e68ad6e3ca5e7e6ac883a8fe9a552c5d1e7be539731b035f0",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_content_guard.py",
+      "bytes": 5099,
+      "sha256": "2b0792abcecc26df5ac7a34b2f5ae7257dab5a63d7e38961e6a92c9c3fd1c833",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_flower_optional_import.py",
+      "bytes": 3876,
+      "sha256": "a8597fb391cdf70a2a551bcab289b687ef9d65a0c770616c46caf02aa3dbb8fe",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_flower_parity.py",
+      "bytes": 5649,
+      "sha256": "df9174aa1fb9b5f01627c5ddf071f27f4d7e41fa9bdb5a54dd941fbe16ed919e",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_kaggle_30h.py",
+      "bytes": 20385,
+      "sha256": "b2eb74536e7bc2c2f22fd675b48d80ff884089663fc240a1c0e7c7bbf2fe1b0b",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_package_and_notebook_v4.py",
+      "bytes": 6952,
+      "sha256": "410dfae9d3197d07a3c9109d72497579a80e82743eaf31816ebc3e235cad8fcb",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_package_release_negative.py",
+      "bytes": 18028,
+      "sha256": "1b1a5c2c8891f4d5ab73321f308de85ed6b673e26885f5aa6d0a7ae9cd650a1f",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_partition.py",
+      "bytes": 28213,
+      "sha256": "209a6e23ed98bf5d4e3d742154628f2e0f7b81dfffc48913e1d38aa43c7570b1",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_real_flower_parity.py",
+      "bytes": 7091,
+      "sha256": "6a8e33e2a8ee38575d7306ff6ac15493140a02d86342a08dafaf18514f39a555",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_research_reporting.py",
+      "bytes": 4082,
+      "sha256": "dd46da4d7dab97c1bc5c4c15556b7d3ad6f6fecebee887660a672446aa44c097",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_stage1_compat_collector.py",
+      "bytes": 3099,
+      "sha256": "301be1bf293857fef9f5d669328d3dd0514158e79586b76e00366d1c5b0848af",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_stage1_compat_hardening.py",
+      "bytes": 14795,
+      "sha256": "a55df7752b91be655c67aa5971dcb3bf0a3549d45d76260c23c20afd08462750",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_stage1_compat_preflight.py",
+      "bytes": 4662,
+      "sha256": "206635ce28108fe010a6a38ec7cd6d29ff686e83a023ae45f350dbd5e5eb192a",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_stage1_compat_runner.py",
+      "bytes": 21657,
+      "sha256": "9028e971982c90b84b43d2de654db91a8a38b50abfa8bfebcbb5732bbd3823d7",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_stage2_acceptance.py",
+      "bytes": 16644,
+      "sha256": "f30a95eecccc430c8679ed763b7ceeaa6bc840e679d63a3fe5a9c5702761d365",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_stage2_protocol.py",
+      "bytes": 5465,
+      "sha256": "9a71e0d6dca0a35a0bddd067244cb03741d883fbb51d91fd6838562f67dbfc83",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_stage2_repair.py",
+      "bytes": 7653,
+      "sha256": "6a17c4df39cea3c2c87368c1d41297eb0ab87897919a7b0dae4ef62a3fee4643",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_stage2_scratch.py",
+      "bytes": 6915,
+      "sha256": "2736392c47b8bc7317bac3172bba083caede05be3e7e099325bd70c05d481f98",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_stage2_scratch_audit.py",
+      "bytes": 10953,
+      "sha256": "044a8ec2d9c5a4c1bc9a7f6398567dbfda0772216cd0b5a467b87d05e9bb69df",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_stage2_scratch_cli_paths.py",
+      "bytes": 5643,
+      "sha256": "fb1abb5f87899f67f94613430e9bd6f58b149f51f93df80d91e19d7afef5c20a",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_strict_preflight_regressions.py",
+      "bytes": 11435,
+      "sha256": "cd37fc4103eefaab47cf74619b9874ea37dcac2f9697011e46183bed5575b9c4",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "training/stage2_scratch_v4/tests/test_training_gate_c.py",
+      "bytes": 5203,
+      "sha256": "b48c510b45b1910d5d8cfdd865106fd18ee38765a3364989a0d188572c9d0e92",
+      "role": "current_R12_training_code"
+    },
+    {
+      "path": "models/stage2_scratch_v4/label01_seed42/best_model.pth",
+      "bytes": 6364874,
+      "sha256": "8f1412e618c7bbef9df9dba491f5c804d76ddfd7cc871a4a2898fd21ade36d01",
+      "role": "completed_aggregated_best_model"
+    },
+    {
+      "path": "models/stage2_scratch_v4/label100_seed42/best_model.pth",
+      "bytes": 6364874,
+      "sha256": "bef1411d3593a76ce3ebbc1d1334278ea2c0ca7c7cf7a7c07db6a748e1bb9836",
+      "role": "completed_aggregated_best_model"
+    },
+    {
+      "path": "models/stage2_scratch_v4/label1_seed42/best_model.pth",
+      "bytes": 6364874,
+      "sha256": "613fa239c0fb6b94231d6d0f97971cfd618d05378bcaa6e2400a9e3641e0d2b3",
+      "role": "completed_aggregated_best_model"
+    },
+    {
+      "path": "models/stage2_scratch_v4/quantity100_seed42/best_model.pth",
+      "bytes": 6364874,
+      "sha256": "9439319497dae6cd018b7dad6f5a46d607166c73cdfb20a15698fe80882c3d66",
+      "role": "completed_aggregated_best_model"
+    },
+    {
+      "path": "models/stage2_scratch_v4/label01_seed42/checkpoints/label01_seed42_checkpoint.pth",
+      "bytes": 12740124,
+      "sha256": "b95590066a3f4fd9d451fc1d51481fb6f03b356691e36728ba87cb454b07bc84",
+      "role": "resume_checkpoint_COMPLETED_JOB_RESUME_SNAPSHOT"
+    },
+    {
+      "path": "models/stage2_scratch_v4/label100_seed42/checkpoints/label100_seed42_checkpoint.pth",
+      "bytes": 12740124,
+      "sha256": "33147b2750d088449a75ff822f2588a2cc10aa23cb31ebdb5a47b73d81d0070b",
+      "role": "resume_checkpoint_COMPLETED_JOB_RESUME_SNAPSHOT"
+    },
+    {
+      "path": "models/stage2_scratch_v4/label1_seed42/checkpoints/label1_seed42_checkpoint.pth",
+      "bytes": 12740124,
+      "sha256": "d814e018d47044d9a618b42fd94d009bfe2b45c57c84773d3bc38340a1a3dce0",
+      "role": "resume_checkpoint_COMPLETED_JOB_RESUME_SNAPSHOT"
+    },
+    {
+      "path": "models/stage2_scratch_v4/quantity01_seed42/checkpoints/quantity01_seed42_checkpoint.pth",
+      "bytes": 12739612,
+      "sha256": "a24be2c7ab0af4911a945dc5617855bd1bf540ef82c8916e5d9998fab64ddd40",
+      "role": "resume_checkpoint_PAUSED_QUOTA"
+    },
+    {
+      "path": "models/stage2_scratch_v4/quantity100_seed42/checkpoints/quantity100_seed42_checkpoint.pth",
+      "bytes": 12740124,
+      "sha256": "10d34986b580276b9854f049a13011de0feaf4ef07a18ccec3e295ed2f74cbc4",
+      "role": "resume_checkpoint_COMPLETED_JOB_RESUME_SNAPSHOT"
+    },
+    {
+      "path": "results/stage2_scratch_v4/label01_seed42/job_result.json",
+      "bytes": 6001,
+      "sha256": "5997f8eca9e3afe7669ea9a7a40f1b205dc0a873ea86e1004afc0daebf1787be",
+      "role": "original_run_metadata_do_not_rewrite"
+    },
+    {
+      "path": "results/stage2_scratch_v4/label01_seed42/fedavg_metrics.json",
+      "bytes": 6001,
+      "sha256": "5997f8eca9e3afe7669ea9a7a40f1b205dc0a873ea86e1004afc0daebf1787be",
+      "role": "original_run_metadata_do_not_rewrite"
+    },
+    {
+      "path": "results/stage2_scratch_v4/label100_seed42/job_result.json",
+      "bytes": 5975,
+      "sha256": "e879343d15a8b125d67f754091c5c9b331b752f4ed8e860bc49710b17dd5b6fe",
+      "role": "original_run_metadata_do_not_rewrite"
+    },
+    {
+      "path": "results/stage2_scratch_v4/label100_seed42/fedavg_metrics.json",
+      "bytes": 5975,
+      "sha256": "e879343d15a8b125d67f754091c5c9b331b752f4ed8e860bc49710b17dd5b6fe",
+      "role": "original_run_metadata_do_not_rewrite"
+    },
+    {
+      "path": "results/stage2_scratch_v4/label1_seed42/job_result.json",
+      "bytes": 5973,
+      "sha256": "3d8a10416d34eab77348e32ee4ff844379bce25bd2120f923cf70f4f7cd42cb5",
+      "role": "original_run_metadata_do_not_rewrite"
+    },
+    {
+      "path": "results/stage2_scratch_v4/label1_seed42/fedavg_metrics.json",
+      "bytes": 5973,
+      "sha256": "3d8a10416d34eab77348e32ee4ff844379bce25bd2120f923cf70f4f7cd42cb5",
+      "role": "original_run_metadata_do_not_rewrite"
+    },
+    {
+      "path": "results/stage2_scratch_v4/quantity100_seed42/job_result.json",
+      "bytes": 5991,
+      "sha256": "52ee76d50142e6a645bcd4c0c42841113b792aea98de8948ae77a6813f3791c7",
+      "role": "original_run_metadata_do_not_rewrite"
+    },
+    {
+      "path": "results/stage2_scratch_v4/quantity100_seed42/fedavg_metrics.json",
+      "bytes": 5991,
+      "sha256": "52ee76d50142e6a645bcd4c0c42841113b792aea98de8948ae77a6813f3791c7",
+      "role": "original_run_metadata_do_not_rewrite"
+    },
+    {
+      "path": "results/stage2_scratch_v4/preflight.json",
+      "bytes": 4510,
+      "sha256": "e94a42cbaa5f3fa83ad00b389859028353b42f95761ddb9e33b5e2430253b40b",
+      "role": "original_run_metadata_do_not_rewrite"
+    },
+    {
+      "path": "results/stage2_scratch_v4/scratch_comparison.json",
+      "bytes": 1772,
+      "sha256": "c9b0137f20a3c79cfe0ef078a0f8df197f4e9c7b92b831a3db6d60b5a8bcbcd4",
+      "role": "original_run_metadata_do_not_rewrite"
+    },
+    {
+      "path": "results/stage2_scratch_v4/scratch_protocol.json",
+      "bytes": 885,
+      "sha256": "1e263bc9582f0083dadffa82ddb9d2a93093f764c42d03ae557a1b7dbe8bcfdd",
+      "role": "original_run_metadata_do_not_rewrite"
+    },
+    {
+      "path": "results/stage2_scratch_v4/session_1789954804661655686.json",
+      "bytes": 385,
+      "sha256": "c051500a494dbeace33bf70f2bc95417a7d539be63a95a2930248a2bd47e8069",
+      "role": "original_run_metadata_do_not_rewrite"
+    },
+    {
+      "path": "results/stage2_scratch_v4/stage1_comparison.json",
+      "bytes": 7533,
+      "sha256": "b3158e009dce2e11afa0ad88933d525d17a44463fa87c778b2f7edb110a5ca5d",
+      "role": "original_run_metadata_do_not_rewrite"
+    },
+    {
+      "path": "results/stage2_scratch_v4/stage1_ledger.json",
+      "bytes": 3495,
+      "sha256": "41a594dbcfb72f3b585289a75cfc735929015f5e8545a8feb085f7ab865796ee",
+      "role": "original_run_metadata_do_not_rewrite"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/data/duplicate_review.json",
+      "bytes": 921507,
+      "sha256": "53bbb477f71e0512535f58d17835e77cd727c65f4354e034ec1761120f0c2f74",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/data/four_visually_verified_pairs.json",
+      "bytes": 1720,
+      "sha256": "b1f5dd3a448ef7cd5e3c087e9267f1bfff1a2162571bc594369f2b308427d492",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/data/visually_verified_pairs.json",
+      "bytes": 2608,
+      "sha256": "257cbcc1b8a77af1c59ab26eff71e191c0763db0cb6c1b5050e2019500a626f1",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/__init__.py",
+      "bytes": 114,
+      "sha256": "e97931e2f21e49d752e78406b97ef4065cf3adb621978846f9311e4121c8283a",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/budget.py",
+      "bytes": 1492,
+      "sha256": "de77dbaf134622cba196605dce384b9ddc41f3abd0ca0733341d1330dc26e036",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/budget_state.py",
+      "bytes": 8838,
+      "sha256": "8af4885dba6197c71d0fee89649ec946012b20d47b4e321897dfa382ad40bed3",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/checkpoint.py",
+      "bytes": 11994,
+      "sha256": "8896769954c60c8923101e47d6b2e2ceaadac4c0f64a16405825c5f7126c8914",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/client_app.py",
+      "bytes": 7119,
+      "sha256": "35940c8baedf883512df0a67a2594d229eb50f381071897752c945aa1388f42a",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/config.py",
+      "bytes": 28110,
+      "sha256": "c34dbc8e4598c95693ffc3ea2b4ec48dfe2588b634d02e192b4d1fb55ae88da2",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/content_audit.py",
+      "bytes": 4097,
+      "sha256": "248a76ed94406309df65bf3456444d5b1f6f3ddcd9e9e38ab0d70655be59f59f",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/control.py",
+      "bytes": 7201,
+      "sha256": "5d21b3c9f1c4133e246739e661d6695d944cebe50969e5b904d7889a41126441",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/data.py",
+      "bytes": 10651,
+      "sha256": "6bab5b358e3e4ebde9257d0fa04eb58b4e582ec2c98cb240ded642ea6de5fbf6",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/evaluation_artifacts.py",
+      "bytes": 2669,
+      "sha256": "79f715421819df5c393592225d29ab7437de16c5c3ada4f800883d93390f221f",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/kaggle_budget.py",
+      "bytes": 28011,
+      "sha256": "6719368161790d73e6ee36ec90d03ef7d7bed6ce4fa788e3debe05f82c8b59bb",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/model.py",
+      "bytes": 3135,
+      "sha256": "d2f29f48804808542089eef159f4d35f9908c3d7c55ce5a16d1e386da3b68db5",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/package_verify.py",
+      "bytes": 4724,
+      "sha256": "3102ae5f66c629f6f9789e4109903d644d21848050ed1bb413bf658b1c572419",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/prepare.py",
+      "bytes": 31743,
+      "sha256": "b536dc0921c3cb82e1f64f8f643f6dbb0044c27d3bc1fbaf39bee937e09f4448",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/progress.py",
+      "bytes": 10473,
+      "sha256": "6b088e223ddc5fc75256ca312b58b8e90b718965c7b24c2825adf1a3fcf9d6ea",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/reporting.py",
+      "bytes": 15207,
+      "sha256": "d597e9a5e3c4140b663b0f6fd7e5729c67fdea8c915c7f249281616c257b17a3",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/reproducibility.py",
+      "bytes": 1110,
+      "sha256": "af55ed21faa4fde47553205359e7f7a58a969f13c0e84b11cdb5c5a5771dc699",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/research_reporting.py",
+      "bytes": 10153,
+      "sha256": "1b576e451fce2d7c0b65ff4f767be3e797bfc7c5086bb214c66ec1158d58ad35",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/server_app.py",
+      "bytes": 25772,
+      "sha256": "c3635c9a68e6ec8263029ed61e09359089d6e226715086d40fdde485238b6386",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/stage2_protocol.py",
+      "bytes": 4672,
+      "sha256": "057acee5c8d4db4d84dec1d09df3c24a90861204e2c3f6d32054fdeb799560e0",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/strategy.py",
+      "bytes": 10288,
+      "sha256": "a11d2d10f33b6d033727690b852c0c3ed1527b389aec666d6b957100e6d116fe",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/sweep.py",
+      "bytes": 25172,
+      "sha256": "95ec5c266068bbbd3f5845a86e90ebed7b2d912810fad2820d928a895379d928",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/fl_training/task.py",
+      "bytes": 10564,
+      "sha256": "085396c1b010f01e4924ee8bf545a5e492ccc17d53c59088e3573a3644bf6900",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/kaggle_stage2_scratch_v4.ipynb",
+      "bytes": 12083,
+      "sha256": "a56a5bd2d276c4facd07723d487f88f07fdf421463e6ba695860e1891a0e9d85",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/pyproject.toml",
+      "bytes": 1221,
+      "sha256": "e7df8124a7985744a8a79f9d0ab10d411a2c76279a35f940c3f080bdb0983442",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/requirements-stage1.txt",
+      "bytes": 198,
+      "sha256": "c50e1f5915cc290b4e6ecff4a43c414bd39940352e186c6ce09b1dfcd0e24d70",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/requirements-stage2-matched.txt",
+      "bytes": 57,
+      "sha256": "9a3f4b24ba213c69eca5ae8d50abf77ce29d5d7ccc782aa129a691b4e5d6bc14",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/src/__init__.py",
+      "bytes": 46,
+      "sha256": "ed2f51645bafcec92855593ae9bb94c873b26b4854b6b75ea87c2c00cd96fb63",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/src/data/__init__.py",
+      "bytes": 2493,
+      "sha256": "b7ad8129d05afb119db1f48b323688d3c8d74ce8d20805c8ba1effebfa0737b3",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/src/data/dataset.py",
+      "bytes": 12157,
+      "sha256": "6b94958dd77118181f3515b1ca4d09e01a20ccb10d7cee6d0952f37037211991",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/src/data/dirichlet_split.py",
+      "bytes": 17476,
+      "sha256": "9510d85fc763d99e0ab68ba2be605d7b6d026acd9049d2413e238fea1f00c540",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/src/data/fedavg.py",
+      "bytes": 18282,
+      "sha256": "5a1fafda7e17ccc922f8d2757ba6fff947d903cea3999c03bbf127674b385d8e",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/src/data/leaf_groups.py",
+      "bytes": 10577,
+      "sha256": "41e1e0ae63293a951b4cf1b98a8be5f5bd6db14d3c11e4745a92e9e0b2c6fb4f",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/src/data/metrics.py",
+      "bytes": 15608,
+      "sha256": "65994dc58287b7f51cb403ba5a277fcdc754ed49846f0c44d39b3f1971d5e314",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/src/data/partitioner.py",
+      "bytes": 28670,
+      "sha256": "26995ac9d57ae857daf016a01819c57a5e0f36834ec0293a60b1281e0d9456f8",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/src/data/transforms.py",
+      "bytes": 14917,
+      "sha256": "ebf50357899adf1e37be07d80cad72727ecddf3fb86b83f582778f5919be6d7b",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/__init__.py",
+      "bytes": 233,
+      "sha256": "3ef0621163e92b6386234b6280c7a1010605fcdfb31ad425de9cbd4a21872d79",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/accounting.py",
+      "bytes": 9062,
+      "sha256": "a99fd1331f350ea0c699ec416492c25bf2cd665f6e5e077f9b2e219398c088cc",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/artifacts.py",
+      "bytes": 3648,
+      "sha256": "74ee5101a2d0a44ca6a6ec4dc02a344337ef3966044deb997147690d665ccb6c",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/baselines.py",
+      "bytes": 10339,
+      "sha256": "3e32270410e7c4c7b90752199a8183b3613cdd567baaeafb10e16e96abb58bc1",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/budget.py",
+      "bytes": 12553,
+      "sha256": "8ec5ef96c1bb14728c9785cd419a23f5e0a1ecdc79042c21b7ed25635c7cd011",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/calibrate.py",
+      "bytes": 5175,
+      "sha256": "b24213b370f73a78790c6b03e6326762206e1549514abebb44f6edfc63c0626e",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/checkpoint.py",
+      "bytes": 6441,
+      "sha256": "6785e4cd7e0daa3d7e2c0f824e11647e81686c8a06eb242b0809ca55ad4713b8",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/collector.py",
+      "bytes": 15980,
+      "sha256": "6cee33017722df85b763e1389f89dd8e053577862e5697c0513d641727a1ac66",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/config.py",
+      "bytes": 3271,
+      "sha256": "01662f10973185fe5c7386aeb01fc19989170a127872a8a881de7e02731aaa06",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/constants.py",
+      "bytes": 1382,
+      "sha256": "ef0e3a1a6a46bbb09dcf4601c1f7656df02f1ddf24d03b9829bc8010a8866739",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/data.py",
+      "bytes": 6718,
+      "sha256": "d1995ec1e0db0652e814c258062bd11ef1551658a445549ab70aa414abdda3b6",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/dry_run.py",
+      "bytes": 4386,
+      "sha256": "d535be7e5e5cb19217a612de3f4c893b5bb8fbd5e93aafb545ffd2d2b381b832",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/identity.py",
+      "bytes": 3943,
+      "sha256": "ec18c4f80d087c31f485252a3217a78b75a24e7df60617f79fcfbf87ebcbb8f6",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/integrity.py",
+      "bytes": 1925,
+      "sha256": "f9d92205b398e007970190afbd73ca6933c9b737d9071ce1898166fbe5631ebb",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/launcher.py",
+      "bytes": 6819,
+      "sha256": "dca9054fe0a34d0ae3f01068d9003946565b4d4a2835752d593777877c8a1fe8",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/models.py",
+      "bytes": 727,
+      "sha256": "aeb4bd41ef5b3254d5f257d141a924d2a358c63044e091f0d4e3646ade7ded3c",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/preflight.py",
+      "bytes": 13067,
+      "sha256": "875de3c69986ec46bfaa5657c1ead5f6dd775842e29dcc21b632add9d1f46f9f",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/runner.py",
+      "bytes": 25258,
+      "sha256": "cccd3046b91e015ea5907525884ee51bebb3c2343526085c585980539829c9e7",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/experiments/compare_results.py",
+      "bytes": 2013,
+      "sha256": "6551a5a439a365c5a611099082b0a7fa643d2c2f262d432d80efed6c7a76f40b",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/experiments/partitions/plantvillage_alpha100_clients5_seed42.json",
+      "bytes": 539541,
+      "sha256": "f207b244cd09bc33b8003828df664547afc47bda98785c7853caa6eb048ef0b8",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/experiments/partitions/plantvillage_alpha1_clients5_seed42.json",
+      "bytes": 539490,
+      "sha256": "b97725cd5f0f8e984c7ddba1a100bd9a0faee73f208345ba4e0f5c36d4f637c8",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/experiments/report_stage2.py",
+      "bytes": 8128,
+      "sha256": "85dd82eed56948dfbe10d319fd7d6af41ae240af1e05fdc731a0707df002586a",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/experiments/results/centralized_metrics.json",
+      "bytes": 2664,
+      "sha256": "4d613e91923b60094d95a4df10a69c75ebf2edf25f42c1bd6615d7b9d7e25cb8",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/experiments/results/centralized_seed42_metrics.json",
+      "bytes": 2664,
+      "sha256": "4d613e91923b60094d95a4df10a69c75ebf2edf25f42c1bd6615d7b9d7e25cb8",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/experiments/results/dataset_inspection.json",
+      "bytes": 3265,
+      "sha256": "ba572dde0ce6028a4b36373773e27252e8cc2a0a0e55328a9feda39ac4768efe",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/experiments/results/fedavg_alpha1_seed42.json",
+      "bytes": 6039,
+      "sha256": "e8aa2daef3dcf18980590881faf8c2d6263211edaf0cb093e639494bcd9c2e25",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/experiments/results/fedavg_metrics.json",
+      "bytes": 6039,
+      "sha256": "e8aa2daef3dcf18980590881faf8c2d6263211edaf0cb093e639494bcd9c2e25",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/experiments/results/local_only_alpha100_seed42.json",
+      "bytes": 4861,
+      "sha256": "83a04dd1a60c734dc8c7d83b618e52add532fcd2e3f5b2302a1cd3af26dbd13f",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/experiments/results/local_only_alpha1_seed42.json",
+      "bytes": 4809,
+      "sha256": "4d13dd7767eab28c7a2f7dc2d30cbafc1b47ced0d6675d8da6c92b2d0b3798c1",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/experiments/results/local_only_metrics.json",
+      "bytes": 4809,
+      "sha256": "4d13dd7767eab28c7a2f7dc2d30cbafc1b47ced0d6675d8da6c92b2d0b3798c1",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/experiments/splits/plantvillage_seed42.json",
+      "bytes": 369118,
+      "sha256": "fa44b69cb8509a6af7562f2becd17b06315e4237e652382dd1ea8b5399eb1cc3",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/experiments/splits/plantvillage_train0.72_val0.08_seed42.json",
+      "bytes": 369188,
+      "sha256": "0af343233b632776973f3666dfc886424ad593ef7c402c01aa0c8be875385d9f",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/federated/__init__.py",
+      "bytes": 31,
+      "sha256": "ccabfd71d660a91f44c581cb67e5d4665c4eb9eb60db48bd6c29a63be3cd78d1",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/federated/run_simulation.py",
+      "bytes": 12683,
+      "sha256": "74e54ee772e99a01841aa45078de35efeaff5ac1ca0df874ee2ce83209131ea4",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/models/__init__.py",
+      "bytes": 73,
+      "sha256": "54b651ae6bd6ab39eaedd3a1383cd9900428219e42ddaa5d77f0074249c3a63e",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/models/mobilenetv3.py",
+      "bytes": 421,
+      "sha256": "c7214939837e7ca971b9f01bbdb4dfebe35524acd53254f13f43725ff51db1b4",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/README.md",
+      "bytes": 2906,
+      "sha256": "ea661a8094595ab707c04fd995252b761a6334e8e1b19d42e7401ab3ec2c0c57",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/requirements.txt",
+      "bytes": 138,
+      "sha256": "1b98692323cb698a9ab43527ff92025eb09f82c2eecd9c39427b07227c398455",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/test_setup.py",
+      "bytes": 682,
+      "sha256": "6664d088edc0a7b69e3964af5747f6f3b20fedf1cb0c130693fb230c7d20046f",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/utils/__init__.py",
+      "bytes": 65,
+      "sha256": "0de9a7d8f2c259fb63d8a06984392e94134f00d33c9ebdf24d83c83322512f68",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/utils/config.py",
+      "bytes": 639,
+      "sha256": "517e8f623d0960788d7da2b032ab076a61f5c62e3a8ff7cdf7a7acb18fee5a68",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/utils/data_partition.py",
+      "bytes": 3923,
+      "sha256": "1e594ea8930eb21734714bfa5f81602bea6702058457236b6aa502e81877b7bc",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/utils/data_utils.py",
+      "bytes": 5207,
+      "sha256": "c88b0a71ca4cd310fd7ff4684bd2e5ca710421ad242dcb0a3266edc6c5e2b0c8",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/utils/evaluate.py",
+      "bytes": 1824,
+      "sha256": "74d6000175def8d691fc20398e0cded95f286c61c77430c632c83d635d2b937b",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/utils/plotting.py",
+      "bytes": 2031,
+      "sha256": "533a640f3b3fcc156e894720996c516f8d7d928066fc9374b53a058da1ea3479",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream/utils/reproducibility.py",
+      "bytes": 284,
+      "sha256": "ded81666d8af8e0c029232fee966aa8b015da4edc5551202ff50569c1e39a19b",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream_loader.py",
+      "bytes": 2183,
+      "sha256": "bd7ad13c3e7f137de9ec9a7de5eccaa3a7480902f37bd895e9404529aa69d669",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage1_compat/upstream_manifest.json",
+      "bytes": 3423,
+      "sha256": "0ed324013f785f2aec3ca5e2d5cf345f75affe61b0a923696ca1c101372a6679",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage2_matched/__init__.py",
+      "bytes": 75,
+      "sha256": "6e4d6a86f660039e9f6adee9ce3d20b4349ffb44a66228b14540d462b31e2f08",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage2_matched/data.py",
+      "bytes": 21881,
+      "sha256": "27c2a88c91f8699f0542890b65accf6b2f980641d32d3c165a9e9e421b37491c",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage2_scratch/__init__.py",
+      "bytes": 83,
+      "sha256": "de6a538dae1097128c305a8f88fadae2ee236d335368278703d23c37ecab8392",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage2_scratch/__main__.py",
+      "bytes": 4557,
+      "sha256": "6b30c28db8363ae624924555bc0d54551a653bab7efeef1079b4b4b8d5288120",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage2_scratch/aggregation.py",
+      "bytes": 3536,
+      "sha256": "1ee9b441e8ee3998754932c746ddd85cd075c1e3890f977b5362e1acf766eda3",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage2_scratch/baselines.py",
+      "bytes": 2172,
+      "sha256": "d7fa141b3418c92c2473e42d2be030343e80e1586c651c300cc485b482730107",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage2_scratch/experiment.py",
+      "bytes": 24316,
+      "sha256": "edb18bd9fd359861af6edc7fa91052723f3b85305ff2b536a2b8e9a227d487c1",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage2_scratch/flower_adapter.py",
+      "bytes": 10731,
+      "sha256": "c99791bb0698d2a6bab098d50f0459a4584ced686d0896b828bb873a0b1865a2",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/stage2_scratch/runner.py",
+      "bytes": 17415,
+      "sha256": "8ce3dcb5e3655b6dceffe8f781206a3962841850c9b8a77c7800d29c538db9f2",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/fixtures/kaggle_calibration_20260914.json",
+      "bytes": 2762,
+      "sha256": "fd9d89c2cfa27a2f4422b0dd66ab516e158707f7082db8719d7bf78d928afa1e",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_content_guard.py",
+      "bytes": 4943,
+      "sha256": "79f192f9c83c7ef2e42bcbb7f06c9d2982dd255a9748ce933dc9cfb15b69e680",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_flower_parity.py",
+      "bytes": 5648,
+      "sha256": "b4b150f7bdd987b7e361a7d20b3193041be83b94120697972818981a87534e8f",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_kaggle_30h.py",
+      "bytes": 19917,
+      "sha256": "6caf891b154c350ba19b662f8ca7260c616bd0b9db641ac7d75ad1eef963808f",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_package_and_notebook_v4.py",
+      "bytes": 4041,
+      "sha256": "7be798c97a73d248ab8f4a4800322bc28336f550c0cb78d0e8296814941899ce",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_partition.py",
+      "bytes": 27496,
+      "sha256": "37568586a1b0e33d484f997c81eeba446a0bb09e1c6190c160809c9c94eaba87",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_real_flower_parity.py",
+      "bytes": 7071,
+      "sha256": "8215bdfeabc1200d6719be64b9e94be518dcd55b03977804f73432ed610188b0",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_research_reporting.py",
+      "bytes": 3953,
+      "sha256": "7008839857f82070cae548d92fe2928cf759b5150a2927e4a79b739d3c8b6def",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_stage1_compat_collector.py",
+      "bytes": 3099,
+      "sha256": "301be1bf293857fef9f5d669328d3dd0514158e79586b76e00366d1c5b0848af",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_stage1_compat_hardening.py",
+      "bytes": 13790,
+      "sha256": "090aedf1716353ade6dbb39e18203017f83cd6a6e7fe15912ecc1ad7b19e0682",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_stage1_compat_preflight.py",
+      "bytes": 4090,
+      "sha256": "ddd27bc84263f0a7bcb5ba42e71365f69a13acf13303be510481c2cd07b245b3",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_stage1_compat_runner.py",
+      "bytes": 21657,
+      "sha256": "9028e971982c90b84b43d2de654db91a8a38b50abfa8bfebcbb5732bbd3823d7",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_stage2_acceptance.py",
+      "bytes": 16616,
+      "sha256": "4859cf9131c7ee38e61bb40e88c677dc915b2a13c44a8fb5b893f0a00ef033db",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_stage2_matched.py",
+      "bytes": 8752,
+      "sha256": "a34cc1290cd9bb1f3dbc6771d0e711f8e7093c9d7d5b3646e3004c71e3cfb16c",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_stage2_protocol.py",
+      "bytes": 5465,
+      "sha256": "9a71e0d6dca0a35a0bddd067244cb03741d883fbb51d91fd6838562f67dbfc83",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_stage2_repair.py",
+      "bytes": 7625,
+      "sha256": "5e2187325f6727f8628bf7fa4c46c359e103c3aa8151bc08c2ea063669d8752e",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_stage2_scratch.py",
+      "bytes": 6255,
+      "sha256": "1653cfb4a4eb811ddc0d43fd92faccacef948003fb4bdcd65f5c83b065f78ac0",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_stage2_scratch_audit.py",
+      "bytes": 10241,
+      "sha256": "6417348d39b7a1ba7404386215f9bbf4a61e6885b815896b40f3b18f1bc8397f",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_strict_preflight_regressions.py",
+      "bytes": 11081,
+      "sha256": "3b80966bf5e8d027415f1738ead6f9078b76ac03377bcf412b791ae5b1916e20",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_team_runner.py",
+      "bytes": 7307,
+      "sha256": "27aac8630451db8c4cca683cd18d8c8646701ee77ceb339ce47c3f3ac88308d6",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_training_gate_a.py",
+      "bytes": 3246,
+      "sha256": "6f78765e03bea2928983b28e6891be748e938753be4c7cf580268eac17c289ef",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_training_gate_b.py",
+      "bytes": 5443,
+      "sha256": "3d743ec7e7ff42895907634f73c71d2846d790387c4a50bee07568fe4d54e414",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_training_gate_c.py",
+      "bytes": 5203,
+      "sha256": "b48c510b45b1910d5d8cfdd865106fd18ee38765a3364989a0d188572c9d0e92",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_training_gate_d.py",
+      "bytes": 4209,
+      "sha256": "b992559d9fd3ac2249691cb6a0e4069cc746d4e9271517d40ae000003ba73b76",
+      "role": "original_training_source_not_current_R12"
+    },
+    {
+      "path": "provenance/kaggle-scratch-v4-training-source/tests/test_training_gate_e.py",
+      "bytes": 2589,
+      "sha256": "dd7ac3e7b7c8aab7d20d0bab07c845d291e13debe780ea486aa233b25d5a43c1",
+      "role": "original_training_source_not_current_R12"
+    }
+  ]
+}

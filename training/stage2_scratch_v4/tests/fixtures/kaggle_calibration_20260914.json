@@ -1,0 +1,72 @@
+{
+  "identity": "adeec98cb56a4280a4f178374c6b1e47f1b1a76b96549effb6375d7b73161251",
+  "rounds": null,
+  "jobs": {
+    "calibration/iid__feature-none__seed-42/centralized": {
+      "attempts": 1,
+      "wall_seconds": 233.11836164400006,
+      "status": "completed",
+      "max_rss_bytes": 1516478464,
+      "max_gpu_memory_mb": 608.0
+    },
+    "calibration/iid__feature-none__seed-42/local-only": {
+      "attempts": 1,
+      "wall_seconds": 905.8143009849998,
+      "status": "completed",
+      "max_rss_bytes": 1649889280,
+      "max_gpu_memory_mb": 610.0
+    },
+    "calibration/iid__feature-none__seed-42/fedavg": {
+      "attempts": 1,
+      "wall_seconds": 243.29936231500005,
+      "status": "completed",
+      "max_rss_bytes": 585863168,
+      "max_gpu_memory_mb": 610.0
+    }
+  },
+  "calibration": {
+    "centralized": {
+      "seconds_per_round": 146.16182629100012,
+      "fixed_seconds": 379.2801879350002,
+      "measured_wall_seconds": 233.11836164400006,
+      "calibration_rounds": 1,
+      "client_models_measured": 1,
+      "training_validation_seconds": 146.16182629100012,
+      "startup_checkpoint_postprocess_seconds": 86.95653535299994,
+      "max_process_rss_bytes": 1516478464,
+      "max_gpu_memory_mb": 608.0,
+      "gpu_memory_scope": "nvidia-smi compute processes; null when unavailable",
+      "final_evaluation_report_reserve_round_equivalents": 2,
+      "test_used_for_selection": false
+    },
+    "local-only": {
+      "seconds_per_round": 455.3123976770012,
+      "fixed_seconds": 1361.126698662001,
+      "measured_wall_seconds": 905.8143009849998,
+      "calibration_rounds": 1,
+      "client_models_measured": 10,
+      "training_validation_seconds": 455.3123976770012,
+      "startup_checkpoint_postprocess_seconds": 450.50190330799865,
+      "max_process_rss_bytes": 1649889280,
+      "max_gpu_memory_mb": 610.0,
+      "gpu_memory_scope": "nvidia-smi compute processes; null when unavailable",
+      "final_evaluation_report_reserve_round_equivalents": 2,
+      "test_used_for_selection": false
+    },
+    "fedavg": {
+      "seconds_per_round": 193.78259921073916,
+      "fixed_seconds": 437.0819615257392,
+      "measured_wall_seconds": 243.29936231500005,
+      "calibration_rounds": 1,
+      "client_models_measured": 1,
+      "training_validation_seconds": 193.78259921073916,
+      "startup_checkpoint_postprocess_seconds": 49.51676310426089,
+      "max_process_rss_bytes": 585863168,
+      "max_gpu_memory_mb": 610.0,
+      "gpu_memory_scope": "nvidia-smi compute processes; null when unavailable",
+      "final_evaluation_report_reserve_round_equivalents": 2,
+      "test_used_for_selection": false
+    }
+  },
+  "used_seconds": 2631.520771817
+}

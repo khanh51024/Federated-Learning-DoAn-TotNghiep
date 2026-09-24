@@ -1,0 +1,38 @@
+[
+  {
+    "a": "Corn_(maize)___healthy/8afc9635-c5e3-41be-aac0-74109d6112ed___R.S_HL 0601 copy 2.jpg",
+    "b": "Corn_(maize)___healthy/94ca39a0-d4df-44c6-b5cc-a38a754506e5___R.S_HL 0601 copy 3.jpg",
+    "same_label": true,
+    "phash_distance": 0,
+    "rgb_mae": 3.479217529296875,
+    "decision": "accepted",
+    "reason": "Visually verified original pair: same physical leaf/source scene."
+  },
+  {
+    "a": "Tomato___Tomato_Yellow_Leaf_Curl_Virus/4ae45072-4db3-477d-9ace-9a08ce483d46___UF.GRC_YLCV_Lab 01407.JPG",
+    "b": "Tomato___Tomato_Yellow_Leaf_Curl_Virus/9836e208-f2b2-4713-b258-6faec4e0043a___UF.GRC_YLCV_Lab 01408.JPG",
+    "same_label": true,
+    "phash_distance": 2,
+    "rgb_mae": 7.753880977630615,
+    "decision": "accepted",
+    "reason": "Visually verified original pair: same physical leaf/source scene."
+  },
+  {
+    "a": "Tomato___Tomato_Yellow_Leaf_Curl_Virus/7bff3fb7-788d-414c-bf0e-92a5ce4a4757___UF.GRC_YLCV_Lab 02064.JPG",
+    "b": "Tomato___Tomato_Yellow_Leaf_Curl_Virus/b89e6dce-ebc9-4eac-a0f8-19e34657f6e1___UF.GRC_YLCV_Lab 02067.JPG",
+    "same_label": true,
+    "phash_distance": 4,
+    "rgb_mae": 10.459935188293457,
+    "decision": "accepted",
+    "reason": "Visually verified original pair: same physical leaf/source scene."
+  },
+  {
+    "a": "Corn_(maize)___Northern_Leaf_Blight/83327a8d-9bfd-49d6-9fc9-bc065a379bce___RS_NLB 4044 copy 2.jpg",
+    "b": "Corn_(maize)___Northern_Leaf_Blight/b7ec2193-2a49-43b9-9962-7a13d472e668___RS_NLB 4044.JPG",
+    "same_label": true,
+    "phash_distance": 2,
+    "rgb_mae": 10.835891723632812,
+    "decision": "accepted",
+    "reason": "Visually verified original pair: same physical leaf/source scene."
+  }
+]

@@ -1,0 +1,147 @@
+{
+  "schema_version": "1.0.0",
+  "timestamp_utc": "2026-09-24T15:52:24.155281+00:00",
+  "repository": "https://github.com/khanh51024/Federated-Learning-DoAn-TotNghiep.git",
+  "branch": "code-train-fedavg-old",
+  "architecture": "MobileNetV3-Small",
+  "num_classes": 38,
+  "pretrained": false,
+  "weights": null,
+  "aggregation": "FedAvg (sample-size weighted)",
+  "input_specs": {
+    "channels": 3,
+    "height": 224,
+    "width": 224,
+    "transform": "EVAL_TRANSFORM: RGB, Resize((224, 224)), ToTensor(), Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])"
+  },
+  "scientific_stage2_complete": false,
+  "scientific_note": "Only 4 conditions at seed 42 completed; multi-seed / remaining conditions incomplete. No global winner across conditions. Models must not be averaged across conditions.",
+  "fingerprints": {
+    "original_training_source_sha256": "6f2b6e8c1d3dd3a03dff0127b90aaf73b9dfc83c8c667eaa90d2e8f1a914a3bd",
+    "protocol_source_sha256": "6f2b6e8c1d3dd3a03dff0127b90aaf73b9dfc83c8c667eaa90d2e8f1a914a3bd",
+    "current_R12_source_sha256": "192e40760869a3a00c3da056da67a1b3ef47273d8d9600ba57976d8fd8a572c7",
+    "partitions_suite_tree_sha256": "eea84a26962845f64141803c81eee82aa1cc3841a0dacdc7e94c8fcbac772c15",
+    "partitions_suite_bytes": 264037275,
+    "partitions_suite_files": 84
+  },
+  "completed_models": [
+    {
+      "job_id": "label01_seed42",
+      "condition": "label01",
+      "seed": 42,
+      "relative_path": "models/stage2_scratch_v4/label01_seed42/best_model.pth",
+      "bytes": 6364874,
+      "file_sha256": "8f1412e618c7bbef9df9dba491f5c804d76ddfd7cc871a4a2898fd21ade36d01",
+      "state_sha256": "fcceb9375b4e6b75d1e35648ff4a7d48c3913e7ec0a96353f1cc2ee3dfe11de9",
+      "best_round": 5,
+      "selection_metric": "validation_accuracy",
+      "test_metrics": {
+        "loss": 2.8741084966737267,
+        "accuracy": 0.2550132771724201,
+        "macro_f1": 0.063585588805365,
+        "samples": 10921
+      },
+      "validation_status": "weights_only CPU load, state hash, strict state_dict, finite [1,38] forward; no retraining",
+      "kind": "aggregated global model selected by validation within this condition"
+    },
+    {
+      "job_id": "label100_seed42",
+      "condition": "label100",
+      "seed": 42,
+      "relative_path": "models/stage2_scratch_v4/label100_seed42/best_model.pth",
+      "bytes": 6364874,
+      "file_sha256": "bef1411d3593a76ce3ebbc1d1334278ea2c0ca7c7cf7a7c07db6a748e1bb9836",
+      "state_sha256": "2c51f1a4ae7645278dc198ce9111696f54db7741d513b8b56401b1ef609d928f",
+      "best_round": 10,
+      "selection_metric": "validation_accuracy",
+      "test_metrics": {
+        "loss": 1.6134839349546315,
+        "accuracy": 0.5372218661294753,
+        "macro_f1": 0.2619618109518449,
+        "samples": 10921
+      },
+      "validation_status": "weights_only CPU load, state hash, strict state_dict, finite [1,38] forward; no retraining",
+      "kind": "aggregated global model selected by validation within this condition"
+    },
+    {
+      "job_id": "label1_seed42",
+      "condition": "label1",
+      "seed": 42,
+      "relative_path": "models/stage2_scratch_v4/label1_seed42/best_model.pth",
+      "bytes": 6364874,
+      "file_sha256": "613fa239c0fb6b94231d6d0f97971cfd618d05378bcaa6e2400a9e3641e0d2b3",
+      "state_sha256": "37ea4e8819311d38bc484dd354ae4a7f6fb4a29df3bc6f37e947d8fd6ab10382",
+      "best_round": 10,
+      "selection_metric": "validation_accuracy",
+      "test_metrics": {
+        "loss": 1.594986070732381,
+        "accuracy": 0.5485761377163263,
+        "macro_f1": 0.2819419898160447,
+        "samples": 10921
+      },
+      "validation_status": "weights_only CPU load, state hash, strict state_dict, finite [1,38] forward; no retraining",
+      "kind": "aggregated global model selected by validation within this condition"
+    },
+    {
+      "job_id": "quantity100_seed42",
+      "condition": "quantity100",
+      "seed": 42,
+      "relative_path": "models/stage2_scratch_v4/quantity100_seed42/best_model.pth",
+      "bytes": 6364874,
+      "file_sha256": "9439319497dae6cd018b7dad6f5a46d607166c73cdfb20a15698fe80882c3d66",
+      "state_sha256": "56d9213ec48f3bcca86f5172fbc307fb15cec6f7cda03fff7eed810fa058de8e",
+      "best_round": 10,
+      "selection_metric": "validation_accuracy",
+      "test_metrics": {
+        "loss": 1.6789623838541938,
+        "accuracy": 0.5243109605347496,
+        "macro_f1": 0.2535211790417607,
+        "samples": 10921
+      },
+      "validation_status": "weights_only CPU load, state hash, strict state_dict, finite [1,38] forward; no retraining",
+      "kind": "aggregated global model selected by validation within this condition"
+    }
+  ],
+  "resume_checkpoints": [
+    {
+      "job_id": "label01_seed42",
+      "relative_path": "models/stage2_scratch_v4/label01_seed42/checkpoints/label01_seed42_checkpoint.pth",
+      "bytes": 12740124,
+      "file_sha256": "b95590066a3f4fd9d451fc1d51481fb6f03b356691e36728ba87cb454b07bc84",
+      "status": "COMPLETED_JOB_RESUME_SNAPSHOT",
+      "validation": "File hash only; RNG checkpoint not unpickled; strict resume against original source/environment still required"
+    },
+    {
+      "job_id": "label100_seed42",
+      "relative_path": "models/stage2_scratch_v4/label100_seed42/checkpoints/label100_seed42_checkpoint.pth",
+      "bytes": 12740124,
+      "file_sha256": "33147b2750d088449a75ff822f2588a2cc10aa23cb31ebdb5a47b73d81d0070b",
+      "status": "COMPLETED_JOB_RESUME_SNAPSHOT",
+      "validation": "File hash only; RNG checkpoint not unpickled; strict resume against original source/environment still required"
+    },
+    {
+      "job_id": "label1_seed42",
+      "relative_path": "models/stage2_scratch_v4/label1_seed42/checkpoints/label1_seed42_checkpoint.pth",
+      "bytes": 12740124,
+      "file_sha256": "d814e018d47044d9a618b42fd94d009bfe2b45c57c84773d3bc38340a1a3dce0",
+      "status": "COMPLETED_JOB_RESUME_SNAPSHOT",
+      "validation": "File hash only; RNG checkpoint not unpickled; strict resume against original source/environment still required"
+    },
+    {
+      "job_id": "quantity01_seed42",
+      "relative_path": "models/stage2_scratch_v4/quantity01_seed42/checkpoints/quantity01_seed42_checkpoint.pth",
+      "bytes": 12739612,
+      "file_sha256": "a24be2c7ab0af4911a945dc5617855bd1bf540ef82c8916e5d9998fab64ddd40",
+      "status": "PAUSED_QUOTA",
+      "validation": "File hash only; RNG checkpoint not unpickled; strict resume against original source/environment still required"
+    },
+    {
+      "job_id": "quantity100_seed42",
+      "relative_path": "models/stage2_scratch_v4/quantity100_seed42/checkpoints/quantity100_seed42_checkpoint.pth",
+      "bytes": 12740124,
+      "file_sha256": "10d34986b580276b9854f049a13011de0feaf4ef07a18ccec3e295ed2f74cbc4",
+      "status": "COMPLETED_JOB_RESUME_SNAPSHOT",
+      "validation": "File hash only; RNG checkpoint not unpickled; strict resume against original source/environment still required"
+    }
+  ]
+}

@@ -1,0 +1,212 @@
+{
+  "status": "historical_reference",
+  "reference_only": true,
+  "strict_comparison_eligible": false,
+  "mismatch_reasons": [
+    "Khác split: GĐ1 dùng 39.084/4.328/10.893; GĐ2 v3 dùng 38.984/4.400/10.921",
+    "Khoảng 7.900+ ảnh test GĐ2 thuộc tập train GĐ1 (theo split đã pin)",
+    "Khác optimizer: GĐ1 dùng AdamW; GĐ2 FedAvg dùng SGD",
+    "Khác selection policy: GĐ1 Local-only chọn final epoch; GĐ2 chọn best validation",
+    "Không có baseline Local-only cho alpha=0.1, quantity hoặc feature skew"
+  ],
+  "entries": {
+    "centralized_seed42": {
+      "method": "centralized",
+      "seed": 42,
+      "alpha": null,
+      "client_count": 1,
+      "split_info": {
+        "train": 39084,
+        "validation": 4328,
+        "test": 10893
+      },
+      "selection_policy": "best_validation_accuracy",
+      "metric_units": "ratio [0.0, 1.0]",
+      "metrics": {
+        "test_accuracy": 0.9889837510327734,
+        "test_macro_f1": 0.9846034541392875,
+        "test_loss": 0.04153909953940026,
+        "best_epoch": 8,
+        "best_validation_accuracy": 0.9893715341959335
+      },
+      "source_file": "centralized_seed42_metrics.json",
+      "source_file_sha256": "4d613e91923b60094d95a4df10a69c75ebf2edf25f42c1bd6615d7b9d7e25cb8",
+      "upstream_commit": "79a537060322d3e83e0ebef2d394e2a39e0aa959",
+      "reference_only": true,
+      "strict_comparison_eligible": false,
+      "verification_level": "legacy_protocol_reference",
+      "notes": "Centralized upper bound tham chiếu. Train union/transforms không phụ thuộc client."
+    },
+    "local_only_alpha1_seed42": {
+      "method": "local_only",
+      "seed": 42,
+      "alpha": 1.0,
+      "client_count": 5,
+      "split_info": {
+        "train": 39084,
+        "validation": 4328,
+        "test": 10893
+      },
+      "selection_policy": "final_epoch",
+      "metric_units": "ratio [0.0, 1.0]",
+      "metrics": {
+        "accuracy_mean": 0.902983567428624,
+        "accuracy_std": 0.021408306434750557,
+        "accuracy_min": 0.877811438538511,
+        "accuracy_max": 0.9353713393922702,
+        "macro_f1_mean": 0.8647441333442216,
+        "macro_f1_std": 0.029107799753546715,
+        "macro_f1_min": 0.8245580175501638,
+        "macro_f1_max": 0.9032912211585938,
+        "client_results": [
+          {
+            "loss": 0.2865745659473349,
+            "accuracy": 0.919856788763426,
+            "macro_f1": 0.8900677801311566,
+            "samples": 10893,
+            "client_id": 0,
+            "train_samples": 5785
+          },
+          {
+            "loss": 0.5248353284799308,
+            "accuracy": 0.877811438538511,
+            "macro_f1": 0.8245580175501638,
+            "samples": 10893,
+            "client_id": 1,
+            "train_samples": 7646
+          },
+          {
+            "loss": 0.4488147386933428,
+            "accuracy": 0.8868080418617461,
+            "macro_f1": 0.8425637633175926,
+            "samples": 10893,
+            "client_id": 2,
+            "train_samples": 7531
+          },
+          {
+            "loss": 0.31144564898667865,
+            "accuracy": 0.9353713393922702,
+            "macro_f1": 0.9032912211585938,
+            "samples": 10893,
+            "client_id": 3,
+            "train_samples": 8002
+          },
+          {
+            "loss": 0.3868588281948081,
+            "accuracy": 0.8950702285871661,
+            "macro_f1": 0.8632398845636015,
+            "samples": 10893,
+            "client_id": 4,
+            "train_samples": 10120
+          }
+        ]
+      },
+      "source_file": "local_only_alpha1_seed42.json",
+      "source_file_sha256": "4d13dd7767eab28c7a2f7dc2d30cbafc1b47ced0d6675d8da6c92b2d0b3798c1",
+      "upstream_commit": "79a537060322d3e83e0ebef2d394e2a39e0aa959",
+      "reference_only": true,
+      "strict_comparison_eligible": false,
+      "verification_level": "legacy_protocol_reference",
+      "notes": "Local-only lower bound alpha=1. Đánh giá test tại epoch cuối (epoch 10), không chọn theo validation."
+    },
+    "local_only_alpha100_seed42": {
+      "method": "local_only",
+      "seed": 42,
+      "alpha": 100.0,
+      "client_count": 5,
+      "split_info": {
+        "train": 39084,
+        "validation": 4328,
+        "test": 10893
+      },
+      "selection_policy": "final_epoch",
+      "metric_units": "ratio [0.0, 1.0]",
+      "metrics": {
+        "accuracy_mean": 0.9668778114385385,
+        "accuracy_std": 0.005469257012009621,
+        "accuracy_min": 0.959515285045442,
+        "accuracy_max": 0.97521343982374,
+        "macro_f1_mean": 0.9531304661297006,
+        "macro_f1_std": 0.006047546863555908,
+        "macro_f1_min": 0.9439988399608453,
+        "macro_f1_max": 0.962275692494646,
+        "client_results": [
+          {
+            "loss": 0.12209937518126475,
+            "accuracy": 0.9651152116037822,
+            "macro_f1": 0.9533666611319564,
+            "samples": 10893,
+            "client_id": 0,
+            "train_samples": 8096
+          },
+          {
+            "loss": 0.13315451426368094,
+            "accuracy": 0.9639217846323327,
+            "macro_f1": 0.9501988898065467,
+            "samples": 10893,
+            "client_id": 1,
+            "train_samples": 7626
+          },
+          {
+            "loss": 0.10604238749626997,
+            "accuracy": 0.9706233360873956,
+            "macro_f1": 0.9558122472545092,
+            "samples": 10893,
+            "client_id": 2,
+            "train_samples": 7797
+          },
+          {
+            "loss": 0.08684985530540042,
+            "accuracy": 0.97521343982374,
+            "macro_f1": 0.962275692494646,
+            "samples": 10893,
+            "client_id": 3,
+            "train_samples": 7651
+          },
+          {
+            "loss": 0.15163039193918454,
+            "accuracy": 0.959515285045442,
+            "macro_f1": 0.9439988399608453,
+            "samples": 10893,
+            "client_id": 4,
+            "train_samples": 7914
+          }
+        ]
+      },
+      "source_file": "local_only_alpha100_seed42.json",
+      "source_file_sha256": "83a04dd1a60c734dc8c7d83b618e52add532fcd2e3f5b2302a1cd3af26dbd13f",
+      "upstream_commit": "79a537060322d3e83e0ebef2d394e2a39e0aa959",
+      "reference_only": true,
+      "strict_comparison_eligible": false,
+      "verification_level": "legacy_protocol_reference",
+      "notes": "Local-only lower bound alpha=100. Đánh giá test tại epoch cuối (epoch 10), không chọn theo validation."
+    },
+    "fedavg_historical_alpha1_seed42": {
+      "method": "fedavg_historical",
+      "seed": 42,
+      "alpha": 1.0,
+      "client_count": 5,
+      "split_info": {
+        "train": 39084,
+        "validation": 4328,
+        "test": 10893
+      },
+      "selection_policy": "best_validation_accuracy",
+      "metric_units": "ratio [0.0, 1.0]",
+      "metrics": {
+        "test_accuracy": 0.9913706049756724,
+        "test_macro_f1": 0.9862404620940969,
+        "test_loss": 0.03062546274955939,
+        "best_round": 9,
+        "best_validation_accuracy": 0.993992606284658
+      },
+      "source_file": "fedavg_alpha1_seed42.json",
+      "source_file_sha256": "e8aa2daef3dcf18980590881faf8c2d6263211edaf0cb093e639494bcd9c2e25",
+      "upstream_commit": "79a537060322d3e83e0ebef2d394e2a39e0aa959",
+      "reference_only": true,
+      "strict_comparison_eligible": false,
+      "verification_level": "legacy_protocol_reference",
+      "notes": "Kết quả FedAvg alpha=1 lịch sử GĐ1 để kiểm tra độ tương thích/tái lập."
+    }
+  }
+}

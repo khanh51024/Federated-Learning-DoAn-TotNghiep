@@ -1,0 +1,45 @@
+# Python Bytecode and Caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+.mypy_cache/
+
+# Virtual Environments & IDE
+.venv/
+venv/
+ENV/
+.env
+.vscode/
+.idea/
+.claude/
+
+# Training Outputs & Checkpoints
+runs/
+output/
+*.log
+*.pt
+*.pth
+
+# Packaging and Build
+build/
+dist/
+*.egg-info/
+*.zip
+*.tar.gz
+
+# Local Runtimes
+.runtime/
+.stage2_scratch_runtime/
+.stage2_matched_runtime/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Secrets & Credentials
+kaggle.json
+*.key
+*.token

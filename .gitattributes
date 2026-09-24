@@ -1,1 +1,4 @@
 *.pt filter=lfs diff=lfs merge=lfs -text
+*.pth filter=lfs diff=lfs merge=lfs -text
+provenance/kaggle-scratch-v4-training-source/** -text
+results/stage2_scratch_v4/** -text
