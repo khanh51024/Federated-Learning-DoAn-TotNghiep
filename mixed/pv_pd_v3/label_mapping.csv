@@ -1,0 +1,30 @@
+source_label,species,target_class,status,disease,action_classification,action_detection
+Apple Scab Leaf,Apple,Apple___Apple_scab,exact_match,Apple scab (Venturia inaequalis),supervised_eligible,valid_leaf_box
+Apple leaf,Apple,Apple___healthy,assumed_healthy,healthy,quarantine_from_disease_loss,valid_leaf_box
+Apple rust leaf,Apple,Apple___Cedar_apple_rust,ambiguous_alias,Cedar apple rust (Gymnosporangium juniperi-virginianae),quarantine_from_disease_loss,valid_leaf_box
+Bell_pepper leaf,"Pepper,_bell","Pepper,_bell___healthy",assumed_healthy,healthy,quarantine_from_disease_loss,valid_leaf_box
+Bell_pepper leaf spot,"Pepper,_bell","Pepper,_bell___Bacterial_spot",ambiguous_alias,Bacterial spot (Xanthomonas),quarantine_from_disease_loss,valid_leaf_box
+Blueberry leaf,Blueberry,Blueberry___healthy,assumed_healthy,healthy,quarantine_from_disease_loss,valid_leaf_box
+Cherry leaf,Cherry_(including_sour),Cherry_(including_sour)___healthy,assumed_healthy,healthy,quarantine_from_disease_loss,valid_leaf_box
+Corn Gray leaf spot,Corn_(maize),Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot,exact_match,Cercospora leaf spot / Gray leaf spot,supervised_eligible,valid_leaf_box
+Corn leaf blight,Corn_(maize),Corn_(maize)___Northern_Leaf_Blight,ambiguous_alias,Northern Leaf Blight (Exserohilum turcicum),quarantine_from_disease_loss,valid_leaf_box
+Corn rust leaf,Corn_(maize),Corn_(maize)___Common_rust_,exact_match,Common rust (Puccinia sorghi),supervised_eligible,valid_leaf_box
+Peach leaf,Peach,Peach___healthy,assumed_healthy,healthy,quarantine_from_disease_loss,valid_leaf_box
+Potato leaf,Potato,,unmapped_in_classification_yaml,unverified,quarantine_from_disease_loss,valid_leaf_box
+Potato leaf early blight,Potato,Potato___Early_blight,exact_match,Early blight (Alternaria solani),supervised_eligible,valid_leaf_box
+Potato leaf late blight,Potato,Potato___Late_blight,exact_match,Late blight (Phytophthora infestans),supervised_eligible,valid_leaf_box
+Raspberry leaf,Raspberry,Raspberry___healthy,assumed_healthy,healthy,quarantine_from_disease_loss,valid_leaf_box
+Soyabean leaf,Soybean,Soybean___healthy,assumed_healthy,healthy,quarantine_from_disease_loss,valid_leaf_box
+Squash Powdery mildew leaf,Squash,Squash___Powdery_mildew,exact_match,Powdery mildew (Podosphaera xanthii),supervised_eligible,valid_leaf_box
+Strawberry leaf,Strawberry,Strawberry___healthy,assumed_healthy,healthy,quarantine_from_disease_loss,valid_leaf_box
+Tomato Early blight leaf,Tomato,Tomato___Early_blight,exact_match,Early blight (Alternaria solani),supervised_eligible,valid_leaf_box
+Tomato Septoria leaf spot,Tomato,Tomato___Septoria_leaf_spot,exact_match,Septoria leaf spot (Septoria lycopersici),supervised_eligible,valid_leaf_box
+Tomato leaf,Tomato,Tomato___healthy,assumed_healthy,healthy,quarantine_from_disease_loss,valid_leaf_box
+Tomato leaf bacterial spot,Tomato,Tomato___Bacterial_spot,exact_match,Bacterial spot (Xanthomonas),supervised_eligible,valid_leaf_box
+Tomato leaf late blight,Tomato,Tomato___Late_blight,exact_match,Late blight (Phytophthora infestans),supervised_eligible,valid_leaf_box
+Tomato leaf mosaic virus,Tomato,Tomato___Tomato_mosaic_virus,exact_match,Tomato mosaic virus (ToMV),supervised_eligible,valid_leaf_box
+Tomato leaf yellow virus,Tomato,Tomato___Tomato_Yellow_Leaf_Curl_Virus,ambiguous_alias,Tomato Yellow Leaf Curl Virus (TYLCV),quarantine_from_disease_loss,valid_leaf_box
+Tomato mold leaf,Tomato,Tomato___Leaf_Mold,exact_match,Leaf Mold (Passalora fulva),supervised_eligible,valid_leaf_box
+Tomato two spotted spider mites leaf,Tomato,Tomato___Spider_mites Two-spotted_spider_mite,exact_match,Two-spotted spider mite (Tetranychus urticae),supervised_eligible,valid_leaf_box
+grape leaf,Grape,Grape___healthy,assumed_healthy,healthy,quarantine_from_disease_loss,valid_leaf_box
+grape leaf black rot,Grape,Grape___Black_rot,exact_match,Black rot (Guignardia bidwellii),supervised_eligible,valid_leaf_box
