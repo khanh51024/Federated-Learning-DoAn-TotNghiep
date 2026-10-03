@@ -6,7 +6,9 @@ independent model; no weights are aggregated. `SOURCE_MANIFEST.json` records a
 SHA-256 for every copied source file. The canonical release SHA-256 is
 `6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252`.
 
-Data images, shard manifests, pretrained weights, W0 and run outputs are external.
+The five selected client checkpoints, summaries, validation metrics and charts
+are in [results/20261003/RESULTS.md](results/20261003/RESULTS.md). Data images,
+shard manifests, pretrained weights, W0 and full run outputs remain external.
 Set `WORKSPACE_ROOT` to this repository root so the launcher finds its runners,
 and pass the audited inputs explicitly:
 
