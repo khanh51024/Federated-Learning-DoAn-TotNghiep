@@ -23,7 +23,7 @@
 
 - So resize vuông `canonical_v1` với resize giữ tỷ lệ và padding, rồi với crop độ phân giải **288/320 px** cho vết bệnh nhỏ. Kiến trúc có adaptive pooling nhưng **checkpoint v6 học ở 224 px**; phải fine-tune lại, đo VRAM/tốc độ và dùng cùng transform lúc suy luận. [Tài liệu MobileNetV3-Small](https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.mobilenet_v3_small.html).
 - Dữ liệu gốc PlantDoc là **2.115/37.238 = 5,68%**, còn sampler rút mục tiêu **25% lượt học** bằng cách lấy có hoàn lại. So 15% và 25%, `with_replacement` và `cycle_without_replacement`; ghi số ảnh/cảnh duy nhất và số lượt lặp. Tăng tỷ lệ không mặc nhiên tốt vì PlantDoc có ít cảnh.
-- Dùng augmentation **có phạm vi đo được**: sáng/tương phản nhẹ, JPEG, blur nhẹ, hình học vừa phải. Thiết kế “corruption sweep” theo mức độ, báo top-1/F1 trên ảnh sạch và từng mức. Tránh augment xóa đốm bệnh hoặc đổi màu dấu bệnh tới mức sai nhãn. [TorchVision transforms](https://docs.pytorch.org/vision/2.0/transforms.html) · [benchmark nhiễu ảnh](https://openreview.net/pdf?id=HJz6tiCqYm).
+- Dùng tăng cường ảnh **có phạm vi đo được**: sáng/tương phản nhẹ, JPEG, blur nhẹ, hình học vừa phải. Đánh giá biến dạng ảnh theo từng mức, báo top-1/F1 trên ảnh sạch và từng mức. Tránh phép biến đổi xóa đốm bệnh hoặc đổi màu dấu bệnh tới mức sai nhãn. [TorchVision transforms](https://docs.pytorch.org/vision/stable/transforms.html) · [benchmark nhiễu ảnh](https://openreview.net/pdf?id=HJz6tiCqYm).
 - Với ảnh mờ/thiếu sáng/che khuất: đo phân tầng trước, rồi chọn ngưỡng cảnh báo trên calibration. **Không có ngưỡng vật lý cố hữu của MobileNetV3-Small**; độ chịu lỗi phụ thuộc ảnh, tần suất kiểu lỗi trong train và phiên bản preprocessing.
 
 ### P2 — Cải thiện học nhãn bệnh trong cùng loại cây
@@ -34,7 +34,7 @@
 
 ### P3 — Hiệu chuẩn confidence và chọn checkpoint
 
-Fit một hệ số nhiệt độ T trên **calibration 4.225 ảnh** rồi đo NLL/ECE/Brier theo PlantDoc và PlantVillage. `softmax(logits/T)` với T>0 không đổi top-1 nhưng có thể cải thiện ý nghĩa xác suất; kiểm trên test khóa kín. [Guo và cộng sự, ICML 2017](https://proceedings.mlr.press/v70/guo17a.html).
+Ước lượng một hệ số nhiệt độ T trên **4.225 ảnh calibration được tách riêng theo manifest**, rồi đo NLL/ECE/Brier theo PlantDoc và PlantVillage. `softmax(logits/T)` với T>0 không đổi top-1 nhưng có thể cải thiện chất lượng xác suất; cần xác nhận trên bộ test ngoài miền sau khi xây dựng và khóa nhãn. [Guo và cộng sự, ICML 2017](https://proceedings.mlr.press/v70/guo17a.html).
 
 Kiểm lịch sử 83 epoch: checkpoint epoch 22 được chọn theo chất lượng PlantDoc có ngưỡng bảo vệ PlantVillage. Nếu thay quy tắc chọn, tạo run mới; không chọn epoch bằng test hoặc ảnh ngoài mạng. Xuất `sampler_epoch_stats`, learning rate, train/val loss và PlantDoc/PlantVillage F1 trong đồ thị để nhìn rõ sự phân kỳ. Biểu đồ baseline hiện tại: [đường cong](../results/20261003/centralized_training_curve.png).
 

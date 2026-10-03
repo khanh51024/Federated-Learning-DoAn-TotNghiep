@@ -10,13 +10,13 @@
 
 Trọng số khởi tạo: `mobilenet_v3_small-047dcff4.pth` (SHA-256 `047dcff4addef86ea5bc2eff13c9614dc11f47ab1160d0a71a25e7db994f4e1f`) và W0 38 lớp `mobilenet_v3_small_38_seed42_w0.pt` (SHA-256 `52f2ccfd83b4ed21ac44bddb03ec5afd3f119d6f4943f919640b23e39c91c879`). Đây là đầu vào được chốt ngoài nhánh; checkpoint epoch 22 là đầu ra khác W0.
 
-Luồng ảnh crop: mở ảnh và xử lý EXIF → RGB → resize trực tiếp **224×224** bilinear → `ToTensor` về [0,1] → chuẩn hóa ImageNet với mean `(0,485; 0,456; 0,406)`, std `(0,229; 0,224; 0,225)` → backbone trích đặc trưng, gộp thích nghi, lớp 38 đầu ra → chọn nhãn xác suất cao nhất. Train `canonical_v1` thêm lật ngang `p=0,5`; validation dùng phép biến đổi cố định. [Mã tiền xử lý](plant_data_contract/plant_data_contract/transforms.py).
+Luồng ảnh cắt vùng lá: mở ảnh và xử lý EXIF → RGB → resize trực tiếp **224×224** bilinear → `ToTensor` về [0,1] → chuẩn hóa ImageNet với mean `(0,485; 0,456; 0,406)`, std `(0,229; 0,224; 0,225)` → backbone trích đặc trưng, gộp thích nghi, lớp 38 đầu ra → chọn nhãn xác suất cao nhất. Train `canonical_v1` thêm lật ngang `p=0,5`; validation dùng phép biến đổi cố định. Khi suy luận với checkpoint này, dùng `canonical_v1`; preset ImageNet của TorchVision (resize cạnh ngắn về 256 rồi cắt giữa 224) **khác** phép resize trực tiếp ở đây. [Mã tiền xử lý](plant_data_contract/plant_data_contract/transforms.py).
 
 Kiến trúc có tầng gộp thích nghi nên về mặt mạng có thể nhận nhiều kích thước tensor, nhưng **code và checkpoint này được huấn luyện/đánh giá tại 224×224**. Resize vuông có thể làm méo tỷ lệ ảnh và mất dấu bệnh nhỏ; ảnh toàn cây nhiều lá không thể được định vị đúng từng lá bởi bộ phân loại một nhãn. Chưa đo ngưỡng chịu được tối thiểu về lux, độ mờ, che khuất hay tỷ lệ lá trong ảnh. [Tài liệu TorchVision về trọng số và đầu vào](https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.mobilenet_v3_small.html).
 
 ## Tập dữ liệu và mức trộn
 
-Release chung `dataset/mixed/pv_pd_v3` (SHA-256 `6d2c6b40…43d252`) có 38 lớp. PlantDoc là crop lá từ bbox có mép dư **8%**, PlantVillage là ảnh lá; train/validation/calibration/legacy diagnostic test được cố định theo manifest và nhóm cảnh `group_id`. Không đưa ảnh hay notebook Colab vào nhánh Git.
+Release chung `dataset/mixed/pv_pd_v3` (SHA-256 `6d2c6b40…43d252`) có 38 lớp. PlantDoc là ảnh cắt vùng lá từ bbox, nới mỗi cạnh thêm **8% chiều rộng hoặc chiều cao bbox** trong giới hạn biên ảnh; PlantVillage là ảnh lá. Train/validation/calibration/legacy diagnostic test được cố định theo manifest và nhóm cảnh `group_id`. Không đưa ảnh hay notebook Colab vào nhánh Git.
 
 | Phần dữ liệu | PlantDoc | PlantVillage | Tổng |
 | --- | ---: | ---: | ---: |
@@ -35,11 +35,13 @@ Mô hình tốt nhất ở **epoch 22**; train vẫn tiếp tục kiểm tra đ�
 
 ## Kết quả checkpoint tốt nhất
 
-| Nguồn validation | Top-1 đúng cây và bệnh | Macro-F1 lớp có mẫu | Đúng loại cây |
+| Nguồn validation | Top-1 đúng nhãn cây–tình trạng | Macro-F1 lớp có mẫu | Đúng loại cây |
 | --- | ---: | ---: | ---: |
 | PlantDoc (269 ảnh) | **53,90%** | **53,47%** | **78,81%** |
 | PlantVillage (4.344 ảnh) | **99,22%** | **98,99%** | **99,72%** |
 | Cả hai (4.613 ảnh) | 96,57% | 96,14% | 98,50% |
+
+Macro-F1 của PlantDoc tính trên **13 lớp có mẫu thật** trong 269 ảnh; PlantVillage có đủ 38 lớp. Hai số macro-F1 vì thế có phạm vi lớp khác nhau.
 
 Trong PlantDoc có **57** ảnh sai loại cây, **67** ảnh đúng cây nhưng sai bệnh; **77** dự đoán sai vẫn có xác suất cao nhất ≥0,9. Kết quả cao ở PlantVillage và thấp ở PlantDoc là dấu hiệu khác biệt miền dữ liệu, chưa đủ để kết luận nguyên nhân của từng ảnh sai. [Metric và lớp nhầm](results/20261003/validation_metrics.json).
 
@@ -54,17 +56,22 @@ Trong PlantDoc có **57** ảnh sai loại cây, **67** ảnh đúng cây nhưng
 
 ## Chạy lại
 
-Cần cung cấp release ảnh, trọng số ImageNet, W0 và incumbent đã chốt từ bundle gốc. Checkpoint trong `results/` là đầu ra đánh giá. Trước tiên dùng `--preflight-only`, sau đó bỏ cờ này và chọn output mới:
+Cần cung cấp release ảnh, trọng số ImageNet, W0 và incumbent đã chốt từ gói đầu vào. Checkpoint trong `results/` là đầu ra đánh giá. Đặt W0 cùng thư mục với tệp trọng số ImageNet. Ví dụ sau dành cho PowerShell trên Windows: chạy từ gốc nhánh, thay các đường dẫn mẫu bằng đường dẫn thật. Lệnh chỉ kiểm trước train; để train full, bỏ `--preflight-only` và dùng thư mục output mới, rỗng. Trên Colab cần đổi đường dẫn và cú pháp lệnh cho môi trường notebook:
 
 ```powershell
+$DatasetRoot = 'D:\du-lieu\dataset'
+$Weights = 'D:\trong-so\mobilenet_v3_small-047dcff4.pth'
+$IncumbentSummary = 'D:\bundle\central_summary.json'
+$IncumbentCheckpoint = 'D:\bundle\central_checkpoint_best.pt'
+$OutputDir = 'D:\ket-qua\central-run-moi'
 python training-workflows/colab_centralized/run.py `
-  --dataset-root <thu-muc-dataset> `
+  --dataset-root $DatasetRoot `
   --runner train-tap-trung/scripts/train_production.py `
   --spec-file configs/central_spec_v3.json `
-  --pretrained-weights <mobilenet_v3_small-047dcff4.pth> `
-  --incumbent-summary <central_summary.json> `
-  --incumbent-checkpoint <central_checkpoint_best.pt> `
-  --mode full --output-dir <thu-muc-ket-qua-moi> --preflight-only --execute
+  --pretrained-weights $Weights `
+  --incumbent-summary $IncumbentSummary `
+  --incumbent-checkpoint $IncumbentCheckpoint `
+  --mode full --output-dir $OutputDir --preflight-only --execute
 ```
 
-Trên Colab có thể thêm `--sync-dir <thu-muc-Drive>` để đồng bộ checkpoint. `SOURCE_MANIFEST.json` xác thực mã train, `results/20261003/artifact_manifest.json` xác thực kết quả.
+Trên Colab có thể thêm `--sync-dir` với đường dẫn thư mục Drive đã gắn để đồng bộ checkpoint. `SOURCE_MANIFEST.json` xác thực mã train, `results/20261003/artifact_manifest.json` xác thực kết quả.
