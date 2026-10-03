@@ -5,8 +5,10 @@ the Colab full run. `SOURCE_MANIFEST.json` records SHA-256 for every copied sour
 file. The canonical release is `mixed/pv_pd_v3`, SHA-256
 `6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252`.
 
-Data images, pretrained weights, W0, incumbent checkpoint, outputs and the Colab
-upload notebook are external to this code branch. Run from this repository root:
+The selected checkpoint, summary, validation metrics and charts are in
+[results/20261003/RESULTS.md](results/20261003/RESULTS.md). Data images,
+pretrained weights, W0, incumbent checkpoint, full run outputs and the Colab
+upload notebook remain external. Run from this repository root:
 
 ```powershell
 python training-workflows/colab_centralized/run.py `
