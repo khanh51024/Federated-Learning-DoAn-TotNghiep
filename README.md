@@ -5,9 +5,11 @@ Kaggle label-Dirichlet α=0.1 full run. `SOURCE_MANIFEST.json` records a SHA-256
 for every copied source file. The canonical release is `mixed/pv_pd_v3` with
 release SHA-256 `6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252`.
 
+The selected global checkpoint, validation metrics and comparison charts from the
+completed run are in [results/20261003/RESULTS.md](results/20261003/RESULTS.md).
 Data images, partition manifests, pretrained weights, W0, incumbent checkpoint,
-run outputs and the Kaggle upload notebook are external to this code branch.
-Supply them from the audited release and the pinned bundle; the launcher checks
+full run outputs and the Kaggle upload notebook remain external. Supply training
+inputs from the audited release and the pinned bundle; the launcher checks
 release and spec hashes before execution. Run from this repository root:
 
 ```powershell
