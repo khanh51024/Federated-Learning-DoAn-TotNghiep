@@ -1,0 +1,91 @@
+{
+  "architecture": "mobilenet_v3_small_38_class",
+  "campaign_id": "mixed_quality_v4_1_fedavg_non_iid_20261003",
+  "dataset_release": "dataset/mixed/pv_pd_v3",
+  "expected_w0_fingerprint": "eaf9197b42fb39163186a7285f7f1ed4f1e728bd83522260fdc5f0f51c110850",
+  "hyperparameters": {
+    "fedavg": {
+      "aggregation": "weighted_fedavg",
+      "amp": true,
+      "client_batch_size": 32,
+      "client_epochs": 1,
+      "client_lr": 0.01,
+      "client_momentum": 0.0,
+      "client_optimizer": "SGD",
+      "client_weight_decay": 0.0001,
+      "clients_per_round": 5,
+      "rounds": 60
+    }
+  },
+  "kaggle_fedavg_jobs": [
+    {
+      "job_id": "fed_mixed_iid_baseline_s42",
+      "owner": "nguynhongnamkhnh",
+      "partition_scheme": "iid",
+      "seed": 42,
+      "status": "READY_FULL",
+      "target_platform": "kaggle"
+    },
+    {
+      "job_id": "fed_mixed_label_a01_s42",
+      "owner": "nguynhongnamkhnh",
+      "partition_scheme": "label_alpha_0_1",
+      "partition_seed": 42,
+      "seed": 42,
+      "status": "READY_FULL",
+      "target_platform": "kaggle"
+    },
+    {
+      "job_id": "fed_mixed_feature_a10_s42",
+      "owner": "nguynhongnamkhnh",
+      "partition_scheme": "feature_alpha_10_0",
+      "partition_seed": 42,
+      "seed": 42,
+      "status": "READY_FULL",
+      "target_platform": "kaggle"
+    },
+    {
+      "job_id": "fed_mixed_stress_s42",
+      "owner": "nguynhongnamkhnh",
+      "partition_scheme": "mixed_stress",
+      "partition_seed": 42,
+      "seed": 42,
+      "status": "READY_FULL",
+      "target_platform": "kaggle"
+    }
+  ],
+  "non_iid_jobs_note": "Audited label, feature, and mixed partitions use the same W0, hyperparameters, validation split, and conservative IID incumbent quality floor. Quantity partitions in this release are NOT_PURE_QUANTITY and excluded. Full non-IID results are pending.",
+  "partition_audit_sha256": "8b5479371f3dff3c67e009303b65e836d8bba437f02a7d41e5bbd31fa5992b51",
+  "preprocessing": "canonical_v1",
+  "pretrained_w0_state_file": "mobilenet_v3_small_38_seed42_w0.pt",
+  "pretrained_w0_state_sha256": "52f2ccfd83b4ed21ac44bddb03ec5afd3f119d6f4943f919640b23e39c91c879",
+  "pretrained_weights_file": "training-artifacts/pretrained_weights/mobilenet_v3_small-047dcff4.pth",
+  "pretrained_weights_sha256": "047dcff4addef86ea5bc2eff13c9614dc11f47ab1160d0a71a25e7db994f4e1f",
+  "quality_gate": {
+    "audit_filename": "quality_audit_v3.json",
+    "audit_sha256": "37fc2167662d215deaac63c1afe2a7b7fd8d79d97936bcb81b48dbf7e03614ce",
+    "baseline_status": "VERIFIED_INCUMBENT_FULL",
+    "convergence": {
+      "lr_factor": 0.5,
+      "lr_patience": 4,
+      "min_delta": 0.002,
+      "min_step": 15,
+      "stop_patience": 8
+    },
+    "full_incumbent_baseline": {
+      "checkpoint_sha256": "e19488e6b921b3442acc610b2a81b68f7b1aa09b4718ad2d03fdd4717a7dbc54",
+      "plantvillage_macro_f1_supported": 0.9093232625692907,
+      "release_manifest_sha256": "6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252",
+      "seed": 42,
+      "summary_sha256": "c1b2b6d2f3201e8efbfd7c819d4f0f1130986c477bd6bf0f154ce216c7937354",
+      "w0_fingerprint": "eaf9197b42fb39163186a7285f7f1ed4f1e728bd83522260fdc5f0f51c110850"
+    },
+    "plantvillage_floor_by_seed": {
+      "42": 0.8993232625692907
+    }
+  },
+  "release_manifest_sha256": "6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252",
+  "selected_variant": "pretrained_pd25",
+  "spec_version": "4.1.0",
+  "status": "READY_FULL"
+}
