@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+*.ipynb
+dataset/
+runs/
+output/
+results/
+*.pt
+*.pth
+*.zip
+.env

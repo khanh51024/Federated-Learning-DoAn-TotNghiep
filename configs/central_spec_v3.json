@@ -1,0 +1,88 @@
+{
+  "approved_pilot_report_sha256": "6dac71b3aaba69b29cbb4b23fe9ad19ebb996ee2939c963f98480bb35face0be",
+  "architecture": "mobilenet_v3_small_38_class",
+  "campaign_id": "mixed_quality_v3_seed42_ready_full_w0pin_20261001",
+  "dataset_release": "dataset/mixed/pv_pd_v3",
+  "expected_w0_fingerprint": "eaf9197b42fb39163186a7285f7f1ed4f1e728bd83522260fdc5f0f51c110850",
+  "hyperparameters": {
+    "centralized": {
+      "amp": true,
+      "batch_size": 32,
+      "early_stopping_patience": 12,
+      "lr": 0.001,
+      "max_epochs": 100,
+      "optimizer": "AdamW",
+      "weight_decay": 0.0001
+    },
+    "fedavg": {
+      "aggregation": "weighted_fedavg",
+      "amp": true,
+      "client_batch_size": 32,
+      "client_epochs": 1,
+      "client_lr": 0.01,
+      "client_momentum": 0.0,
+      "client_optimizer": "SGD",
+      "client_weight_decay": 0.0001,
+      "clients_per_round": 5,
+      "rounds": 60
+    }
+  },
+  "kaggle_fedavg_jobs": [
+    {
+      "job_id": "fed_mixed_iid_quality_s42",
+      "owner": "nguynhongnamkhnh",
+      "partition_scheme": "iid",
+      "seed": 42,
+      "status": "READY_AFTER_CENTRALIZED_START",
+      "target_platform": "kaggle"
+    }
+  ],
+  "laptop_centralized_jobs": [
+    {
+      "condition": "mixed",
+      "job_id": "cent_mixed_quality_s42",
+      "seed": 42,
+      "status": "READY_FULL",
+      "target_platform": "colab_t4"
+    }
+  ],
+  "pilot_manifest_sha256": "58b8d7607f4555fb9cf16145816fefa7e7e3c018618215acf929aed78542fd8a",
+  "preprocessing": "canonical_v1",
+  "pretrained_w0_state_file": "mobilenet_v3_small_38_seed42_w0.pt",
+  "pretrained_w0_state_sha256": "52f2ccfd83b4ed21ac44bddb03ec5afd3f119d6f4943f919640b23e39c91c879",
+  "pretrained_weights_file": "training-artifacts/pretrained_weights/mobilenet_v3_small-047dcff4.pth",
+  "pretrained_weights_sha256": "047dcff4addef86ea5bc2eff13c9614dc11f47ab1160d0a71a25e7db994f4e1f",
+  "quality_gate": {
+    "audit_filename": "quality_audit_v3.json",
+    "audit_sha256": "37fc2167662d215deaac63c1afe2a7b7fd8d79d97936bcb81b48dbf7e03614ce",
+    "convergence": {
+      "lr_factor": 0.5,
+      "lr_patience": 4,
+      "min_delta": 0.002,
+      "min_step": 15,
+      "stop_patience": 12
+    },
+    "final_holdout_status": "FINAL_HOLDOUT_PENDING",
+    "pilot_seed42_baseline": {
+      "best_checkpoint_sha256": "b7d4c51742b805dee62f87d03597ff7122ed24574c116edff7f69ca5c944c207",
+      "best_epoch": 4,
+      "plantdoc_crop_accuracy": 0.5613382899628253,
+      "plantdoc_macro_f1_supported": 0.19592190629117984,
+      "plantvillage_macro_f1_supported": 0.5644397097108741
+    },
+    "pilot_seed42_selected": {
+      "best_checkpoint_sha256": "4be7af7ecc5205cbbc92494113c77478cf42e12648d3315d7f1ff2b0cf2744cc",
+      "best_epoch": 3,
+      "plantdoc_crop_accuracy": 0.7695167286245354,
+      "plantdoc_macro_f1_supported": 0.523662277972486,
+      "plantvillage_macro_f1_supported": 0.8815948392419652
+    },
+    "plantvillage_floor_by_seed": {
+      "42": 0.5544397097108741
+    },
+    "selection": "plantdoc_supported_macro_f1_with_pv_floor_then_plantdoc_crop_accuracy"
+  },
+  "release_manifest_sha256": "6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252",
+  "selected_variant": "pretrained_pd25",
+  "status": "READY_FULL"
+}
