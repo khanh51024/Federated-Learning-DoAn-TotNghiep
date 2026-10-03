@@ -2,6 +2,8 @@
 
 **Trạng thái:** tài liệu nghiên cứu, **chưa sửa runner hoặc train lại**. Baseline cố định: `label_alpha_0_1`, 5 client, seed 42, checkpoint global vòng 27, kết thúc vòng 32, release `pv_pd_v3`. Nguồn số: [metrics](../results/20261003/validation_metrics.json), [spec](../configs/quality_spec_v4_FEDAVG_FULL.json), [runner](../train-gd-2/kaggle-workspace/campaign-mixed-pv-pd-v1/fedavg_mixed_runner.py).
 
+Phiên này mô phỏng năm client **tuần tự trong một tiến trình**, với dữ liệu tập trung trong môi trường Kaggle. Các kết quả dưới đây không đo quyền riêng tư, chi phí truyền mạng hay khả năng vận hành trên thiết bị phân tán thật.
+
 ## 1. Triệu chứng quan sát và giới hạn suy luận
 
 - PlantDoc validation: **47,21% top-1**, **46,87% macro-F1 supported**, **75,46% đúng cây**; PlantVillage: **93,12%**, **90,19%**, **98,69%**. Chênh lệch lớn giữa hai nguồn là bằng chứng về **hiệu năng khác miền**, nhưng chưa chứng minh nguyên nhân là nền, ánh sáng hay lỗi nhãn.
@@ -15,7 +17,7 @@ PlantVillage vốn chủ yếu là lá đơn điều kiện kiểm soát, còn P
 
 ### P0 — Đo đúng lỗi trước khi chỉnh thuật toán
 
-1. Xuất dự đoán theo `sample_id`, `group_id`, nguồn, nhãn thật/đoán, confidence, crop bbox; dựng ma trận nhầm lẫn **PlantDoc riêng**, phân nhóm *sai cây*, *đúng cây sai bệnh*. Kiểm tra thủ công mẫu đại diện, nhất là Tomato bacterial spot/early blight/Septoria, Potato early/late blight và Grape black rot/Esca. Không tự động coi ảnh sai là lỗi nhãn.
+1. Xuất dự đoán theo `sample_id`, `group_id`, nguồn, nhãn thật/đoán, độ tin cậy dự đoán và bbox của vùng lá; dựng ma trận nhầm lẫn **PlantDoc riêng**, phân nhóm *sai cây*, *đúng cây sai bệnh*. Kiểm tra thủ công mẫu đại diện, nhất là Tomato bacterial spot/early blight/Septoria, Potato early/late blight và Grape black rot/Esca. Không tự động coi ảnh sai là lỗi nhãn.
 2. Từ ảnh scene gốc PlantDoc, đánh giá hai điều kiện riêng: **bbox chuẩn → classifier** và **detector dự đoán bbox → classifier**. Chênh lệch cho biết phần lỗi do định vị lá. Với ảnh nhiều lá, trả dự đoán từng lá và thống kê cấp cảnh; không ép cả ảnh thành một nhãn.
 3. Tạo bộ ảnh ngoài mạng có giấy phép/nguồn và nhãn chuyên gia, giữ tách hẳn khỏi train/tuning. Báo cáo theo loại cây, bệnh, nguồn/cảnh; chỉ gọi đó là external test sau khi bộ này được cố định.
 
@@ -23,7 +25,7 @@ PlantVillage vốn chủ yếu là lá đơn điều kiện kiểm soát, còn P
 
 - So `canonical_v1` với **giữ tỷ lệ rồi padding** và với **crop lá độ phân giải cao hơn** (ví dụ 288 hoặc 320 px), đồng nhất train/inference. MobileNetV3-Small có adaptive pooling nhưng chi phí GPU, bộ nhớ và kích thước đặc trưng tăng; cần pilot trên cùng ảnh và đo tốc độ. Với lá nhỏ trong ảnh toàn cây, thử detector/crop nhiều lá trước classifier, đánh giá bbox và nhãn riêng. [TorchVision detection tutorial](https://docs.pytorch.org/tutorials/intermediate/torchvision_tutorial).
 - So sampler 25% `with_replacement` với `cycle_without_replacement` và 15%/25% PlantDoc **từng biến một**. Ghi số ảnh/cảnh duy nhất được rút mỗi epoch, số lần lặp tối đa, recall từng lớp. Tăng tỷ lệ PlantDoc quá mức có thể overfit cảnh ít.
-- Thử augmentation có kiểm soát: biến thiên sáng/tương phản vừa phải, Gaussian blur nhẹ, JPEG, thay đổi góc/crop nhưng **không xóa dấu bệnh hoặc đổi nhãn**. Đo trước/sau trên ảnh sạch và trên dãy mức độ biến dạng cố định. [TorchVision transforms](https://docs.pytorch.org/vision/2.0/transforms.html) · [benchmark nhiễu ảnh](https://openreview.net/pdf?id=HJz6tiCqYm).
+- Thử tăng cường ảnh có kiểm soát: biến thiên sáng/tương phản vừa phải, Gaussian blur nhẹ, JPEG, thay đổi góc hoặc vùng cắt nhưng **không xóa dấu bệnh hoặc đổi nhãn**. Đo trước/sau trên ảnh sạch và trên dãy mức độ biến dạng cố định. [TorchVision transforms](https://docs.pytorch.org/vision/stable/transforms.html) · [benchmark nhiễu ảnh](https://openreview.net/pdf?id=HJz6tiCqYm).
 - Phân tầng kết quả theo ánh sáng, blur, che khuất và kích thước vùng lá. **Chỉ sau phép thử này** mới đặt ngưỡng cảnh báo chất lượng ảnh; phải ghi phương pháp đo (ví dụ Laplacian variance cho blur) và tỷ lệ lỗi theo từng mức, không suy ra một ngưỡng “khả năng tiếp nhận” từ cấu trúc mạng.
 
 ### P2 — Giảm lệch client trong FedAvg
@@ -35,7 +37,7 @@ PlantVillage vốn chủ yếu là lá đơn điều kiện kiểm soát, còn P
 
 ### P3 — Độ tin cậy khi suy luận
 
-Hiệu chuẩn temperature trên tập **calibration 4.225 ảnh** độc lập với train/validation; đo ECE, Brier hoặc NLL, đặc biệt PlantDoc. Việc chia logit cho T không đổi top-1 nếu T>0, chỉ làm confidence có ý nghĩa hơn. Sau đó chọn ngưỡng “không chắc” trên calibration và xác nhận bằng test cố định; không coi `softmax≥0,9` là chứng nhận đúng. [Nghiên cứu calibration](https://proceedings.mlr.press/v70/guo17a.html). Dùng Grad-CAM để kiểm liệu vùng được chú ý nằm trên lá hay nền, như công cụ chẩn đoán chứ không là bằng chứng nhân quả. [Grad-CAM](https://openaccess.thecvf.com/content_ICCV_2017/papers/Selvaraju_Grad-CAM_Visual_Explanations_ICCV_2017_paper.pdf).
+Hiệu chuẩn nhiệt độ trên tập **calibration 4.225 ảnh** được tách riêng theo manifest; đo ECE, Brier hoặc NLL, đặc biệt PlantDoc. Việc chia logit cho T không đổi top-1 nếu T>0; mức độ tin cậy dự đoán có thể cải thiện nhưng phải đo. Sau đó chọn ngưỡng “không chắc” trên calibration và xác nhận trên bộ test ngoài miền sau khi xây dựng và khóa nhãn; không coi `softmax≥0,9` là chứng nhận đúng. [Nghiên cứu calibration](https://proceedings.mlr.press/v70/guo17a.html). Dùng Grad-CAM để kiểm liệu vùng được chú ý nằm trên lá hay nền, như công cụ chẩn đoán chứ không là bằng chứng nhân quả. [Grad-CAM](https://openaccess.thecvf.com/content_ICCV_2017/papers/Selvaraju_Grad-CAM_Visual_Explanations_ICCV_2017_paper.pdf).
 
 ## 3. Cách quyết định một thay đổi có tốt hơn
 
