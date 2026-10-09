@@ -26,7 +26,7 @@
     {
       "name": "canonical_provenance",
       "status": "warn",
-      "detail": "UNVERIFIED: ['fedavg_state_hash_mismatch', 'fedavg_accuracy_metadata_mismatch', 'centralized_epoch_mismatch', 'scientific_stage2_incomplete']"
+      "detail": "UNVERIFIED: ['fedavg_state_hash_mismatch', 'scientific_stage2_incomplete']"
     },
     {
       "name": "network_global_artifact",

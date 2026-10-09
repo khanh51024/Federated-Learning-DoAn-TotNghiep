@@ -1,0 +1,203 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-09T17:01:48",
+  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (checkpoint canonical mất, chưa multi-seed)",
+  "canonical_run_id": "20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62",
+  "dataset_truth": {
+    "source": "data/partitions_stage2_scratch_v3/suite.json",
+    "protocol": "stage2_scratch_clean_v3",
+    "total_images": 54305,
+    "split": {
+      "train": 38984,
+      "val": 4400,
+      "test": 10921
+    },
+    "num_clients": 5,
+    "split_seed": 42,
+    "smoke": false,
+    "conditions": {
+      "feature01": {
+        "scenario": "feature_dirichlet",
+        "alpha": 0.1,
+        "quantity_alpha": null,
+        "n_k": [
+          5133,
+          18545,
+          6779,
+          614,
+          7913
+        ]
+      },
+      "feature100": {
+        "scenario": "feature_dirichlet",
+        "alpha": 100.0,
+        "quantity_alpha": null,
+        "n_k": [
+          8136,
+          8050,
+          7434,
+          7936,
+          7428
+        ]
+      },
+      "label01": {
+        "scenario": "label_skew",
+        "alpha": 0.1,
+        "quantity_alpha": null,
+        "n_k": [
+          10851,
+          7205,
+          6069,
+          8453,
+          6406
+        ]
+      },
+      "label1": {
+        "scenario": "label_skew",
+        "alpha": 1.0,
+        "quantity_alpha": null,
+        "n_k": [
+          9399,
+          6566,
+          8419,
+          7985,
+          6615
+        ]
+      },
+      "label100": {
+        "scenario": "label_skew",
+        "alpha": 100.0,
+        "quantity_alpha": null,
+        "n_k": [
+          7568,
+          7699,
+          7817,
+          8032,
+          7868
+        ]
+      },
+      "label_quantity01": {
+        "scenario": "label_quantity_skew",
+        "alpha": 0.1,
+        "quantity_alpha": 0.1,
+        "n_k": [
+          10,
+          14119,
+          12163,
+          12574,
+          118
+        ]
+      },
+      "quantity01": {
+        "scenario": "quantity_skew",
+        "alpha": null,
+        "quantity_alpha": 0.1,
+        "n_k": [
+          10,
+          6288,
+          31362,
+          1314,
+          10
+        ]
+      },
+      "quantity100": {
+        "scenario": "quantity_skew",
+        "alpha": null,
+        "quantity_alpha": 100.0,
+        "n_k": [
+          7638,
+          8075,
+          7366,
+          7134,
+          8771
+        ]
+      }
+    },
+    "note": "Đây là split reproduction cục bộ (5 clients). Run canonical Kaggle dùng partition v1 (10 clients, label_skew alpha=0.1, test 10,917 ảnh) — hai split KHÔNG trộn lẫn."
+  },
+  "model_counts_by_family": {
+    "scientific_canonical": 3,
+    "published_demo": 7,
+    "network_demo": 4,
+    "reference": 1,
+    "smoke": 3
+  },
+  "canonical_checkpoint_status": {
+    "fedavg_canonical": {
+      "checkpoint_exists": false,
+      "checkpoint_status": "missing_on_this_machine",
+      "status": "unverified_metrics_only"
+    },
+    "centralized_canonical": {
+      "checkpoint_exists": false,
+      "checkpoint_status": "missing_on_this_machine",
+      "status": "historical_unverified"
+    },
+    "local_only_canonical": {
+      "checkpoint_exists": false,
+      "checkpoint_status": "not_applicable",
+      "status": "historical_unverified"
+    }
+  },
+  "gates": {
+    "provenance": {
+      "status": "unverified",
+      "critical_issues": [
+        "fedavg_state_hash_mismatch"
+      ],
+      "warning_issues": [
+        "scientific_stage2_incomplete"
+      ],
+      "source": "artifacts/artifact_provenance_validation.json"
+    },
+    "pre_demo_check": {
+      "overall": "technical_demo_ready",
+      "source": "artifacts/pre_demo_check.json"
+    },
+    "final_acceptance": {
+      "technical": "pass",
+      "scientific": "blocked",
+      "readiness_overall": "technical_demo_ready",
+      "scientific_blockers": [
+        {
+          "name": "plantvillage_real_data",
+          "status": "warn",
+          "detail": "No --dataset-root supplied; scientific training cannot be validated."
+        },
+        {
+          "name": "canonical_provenance",
+          "status": "warn",
+          "detail": "UNVERIFIED: ['fedavg_state_hash_mismatch', 'fedavg_accuracy_metadata_mismatch', 'centralized_epoch_mismatch', 'scientific_stage2_incomplete']"
+        },
+        {
+          "name": "network_global_artifact",
+          "status": "warn",
+          "detail": "checkpoint exists but scientific gate not satisfied: require_real=False, all_real=False, real_test=False"
+        },
+        {
+          "name": "multiseed_real_summary",
+          "status": "warn",
+          "detail": "no complete verified multi-seed real summary yet"
+        }
+      ],
+      "source": "artifacts/final_acceptance.json"
+    },
+    "network_artifact": {
+      "ok": false,
+      "source": "artifacts/network_artifact_validation.json"
+    }
+  },
+  "open_checklist_items": [
+    "Tách web inference/training/monitoring đọc qua registry",
+    "Dọn tài liệu mâu thuẫn (xóa archive, tạo RUNBOOK/MODEL_REGISTRY)",
+    "Kiểm chứng provenance & checkpoint (cần tái chạy run canonical hoặc khôi phục weights từ Kaggle)",
+    "Chốt một protocol khoa học duy nhất cho mỗi thí nghiệm",
+    "Audit leakage theo từng run (cần dataset gốc)",
+    "Đánh giá PlantDoc theo từng lớp",
+    "Phân tích lỗi confidence cao (100 ảnh sai với confidence > 0.9 ở FedAvg v7)",
+    "Chạy multi-seed non-IID (seed 42/123/2026)",
+    "Đồng bộ báo cáo & artifacts sau khi có run mới",
+    "Full tests + release sạch"
+  ],
+  "source": "scripts/update_status.py"
+}

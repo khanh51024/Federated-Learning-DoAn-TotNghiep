@@ -239,22 +239,22 @@
       "seed": 42,
       "metrics": {
         "overall": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 4613,
+          "top1_accuracy": 0.9657489703013223,
+          "macro_f1_supported": 0.9614214620118254,
+          "crop_accuracy": 0.9850422718404509
         },
         "plantdoc": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 269,
+          "top1_accuracy": 0.5390334572490706,
+          "macro_f1_supported": 0.5346981565864009,
+          "crop_accuracy": 0.7881040892193308
         },
         "plantvillage": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 4344,
+          "top1_accuracy": 0.9921731123388582,
+          "macro_f1_supported": 0.9898832199272135,
+          "crop_accuracy": 0.9972375690607734
         }
       },
       "metrics_source": "artifacts/branch_demo/20261003/centralized/validation_metrics.json",
@@ -280,22 +280,22 @@
       "seed": 42,
       "metrics": {
         "overall": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 4613,
+          "top1_accuracy": 0.9044006069802731,
+          "macro_f1_supported": 0.8717241548564056,
+          "crop_accuracy": 0.9733362237155864
         },
         "plantdoc": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 269,
+          "top1_accuracy": 0.4721189591078067,
+          "macro_f1_supported": 0.4686846181511861,
+          "crop_accuracy": 0.7546468401486989
         },
         "plantvillage": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 4344,
+          "top1_accuracy": 0.9311694290976059,
+          "macro_f1_supported": 0.9018740559922589,
+          "crop_accuracy": 0.986878453038674
         }
       },
       "metrics_source": "artifacts/branch_demo/20261003/fedavg/validation_metrics.json",
@@ -321,22 +321,22 @@
       "seed": 42,
       "metrics": {
         "overall": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 4613,
+          "top1_accuracy": 0.43767613266854544,
+          "macro_f1_supported": 0.2687175981976213,
+          "crop_accuracy": 0.7801864296553219
         },
         "plantdoc": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 269,
+          "top1_accuracy": 0.25650557620817843,
+          "macro_f1_supported": 0.2011445592398035,
+          "crop_accuracy": 0.5910780669144982
         },
         "plantvillage": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 4344,
+          "top1_accuracy": 0.4488950276243094,
+          "macro_f1_supported": 0.2678555326377989,
+          "crop_accuracy": 0.7918968692449355
         }
       },
       "metrics_source": "artifacts/branch_demo/20261003/local/client_00/validation_metrics.json",
@@ -362,22 +362,22 @@
       "seed": 42,
       "metrics": {
         "overall": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 4613,
+          "top1_accuracy": 0.5044439627140689,
+          "macro_f1_supported": 0.3496633468521499,
+          "crop_accuracy": 0.7515716453500976
         },
         "plantdoc": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 269,
+          "top1_accuracy": 0.2527881040892193,
+          "macro_f1_supported": 0.11671753584367237,
+          "crop_accuracy": 0.5762081784386617
         },
         "plantvillage": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 4344,
+          "top1_accuracy": 0.5200276243093923,
+          "macro_f1_supported": 0.34871781678642394,
+          "crop_accuracy": 0.7624309392265194
         }
       },
       "metrics_source": "artifacts/branch_demo/20261003/local/client_01/validation_metrics.json",
@@ -403,22 +403,22 @@
       "seed": 42,
       "metrics": {
         "overall": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 4613,
+          "top1_accuracy": 0.5380446564058097,
+          "macro_f1_supported": 0.34124369511829983,
+          "crop_accuracy": 0.8127032300021678
         },
         "plantdoc": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 269,
+          "top1_accuracy": 0.2899628252788104,
+          "macro_f1_supported": 0.21018773144279218,
+          "crop_accuracy": 0.6059479553903345
         },
         "plantvillage": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 4344,
+          "top1_accuracy": 0.5534069981583793,
+          "macro_f1_supported": 0.3430743191775756,
+          "crop_accuracy": 0.8255064456721916
         }
       },
       "metrics_source": "artifacts/branch_demo/20261003/local/client_02/validation_metrics.json",
@@ -444,22 +444,22 @@
       "seed": 42,
       "metrics": {
         "overall": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 4613,
+          "top1_accuracy": 0.5378278777368307,
+          "macro_f1_supported": 0.3359254417233138,
+          "crop_accuracy": 0.7851723390418383
         },
         "plantdoc": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 269,
+          "top1_accuracy": 0.26765799256505574,
+          "macro_f1_supported": 0.2564276461564424,
+          "crop_accuracy": 0.5018587360594795
         },
         "plantvillage": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 4344,
+          "top1_accuracy": 0.5545580110497238,
+          "macro_f1_supported": 0.33926285189974964,
+          "crop_accuracy": 0.8027163904235728
         }
       },
       "metrics_source": "artifacts/branch_demo/20261003/local/client_03/validation_metrics.json",
@@ -485,22 +485,22 @@
       "seed": 42,
       "metrics": {
         "overall": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 4613,
+          "top1_accuracy": 0.5319748536743985,
+          "macro_f1_supported": 0.364680314066481,
+          "crop_accuracy": 0.7832213310210275
         },
         "plantdoc": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 269,
+          "top1_accuracy": 0.21189591078066913,
+          "macro_f1_supported": 0.18581968155603942,
+          "crop_accuracy": 0.5241635687732342
         },
         "plantvillage": {
-          "count": null,
-          "top1_accuracy": null,
-          "macro_f1_supported": null,
-          "crop_accuracy": null
+          "count": 4344,
+          "top1_accuracy": 0.5517955801104972,
+          "macro_f1_supported": 0.37523315055143436,
+          "crop_accuracy": 0.7992633517495396
         }
       },
       "metrics_source": "artifacts/branch_demo/20261003/local/client_04/validation_metrics.json",
@@ -715,9 +715,7 @@
     "provenance": {
       "status": "unverified",
       "critical_issues": [
-        "fedavg_state_hash_mismatch",
-        "fedavg_accuracy_metadata_mismatch",
-        "centralized_epoch_mismatch"
+        "fedavg_state_hash_mismatch"
       ],
       "warning_issues": [
         "scientific_stage2_incomplete"
