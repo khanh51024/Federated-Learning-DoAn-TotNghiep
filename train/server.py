@@ -175,7 +175,17 @@ def run_federated_simulation(
         "telemetry_summary": telemetry_mgr.get_summary(),
     }
 
-    with open(metrics_dir / "fedavg_results.json", "w", encoding="utf-8") as f:
+    out_file = metrics_dir / "fedavg_results.json"
+    if smoke and out_file.exists() and not output_dir:
+        try:
+            with open(out_file, "r", encoding="utf-8") as existing_f:
+                existing_data = json.load(existing_f)
+                if existing_data.get("rounds", 0) > 1:
+                    out_file = metrics_dir / "smoke_fedavg_results.json"
+        except Exception:
+            pass
+
+    with open(out_file, "w", encoding="utf-8") as f:
         json.dump(results_payload, f, indent=2)
 
     print(f"\n[+] Federated Learning Hoàn Tất! Best Global Accuracy: {best_acc*100:.2f}%")
@@ -184,28 +194,36 @@ def run_federated_simulation(
 
 # Flower Network Server Deployment
 def start_flower_server(
-    server_address: str = "0.0.0.0:8080",
-    num_clients: int = 5,
-    rounds: int = 5,
+    server_address: str = "0.0.0.0:8089",
+    num_clients: int = 2,
+    rounds: int = 1,
 ) -> None:
     """Khởi chạy Flower Server lắng nghe kết nối từ các client process qua IP:Port."""
     import flwr as fl
+    from flwr.common import ndarrays_to_parameters
     from flwr.server.strategy import FedAvg
 
     print(f"[*] Starting Flower Server listening on {server_address}")
-    print(f"[*] Waiting for {num_clients} clients to connect...")
+    print(f"[*] Configured for {num_clients} clients, {rounds} round(s)...")
+
+    init_model = create_model(num_classes=38, pretrained=False)
+    init_weights = [v.cpu().numpy() for v in get_parameters(init_model).values()]
+    initial_params = ndarrays_to_parameters(init_weights)
 
     strategy = FedAvg(
         fraction_fit=1.0,
         min_fit_clients=num_clients,
         min_available_clients=num_clients,
+        initial_parameters=initial_params,
     )
 
-    fl.server.start_server(
+    history = fl.server.start_server(
         server_address=server_address,
         config=fl.server.ServerConfig(num_rounds=rounds),
         strategy=strategy,
     )
+    print("[+] Flower Network Server completed successfully!")
+    return history
 
 
 if __name__ == "__main__":

@@ -1,0 +1,57 @@
+{
+  "status": "unverified",
+  "canonical_run_id": "20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62",
+  "centralized_checkpoint": {
+    "path": "artifacts\\checkpoints\\centralized_best.pt",
+    "exists": true,
+    "file_sha256": "854f4596721de09d03c8c51ba2cb487fa85ba69552f8716504d285867d0c4095",
+    "state_sha256": "0b7e85d537ba1433fc095fa144e587cbe9b93c888be11a124f2dd471c15442fa",
+    "metadata": {
+      "test_metrics": {
+        "loss": 3.6087,
+        "accuracy": 1.0,
+        "macro_f1": 0.0263
+      },
+      "pretrained": false,
+      "epochs": 2
+    }
+  },
+  "fedavg_checkpoint": {
+    "path": "artifacts\\checkpoints\\fedavg_best.pt",
+    "exists": true,
+    "file_sha256": "9c59cb428e8b2b41143016ca8d9af1a1606f4c9b3a01d73f79d5ef3fd5b78e26",
+    "state_sha256": "acfead80355085a51b528bbfbd83778de1d7e74652bc5a33cee2ca722364c60f",
+    "metadata": {
+      "test_accuracy": 1.0
+    }
+  },
+  "issues": [
+    {
+      "severity": "critical",
+      "code": "fedavg_state_hash_mismatch",
+      "message": "Current fedavg_best.pt does not match canonical_manifest state_dict_sha256.",
+      "manifest": "a5af501306293146f21d5d3ce9446f66bc23355d1cbb4df196d55a50d4abe288",
+      "actual": "acfead80355085a51b528bbfbd83778de1d7e74652bc5a33cee2ca722364c60f"
+    },
+    {
+      "severity": "critical",
+      "code": "fedavg_accuracy_metadata_mismatch",
+      "message": "Checkpoint metadata test_accuracy differs from canonical manifest.",
+      "manifest": 0.990932,
+      "actual": 1.0
+    },
+    {
+      "severity": "critical",
+      "code": "centralized_epoch_mismatch",
+      "message": "Current centralized_best.pt epochs metadata differs from canonical manifest training scope.",
+      "manifest": 10,
+      "actual": 2
+    },
+    {
+      "severity": "warning",
+      "code": "scientific_stage2_incomplete",
+      "message": "canonical_manifest explicitly marks scientific_stage2_complete=false."
+    }
+  ],
+  "safe_reporting_policy": "Only report scientific accuracy/loss/F1 from a real-data run whose dataset preflight passes and whose metrics/checkpoint provenance are linked."
+}

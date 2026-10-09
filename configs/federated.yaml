@@ -1,0 +1,30 @@
+# Cấu hình Huấn luyện Federated Learning (FedAvg)
+experiment: "federated_fedavg"
+model:
+  backbone: "mobilenetv3_small"
+  num_classes: 38
+  pretrained: false  # Khóa protocol Scratch GĐ2
+
+federated:
+  strategy: "FedAvg"
+  num_clients: 5
+  rounds: 10
+  local_epochs: 1
+  batch_size: 32
+  lr: 0.01
+  momentum: 0.9
+  weight_decay: 0.0001
+  fraction_fit: 1.0
+
+data:
+  dataset_name: "PlantVillage"
+  partition_dir: "data/partitions_stage2_scratch_v3/label100"
+  test_csv: "data/partitions_stage2_scratch_v3/label100/global_test.csv"
+
+telemetry:
+  enabled: true
+  save_path: "artifacts/metrics/telemetry_history.json"
+
+output:
+  checkpoints_dir: "artifacts/checkpoints"
+  metrics_dir: "artifacts/metrics"

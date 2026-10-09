@@ -3,43 +3,124 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Federated Learning — Giám Sát & Chẩn Đoán Bệnh Lá Cây</title>
+  <title>CropFed FL — Nền Tảng Học Máy Liên Hiệp Chẩn Đoán Bệnh Lá Cây</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css?v=3.0.0">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+  <!-- MOBILE TOP BAR -->
+  <header class="mobile-topbar">
+    <div class="brand-inline">
+      <span class="brand-logo">
+        <svg class="brand-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 20A7 7 0 0 1 4 13a7 7 0 0 1 7-7c4 0 9 2 9 7v1a6 6 0 0 1-6 6h-3z"/>
+          <path d="M11 20v-8"/>
+        </svg>
+      </span>
+      <span class="brand-title">CropFed FL</span>
+    </div>
+    <div class="mobile-actions">
+      <span class="status-indicator">
+        <span class="pulse-dot"></span>
+      </span>
+      <button class="mobile-nav-toggle" id="mobile-nav-toggle" aria-label="Mở thanh điều hướng">
+        <svg class="svg-icon" viewBox="0 0 24 24">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </header>
+
   <div class="app-layout">
     <!-- SIDEBAR -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="app-sidebar">
       <div class="brand">
-        <div class="brand-logo">🌿</div>
+        <div class="brand-logo">
+          <svg class="brand-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 20A7 7 0 0 1 4 13a7 7 0 0 1 7-7c4 0 9 2 9 7v1a6 6 0 0 1-6 6h-3z"/>
+            <path d="M11 20v-8"/>
+          </svg>
+        </div>
         <div>
           <h2 class="brand-title">CropFed FL</h2>
-          <span class="brand-subtitle">MobileNetV3 &middot; PlantVillage</span>
+          <span class="brand-subtitle">MobileNetV3 &middot; PlantVillage FL</span>
         </div>
       </div>
 
       <nav class="nav-menu">
         <button class="nav-item active" data-tab="tab-dashboard">
-          <span class="nav-icon">📊</span> Tổng Quan (Dashboard)
+          <span class="nav-icon">
+            <svg class="svg-icon" viewBox="0 0 24 24">
+              <rect width="7" height="9" x="3" y="3" rx="1"/>
+              <rect width="7" height="5" x="14" y="3" rx="1"/>
+              <rect width="7" height="9" x="14" y="12" rx="1"/>
+              <rect width="7" height="5" x="3" y="16" rx="1"/>
+            </svg>
+          </span>
+          Tổng Quan Hệ Thống
         </button>
         <button class="nav-item" data-tab="tab-centralized">
-          <span class="nav-icon">🖥️</span> Centralized Baseline
+          <span class="nav-icon">
+            <svg class="svg-icon" viewBox="0 0 24 24">
+              <rect width="20" height="8" x="2" y="2" rx="2" ry="2"/>
+              <rect width="20" height="8" x="2" y="14" rx="2" ry="2"/>
+              <line x1="6" y1="6" x2="6.01" y2="6"/>
+              <line x1="6" y1="18" x2="6.01" y2="18"/>
+            </svg>
+          </span>
+          Huấn Luyện Tập Trung
         </button>
         <button class="nav-item" data-tab="tab-federated">
-          <span class="nav-icon">🌐</span> Huấn Luyện FedAvg
+          <span class="nav-icon">
+            <svg class="svg-icon" viewBox="0 0 24 24">
+              <circle cx="18" cy="5" r="3"/>
+              <circle cx="6" cy="12" r="3"/>
+              <circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+          </span>
+          Huấn Luyện FedAvg
         </button>
         <button class="nav-item" data-tab="tab-clients">
-          <span class="nav-icon">👥</span> Clients & Telemetry
+          <span class="nav-icon">
+            <svg class="svg-icon" viewBox="0 0 24 24">
+              <rect width="18" height="18" x="3" y="3" rx="2"/>
+              <path d="M9 9h6v6H9z"/>
+              <path d="M15 2v2"/><path d="M9 2v2"/>
+              <path d="M20 15h2"/><path d="M20 9h2"/>
+              <path d="M9 20v2"/><path d="M15 20v2"/>
+              <path d="M2 15h2"/><path d="M2 9h2"/>
+            </svg>
+          </span>
+          Trạm Nông Hộ & Viễn Đoán
         </button>
         <button class="nav-item" data-tab="tab-experiments">
-          <span class="nav-icon">📈</span> So Sánh & Benchmark
+          <span class="nav-icon">
+            <svg class="svg-icon" viewBox="0 0 24 24">
+              <path d="M3 3v18h18"/>
+              <path d="m19 9-5 5-4-4-3 3"/>
+            </svg>
+          </span>
+          Đánh Giá & Đối Sánh
         </button>
         <button class="nav-item" data-tab="tab-inference">
-          <span class="nav-icon">🔍</span> Nhận Diện (Inference)
+          <span class="nav-icon">
+            <svg class="svg-icon" viewBox="0 0 24 24">
+              <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+              <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+              <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+              <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+              <circle cx="12" cy="12" r="3"/>
+              <path d="m16 16-1.5-1.5"/>
+            </svg>
+          </span>
+          Chẩn Đoán Bệnh Lá
         </button>
       </nav>
 
@@ -48,7 +129,7 @@
           <span class="pulse-dot"></span>
           <span id="server-status-text">Server: Online</span>
         </div>
-        <div class="system-chip" id="system-device">Device: CPU / CUDA</div>
+        <div class="system-chip" id="system-device">Device: Đang kết nối...</div>
       </div>
     </aside>
 
@@ -66,126 +147,532 @@
 
       <!-- TAB 1: DASHBOARD -->
       <section id="tab-dashboard" class="tab-pane active">
+        <!-- Published validation evidence. Populated only after SHA-256 verification. -->
+        <div class="panel mb-4" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-md); padding: 14px 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="status-badge" id="published-evidence-badge">Đang kiểm artifact</span>
+              <span style="font-size: 13.5px; font-weight: 600; color: #fff;">Đối chứng Centralized / FedAvg / 5 Local-only trên cùng validation</span>
+            </div>
+            <span class="text-muted" style="font-size: 12px; font-family: var(--font-mono);">PlantVillage + PlantDoc · seed 42 · α=0,1 · artifact 20261003</span>
+          </div>
+          <p id="published-evidence-note" class="panel-desc mt-2">Đang kiểm SHA-256. Đây là validation nội bộ đã công bố; chưa tái đánh giá trên máy demo hoặc ảnh ngoài thực địa.</p>
+        </div>
+
         <div class="kpi-grid">
           <div class="kpi-card">
-            <span class="kpi-label">Độ Chính Xác Toàn Cục</span>
-            <span class="kpi-value text-emerald" id="dash-acc">97.12%</span>
-            <span class="kpi-sub">FedAvg (Test Set 10.921 ảnh)</span>
+            <div class="kpi-card-header">
+              <span class="kpi-label">FedAvg: validation PlantVillage Top-1</span>
+              <div class="kpi-icon-wrap">
+                <svg class="svg-icon" viewBox="0 0 24 24">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                  <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+              </div>
+            </div>
+            <span class="kpi-value text-emerald" id="dash-acc">—</span>
+            <span class="kpi-sub">4.344 ảnh; số từ artifact được kiểm hash</span>
           </div>
+
           <div class="kpi-card">
-            <span class="kpi-label">Hàm Mất Mát (Loss)</span>
-            <span class="kpi-value text-sky" id="dash-loss">0.112</span>
-            <span class="kpi-sub">CrossEntropy Loss</span>
+            <div class="kpi-card-header">
+              <span class="kpi-label">FedAvg: validation PlantDoc Top-1</span>
+              <div class="kpi-icon-wrap">
+                <svg class="svg-icon" viewBox="0 0 24 24">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+              </div>
+            </div>
+            <span class="kpi-value text-sky" id="dash-loss">—</span>
+            <span class="kpi-sub">269 ảnh cắt lá; khác biệt miền dữ liệu</span>
           </div>
+
           <div class="kpi-card">
-            <span class="kpi-label">Số Clients Tham Gia</span>
-            <span class="kpi-value text-purple" id="dash-clients">5 / 5</span>
-            <span class="kpi-sub">Kết nối đồng thời</span>
+            <div class="kpi-card-header">
+              <span class="kpi-label">Client Flower kết nối / hợp lệ</span>
+              <div class="kpi-icon-wrap">
+                <svg class="svg-icon" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="m4.93 4.93 4.24 4.24"/>
+                  <path d="m14.83 9.17 4.24-4.24"/>
+                  <path d="m14.83 14.83 4.24 4.24"/>
+                  <path d="m9.17 14.83-4.24 4.24"/>
+                </svg>
+              </div>
+            </div>
+            <span class="kpi-value text-purple" id="dash-clients">0 / 5</span>
+            <span class="kpi-sub">Đang chạy: client kết nối; hoàn tất: update hợp lệ vòng cuối</span>
           </div>
+
           <div class="kpi-card">
-            <span class="kpi-label">Độ Trễ Mạng (RTT)</span>
-            <span class="kpi-value text-amber" id="dash-rtt">85.4 ms</span>
-            <span class="kpi-sub">Trung bình P95: 92.1 ms</span>
+            <div class="kpi-card-header">
+              <span class="kpi-label">Độ Trễ Mạng Trung Bình (RTT)</span>
+              <div class="kpi-icon-wrap">
+                <svg class="svg-icon" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+            </div>
+            <span class="kpi-value text-amber" id="dash-rtt">N/A</span>
+            <span class="kpi-sub">Đo probe gRPC trên localhost; không đại diện mạng liên vùng</span>
           </div>
         </div>
 
         <div class="grid-2col mt-6">
           <div class="panel">
-            <h3 class="panel-title">Đường Cong Hội Tụ Qua Các Vòng (FedAvg)</h3>
-            <div class="chart-container">
+            <div class="panel-header-flex">
+              <div>
+                <h3 class="panel-title">Lịch sử vòng FedAvg v7</h3>
+                <p class="panel-desc">Artifact hiện chỉ công bố validation checkpoint đã chọn; không có chuỗi metric mỗi vòng để vẽ hội tụ.</p>
+              </div>
+            </div>
+            <div class="chart-container mt-4">
               <canvas id="chart-dashboard-convergence"></canvas>
             </div>
           </div>
+
           <div class="panel">
-            <h3 class="panel-title">Phân Bổ Dữ Liệu Các Client (Dirichlet non-IID)</h3>
-            <div class="chart-container">
+            <div class="panel-header-flex">
+              <div>
+                <h3 class="panel-title">Phân Bổ Mẫu Dữ Liệu Theo Trạm (non-IID)</h3>
+                <p class="panel-desc">Số ảnh train trong năm shard mô phỏng đã công bố; chưa phải năm nông hộ vật lý</p>
+              </div>
+            </div>
+            <div class="chart-container mt-4">
               <canvas id="chart-dashboard-distribution"></canvas>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- TAB 2: CENTRALIZED -->
+      <!-- TAB 2: CENTRALIZED BASELINE -->
       <section id="tab-centralized" class="tab-pane">
-        <div class="panel">
-          <div class="panel-header-flex">
-            <div>
-              <h3 class="panel-title">Điều Khiển Centralized Baseline (Mốc giới hạn trên)</h3>
-              <p class="panel-desc">Huấn luyện MobileNetV3-Small tập trung trên toàn bộ 38.984 ảnh train.</p>
+        <div class="ml-console-grid">
+          <!-- CỘT TRÁI: BẢNG ĐIỀU KHIỂN THAM SỐ -->
+          <div class="console-sidebar">
+            <div class="panel">
+              <h3 class="panel-title" style="font-size: 16px;">Tham Số Huấn Luyện</h3>
+              <p class="panel-desc">Cấu hình mô hình baseline học tập trung</p>
+
+              <div class="form-group mt-4">
+                <label for="cent-epochs">Số Chu Kỳ (Epochs)</label>
+                <input type="number" id="cent-epochs" value="5" min="1" max="50" class="input-field">
+              </div>
+
+              <div class="form-group mt-3">
+                <label for="cent-seed">Training Seed</label>
+                <input type="number" id="cent-seed" value="42" min="0" class="input-field">
+              </div>
+
+              <!-- CHẾ ĐỘ THỬ NGHIỆM -->
+              <div class="form-group mt-4">
+                <label>Quy Mô Dữ Liệu Thực Thi</label>
+                <div class="mode-segmented-control">
+                  <div class="mode-option-card active sky" id="mode-cent-demo" onclick="setCentralizedMode(true)">
+                    <div class="mode-card-header-clean">
+                      <span class="mode-title-text">
+                        <svg class="svg-icon icon-sm text-sky" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        Chế Độ Kiểm Thử Nhanh
+                      </span>
+                      <span class="badge-tag lightweight">Tối ưu CPU</span>
+                    </div>
+                    <p class="mode-desc-text">Lấy mẫu cân bằng 38 lớp, thời gian chạy ~15-25 giây, phù hợp thuyết trình và kiểm tra thuật toán.</p>
+                  </div>
+
+                  <div class="mode-option-card" id="mode-cent-full" aria-disabled="true" title="Chưa có release ảnh mixed pv_pd_v3 và manifest">
+                    <div class="mode-card-header-clean">
+                      <span class="mode-title-text">
+                        <svg class="svg-icon icon-sm text-amber" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                        Huấn Luyện Toàn Diện
+                      </span>
+                      <span class="badge-tag full">Toàn bộ mẫu</span>
+                    </div>
+                    <p class="mode-desc-text">Chưa khả dụng: cần release ảnh mixed pv_pd_v3, manifest và W0 để chạy lại thí nghiệm.</p>
+                  </div>
+                </div>
+                <input type="hidden" id="cent-smoke-val" value="true">
+              </div>
+
+              <!-- NÚT THỰC THI -->
+              <div class="mt-4" style="display: flex; flex-direction: column; gap: 8px;">
+                <button class="btn btn-primary" id="btn-train-centralized" onclick="triggerCentralizedTrain()">
+                  <svg class="svg-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Bắt Đầu Huấn Luyện
+                </button>
+                <button class="btn btn-danger" id="btn-stop-centralized" style="display: none;" onclick="triggerStopTrain()">
+                  <svg class="svg-icon" viewBox="0 0 24 24"><rect width="14" height="14" x="5" y="5" rx="2"/></svg>
+                  Dừng Tiến Trình
+                </button>
+              </div>
+
+              <!-- THANH TIẾN TRÌNH % -->
+              <div class="progress-bar-wrapper mt-4" id="cent-progress-bar-box" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 12.5px;">
+                  <span id="cent-progress-label" style="color: var(--accent-sky); font-weight: 600;">Tiến trình: 0%</span>
+                  <span id="cent-progress-detail" class="text-muted" style="font-size: 11px;">Đang khởi tạo...</span>
+                </div>
+                <div class="progress-track">
+                  <div class="progress-fill" id="cent-progress-fill" style="width: 0%;"></div>
+                </div>
+              </div>
             </div>
-            <button class="btn btn-primary" id="btn-train-centralized" onclick="triggerCentralizedTrain()">
-              🚀 Bắt Đầu Huấn Luyện
-            </button>
           </div>
 
-          <div class="grid-3col mt-4">
-            <div class="metric-box">
-              <span class="metric-box-title">Test Accuracy</span>
-              <span class="metric-box-val" id="cent-acc">98.25%</span>
+          <!-- CỘT PHẢI: GIÁM SÁT TIẾN TRÌNH & ĐỒ THỊ -->
+          <div class="console-main">
+            <!-- 3 HỘP CHỈ SỐ -->
+            <div class="grid-3col">
+              <div class="metric-box">
+                <span class="metric-box-title">Validation PlantVillage Top-1</span>
+                <span class="metric-box-val" id="cent-acc">UNVERIFIED</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-box-title">Validation PlantVillage Macro-F1</span>
+                <span class="metric-box-val" id="cent-f1">UNVERIFIED</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-box-title">Validation PlantDoc Top-1</span>
+                <span class="metric-box-val" id="cent-loss">UNVERIFIED</span>
+              </div>
             </div>
-            <div class="metric-box">
-              <span class="metric-box-title">Macro-F1</span>
-              <span class="metric-box-val" id="cent-f1">0.9781</span>
-            </div>
-            <div class="metric-box">
-              <span class="metric-box-title">Test Loss</span>
-              <span class="metric-box-val" id="cent-loss">0.0842</span>
-            </div>
-          </div>
 
-          <div class="chart-container mt-6">
-            <canvas id="chart-centralized-history"></canvas>
+            <!-- BIỂU ĐỒ LỊCH SỬ HUẤN LUYỆN -->
+            <div class="panel">
+              <div class="panel-header-flex">
+                <div>
+                  <h3 class="panel-title">Đồ Thị Hội Tụ Theo Epoch</h3>
+                  <p class="panel-desc">Lịch sử validation nội bộ có trong summary Centralized v6; không phải đường FedAvg.</p>
+                </div>
+              </div>
+              <div class="chart-container mt-4">
+                <canvas id="chart-centralized-history"></canvas>
+              </div>
+            </div>
+
+            <!-- BẢNG TIẾN TRÌNH EPOCH -->
+            <div class="panel">
+              <div class="panel-header-flex">
+                <div>
+                  <h3 class="panel-title">Nhật Ký Huấn Luyện Chi Tiết</h3>
+                  <p class="panel-desc">Ghi nhận độ đo định lượng sau mỗi epoch hoàn tất</p>
+                </div>
+                <span class="status-badge" id="cent-live-badge">Sẵn sàng</span>
+              </div>
+              <div class="table-responsive mt-3">
+                <table class="data-table" id="cent-progress-table">
+                  <thead>
+                    <tr>
+                      <th>Epoch</th>
+                      <th>Train Accuracy</th>
+                      <th>Train Loss</th>
+                      <th>Val Accuracy</th>
+                      <th>Val Loss</th>
+                      <th>Macro-F1</th>
+                      <th>Thời Gian</th>
+                      <th>Trạng Thái</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cent-progress-body">
+                    <tr><td colspan="8" class="text-center text-muted">Chưa có tiến trình huấn luyện. Nhấn "Bắt Đầu Huấn Luyện" để theo dõi.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- TAB 3: FEDERATED -->
+      <!-- TAB 3: FEDERATED LEARNING -->
       <section id="tab-federated" class="tab-pane">
-        <div class="panel">
-          <div class="panel-header-flex">
-            <div>
-              <h3 class="panel-title">Cấu Hình Huấn Luyện Federated Learning (FedAvg)</h3>
-              <p class="panel-desc">Phát tán mô hình, nhận updates từ 5 clients, tổng hợp theo trọng số n_k.</p>
+        <div class="ml-console-grid">
+          <!-- CỘT TRÁI: CẤU HÌNH GIAO THỨC FEDAVG -->
+          <div class="console-sidebar">
+            <div class="panel">
+              <h3 class="panel-title" style="font-size: 16px;">Giao Thức FedAvg</h3>
+              <p class="panel-desc">Tham số điều phối mạng học máy liên hiệp</p>
+
+              <div class="form-group mt-4">
+                <label for="fl-rounds">Số Vòng Giao Tiếp (Rounds)</label>
+                <input type="number" id="fl-rounds" value="2" min="1" max="50" class="input-field">
+              </div>
+
+              <div class="form-group mt-3">
+                <label for="fl-epochs">Số Epoch Cục Bộ (E)</label>
+                <input type="number" id="fl-epochs" value="1" min="1" max="10" class="input-field">
+              </div>
+
+              <div class="form-group mt-3">
+                <label for="fl-seed">Training Seed</label>
+                <input type="number" id="fl-seed" value="42" min="0" class="input-field">
+              </div>
+
+              <div class="form-group mt-3">
+                <label for="fl-alpha">Mức Độ Non-IID (Dirichlet &alpha;)</label>
+                <select id="fl-alpha" class="input-field">
+                  <option value="100.0">IID (&alpha; = 100.0 - Phân bố đồng đều)</option>
+                  <option value="1.0">Moderate non-IID (&alpha; = 1.0 - Lệch nhãn thực tế)</option>
+                  <option value="0.1" selected>Severe non-IID (&alpha; = 0.1 - Lệch nhãn nghiêm trọng)</option>
+                </select>
+              </div>
+
+              <!-- CHỌN ENGINE FEDERATED -->
+              <div class="form-group mt-4">
+                <label for="fl-engine">Engine Thực Thi</label>
+                <select id="fl-engine" class="input-field" onchange="toggleFederatedEngineFields()">
+                  <option value="network" selected>Demo Flower — server và 5 client localhost qua gRPC</option>
+                  <option value="simulation">Simulation scratch PlantVillage cũ — kiểm thử kỹ thuật</option>
+                </select>
+                <p class="panel-desc mt-2" id="fl-engine-help">Simulation chạy các client trong cùng máy/process workflow; không được dùng để chứng minh latency mạng thật.</p>
+              </div>
+
+              <div id="fl-network-fields" style="display: none;">
+                <div class="form-group mt-3">
+                  <label for="fl-server-address">Flower Server Address</label>
+                  <input type="text" id="fl-server-address" value="127.0.0.1:8089" class="input-field" placeholder="127.0.0.1:8089">
+                </div>
+                <div class="form-group mt-3">
+                  <label for="fl-num-clients">Số Client Bắt Buộc</label>
+                  <input type="number" id="fl-num-clients" value="5" min="5" max="5" class="input-field" disabled>
+                </div>
+                <div class="form-group mt-3">
+                  <label>
+                    <input type="checkbox" id="fl-require-real-clients" disabled>
+                    Bắt buộc client dùng ảnh thật (chưa khả dụng khi thiếu release ảnh)
+                  </label>
+                </div>
+                <div class="form-group mt-3">
+                  <label for="fl-eval-dataset-root">Held-out Evaluation Root (tùy chọn)</label>
+                  <input type="text" id="fl-eval-dataset-root" class="input-field" disabled placeholder="Cần release ảnh mixed pv_pd_v3">
+                  <p class="panel-desc mt-2">Chỉ dùng để đánh giá global model sau FedAvg; không được dùng làm client training data.</p>
+                </div>
+                <div class="form-group mt-3">
+                  <label>
+                    <input type="checkbox" id="fl-require-real-evaluation" disabled>
+                    Bắt buộc held-out evaluator dùng ảnh thật
+                  </label>
+                </div>
+                <div class="form-group mt-3">
+                  <label for="fl-validator-policy">Chính Sách Validator</label>
+                  <select id="fl-validator-policy" class="input-field">
+                    <option value="observe" selected>Observe only — ghi cờ nhưng vẫn aggregate</option>
+                    <option value="reject">Reject suspicious — loại update trước FedAvg</option>
+                  </select>
+                </div>
+                <div class="form-group mt-3">
+                  <label for="fl-max-update-norm">Ngưỡng Update L2 Norm (tùy chọn)</label>
+                  <input type="number" step="0.01" min="0.01" id="fl-max-update-norm" class="input-field" placeholder="Ví dụ 5.0; để trống = không dùng ngưỡng">
+                </div>
+                <div class="panel-desc mt-2">
+                  Web tự khởi động một Flower server và năm tiến trình client riêng trên localhost. Dữ liệu smoke là ảnh tổng hợp từ manifest partition cũ; kết quả phiên này chỉ chứng minh luồng kỹ thuật, không thay thế validation đã công bố.
+                </div>
+              </div>
+
+              <!-- CHỌN CHẾ ĐỘ FEDERATED -->
+              <div class="form-group mt-4" id="fl-scale-mode-block">
+                <label>Quy Mô Thực Nghiệm</label>
+                <div class="mode-segmented-control">
+                  <div class="mode-option-card active" id="mode-fed-demo" onclick="setFederatedMode(true)">
+                    <div class="mode-card-header-clean">
+                      <span class="mode-title-text">
+                        <svg class="svg-icon icon-sm text-emerald" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        Mô Phỏng Nhanh (In-Silico)
+                      </span>
+                      <span class="badge-tag lightweight">Tối ưu CPU</span>
+                    </div>
+                    <p class="mode-desc-text">Mô phỏng 5 client trong cùng workflow để kiểm thử SGD/FedAvg nhanh. Không dùng số liệu này làm bằng chứng độ trễ mạng thật.</p>
+                  </div>
+
+                  <div class="mode-option-card" id="mode-fed-full" aria-disabled="true" title="Chưa có release ảnh mixed pv_pd_v3 và manifest">
+                    <div class="mode-card-header-clean">
+                      <span class="mode-title-text">
+                        <svg class="svg-icon icon-sm text-amber" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                        Huấn Luyện Toàn Phần 5 Clients
+                      </span>
+                      <span class="badge-tag full">Toàn mạng</span>
+                    </div>
+                    <p class="mode-desc-text">Chưa khả dụng: cần release ảnh mixed pv_pd_v3, manifest và W0 để huấn luyện thật.</p>
+                  </div>
+                </div>
+                <input type="hidden" id="fl-smoke-val" value="true">
+              </div>
+
+              <!-- NÚT THỰC THI -->
+              <div class="mt-4" style="display: flex; flex-direction: column; gap: 8px;">
+                <button class="btn btn-primary" id="btn-train-federated" onclick="triggerFederatedTrain()">
+                  <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                  Khởi Động Vòng FedAvg
+                </button>
+                <button class="btn btn-danger" id="btn-stop-federated" style="display: none;" onclick="triggerStopTrain()">
+                  <svg class="svg-icon" viewBox="0 0 24 24"><rect width="14" height="14" x="5" y="5" rx="2"/></svg>
+                  Dừng Tiến Trình
+                </button>
+              </div>
+
+              <!-- THANH TIẾN TRÌNH % -->
+              <div class="progress-bar-wrapper mt-4" id="fed-progress-bar-box" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 12.5px;">
+                  <span id="fed-progress-label" style="color: var(--accent-emerald); font-weight: 600;">Tiến trình: 0%</span>
+                  <span id="fed-progress-detail" class="text-muted" style="font-size: 11px;">Đang phân phối...</span>
+                </div>
+                <div class="progress-track">
+                  <div class="progress-fill fed-fill" id="fed-progress-fill" style="width: 0%;"></div>
+                </div>
+              </div>
             </div>
-            <button class="btn btn-primary" id="btn-train-federated" onclick="triggerFederatedTrain()">
-              ⚡ Khởi Động Vòng FedAvg
-            </button>
           </div>
 
-          <div class="form-row mt-4">
-            <div class="form-group">
-              <label>Số Vòng Giao Tiếp (Rounds)</label>
-              <input type="number" id="fl-rounds" value="5" min="1" max="50" class="input-field">
+          <!-- CỘT PHẢI: GIÁM SÁT HỘI TỤ TOÀN CỤC -->
+          <div class="console-main">
+            <!-- BIỂU ĐỒ HỘI TỤ FEDAVG -->
+            <div class="panel">
+              <div class="panel-header-flex">
+                <div>
+                  <h3 class="panel-title">Lịch sử vòng FedAvg</h3>
+                  <p class="panel-desc">Nhánh v7 chưa công bố log từng vòng; biểu đồ để trống cho đến khi có lịch sử có nguồn.</p>
+                </div>
+              </div>
+              <div class="chart-container mt-4">
+                <canvas id="chart-federated-history"></canvas>
+              </div>
             </div>
-            <div class="form-group">
-              <label>Số Epoch Cục Bộ (E)</label>
-              <input type="number" id="fl-epochs" value="1" min="1" max="10" class="input-field">
-            </div>
-            <div class="form-group">
-              <label>Mức độ Non-IID (Dirichlet &alpha;)</label>
-              <select id="fl-alpha" class="input-field">
-                <option value="100.0">IID (&alpha; = 100.0)</option>
-                <option value="1.0" selected>Moderate non-IID (&alpha; = 1.0)</option>
-                <option value="0.1">Severe non-IID (&alpha; = 0.1)</option>
-              </select>
-            </div>
-          </div>
 
-          <div class="chart-container mt-6">
-            <canvas id="chart-federated-history"></canvas>
+            <!-- BẢNG TIẾN TRÌNH TỪNG VÒNG -->
+            <div class="panel">
+              <div class="panel-header-flex">
+                <div>
+                  <h3 class="panel-title">Tiến Trình Phiên Flower Hiện Tại</h3>
+                  <p class="panel-desc">Bảng này chỉ theo dõi phiên đang chạy; audit của phiên hoàn tất nằm bên dưới.</p>
+                </div>
+                <span class="status-badge" id="fed-live-badge">Flower smoke · chưa chạy</span>
+              </div>
+              <div class="table-responsive mt-3">
+                <table class="data-table" id="fed-progress-table">
+                  <thead>
+                    <tr>
+                      <th>Vòng (Round)</th>
+                      <th>Global Accuracy</th>
+                      <th>Global Loss</th>
+                      <th>Macro-F1</th>
+                      <th>Thời Gian Tổng Hợp</th>
+                      <th>Thời Gian Vòng</th>
+                      <th>Trạng Thái</th>
+                    </tr>
+                  </thead>
+                  <tbody id="fed-progress-body">
+                    <tr><td colspan="7" class="text-center text-muted">Chưa có phiên đang theo dõi. Bấm "Khởi Động Vòng FedAvg" để chạy smoke; audit của phiên hoàn tất nằm ở bảng Flower bên dưới.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="panel" id="network-metrics-panel">
+              <div class="panel-header-flex">
+                <div>
+                  <h3 class="panel-title">Flower localhost smoke — 5 tiến trình client</h3>
+                  <p class="panel-desc">Đây là telemetry gRPC trên cùng máy với ảnh tổng hợp; không phải validation của checkpoint FedAvg v7.</p>
+                  <p class="panel-desc" id="network-run-context">Chưa có phiên Flower smoke hoàn tất.</p>
+                </div>
+                <button class="btn btn-secondary" onclick="loadNetworkMetrics()">Làm Mới</button>
+              </div>
+              <div class="table-responsive mt-3">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Round</th>
+                      <th>Accepted</th>
+                      <th>Suspicious</th>
+                      <th>Rejected</th>
+                      <th>Mean Update Norm</th>
+                      <th>Val Accuracy</th>
+                      <th>Val Loss</th>
+                      <th>Val Macro-F1</th>
+                      <th>Mean RTT Probe</th>
+                      <th>Max RTT Probe</th>
+                      <th>Round Fit</th>
+                      <th>Comm. Overhead Ước Lượng</th>
+                    </tr>
+                  </thead>
+                  <tbody id="network-metrics-body">
+                    <tr><td colspan="12" class="text-center text-muted">Chưa chạy Flower localhost smoke.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div id="network-final-test-summary" class="panel-desc mt-3">Final held-out test: chưa có evaluator.</div>
+
+              <div class="table-responsive mt-4">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Round</th>
+                      <th>Client</th>
+                      <th>RTT Probe</th>
+                      <th>Local Train</th>
+                      <th>Data Mode</th>
+                      <th>Seed</th>
+                      <th>Partition</th>
+                      <th>Update Norm</th>
+                      <th>Status</th>
+                      <th>Reason</th>
+                    </tr>
+                  </thead>
+                  <tbody id="network-client-rtt-body">
+                    <tr><td colspan="10" class="text-center text-muted">Chưa có audit per-client.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       <!-- TAB 4: CLIENTS & TELEMETRY -->
       <section id="tab-clients" class="tab-pane">
+        <!-- TỔNG QUAN PHÂN VÙNG MẠNG -->
+        <div class="panel mb-4" style="background: rgba(139, 92, 246, 0.04); border-color: rgba(139, 92, 246, 0.2);">
+          <div class="panel-header-flex">
+            <div>
+              <h3 class="panel-title" style="color: var(--accent-purple);">Kiến Trúc Phân Vùng Dữ Liệu & Nút Mạng Cục Bộ</h3>
+              <p class="panel-desc">Mỗi client là một tiến trình localhost riêng qua Flower gRPC. Shard mô phỏng phân tán; không đại diện cho nông hộ vật lý và không chứng minh độ trễ mạng liên vùng.</p>
+            </div>
+            <span class="status-badge" style="border-color: rgba(139, 92, 246, 0.4); color: #c084fc;">5 Phân Vùng Dirichlet</span>
+          </div>
+        </div>
+
+        <!-- LƯỚI 5 CARD CLIENTS -->
         <div class="clients-cards-grid" id="clients-container">
           <!-- Client Cards injected via JS -->
         </div>
 
+        <!-- HƯỚNG DẪN KẾT NỐI MÁY THẬT -->
+        <div class="network-architecture-card mt-4">
+          <details>
+            <summary style="cursor: pointer; font-weight: 600; color: #38bdf8; display: flex; align-items: center; justify-content: space-between; padding: 4px 0;">
+              <span style="display: flex; align-items: center; gap: 8px;">
+                <svg class="svg-icon text-sky" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Tài Liệu Kỹ Thuật: Cơ Chế Mạng & Hướng Dẫn Kết Nối Client Vật Lý (Flower gRPC)
+              </span>
+              <span class="text-muted" style="font-size: 12px;">(Xem chi tiết lệnh)</span>
+            </summary>
+            <div style="margin-top: 14px; font-size: 13px; line-height: 1.6; color: #cbd5e1; border-top: 1px dashed rgba(255,255,255,0.08); padding-top: 12px;">
+              <p><strong>1. Nguyên lý phân tán dữ liệu:</strong><br/>
+              Bộ đối chứng công bố dùng 37.238 ảnh train PlantVillage + PlantDoc, phân hoạch lệch nhãn α=0,1 cho năm client mô phỏng. Demo mạng trên máy này dùng tập smoke tổng hợp riêng và không tái hiện accuracy của checkpoint Kaggle.</p>
+              <p style="margin-top: 10px;"><strong>2. Phiên Flower trên máy demo:</strong><br/>
+              Web khởi động một server bind <strong>0.0.0.0:8089</strong> và năm client riêng kết nối <strong>127.0.0.1:8089</strong>. Phiên này không cấu hình client ngoài Internet hoặc server đám mây.</p>
+              <div class="code-box-clean mt-2">
+                .\.venv\Scripts\python.exe -m web.app
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <!-- WEIGHT INSPECTOR -->
         <div class="panel mt-6">
           <div class="panel-header-flex">
-            <h3 class="panel-title">Weight Inspector — Phân Tích Thống Kê Trọng Số</h3>
+            <div>
+              <h3 class="panel-title">Weight Inspector — Phân Tích Thống Kê Trọng Số</h3>
+              <p class="panel-desc">Kiểm tra tensor trọng số từng lớp mạng; Chuẩn cập nhật ||Δ_k||_2 phản ánh khoảng cách dịch chuyển tham số</p>
+            </div>
             <select id="layer-selector" class="input-field select-layer" onchange="loadLayerStats()">
               <!-- Layer options injected via JS -->
             </select>
@@ -195,37 +682,41 @@
             <table class="data-table" id="layer-stats-table">
               <thead>
                 <tr>
-                  <th>Layer Name</th>
-                  <th>Tensor Shape</th>
-                  <th>Tham Số</th>
-                  <th>L2 Norm</th>
-                  <th>Update Norm ||&Delta;<sub>k</sub>||<sub>2</sub></th>
+                  <th>Tên Lớp (Layer Name)</th>
+                  <th>Kích Thước (Tensor Shape)</th>
+                  <th>Số Lượng Tham Số</th>
+                  <th>Chuẩn L2 Norm</th>
+                  <th>Chuẩn Cập Nhật ||&Delta;<sub>k</sub>||<sub>2</sub></th>
                   <th>Mean &plusmn; Std</th>
-                  <th>Sample Values</th>
+                  <th>Mẫu Giá Trị</th>
                 </tr>
               </thead>
               <tbody id="layer-stats-body">
-                <tr><td colspan="7">Đang tải thống kê layer...</td></tr>
+                <tr><td colspan="7">Đang nạp dữ liệu trọng số layer...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- TAB 5: EXPERIMENTS & BENCHMARKS -->
+      <!-- TAB 5: BENCHMARK & EXPERIMENTS -->
       <section id="tab-experiments" class="tab-pane">
         <div class="panel">
-          <h3 class="panel-title">Bảng Đối Sánh 3 Trụ Cột (Centralized vs FedAvg vs Local-only)</h3>
-          <p class="panel-desc">Chứng minh giá trị gia tăng của Federated Learning so với tự học và sự đánh đổi so với tập trung.</p>
+          <div class="panel-header-flex">
+            <div>
+              <h3 class="panel-title">Bảng Đối Sánh 3 Trụ Cột (Centralized vs FedAvg vs Local-only)</h3>
+              <p class="panel-desc">Bảy checkpoint từ ba nhánh GitHub, cùng validation 269 ảnh PlantDoc + 4.344 ảnh PlantVillage. SHA-256 artifact được kiểm; chưa tái đánh giá tại máy demo. GĐ2 mới có một kịch bản lệch nhãn α=0,1 và một seed.</p>
+            </div>
+          </div>
 
           <div class="table-responsive mt-4">
             <table class="data-table" id="compare-table">
               <thead>
                 <tr>
-                  <th>Chỉ số (Metric)</th>
-                  <th>Centralized (Tập trung)</th>
-                  <th>FedAvg (Federated)</th>
-                  <th>Local-only (Tự học)</th>
+                  <th>Mô hình / giai đoạn</th>
+                  <th>Nguồn validation</th>
+                  <th>Top-1 / Macro-F1</th>
+                  <th>Checkpoint / nguồn</th>
                 </tr>
               </thead>
               <tbody id="compare-body">
@@ -237,14 +728,25 @@
 
         <div class="grid-2col mt-6">
           <div class="panel">
-            <h3 class="panel-title">Suy Giảm Accuracy Theo Mức Non-IID (&alpha;)</h3>
-            <div class="chart-container">
+            <div class="panel-header-flex">
+              <div>
+                <h3 class="panel-title">Kịch bản non-IID đã có</h3>
+                <p class="panel-desc">Mới có lệch nhãn α=0,1; chưa có đường suy giảm theo nhiều α.</p>
+              </div>
+            </div>
+            <div class="chart-container mt-4">
               <canvas id="chart-alpha-degradation"></canvas>
             </div>
           </div>
+
           <div class="panel">
-            <h3 class="panel-title">Tác Động Của Client Lỗi Đến FedAvg (Faulty Client)</h3>
-            <div class="chart-container">
+            <div class="panel-header-flex">
+              <div>
+                <h3 class="panel-title">Kiểm thử client lỗi</h3>
+                <p class="panel-desc">Chưa có thí nghiệm độ chính xác cùng protocol; chỉ trình bày sau khi có artifact đối chứng.</p>
+              </div>
+            </div>
+            <div class="chart-container mt-4">
               <canvas id="chart-faulty-impact"></canvas>
             </div>
           </div>
@@ -253,57 +755,141 @@
 
       <!-- TAB 6: INFERENCE -->
       <section id="tab-inference" class="tab-pane">
-        <div class="panel">
-          <h3 class="panel-title">Chẩn Đoán Bệnh Lá Cây Song Song (Dual-Model Inference)</h3>
-          <p class="panel-desc">Tải ảnh lá cây lên để đối chiếu kết quả dự đoán đồng thời giữa mô hình Centralized và mô hình Federated Global.</p>
+        <div class="inference-studio-grid">
+          <!-- CỘT TRÁI: KHUNG TẢI ẢNH & THƯ VIỆN TIÊU BẢN MẪU -->
+          <div class="console-sidebar">
+            <div class="panel">
+              <h3 class="panel-title" style="font-size: 16px;">Tải Ảnh Lá Cây Cần Chẩn Đoán</h3>
+              <p class="panel-desc">Đầu vào là ảnh vùng lá đơn đã cắt; bộ phân loại không tự tìm lá trên ảnh toàn cây.</p>
 
-          <div class="upload-zone" id="upload-dropzone">
-            <input type="file" id="leaf-image-input" accept="image/*" class="file-input" onchange="handleImageSelected(this)">
-            <div class="upload-placeholder">
-              <div class="upload-icon">📸</div>
-              <p class="upload-text">Kéo thả ảnh lá cây vào đây hoặc bấm để chọn file</p>
-              <span class="upload-sub">Hỗ trợ JPG, PNG (tự động tiền xử lý chuẩn 224&times;224)</span>
+              <div class="upload-zone mt-4" id="upload-dropzone">
+                <input type="file" id="leaf-image-input" accept="image/*" class="file-input" onchange="handleImageSelected(this)">
+                <div class="upload-placeholder">
+                  <div class="upload-icon" style="color: var(--accent-sky);">
+                    <svg class="svg-icon icon-xl" viewBox="0 0 24 24">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="17 8 12 3 7 8"/>
+                      <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                  </div>
+                  <p class="upload-text" style="margin-top: 8px;">Kéo thả ảnh vào đây hoặc bấm để chọn tệp</p>
+                  <span class="upload-sub" style="margin-top: 4px; display: block; font-size: 11.5px; color: var(--text-muted);">
+                    Hỗ trợ định dạng JPG, PNG, WEBP (Tỉ lệ khuyến nghị &ge; 70% khung hình lá)
+                  </span>
+                </div>
+                <img id="preview-image" class="preview-thumb hidden" alt="Ảnh lá đã chọn">
+              </div>
+
+              <!-- Ảnh lá minh họa không có nhãn kiểm chứng -->
+              <div class="mt-4">
+                <label style="font-size: 12.5px; color: var(--text-secondary); font-weight: 500;">Hoặc dùng ảnh vùng lá minh họa; nhãn bệnh chưa được kiểm chứng:</label>
+                <div class="specimen-grid">
+                  <div class="specimen-card" onclick="loadSampleLeaf('/static/samples/sample_tomato.jpg', 'Ảnh lá minh họa, nhãn chưa kiểm chứng')">
+                    <img src="/static/samples/sample_tomato.jpg" class="specimen-thumb" alt="Ảnh vùng lá minh họa">
+                    <div class="specimen-info">
+                      <span class="specimen-title">Ảnh vùng lá</span>
+                      <span class="specimen-class">Không có nhãn kiểm chứng</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group mt-4">
+                <label for="inference-fed-source">Nguồn Federated Model</label>
+                <select id="inference-fed-source" class="input-field">
+                  <option value="fedavg" selected>FedAvg v7 — checkpoint đã kiểm SHA</option>
+                  <option value="local_00">Local-only client 00</option>
+                  <option value="local_01">Local-only client 01</option>
+                  <option value="local_02">Local-only client 02</option>
+                  <option value="local_03">Local-only client 03</option>
+                  <option value="local_04">Local-only client 04</option>
+                </select>
+              </div>
+
+              <div class="mt-4" style="padding:12px; border:1px solid #64748b; border-radius:10px;">
+                <strong>Nhận diện bằng model PlantVillage đã train</strong>
+                <p style="font-size:12px; margin:6px 0;">Model tham chiếu 38 lớp, chạy độc lập với so sánh FedAvg. Độ tin cậy không phải accuracy.</p>
+                <button class="btn btn-primary" id="btn-plantvillage" onclick="submitPlantVillageReference()" style="width:100%;" disabled>Nhận diện bằng PlantVillage</button>
+                <div id="plantvillage-result" role="status" aria-live="polite" style="margin-top:8px;white-space:pre-wrap;"></div>
+              </div>
+
+              <!-- NÚT THỰC HIỆN CHẨN ĐOÁN -->
+              <div class="mt-4">
+                <button class="btn btn-primary" id="btn-diagnose" onclick="submitInference()" disabled style="width: 100%;">
+                  <svg class="svg-icon" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                  Thực Hiện Chẩn Đoán Đối Sánh
+                </button>
+              </div>
             </div>
-            <img id="preview-image" class="preview-thumb hidden" alt="Ảnh đã chọn">
           </div>
 
-          <div class="action-center mt-4">
-            <button class="btn btn-primary" id="btn-diagnose" onclick="submitInference()" disabled>
-              🔬 Chạy Chẩn Đoán Song Song
-            </button>
-          </div>
+          <!-- CỘT PHẢI: BẢNG ĐỐI CHIẾU KẾT QUẢ SONG SONG -->
+          <div class="console-main">
+            <div class="panel">
+              <div class="panel-header-flex">
+                <div>
+                  <h3 class="panel-title">Kết Quả Chẩn Đoán Song Song (Dual-Model Inference)</h3>
+                  <p class="panel-desc">Cùng phép tiền xử lý canonical_v1; so Centralized với FedAvg hoặc từng Local-only.</p>
+                </div>
+              </div>
 
-          <!-- DUAL RESULT CARDS -->
-          <div class="dual-results-grid mt-6" id="dual-results" style="display: none;">
-            <div class="diagnosis-card card-centralized">
-              <div class="card-badge badge-centralized">Centralized Model</div>
-              <h4 class="diag-disease" id="cent-disease">—</h4>
-              <div class="diag-confidence-meter">
-                <div class="diag-confidence-bar" id="cent-conf-bar" style="width: 0%"></div>
-              </div>
-              <div class="diag-meta-row">
-                <span>Độ tin cậy: <b id="cent-conf-val">0%</b></span>
-                <span>Model Test Acc: <b id="cent-test-acc">—</b></span>
-              </div>
-              <div class="top3-box mt-3">
-                <span class="top3-title">Top-3 Xác Suất Cao Nhất:</span>
-                <ul id="cent-top3-list" class="top3-list"></ul>
-              </div>
-            </div>
+              <!-- DUAL RESULTS CARDS -->
+              <div class="dual-results-grid mt-4" id="dual-results" style="display: none;">
+                <!-- CENTRALIZED RESULT -->
+                <div class="diagnosis-card card-centralized">
+                  <div class="card-badge badge-centralized">Mô Hình Tập Trung (Centralized)</div>
+                  <h4 class="diag-disease" id="cent-disease">—</h4>
+                  <div class="diag-confidence-meter">
+                    <div class="diag-confidence-bar" id="cent-conf-bar" style="width: 0%"></div>
+                  </div>
+                  <div class="diag-meta-row">
+                    <span>Độ tin cậy: <b id="cent-conf-val">0%</b></span>
+                    <span>Validation PlantVillage: <b id="cent-test-acc">—</b></span>
+                  </div>
+                  <div class="top3-box mt-3">
+                    <span class="top3-title">Top 3 Xác Suất Cao Nhất:</span>
+                    <ul id="cent-top3-list" class="top3-list"></ul>
+                  </div>
+                </div>
 
-            <div class="diagnosis-card card-federated">
-              <div class="card-badge badge-federated">Federated Global Model</div>
-              <h4 class="diag-disease" id="fed-disease">—</h4>
-              <div class="diag-confidence-meter">
-                <div class="diag-confidence-bar bar-fed" id="fed-conf-bar" style="width: 0%"></div>
+                <!-- FEDERATED RESULT -->
+                <div class="diagnosis-card card-federated">
+                  <div class="card-badge badge-federated" id="selected-model-badge">FedAvg v7</div>
+                  <h4 class="diag-disease" id="fed-disease">—</h4>
+                  <div class="diag-confidence-meter">
+                    <div class="diag-confidence-bar bar-fed" id="fed-conf-bar" style="width: 0%"></div>
+                  </div>
+                  <div class="diag-meta-row">
+                    <span>Độ tin cậy: <b id="fed-conf-val">0%</b></span>
+                    <span>Validation PlantVillage: <b id="fed-test-acc">—</b></span>
+                  </div>
+                  <div class="top3-box mt-3">
+                    <span class="top3-title">Top 3 Xác Suất Cao Nhất:</span>
+                    <ul id="fed-top3-list" class="top3-list"></ul>
+                  </div>
+                </div>
               </div>
-              <div class="diag-meta-row">
-                <span>Độ tin cậy: <b id="fed-conf-val">0%</b></span>
-                <span>Model Test Acc: <b id="fed-test-acc">—</b></span>
+
+              <!-- KHUYẾN NGHỊ BỆNH HỌC / CẢNH BÁO OOD -->
+              <div id="inference-advisory" class="mt-4 p-3 rounded" style="display: none; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); color: #fbbf24; font-size: 13px; line-height: 1.55;">
+                <strong style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+                  <svg class="svg-icon icon-sm" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  Khuyến Nghị Bệnh Học & Chất Lượng Tiêu Bản:
+                </strong>
+                Độ tin cậy dự đoán nằm dưới ngưỡng khuyến nghị. Đề xuất cung cấp ảnh chụp cận cảnh phiến lá đơn lẻ với ánh sáng tự nhiên đầy đủ để mô hình trích xuất đặc trưng tốt nhất.
               </div>
-              <div class="top3-box mt-3">
-                <span class="top3-title">Top-3 Xác Suất Cao Nhất:</span>
-                <ul id="fed-top3-list" class="top3-list"></ul>
+
+              <!-- PLACEHOLDER KHI CHƯA CHẠY INFERENCE -->
+              <div id="inference-empty-placeholder" class="p-6 text-center text-muted" style="border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: var(--radius-md); margin-top: 16px;">
+                <svg class="svg-icon icon-xl text-muted" viewBox="0 0 24 24" style="margin-bottom: 8px; opacity: 0.6;">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 16v-4"/>
+                  <path d="M12 8h.01"/>
+                </svg>
+                <p style="font-size: 13.5px;">Vui lòng tải ảnh vùng lá hoặc chọn ảnh minh họa ở cột bên trái, sau đó nhấn <strong>"Thực Hiện Chẩn Đoán Đối Sánh"</strong> để quan sát kết quả phân loại song song.</p>
               </div>
             </div>
           </div>
@@ -312,6 +898,23 @@
     </main>
   </div>
 
-  <script src="/static/js/main.js"></script>
+  <script src="/static/js/main.js?v=3.1.0"></script>
+  <script src="/static/js/published_demo.js?v=3.1.0"></script>
+  <script>
+    // Xử lý đóng mở sidebar trên thiết bị di động
+    const navToggle = document.getElementById("mobile-nav-toggle");
+    const sidebar = document.getElementById("app-sidebar");
+    if (navToggle && sidebar) {
+      navToggle.addEventListener("click", () => {
+        sidebar.classList.toggle("open");
+      });
+      // Đóng sidebar khi người dùng chọn tab trên mobile
+      document.querySelectorAll(".nav-item").forEach(item => {
+        item.addEventListener("click", () => {
+          sidebar.classList.remove("open");
+        });
+      });
+    }
+  </script>
 </body>
 </html>

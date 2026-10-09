@@ -1,0 +1,157 @@
+{
+  "server_address": "127.0.0.1:18100",
+  "probe_port": 18101,
+  "num_clients_required": 1,
+  "require_real_clients": false,
+  "rounds": 2,
+  "seed": 42,
+  "evaluation_dataset_root": null,
+  "evaluation_partition_dir": null,
+  "require_real_evaluation": false,
+  "final_test_metrics": null,
+  "checkpoint_file": "artifacts\\checkpoints\\federated_network_global.pt",
+  "audit_rounds": [
+    {
+      "round": 1,
+      "clients": [
+        {
+          "client_id": 0,
+          "flower_cid": "196113597a6548d4b1bbb3714ed81c29",
+          "num_examples": 76,
+          "local_train_time_s": 1.755,
+          "probe_rtt_ms": null,
+          "data_mode": "synthetic",
+          "training_seed": 42,
+          "partition_id": "label100",
+          "partition_config_sha256": "3bb4ededb1eaed67510f0d624d2f7a6ebac633c4dbecc4971f2050e48d48b54f",
+          "client_manifest_sha256": "14eaa43092110c4fcfcdcc2b7497e31086f4fea858a1c6de6f2b87da0bdf8529",
+          "received_update_norm": 1.7609713011205224,
+          "validation_reason": "ok",
+          "status": "ok"
+        }
+      ],
+      "accepted_clients": 1,
+      "suspicious_clients": 0,
+      "rejected_clients": 0,
+      "round_fit_elapsed_ms": 5334.590599999501,
+      "estimated_comm_overhead_ms": 3579.590599999501,
+      "mean_probe_rtt_ms": null,
+      "max_probe_rtt_ms": null,
+      "server_validation_metrics": null
+    },
+    {
+      "round": 2,
+      "clients": [
+        {
+          "client_id": 0,
+          "flower_cid": "196113597a6548d4b1bbb3714ed81c29",
+          "num_examples": 76,
+          "local_train_time_s": 1.76,
+          "probe_rtt_ms": null,
+          "data_mode": "synthetic",
+          "training_seed": 42,
+          "partition_id": "label100",
+          "partition_config_sha256": "3bb4ededb1eaed67510f0d624d2f7a6ebac633c4dbecc4971f2050e48d48b54f",
+          "client_manifest_sha256": "14eaa43092110c4fcfcdcc2b7497e31086f4fea858a1c6de6f2b87da0bdf8529",
+          "received_update_norm": 1.7085116245420124,
+          "validation_reason": "ok",
+          "status": "ok"
+        }
+      ],
+      "accepted_clients": 1,
+      "suspicious_clients": 0,
+      "rejected_clients": 0,
+      "round_fit_elapsed_ms": 2096.5639000023657,
+      "estimated_comm_overhead_ms": 336.5639000023657,
+      "mean_probe_rtt_ms": null,
+      "max_probe_rtt_ms": null,
+      "server_validation_metrics": null
+    }
+  ],
+  "metrics_distributed_fit": {
+    "accepted_clients": [
+      [
+        1,
+        1
+      ],
+      [
+        2,
+        1
+      ]
+    ],
+    "suspicious_clients": [
+      [
+        1,
+        0
+      ],
+      [
+        2,
+        0
+      ]
+    ],
+    "rejected_clients": [
+      [
+        1,
+        0
+      ],
+      [
+        2,
+        0
+      ]
+    ],
+    "mean_received_update_norm": [
+      [
+        1,
+        1.7609713011205224
+      ],
+      [
+        2,
+        1.7085116245420124
+      ]
+    ],
+    "mean_probe_rtt_ms": [
+      [
+        1,
+        -1.0
+      ],
+      [
+        2,
+        -1.0
+      ]
+    ],
+    "max_probe_rtt_ms": [
+      [
+        1,
+        -1.0
+      ],
+      [
+        2,
+        -1.0
+      ]
+    ],
+    "round_fit_elapsed_ms": [
+      [
+        1,
+        5334.590599999501
+      ],
+      [
+        2,
+        2096.5639000023657
+      ]
+    ],
+    "estimated_comm_overhead_ms": [
+      [
+        1,
+        3579.590599999501
+      ],
+      [
+        2,
+        336.5639000023657
+      ]
+    ]
+  },
+  "losses_distributed": [],
+  "losses_centralized": [],
+  "metrics_distributed": {},
+  "metrics_centralized": {}
+}

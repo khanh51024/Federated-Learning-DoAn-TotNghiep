@@ -1,0 +1,147 @@
+{
+  "server_address": "127.0.0.1:18122",
+  "probe_port": 18123,
+  "num_clients_required": 4,
+  "require_real_clients": false,
+  "rounds": 1,
+  "seed": 42,
+  "evaluation_dataset_root": null,
+  "evaluation_partition_dir": null,
+  "require_real_evaluation": false,
+  "final_test_metrics": null,
+  "checkpoint_file": "artifacts\\checkpoints\\attack_matrix_reject.pt",
+  "audit_rounds": [
+    {
+      "round": 1,
+      "clients": [
+        {
+          "client_id": 2,
+          "flower_cid": "2c160f2c3bc54952bf1911048d02de96",
+          "num_examples": 76,
+          "local_train_time_s": 7.248,
+          "probe_rtt_ms": 10.999499998433748,
+          "data_mode": "synthetic",
+          "training_seed": 42,
+          "partition_id": "label100",
+          "partition_config_sha256": "3bb4ededb1eaed67510f0d624d2f7a6ebac633c4dbecc4971f2050e48d48b54f",
+          "client_manifest_sha256": "248c331eb18ec2154015f9aa62f13285f7b8c1455119f7d7b2f06b97dfb63a48",
+          "received_update_norm": 17.615548528710487,
+          "validation_reason": "update_norm_above_threshold",
+          "status": "rejected_suspicious"
+        },
+        {
+          "client_id": 0,
+          "flower_cid": "78594399d17a4f0d964ff78e2020a518",
+          "num_examples": 76,
+          "local_train_time_s": 7.289,
+          "probe_rtt_ms": 13.894600000639912,
+          "data_mode": "synthetic",
+          "training_seed": 42,
+          "partition_id": "label100",
+          "partition_config_sha256": "3bb4ededb1eaed67510f0d624d2f7a6ebac633c4dbecc4971f2050e48d48b54f",
+          "client_manifest_sha256": "14eaa43092110c4fcfcdcc2b7497e31086f4fea858a1c6de6f2b87da0bdf8529",
+          "received_update_norm": 1.7612379503292706,
+          "validation_reason": "ok",
+          "status": "ok"
+        },
+        {
+          "client_id": 3,
+          "flower_cid": "1bc86ec06b9e4784a65bce5786bf786e",
+          "num_examples": 76,
+          "local_train_time_s": 7.266,
+          "probe_rtt_ms": 12.991399999009445,
+          "data_mode": "synthetic",
+          "training_seed": 42,
+          "partition_id": "label100",
+          "partition_config_sha256": "3bb4ededb1eaed67510f0d624d2f7a6ebac633c4dbecc4971f2050e48d48b54f",
+          "client_manifest_sha256": "f4d67b74c7a4428dcf02b82a608199f4e0540d01ce7b7dce0cd1b6d5f00496f3",
+          "received_update_norm": 125.24362361662938,
+          "validation_reason": "update_norm_above_threshold",
+          "status": "rejected_suspicious"
+        },
+        {
+          "client_id": 1,
+          "flower_cid": "f6025481365b423c86b2a76a14c4e465",
+          "num_examples": 76,
+          "local_train_time_s": 7.38,
+          "probe_rtt_ms": 23.816899996745633,
+          "data_mode": "synthetic",
+          "training_seed": 42,
+          "partition_id": "label100",
+          "partition_config_sha256": "3bb4ededb1eaed67510f0d624d2f7a6ebac633c4dbecc4971f2050e48d48b54f",
+          "client_manifest_sha256": "2bc261491567f700824fb15cf953c769026f4a296fcaf395800835f3f1b6ef12",
+          "received_update_norm": 1261.7655541030229,
+          "validation_reason": "update_norm_above_threshold",
+          "status": "rejected_suspicious"
+        }
+      ],
+      "accepted_clients": 1,
+      "suspicious_clients": 3,
+      "rejected_clients": 3,
+      "round_fit_elapsed_ms": 11617.253799999162,
+      "estimated_comm_overhead_ms": 4237.253799999162,
+      "mean_probe_rtt_ms": 15.425599998707185,
+      "max_probe_rtt_ms": 23.816899996745633,
+      "server_validation_metrics": null
+    }
+  ],
+  "metrics_distributed_fit": {
+    "accepted_clients": [
+      [
+        1,
+        1
+      ]
+    ],
+    "suspicious_clients": [
+      [
+        1,
+        3
+      ]
+    ],
+    "rejected_clients": [
+      [
+        1,
+        3
+      ]
+    ],
+    "mean_received_update_norm": [
+      [
+        1,
+        351.596491049673
+      ]
+    ],
+    "mean_probe_rtt_ms": [
+      [
+        1,
+        15.425599998707185
+      ]
+    ],
+    "max_probe_rtt_ms": [
+      [
+        1,
+        23.816899996745633
+      ]
+    ],
+    "round_fit_elapsed_ms": [
+      [
+        1,
+        11617.253799999162
+      ]
+    ],
+    "estimated_comm_overhead_ms": [
+      [
+        1,
+        4237.253799999162
+      ]
+    ]
+  },
+  "losses_distributed": [
+    [
+      1,
+      3.6375999450683594
+    ]
+  ],
+  "losses_centralized": [],
+  "metrics_distributed": {},
+  "metrics_centralized": {}
+}

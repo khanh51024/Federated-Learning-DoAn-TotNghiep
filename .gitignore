@@ -38,3 +38,22 @@ data/*
 !configs/*kaggle*.yaml
 !scripts/*kaggle*.py
 !requirements-kaggle.txt
+
+# ZCode workspace config (không phải dự án)
+.zcode/
+
+# Thư mục test pytest dùng hạn (disposable)
+pytest-of-JiiPii/
+
+# Cache dữ liệu lớn sinh lại được bởi script
+data/source_content_cache*.json
+
+# Partition CSVs/image maps lớn (suite.json + partition_config.json vẫn track)
+data/partitions_stage2_scratch_v3/**/*.csv
+data/partitions_stage2_scratch_v3/**/image_content.json
+data/partitions_stage2_scratch_v3/source_cache.json
+
+# Output runtime smoke (web demo runs, report experiments)
+artifacts/web_runs/
+artifacts/report_experiments/
+artifacts/network_run_logs/

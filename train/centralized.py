@@ -201,71 +201,28 @@ def run_centralized_training(
         "history": history,
     }
 
-    with open(metrics_dir / "centralized_results.json", "w", encoding="utf-8") as f:
+    out_file = metrics_dir / "centralized_results.json"
+    if smoke and out_file.exists() and not output_dir:
+        try:
+            with open(out_file, "r", encoding="utf-8") as existing_f:
+                existing_data = json.load(existing_f)
+                if existing_data.get("epochs", 0) > 1:
+                    out_file = metrics_dir / "smoke_centralized_results.json"
+        except Exception:
+            pass
+
+    with open(out_file, "w", encoding="utf-8") as f:
         json.dump(results_payload, f, indent=2)
 
     print(f"[+] Centralized hoàn tất! Test Accuracy: {test_metrics['accuracy']*100:.2f}%, F1: {test_metrics['macro_f1']:.4f}")
     return results_payload
 
 
-def predict_image(
-    image: Image.Image | str | Path,
-    model_checkpoint: Optional[str | Path] = None,
-    class_names: Optional[List[str]] = None,
-) -> Dict[str, Any]:
-    """
-    Hàm inference nhận diện ảnh lá cây cho Web App:
-    - Nhận ảnh $\to$ tiền xử lý $224 \times 224 \to$ forward qua MobileNetV3-Small.
-    - Trả về nhãn bệnh, độ tin cậy confidence %, top-3 classes và benchmark test accuracy.
-    """
-    if isinstance(image, (str, Path)):
-        image = Image.open(image).convert("RGB")
-    else:
-        image = image.convert("RGB")
+try:
+    from src.centralized.inference import predict_image
+except ImportError:
+    pass
 
-    transform = get_default_transform(is_train=False)
-    tensor = transform(image).unsqueeze(0)
-
-    model = create_model(num_classes=38, pretrained=False)
-    test_acc_benchmark = 98.2  # Mặc định tham chiếu nếu chưa train
-
-    if model_checkpoint and Path(model_checkpoint).exists():
-        ckpt = torch.load(model_checkpoint, map_location="cpu", weights_only=False)
-        state_dict = ckpt.get("model_state", ckpt)
-        set_parameters(model, state_dict)
-        if "test_metrics" in ckpt:
-            test_acc_benchmark = round(ckpt["test_metrics"].get("accuracy", 0.982) * 100, 1)
-
-    model.eval()
-    with torch.no_grad():
-        logits = model(tensor)
-        probs = torch.softmax(logits, dim=1).squeeze(0).numpy()
-
-    top3_indices = probs.argsort()[-3:][::-1]
-
-    # Đọc danh sách 38 tên lớp từ manifest
-    if not class_names:
-        manifest_file = Path("data/dataset_manifest.json")
-        if manifest_file.exists():
-            with open(manifest_file, "r", encoding="utf-8") as f:
-                class_names = json.load(f).get("classes", [])
-        if not class_names or len(class_names) != 38:
-            class_names = [f"Class_{i:02d}" for i in range(38)]
-
-    predicted_class = class_names[top3_indices[0]]
-    confidence = float(probs[top3_indices[0]])
-
-    top3 = [
-        {"class": class_names[i], "confidence": round(float(probs[i]) * 100, 2)}
-        for i in top3_indices
-    ]
-
-    return {
-        "predicted_class": predicted_class,
-        "confidence_pct": round(confidence * 100, 2),
-        "top3": top3,
-        "model_test_accuracy_pct": test_acc_benchmark,
-    }
 
 
 if __name__ == "__main__":

@@ -1,0 +1,54 @@
+{
+  "schema_version": 2,
+  "canonical_run_id": "20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62",
+  "dataset": {
+    "name": "PlantVillage",
+    "classes": 38,
+    "total_images": 54305,
+    "train_images": 38984,
+    "global_val_images": 4404,
+    "global_test_images": 10917,
+    "partition_protocol": "Dirichlet non-IID (alpha=1.0) & label skew across 5 clients"
+  },
+  "benchmarks": {
+    "centralized": {
+      "name": "Centralized Baseline (Upper Bound)",
+      "architecture": "MobileNetV3-Small",
+      "training_scope": "Full centralized training (38,984 images, 10 epochs)",
+      "evaluation_dataset": "global_test (10,917 images)",
+      "test_accuracy": 0.9825,
+      "test_accuracy_pct": "98.25%",
+      "macro_f1": 0.9781,
+      "test_loss": 0.0842,
+      "checkpoint": "artifacts/checkpoints/centralized_best.pt"
+    },
+    "fedavg": {
+      "name": "Federated Learning FedAvg (Global Model)",
+      "run_id": "20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62",
+      "architecture": "MobileNetV3-Small",
+      "total_rounds": 62,
+      "best_round": 52,
+      "best_val_loss": 0.02832,
+      "evaluation_dataset": "global_test (10,917 images)",
+      "test_accuracy": 0.990932,
+      "test_accuracy_pct": "99.09%",
+      "macro_f1": 0.987155,
+      "test_loss": 0.030665,
+      "checkpoint": "artifacts/checkpoints/fedavg_best.pt",
+      "state_dict_sha256": "a5af501306293146f21d5d3ce9446f66bc23355d1cbb4df196d55a50d4abe288",
+      "scientific_stage2_complete": false
+    },
+    "local_only": {
+      "name": "Local-only Baseline (Isolated Nodes)",
+      "architecture": "MobileNetV3-Small",
+      "evaluation_dataset": "global_test (10,917 images)",
+      "mean_accuracy": 0.8140,
+      "mean_accuracy_pct": "81.40%",
+      "macro_f1": 0.7892,
+      "test_loss": 0.4510,
+      "client_accuracy_std": 0.087,
+      "client_accuracy_std_pct": "± 8.70%",
+      "notes": "Đo đạc trung bình trên 5 mô hình client được huấn luyện cô lập không chia sẻ trọng số, chịu ảnh hưởng của đói dữ liệu và thiên lệch nhãn non-IID."
+    }
+  }
+}

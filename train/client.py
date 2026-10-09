@@ -151,7 +151,7 @@ try:
 
         def get_parameters(self, config):
             weights = get_parameters(self.core.model)
-            return [v.numpy() for v in weights.values()]
+            return [v.detach().cpu().numpy() for v in weights.values()]
 
         def fit(self, parameters, config):
             param_keys = list(self.core.model.state_dict().keys())
@@ -159,21 +159,24 @@ try:
             round_num = config.get("round", 1)
 
             res = self.core.fit(weights_dict, round_num=round_num)
-            updated_ndarrays = [v.numpy() for v in res["weights"].values()]
+            updated_ndarrays = [
+                v.detach().cpu().numpy() if isinstance(v, torch.Tensor) else np.asarray(v)
+                for v in res["weights"].values()
+            ]
             metrics = {
-                "loss": res["loss"],
-                "accuracy": res["accuracy"],
-                "update_norm": res["update_norm"],
-                "hash": res["hash"],
+                "loss": float(res["loss"]),
+                "accuracy": float(res["accuracy"]),
+                "update_norm": float(res["update_norm"]),
+                "hash": str(res["hash"]),
             }
-            return updated_ndarrays, res["num_examples"], metrics
+            return updated_ndarrays, int(res["num_examples"]), metrics
 
         def evaluate(self, parameters, config):
             param_keys = list(self.core.model.state_dict().keys())
             weights_dict = {k: torch.from_numpy(p) for k, p in zip(param_keys, parameters)}
             set_parameters(self.core.model, weights_dict)
             metrics = evaluate(self.core.model, self.core.loader, self.core.criterion, self.core.device)
-            return metrics["loss"], self.core.num_examples, {"accuracy": metrics["accuracy"]}
+            return float(metrics["loss"]), int(self.core.num_examples), {"accuracy": float(metrics["accuracy"])}
 
 except ImportError:
     FlowerClientAdapter = None

@@ -1,0 +1,117 @@
+{
+  "server_address": "127.0.0.1:18110",
+  "probe_port": 18111,
+  "num_clients_required": 2,
+  "require_real_clients": false,
+  "rounds": 1,
+  "seed": 42,
+  "evaluation_dataset_root": null,
+  "evaluation_partition_dir": null,
+  "require_real_evaluation": false,
+  "final_test_metrics": null,
+  "checkpoint_file": "artifacts\\checkpoints\\network_rtt_checkpoint_test.pt",
+  "audit_rounds": [
+    {
+      "round": 1,
+      "clients": [
+        {
+          "client_id": 0,
+          "flower_cid": "fdc235b2f3a641e9ae6efdd9f04abb4f",
+          "num_examples": 76,
+          "local_train_time_s": 3.79,
+          "probe_rtt_ms": 22.128099997644313,
+          "data_mode": "synthetic",
+          "training_seed": 42,
+          "partition_id": "label100",
+          "partition_config_sha256": "3bb4ededb1eaed67510f0d624d2f7a6ebac633c4dbecc4971f2050e48d48b54f",
+          "client_manifest_sha256": "14eaa43092110c4fcfcdcc2b7497e31086f4fea858a1c6de6f2b87da0bdf8529",
+          "received_update_norm": 1.7608029938410408,
+          "validation_reason": "ok",
+          "status": "ok"
+        },
+        {
+          "client_id": 1,
+          "flower_cid": "0e17a40b1eed48a09e4e8e1d4a0f8d84",
+          "num_examples": 76,
+          "local_train_time_s": 3.82,
+          "probe_rtt_ms": 19.071400001848815,
+          "data_mode": "synthetic",
+          "training_seed": 42,
+          "partition_id": "label100",
+          "partition_config_sha256": "3bb4ededb1eaed67510f0d624d2f7a6ebac633c4dbecc4971f2050e48d48b54f",
+          "client_manifest_sha256": "2bc261491567f700824fb15cf953c769026f4a296fcaf395800835f3f1b6ef12",
+          "received_update_norm": 1.7602140445486154,
+          "validation_reason": "ok",
+          "status": "ok"
+        }
+      ],
+      "accepted_clients": 2,
+      "suspicious_clients": 0,
+      "rejected_clients": 0,
+      "round_fit_elapsed_ms": 7442.55350000094,
+      "estimated_comm_overhead_ms": 3622.5535000009404,
+      "mean_probe_rtt_ms": 20.599749999746564,
+      "max_probe_rtt_ms": 22.128099997644313,
+      "server_validation_metrics": null
+    }
+  ],
+  "metrics_distributed_fit": {
+    "accepted_clients": [
+      [
+        1,
+        2
+      ]
+    ],
+    "suspicious_clients": [
+      [
+        1,
+        0
+      ]
+    ],
+    "rejected_clients": [
+      [
+        1,
+        0
+      ]
+    ],
+    "mean_received_update_norm": [
+      [
+        1,
+        1.7605085191948282
+      ]
+    ],
+    "mean_probe_rtt_ms": [
+      [
+        1,
+        20.599749999746564
+      ]
+    ],
+    "max_probe_rtt_ms": [
+      [
+        1,
+        22.128099997644313
+      ]
+    ],
+    "round_fit_elapsed_ms": [
+      [
+        1,
+        7442.55350000094
+      ]
+    ],
+    "estimated_comm_overhead_ms": [
+      [
+        1,
+        3622.5535000009404
+      ]
+    ]
+  },
+  "losses_distributed": [
+    [
+      1,
+      3.6375999450683594
+    ]
+  ],
+  "losses_centralized": [],
+  "metrics_distributed": {},
+  "metrics_centralized": {}
+}

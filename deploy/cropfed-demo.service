@@ -1,0 +1,20 @@
+[Unit]
+Description=CropFed FL demo web dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/fl-demo-20261005
+Environment=PYTHONUNBUFFERED=1
+Environment=OMP_NUM_THREADS=1
+Environment=MKL_NUM_THREADS=1
+ExecStart=/home/ubuntu/fl-demo-20261005/.venv/bin/python -m uvicorn web.app:app --host 127.0.0.1 --port 8088
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

@@ -1,13 +1,16 @@
 # Đồ Án Tốt Nghiệp: Federated Learning trên PlantVillage với MobileNetV3-Small
 
+> **Demo bảo vệ GĐ1/GĐ2 hiện tại:** xem [hướng dẫn web và nguồn số liệu](docs/WEB_DEMO_GD1_GD2.md). Trang web dùng ba nhánh mixed PlantVillage/PlantDoc đã ghim; phiên Flower 5 client localhost là smoke kỹ thuật trên ảnh tổng hợp. Các lệnh và số liệu scratch trong phần lịch sử bên dưới không phải đối chứng chính của demo.
+
 > **Nghiên Cứu & Triển Khai Hệ Thống Học Liên Hợp (Federated Learning) Ứng Dụng Chẩn Đoán Bệnh Cây Trồng Trên Nền Tảng Flower Framework**
 
-Hệ thống được thiết kế theo cấu trúc **Lean & Direct** (tinh gọn, trực tiếp, dễ đọc, dễ bảo trì):
-- **`train/`**: Toàn bộ lõi AI / Machine Learning / Federated Learning (Centralized, Flower FedAvg, Local-only, Telemetry, Weight Inspector).
+Hệ thống được tổ chức theo cấu trúc **Monorepo hoàn chỉnh**:
+- **`src/`**: Toàn bộ lõi AI / Machine Learning / Federated Learning chuẩn hóa (`model`, `data`, `centralized`, `federated`, `common`).
 - **`web/`**: Giao diện điều khiển, giám sát thời gian thực và suy luận song song (FastAPI Backend + Modern Dark-mode Frontend).
-- **`tests/`**: Bộ kiểm thử toán học độc lập cho thuật toán FedAvg, kiến trúc MobileNetV3-Small và phân hoạch non-IID.
-- **`configs/`**: Cấu hình YAML chuẩn hóa cho các kịch bản thực nghiệm.
-- **`docs/`**: Sơ đồ kiến trúc Mermaid ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)) và Báo cáo đối sánh 3 trụ cột ([docs/EXPERIMENT_RESULTS.md](docs/EXPERIMENT_RESULTS.md)).
+- **`tests/`**: Bộ kiểm thử toán học độc lập (`test_fedavg.py`, `test_model.py`, `test_parameters.py`, `test_partition.py`, `test_integration.py`).
+- **`configs/`**: Cấu hình YAML chuẩn hóa cho các kịch bản thực nghiệm (`centralized.yaml`, `federated.yaml`, `non_iid.yaml`).
+- **`experiments/`**: Kịch bản thực nghiệm tái lập cho Centralized, FedAvg, Non-IID Dirichlet Sweep và Faulty Clients.
+- **`docs/`**: Giao thức thực nghiệm ([docs/EXPERIMENT_PROTOCOL.md](docs/EXPERIMENT_PROTOCOL.md)), Sơ đồ kiến trúc Mermaid ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)) và Báo cáo đối sánh 3 trụ cột ([docs/EXPERIMENT_RESULTS.md](docs/EXPERIMENT_RESULTS.md)).
 
 ---
 
@@ -15,33 +18,33 @@ Hệ thống được thiết kế theo cấu trúc **Lean & Direct** (tinh gọ
 
 ### Bước 1: Khởi tạo môi trường ảo
 ```powershell
-# Sử dụng uv (cài đặt siêu nhanh) hoặc python chuẩn
-python -m uv venv .venv --python 3.11
+# Sử dụng uv hoặc python chuẩn (Python 3.11)
+python -m venv .venv
 .\.venv\Scripts\activate
 
 # Cài đặt dependencies
 pip install -r requirements.txt
 ```
 
-### Bước 2: Chạy kiểm thử tự động (Unit Tests)
-Chứng minh tính đúng đắn toán học của FedAvg ($n_k$), trích xuất trọng số và tính toàn vẹn SHA-256:
+### Bước 2: Chạy toàn bộ kiểm thử tự động (Unit & Integration Tests)
+Chứng minh tính đúng đắn toán học của FedAvg ($n_k$), trích xuất trọng số, tính toàn vẹn SHA-256 và luồng tích hợp 5 clients:
 ```powershell
-python -m pytest tests/test_fedavg.py tests/test_model.py tests/test_partition.py -v
+python -m pytest tests/test_fedavg.py tests/test_model.py tests/test_parameters.py tests/test_partition.py tests/test_integration.py -v
 ```
 
 ### Bước 3: Huấn luyện mô hình tập trung (Centralized Baseline)
 ```powershell
 # Chạy smoke test nhanh (1 epoch)
-python -m train.centralized --smoke --epochs 1
+python -m src.centralized.train --smoke --epochs 1
 
 # Hoặc huấn luyện đầy đủ
-python -m train.centralized --epochs 10 --batch-size 32 --lr 0.01
+python -m src.centralized.train --epochs 10 --batch-size 32 --lr 0.01
 ```
 
 ### Bước 4: Huấn luyện Federated Learning (FedAvg Simulation)
 ```powershell
 # Chạy mô phỏng 5 clients x 2 communication rounds
-python -m train.server --smoke --rounds 2 --num-clients 5
+python -m src.federated.server_app --smoke --rounds 2 --num-clients 5
 ```
 
 ### Bước 5: Khởi động Giao diện Web Dashboard & Chẩn Đoán Ảnh
@@ -62,83 +65,210 @@ Truy cập trình duyệt tại: **`http://localhost:8088`** để trải nghi�
 
 Flower cho phép chạy máy chủ và các máy khách trên các tiến trình hoặc máy tính vật lý độc lập qua mạng:
 
-### Khởi động Server (Máy chủ Flower):
+### Khởi động Server thật (khuyến nghị dùng launcher):
 ```powershell
-python -m train.server --mode deployment --port 8080 --num-clients 5 --rounds 10
+.\scripts\start_real_flower_server.ps1 `
+  -Rounds 10 `
+  -NumClients 5 `
+  -LocalEpochs 1 `
+  -Seed 42 `
+  -Port 8089 `
+  -EvaluationDatasetRoot D:\PlantVillage `
+  -RejectSuspicious
 ```
 
-### Khởi động 5 Clients (trên các cửa sổ terminal hoặc các máy khác nhau):
+Server launcher mặc định **bắt buộc client dùng dữ liệu PlantVillage thật**. Probe RTT chạy ở `port + 1` (ví dụ `8090`). `-EvaluationDatasetRoot` là tùy chọn nhưng được khuyến nghị cho nghiệm thu: server chỉ dùng `global_val/global_test` để đánh giá global model sau FedAvg, không dùng dữ liệu training của client. Nếu bật evaluator, mọi đường dẫn held-out trong manifest phải resolve thật.
+
+### Khởi động 5 Clients trên các máy/process độc lập:
 ```powershell
-# Terminal Client 0:
-python -m train.client --client-id 0 --server <IP_SERVER>:8080
-
-# Terminal Client 1:
-python -m train.client --client-id 1 --server <IP_SERVER>:8080
-
-# (Tương tự cho Client 2, 3, 4...)
+# Ví dụ Client 0
+.\scripts\start_real_flower_client.ps1 `
+  -ClientId 0 `
+  -Server <IP_SERVER>:8089 `
+  -DatasetRoot D:\PlantVillage `
+  -PartitionDir data\partitions_stage2_scratch_v3\label100
 ```
-Server sẽ tự động nhận diện đủ 5 clients, phát tán mô hình toàn cục, thu nhận updates và tổng hợp FedAvg qua mạng.
+
+Đổi `-ClientId` thành `1..4` cho các client còn lại. Mỗi client chỉ cần sở hữu **ảnh thuộc local partition của chính nó**. Launcher chạy `preflight_client_partition.py` theo `client_XX.csv`; không bắt mỗi client phải có toàn bộ 54.305 ảnh. Nếu thiếu bất kỳ ảnh local nào, client dừng thay vì fallback synthetic.
+
+Server chỉ aggregate update khi client hợp lệ theo policy hiện tại, đồng thời lưu RTT probe, local train time, update norm, seed, partition ID/hash, client-manifest hash, validator status và checkpoint global model.
 
 ---
 
-## 3. Cấu Trúc Mã Nguồn (Directory Tree)
+## 3. Cấu Trúc Mã Nguồn Chuẩn Hóa (Monorepo Directory Tree)
 
 ```text
 Federated-Learning-DoAn-TotNghiep/
-├── README.md                # Tài liệu hướng dẫn này
-├── requirements.txt         # Thư viện phụ thuộc
+├── README.md                # Hướng dẫn toàn diện đồ án
+├── requirements.txt         # Pinned dependencies
+├── pyproject.toml           # Cấu hình project & tools
 ├── .env.example             # Biến môi trường mẫu
 │
-├── train/                   # CORE MACHINE LEARNING & FEDERATED LEARNING
-│   ├── model.py             # MobileNetV3-Small (Pretrained & Scratch, 38 classes, SHA-256)
-│   ├── data.py              # PlantVillage Dataset loader & Dirichlet Partitioning
-│   ├── strategy.py          # Thuật toán FedAvg chuẩn w_(t+1) = sum(n_k * w_k) / sum(n_k)
-│   ├── centralized.py       # Huấn luyện Centralized baseline & API predict ảnh
-│   ├── local_only.py        # Huấn luyện Local-only baseline (mỗi cơ sở tự học)
-│   ├── server.py            # Flower ServerApp (điều phối vòng lặp FedAvg & mạng)
-│   ├── client.py            # Flower ClientApp (huấn luyện cục bộ SGD & đo update norm)
-│   ├── telemetry.py         # Đo đạc Loss != Latency, RTT, train time, byte trao đổi
-│   ├── weight_inspector.py  # Thống kê L2 norm, Update Norm ||Delta_k||_2, mean, std
-│   └── faulty_client.py     # Giả lập client lỗi: no-train, random, scaled, noise
+├── src/                     # MÃ NGUỒN LÕI HỆ THỐNG
+│   ├── model/               # Kiến trúc MobileNetV3-Small (Pretrained & Scratch)
+│   │   ├── mobilenetv3.py
+│   │   └── __init__.py
+│   │
+│   ├── data/                # Nạp dữ liệu PlantVillage & Phân hoạch Dirichlet
+│   │   ├── plantvillage.py
+│   │   ├── split.py
+│   │   └── partition.py
+│   │
+│   ├── centralized/         # Baseline học tập trung & suy luận ảnh
+│   │   ├── train.py
+│   │   ├── evaluate.py
+│   │   └── inference.py
+│   │
+│   ├── federated/           # Flower FedAvg, Telemetry & Weight Inspector
+│   │   ├── client_app.py    # Flower ClientApp & vòng đời huấn luyện cục bộ
+│   │   ├── server_app.py    # Flower ServerApp & FedAvg điều phối mạng
+│   │   ├── strategy.py      # Thuật toán FedAvg w_(t+1) = sum(n_k * w_k) / sum(n_k)
+│   │   ├── telemetry.py     # Đo đạc Loss != Latency, RTT, train time
+│   │   ├── weight_inspector.py # Thống kê L2 norm, Update Norm ||Delta_k||_2
+│   │   └── faulty_client.py # Giả lập client lỗi/tấn công
+│   │
+│   └── common/              # Tiện ích dùng chung
+│       ├── metrics.py       # Macro-F1 & ma trận nhầm lẫn
+│       ├── logging.py       # Định dạng log chuẩn
+│       └── config.py        # YAML config loader
 │
-├── web/                     # GIAO DIỆN QUAN SÁT & SUY LUẬN
-│   ├── app.py               # Máy chủ FastAPI: REST API & phục vụ frontend
-│   └── static/              # Giao diện Dark-mode, Chart.js, 6 tab trực quan
-│       ├── index.html
+├── web/                     # ỨNG DỤNG WEB QUAN SÁT & SUY LUẬN
+│   ├── app.py               # Máy chủ FastAPI REST API
+│   └── static/              # Giao diện Dark-mode Glassmorphism (HTML/CSS/JS)
+│       ├── index.html       # 6 tab trực quan (Dashboard, Centralized, FedAvg, Clients, Benchmarks, Inference)
 │       ├── css/style.css
 │       └── js/main.js
 │
-├── configs/                 # CẤU HÌNH THỰC NGHIỆM
-│   ├── default.yaml         # Cấu hình tham số mặc định
-│   └── non_iid.yaml         # Ma trận Dirichlet alpha = 100, 1.0, 0.1
+├── experiments/             # KỊCH BẢN THỰC NGHIỆM TÁI LẬP
+│   ├── centralized/         # run_centralized.py
+│   ├── federated/           # run_fedavg.py
+│   ├── non_iid/             # run_non_iid_sweep.py
+│   └── faulty_clients/      # run_faulty_eval.py
 │
-├── tests/                   # BỘ KIỂM THỬ TOÁN HỌC & TÍNH TOÀN VẸN
-│   ├── test_fedavg.py       # Kiểm định toán học FedAvg (scalar 2.5, conv tensor, NaN)
-│   ├── test_model.py        # Kiểm định MobileNetV3-Small, nạp rút tham số, hash
-│   └── test_partition.py    # Kiểm định bảo toàn mẫu Dirichlet & đo lường đói dữ liệu
+├── tests/                   # BỘ KIỂM THỬ TOÁN HỌC & ĐỘ TOÀN VẸN
+│   ├── test_fedavg.py       # Kiểm định trọng số toán học FedAvg
+│   ├── test_model.py        # Kiểm định MobileNetV3-Small & 38 lớp
+│   ├── test_parameters.py   # Kiểm định trích xuất, nạp & SHA-256 hash
+│   ├── test_partition.py    # Kiểm định phân hoạch Dirichlet & đói dữ liệu
+│   └── test_integration.py  # Kiểm thử tích hợp luồng 5 clients x 1 round
+│
+├── configs/                 # TỆP CẤU HÌNH YAML
+│   ├── centralized.yaml
+│   ├── federated.yaml
+│   └── non_iid.yaml
+│
+├── artifacts/               # SẢN PHẨM THỰC NGHIỆM
+│   ├── checkpoints/         # centralized_best.pt, fedavg_best.pt
+│   └── metrics/             # centralized_results.json, fedavg_results.json, telemetry_history.json
 │
 └── docs/                    # BÁO CÁO & PHẢN BIỆN KHOA HỌC
+    ├── EXPERIMENT_PROTOCOL.md # Giao thức thực nghiệm đóng băng
     ├── ARCHITECTURE.md      # Sơ đồ kiến trúc Mermaid (Centralized, Flower, Client, FedAvg)
     └── EXPERIMENT_RESULTS.md# Bảng đối sánh 3 trụ cột & cẩm nang trả lời phản biện
 ```
 
 ---
 
-## 4. Tóm Tắt Kết Quả Đối Sánh 3 Trụ Cột
+## 4. Trạng Thái Kết Quả Đối Sánh
 
-Đánh giá trên cùng tập kiểm thử chung **`global_test.csv` (10.921 ảnh, 38 lớp)**:
+> **Quan trọng:** các số liệu canonical cũ trong `artifacts/canonical_manifest.json` hiện **chưa được xem là kết quả khoa học đã xác minh**. Script `scripts/validate_artifact_provenance.py` phát hiện checkpoint hiện tại không khớp provenance của manifest: FedAvg state hash không khớp, metadata accuracy không khớp, và checkpoint Centralized hiện chỉ ghi 2 epochs trong khi manifest mô tả 10 epochs. Manifest cũng đang đánh dấu `scientific_stage2_complete=false`.
 
-```text
-               Centralized Baseline (98.25%)
-                           |
-                     [ -1.13% gap ]
-                           v
-               FedAvg Global Model  (97.12%)
-                           |
-                    [ +15.72% gain ]
-                           v
-               Local-only Baseline  (81.40%)
+Vì vậy, README **không dùng các số 98–99% cũ để kết luận**. Kết quả chính thức phải được sinh lại từ PlantVillage ảnh thật sau khi:
+
+1. `scripts/preflight_plantvillage.py` xác nhận đúng 54.305 ảnh / 38 lớp và manifest paths;
+2. `scripts/run_report_experiments.py --mode real ...` chạy thành công;
+3. metrics và checkpoint được liên kết provenance/hash;
+4. `scripts/validate_artifact_provenance.py` hoặc validator tương đương không còn lỗi critical.
+
+Các artifact cũ chỉ được giữ lại để tham khảo lịch sử, không dùng làm bằng chứng nghiệm thu cho đến khi tái lập được bằng dữ liệu thật.
+
+
+---
+
+## 5. Quy Trình Nghiệm Thu Khoa Học Khuyến Nghị
+
+### 5.1. Kiểm tra trạng thái trước demo
+
+```powershell
+.\.venv\Scripts\python.exe scripts\pre_demo_check.py --dataset-root D:\PlantVillage
 ```
 
-- **FedAvg mang lại giá trị to lớn (+15.72% so với Local-only)**: Chứng minh việc hợp tác huấn luyện liên hợp giữa các cơ sở giúp vượt qua rào cản thiếu hụt dữ liệu (data scarcity) mà không cần chia sẻ ảnh thô.
-- **Sự đánh đổi rất nhỏ (-1.13% so với Centralized)**: Đổi lại việc bảo toàn tính riêng tư dữ liệu và tuân thủ các quy định chủ quyền dữ liệu nông nghiệp.
+Kết quả `ready` mới có nghĩa là toàn bộ scientific gates đã hoàn tất. `technical_demo_ready` chỉ có nghĩa code/demo kỹ thuật chạy được nhưng còn thiếu bằng chứng khoa học thật.
+
+### 5.2. Chạy bộ thực nghiệm thật nhiều seed
+
+```powershell
+.\scripts\run_real_multiseed_report.ps1 `
+  -DatasetRoot D:\PlantVillage `
+  -CentralizedEpochs 10 `
+  -FederatedRounds 10 `
+  -Seeds 42,123,2026
+```
+
+Script sẽ preflight toàn bộ PlantVillage, chạy Centralized và các điều kiện FedAvg `label100`, `label1`, `label01`, `quantity01` cho từng seed, sau đó sinh mean/std tại:
+
+```text
+artifacts/report_experiments/multiseed_real_summary.json
+artifacts/report_experiments/multiseed_real_summary.csv
+```
+
+Các seed trên thay đổi model initialization/DataLoader shuffle trên partition manifests hiện có; chưa đại diện cho partition-seed variance.
+
+### 5.3. Khóa một run thật thành verified artifact
+
+Sau khi một run `mode=real` hoàn tất và dataset preflight PASS:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\promote_verified_run.py `
+  artifacts\report_experiments\<TIMESTAMP> `
+  --scenario label1
+```
+
+Promotion chỉ thành công khi `mode=real`, `scientific_accuracy_valid=true`, preflight PASS và đủ checkpoint/metrics. Artifact được sao chép vào `artifacts/verified/<promotion_id>/` cùng SHA-256 và `verified_manifest.json`; smoke/demo run không thể promote.
+
+### 5.4. Nguyên tắc báo cáo
+
+- Không lấy accuracy/F1/loss từ smoke/synthetic làm kết quả khoa học.
+- Không dùng canonical lịch sử đang `UNVERIFIED` để kết luận.
+- Network latency phải phân biệt `probe_rtt_ms` từng client với `estimated_comm_overhead_ms` của round.
+- Kết quả chính nên báo cáo `mean ± std` qua nhiều training seeds.
+- Faulty-client experiment phải nêu rõ policy `observe-only` hay `reject-suspicious` và ngưỡng validator.
+
+
+### 5.5. Một lệnh chạy scientific network 1 server + 5 clients trên cùng máy
+
+Để nghiệm thu pipeline Flower network thật bằng 6 process độc lập trên một máy trước khi chuyển sang nhiều máy vật lý:
+
+```powershell
+.\scripts\run_local_5client_scientific_network.ps1 `
+  -DatasetRoot D:\PlantVillage `
+  -Scenario label1 `
+  -Rounds 5 `
+  -LocalEpochs 1 `
+  -Seed 42
+```
+
+Script tự thực hiện theo thứ tự:
+
+1. full-path preflight PlantVillage;
+2. khởi động Flower server thật trên `127.0.0.1:8089`;
+3. khởi động 5 Flower client process độc lập;
+4. bắt buộc mọi client báo `data_mode=real`;
+5. chạy held-out `global_val/global_test` thật tại server;
+6. lưu RTT per-client, update norm, audit status, checkpoint global;
+7. chạy `validate_network_artifact.py`;
+8. chỉ khi mọi scientific gate PASS mới chạy `promote_verified_network_run.py`;
+9. copy artifact hợp lệ vào `artifacts/verified_network/<promotion_id>/` kèm SHA-256 và `verified_network_manifest.json`.
+
+Có thể kiểm tra command flow mà không khởi động training:
+
+```powershell
+.\scripts\run_local_5client_scientific_network.ps1 `
+  -DatasetRoot D:\PlantVillage `
+  -Scenario label1 `
+  -Rounds 3 `
+  -Seed 123 `
+  -DryRun
+```
+
+Artifact smoke/synthetic sẽ bị `validate_network_artifact.py` từ chối và không thể promote vào thư mục verified.

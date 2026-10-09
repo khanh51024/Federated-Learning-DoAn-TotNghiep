@@ -1,0 +1,12 @@
+[93mWARNING [0m:   DEPRECATED FEATURE: The `run_simulation` function is deprecated and will be removed in a future version of Flower. Please use `flwr run` in the CLI instead to run your simulation. Refer to the Flower Tutorials for more details: https://flower.ai/docs/framework/tutorial-quickstart-pytorch.html
+
+            This is a deprecated feature. It will be removed
+            entirely in future versions of Flower.
+        
+Downloading: "https://download.pytorch.org/models/mobilenet_v3_small-047dcff4.pth" to /root/.cache/torch/hub/checkpoints/mobilenet_v3_small-047dcff4.pth
+/usr/local/lib/python3.12/dist-packages/ray/_private/worker.py:2051: FutureWarning: Tip: In future versions of Ray, Ray will no longer override accelerator visible devices env var if num_gpus=0 or num_gpus=None (default). To enable this behavior and turn off this error message, set RAY_ACCEL_ENV_VAR_OVERRIDE_ON_ZERO=0
+  warnings.warn(
+/usr/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=164) is multi-threaded, use of fork() may lead to deadlocks in the child.
+  self.pid = os.fork()
+[36m(ClientAppActor pid=431)[0m /usr/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=431) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[36m(ClientAppActor pid=431)[0m   self.pid = os.fork()

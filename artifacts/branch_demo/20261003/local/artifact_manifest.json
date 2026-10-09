@@ -1,0 +1,95 @@
+{
+  "branch": "train-local-only-a01-v7",
+  "validation_manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
+  "release_manifest_sha256": "6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252",
+  "files": {
+    "combined_summary.json": {
+      "bytes": 3617,
+      "sha256": "f635e0f003e8a95bfe14b2f76c7def0fffd39020f9af0d1f27b8152e6cac5007"
+    },
+    "local_shard_sizes.png": {
+      "bytes": 41826,
+      "sha256": "b86453d8525c1d9d7b75d4a3d73607b887b589f97d2f9e2201f148653214548d"
+    },
+    "RESULTS.md": {
+      "bytes": 2702,
+      "sha256": "d6ee34a28db42961e4b6c39af9a45def8fabdc7f83eafee4cd2f8378005e2030"
+    },
+    "validation_comparison.csv": {
+      "bytes": 4028,
+      "sha256": "f87b6af452a3a952580d5d10919562a6dd8dddc8124b542e1502c3421ebda2a4"
+    },
+    "validation_crop_accuracy.png": {
+      "bytes": 54191,
+      "sha256": "c331f5a4c596e42e864c239fc88a6898768e858ccc6750e8518ac63fde1c7f65"
+    },
+    "validation_macro_f1.png": {
+      "bytes": 56552,
+      "sha256": "680d50138c8c2e85e14b3fff132c7d5b1f501dd4c64dcf29f09e8e041d5964f8"
+    },
+    "validation_top1.png": {
+      "bytes": 53927,
+      "sha256": "55b5de8607622d29b57e18a1513d26858d145f4ef17414a6eced32c1c20f2a9f"
+    },
+    "client_00/checkpoint_best.pt": {
+      "bytes": 6351026,
+      "sha256": "55f2b0d476cd18bda957293fd00869a95cb9ab67050d4bab83c5edff54ce86ae"
+    },
+    "client_00/summary.json": {
+      "bytes": 642,
+      "sha256": "abac61fc74c5405b24ede1bd5a124035d1e4eb1ae59ea1547b095eb2eaeb5e17"
+    },
+    "client_00/validation_metrics.json": {
+      "bytes": 11017,
+      "sha256": "a99eef5c5697a88514ecce85496d06ccacef61c7c2db54bd42226e6985396fc8"
+    },
+    "client_01/checkpoint_best.pt": {
+      "bytes": 6351026,
+      "sha256": "0391db294a87c634a5e6ca9d81a90252f35cc3c17d92c1bae4607d56fc091cd1"
+    },
+    "client_01/summary.json": {
+      "bytes": 1150,
+      "sha256": "a5ec9f93afe2b52008f5c05256924bc36d29798a5cff82663edbea8d4fea0524"
+    },
+    "client_01/validation_metrics.json": {
+      "bytes": 11123,
+      "sha256": "6db76a9c6b73bc1ab390e782eef870225035cb0eb0a806368a9ea9d900dea202"
+    },
+    "client_02/checkpoint_best.pt": {
+      "bytes": 6351026,
+      "sha256": "ba2d936eb74e3de33500c8106fbb1edfef7a59fdbe2627211c479c01639be7c4"
+    },
+    "client_02/summary.json": {
+      "bytes": 1203,
+      "sha256": "44a97c2d275d23eb6fc0ed110cf1c643552dec29c328603e05064bd2e24e9268"
+    },
+    "client_02/validation_metrics.json": {
+      "bytes": 11131,
+      "sha256": "074eadb846f76c04f3bfd405c3b0dc97ce2f14b53b177e6b6d9b4f45dde54645"
+    },
+    "client_03/checkpoint_best.pt": {
+      "bytes": 6351026,
+      "sha256": "9d94ab2f7452c8940c1b74118a81e934efb96c09920bba5244bb5f91e2764f76"
+    },
+    "client_03/summary.json": {
+      "bytes": 1109,
+      "sha256": "1d22a5f1c190c23df973cc37263c09427228000c8a777c6a952d26d25e658285"
+    },
+    "client_03/validation_metrics.json": {
+      "bytes": 11077,
+      "sha256": "5bd81eb371adef397e7f69273229751605161f189dec3db88f7e38aa94c48c12"
+    },
+    "client_04/checkpoint_best.pt": {
+      "bytes": 6351026,
+      "sha256": "7ff7a833777dd195b9cdf922ccba088aa706edea8dc4e9d56a9a744dea8eccb0"
+    },
+    "client_04/summary.json": {
+      "bytes": 1148,
+      "sha256": "d35b25c4d71bab05369c705b5584e2d59bb8e63798b0c09d22bf0a479e4de37d"
+    },
+    "client_04/validation_metrics.json": {
+      "bytes": 11071,
+      "sha256": "4b9a304046f32a0cf0c1b7528fe4e23b91796519f4a30f432b94247e3b156763"
+    }
+  }
+}

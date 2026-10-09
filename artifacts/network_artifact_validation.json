@@ -1,0 +1,30 @@
+{
+  "ok": false,
+  "checks": {
+    "metrics_exists": true,
+    "checkpoint_exists": true,
+    "require_real_clients": false,
+    "require_real_evaluation": false,
+    "expected_clients": false,
+    "expected_rounds": true,
+    "final_test_metrics_present": false,
+    "checkpoint_test_metrics_present": false,
+    "seed_present": true,
+    "seed_matches": true,
+    "checkpoint_source": true,
+    "checkpoint_model_state_present": true,
+    "checkpoint_model_hash_matches": true,
+    "audit_round_count": true,
+    "all_clients_real": false,
+    "all_rounds_have_expected_clients": false,
+    "no_synthetic_rejections": true
+  },
+  "details": {
+    "final_test_metrics": {},
+    "seed": 42,
+    "checkpoint_sha256": "d53bed626ce683fe2aaf6ab44cb7f86c7fd254f8a346ba55928ff13eabef4352",
+    "metrics_sha256": "4f256160f9e26c6e89cd1ea95196122409829720569353b36393c7c6f4260b07",
+    "checkpoint_model_hash": "067a6721e2fba647d7b74aee88525afe54f7924209b0effddc9d02d72c8f8490",
+    "recomputed_model_hash": "067a6721e2fba647d7b74aee88525afe54f7924209b0effddc9d02d72c8f8490"
+  }
+}
