@@ -3,7 +3,7 @@
 Tài liệu hướng dẫn triển khai, vận hành và nghiệm thu hệ thống huấn luyện Federated Learning (FedAvg) trên bộ dữ liệu PlantVillage (38 lớp cây–bệnh) bằng Flower Message API và PyTorch.
 
 **Để so sánh với bộ train GĐ1**, dùng `python -m stage2_matched` và notebook
-`kaggle_stage2_matched_v5.ipynb`. Xem [hướng dẫn matched v5](docs/MATCHED_STAGE2_V5.md).
+`kaggle_stage2_matched_v5.ipynb`. Xem [RUNBOOK](RUNBOOK.md).
 Luồng này cố định K=5/AdamW/10 vòng theo GĐ1 và phân bổ Dirichlet trên split sạch.
 
 Luồng GĐ2 v4 độc lập dùng `configs/stage2_fedavg_main_v4.yaml` và notebook

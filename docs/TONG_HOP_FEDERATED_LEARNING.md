@@ -1681,6 +1681,11 @@ overall = ready
 
 # 40. Trạng thái hiện tại của project
 
+> **KHÔNG cập nhật trạng thái tại đây nữa.** Trạng thái tiến độ duy nhất nằm ở
+> `PROJECT_STATUS.md` (tự sinh bởi `scripts/update_status.py`). Hai danh sách
+> dưới đây chỉ giữ nguyên như bản tổng hợp lý thuyết; đối chiếu với
+> `PROJECT_STATUS.md` khi cần số liệu hiện hành.
+
 ## Đã hoàn thành
 
 ```text
@@ -1765,7 +1770,7 @@ Không nên tiếp tục thay đổi lớn core architecture nếu không có y�
 
 ```text
 README.md
-HANDOFF_CHECKLIST.md
+../PROJECT_STATUS.md
 AUDIT_THEO_YEU_CAU_2026-09-30.md
 TAI_LIEU_TONG_HOP_FEDERATED_LEARNING.md
 

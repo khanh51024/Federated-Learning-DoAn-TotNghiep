@@ -10,7 +10,9 @@ Hệ thống được tổ chức theo cấu trúc **Monorepo hoàn chỉnh**:
 - **`tests/`**: Bộ kiểm thử toán học độc lập (`test_fedavg.py`, `test_model.py`, `test_parameters.py`, `test_partition.py`, `test_integration.py`).
 - **`configs/`**: Cấu hình YAML chuẩn hóa cho các kịch bản thực nghiệm (`centralized.yaml`, `federated.yaml`, `non_iid.yaml`).
 - **`experiments/`**: Kịch bản thực nghiệm tái lập cho Centralized, FedAvg, Non-IID Dirichlet Sweep và Faulty Clients.
-- **`docs/`**: Giao thức thực nghiệm ([docs/EXPERIMENT_PROTOCOL.md](docs/EXPERIMENT_PROTOCOL.md)), Sơ đồ kiến trúc Mermaid ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)) và Báo cáo đối sánh 3 trụ cột ([docs/EXPERIMENT_RESULTS.md](docs/EXPERIMENT_RESULTS.md)).
+- **`docs/`**: Hợp đồng model registry ([docs/MODEL_REGISTRY.md](docs/MODEL_REGISTRY.md)), Runbook vận hành ([docs/RUNBOOK.md](docs/RUNBOOK.md)), Giao thức thực nghiệm ([docs/EXPERIMENT_PROTOCOL.md](docs/EXPERIMENT_PROTOCOL.md)), Sơ đồ kiến trúc Mermaid ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
+
+> **Trạng thái tiến độ:** xem [PROJECT_STATUS.md](PROJECT_STATUS.md) — file thống kê duy nhất, tự sinh bởi `python scripts/update_status.py`. Mọi con số accuracy trong repo phải truy được về `artifacts/registry.json`.
 
 ---
 
@@ -164,23 +166,20 @@ Federated-Learning-DoAn-TotNghiep/
 └── docs/                    # BÁO CÁO & PHẢN BIỆN KHOA HỌC
     ├── EXPERIMENT_PROTOCOL.md # Giao thức thực nghiệm đóng băng
     ├── ARCHITECTURE.md      # Sơ đồ kiến trúc Mermaid (Centralized, Flower, Client, FedAvg)
-    └── EXPERIMENT_RESULTS.md# Bảng đối sánh 3 trụ cột & cẩm nang trả lời phản biện
+    ├── MODEL_REGISTRY.md   # Hợp đồng nguồn sự thật (registry)
+    └── RUNBOOK.md          # Lệnh vận hành hiện hành
 ```
 
 ---
 
 ## 4. Trạng Thái Kết Quả Đối Sánh
 
-> **Quan trọng:** các số liệu canonical cũ trong `artifacts/canonical_manifest.json` hiện **chưa được xem là kết quả khoa học đã xác minh**. Script `scripts/validate_artifact_provenance.py` phát hiện checkpoint hiện tại không khớp provenance của manifest: FedAvg state hash không khớp, metadata accuracy không khớp, và checkpoint Centralized hiện chỉ ghi 2 epochs trong khi manifest mô tả 10 epochs. Manifest cũng đang đánh dấu `scientific_stage2_complete=false`.
-
-Vì vậy, README **không dùng các số 98–99% cũ để kết luận**. Kết quả chính thức phải được sinh lại từ PlantVillage ảnh thật sau khi:
-
-1. `scripts/preflight_plantvillage.py` xác nhận đúng 54.305 ảnh / 38 lớp và manifest paths;
-2. `scripts/run_report_experiments.py --mode real ...` chạy thành công;
-3. metrics và checkpoint được liên kết provenance/hash;
-4. `scripts/validate_artifact_provenance.py` hoặc validator tương đương không còn lỗi critical.
-
-Các artifact cũ chỉ được giữ lại để tham khảo lịch sử, không dùng làm bằng chứng nghiệm thu cho đến khi tái lập được bằng dữ liệu thật.
+> **Quan trọng:** nguồn sự thật duy nhất về model/checkpoint/metrics là `artifacts/registry.json` (hợp đồng trong [docs/MODEL_REGISTRY.md](docs/MODEL_REGISTRY.md)). Các sự thật đã được registry xác nhận (2026-10-09):
+>
+> 1. **Checkpoint canonical (FedAvg 99,09% / Centralized 98,25%) KHÔNG còn trên máy** — chỉ còn metrics JSON của run Kaggle. Số liệu này chỉ được trích dẫn kèm nhãn "metrics-only / historical".
+> 2. Các checkpoint smoke (acc=1.0) từng ghi đè slot canonical đã được **cách ly** vào `artifacts/checkpoints/smoke/` và code đã chặn smoke ghi lại.
+> 3. Demo web dùng họ **published_demo** (pretrained mixed PV+PlantDoc, hash-verified) — hoạt động bình thường, ghi rõ là DEMO.
+> 4. Provenance hiện `UNVERIFIED` — đúng như thật, sẽ chuyển `verified` sau khi tái chạy run canonical với dataset gốc.
 
 
 ---

@@ -19,7 +19,7 @@ K=5, AdamW 0.001, batch 32, R=10, E=1, ImageNet weights, checkpoint theo val acc
 Mốc label100/label1 được chạy lại trên cùng split sạch với label01.
 Không ghép số ~99% lịch sử hoặc đối chứng v4 vào bảng matched.
 Upload package mới kèm `data/partitions_stage2_matched_v5` và dataset ảnh.
-Chạy `preflight` trước, chọn `run` khi đã kiểm tra quota. Xem docs/MATCHED_STAGE2_V5.md.
+Chạy `preflight` trước, chọn `run` khi đã kiểm tra quota. Xem docs/RUNBOOK.md.
 """, cell_id="intro-markdown"), cell("code", """
 from pathlib import Path
 import json, shutil, subprocess, sys, os

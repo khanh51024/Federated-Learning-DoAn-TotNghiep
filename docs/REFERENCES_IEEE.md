@@ -1,6 +1,6 @@
 # Tài liệu tham khảo
 
-Đánh số dùng chung với `STAGE2_REPAIR_PLAN.md`. Truy cập và kiểm tra nguồn web ngày 09/09/2026. Không tải lại toàn bộ bài báo vào repository; các tệp Markdown này ghi thông tin thư mục, liên kết nguồn và ghi chú áp dụng.
+Truy cập và kiểm tra nguồn web ngày 09/09/2026. Không tải lại toàn bộ bài báo vào repository; các tệp Markdown này ghi thông tin thư mục, liên kết nguồn và ghi chú áp dụng.
 
 [1] “Nghiên cứu và xây dựng hệ thống Học liên kết (Federated Learning) cho phát hiện sâu bệnh cây trồng qua ảnh trên dữ liệu phân tán, không đồng nhất,” đề cương đề tài tốt nghiệp, tài liệu nội bộ, không ghi tác giả và năm, tr. 1–4. Tệp PDF gốc nằm tại thư mục gốc workspace; yêu cầu GĐ2 ở tr. 3, mục 5; trục so sánh ở tr. 1–3. Không suy đoán thông tin xuất bản còn thiếu.
 

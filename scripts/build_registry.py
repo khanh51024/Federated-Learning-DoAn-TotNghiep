@@ -293,9 +293,10 @@ def _find_in_artifact_manifest(manifest: dict[str, Any] | None, suffix: str) -> 
     return None
 
 
-def _demo_metrics(validation: dict[str, Any] | None) -> dict[str, Any]:
-    if not validation:
+def _demo_metrics(file_data: dict[str, Any] | None) -> dict[str, Any]:
+    if not file_data:
         return {}
+    validation = file_data.get("validation") if isinstance(file_data.get("validation"), dict) else file_data
     overall = validation.get("overall") or {}
     by_source = validation.get("by_source") or {}
 

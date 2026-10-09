@@ -8,7 +8,7 @@ Gói nén sẽ chứa:
 - data/partitions_stage2_matched_v5/
 - requirements-stage1.txt, requirements-stage2-matched.txt, pyproject.toml
 - kaggle_stage2_matched_v5.ipynb
-- docs/MATCHED_STAGE2_V5.md
+- docs/RUNBOOK.md
 
 Loại bỏ hoàn toàn: .venv, __pycache__, checkpoint cũ, log, cache tạm.
 """
@@ -37,7 +37,6 @@ INCLUDE_FILES = [
     "requirements-stage2-matched.txt",
     "pyproject.toml",
     "kaggle_stage2_matched_v5.ipynb",
-    "docs/MATCHED_STAGE2_V5.md",
 ]
 
 EXCLUDE_PATTERNS = [
