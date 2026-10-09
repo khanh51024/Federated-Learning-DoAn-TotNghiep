@@ -183,8 +183,14 @@ def run_centralized_training(
         set_parameters(model, best_state)
     test_metrics = evaluate(model, test_loader, criterion, device)
 
-    # Lưu checkpoint
-    checkpoint_file = checkpoints_dir / "centralized_best.pt"
+    # Lưu checkpoint. Smoke/không có output_dir riêng KHÔNG BAO GIỜ
+    # được ghi vào slot canonical (bài học 25/09: smoke ghi đè centralized_best.pt).
+    if smoke and not output_dir:
+        smoke_ckpt_dir = checkpoints_dir / "smoke"
+        smoke_ckpt_dir.mkdir(parents=True, exist_ok=True)
+        checkpoint_file = smoke_ckpt_dir / "centralized_best_smoke.pt"
+    else:
+        checkpoint_file = checkpoints_dir / "centralized_best.pt"
     torch.save({
         "model_state": best_state or get_parameters(model),
         "test_metrics": test_metrics,

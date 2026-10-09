@@ -318,10 +318,13 @@ def run_federated_simulation(
     final_test_metrics = evaluate(test_eval_model, test_loader, criterion, device)
     print(f"[+] Final Held-out Test Evaluation: Acc={final_test_metrics['accuracy']*100:.2f}%, Loss={final_test_metrics['loss']:.4f}, F1={final_test_metrics['macro_f1']:.4f}")
 
-    # Lưu best và last checkpoint
-    if smoke and (checkpoints_dir / "fedavg_best.pt").exists() and not output_dir:
-        torch.save({"model_state": best_weights or global_weights, "val_accuracy": best_acc, "test_metrics": final_test_metrics, "seed": seed}, checkpoints_dir / "smoke_fedavg_best.pt")
-        torch.save({"model_state": global_weights, "last_accuracy": eval_metrics["accuracy"], "seed": seed}, checkpoints_dir / "smoke_fedavg_last.pt")
+    # Lưu best và last checkpoint. Smoke/không có output_dir riêng KHÔNG BAO GIỜ
+    # được ghi vào slot canonical (bài học 25/09: smoke ghi đè fedavg_best.pt).
+    if smoke and not output_dir:
+        smoke_ckpt_dir = checkpoints_dir / "smoke"
+        smoke_ckpt_dir.mkdir(parents=True, exist_ok=True)
+        torch.save({"model_state": best_weights or global_weights, "val_accuracy": best_acc, "test_metrics": final_test_metrics, "seed": seed}, smoke_ckpt_dir / "fedavg_best_smoke.pt")
+        torch.save({"model_state": global_weights, "last_accuracy": eval_metrics["accuracy"], "seed": seed}, smoke_ckpt_dir / "fedavg_last_smoke.pt")
     else:
         torch.save({"model_state": best_weights or global_weights, "val_accuracy": best_acc, "test_metrics": final_test_metrics, "seed": seed}, checkpoints_dir / "fedavg_best.pt")
         torch.save({"model_state": global_weights, "last_accuracy": eval_metrics["accuracy"], "seed": seed}, checkpoints_dir / "fedavg_last.pt")

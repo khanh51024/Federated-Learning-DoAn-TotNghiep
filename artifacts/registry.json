@@ -1,0 +1,764 @@
+{
+  "schema_version": 1,
+  "generator": "scripts/build_registry.py",
+  "canonical_run_id": "20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62",
+  "dataset_truth": {
+    "source": "data/partitions_stage2_scratch_v3/suite.json",
+    "protocol": "stage2_scratch_clean_v3",
+    "total_images": 54305,
+    "split": {
+      "train": 38984,
+      "val": 4400,
+      "test": 10921
+    },
+    "num_clients": 5,
+    "split_seed": 42,
+    "smoke": false,
+    "conditions": {
+      "feature01": {
+        "scenario": "feature_dirichlet",
+        "alpha": 0.1,
+        "quantity_alpha": null,
+        "n_k": [
+          5133,
+          18545,
+          6779,
+          614,
+          7913
+        ]
+      },
+      "feature100": {
+        "scenario": "feature_dirichlet",
+        "alpha": 100.0,
+        "quantity_alpha": null,
+        "n_k": [
+          8136,
+          8050,
+          7434,
+          7936,
+          7428
+        ]
+      },
+      "label01": {
+        "scenario": "label_skew",
+        "alpha": 0.1,
+        "quantity_alpha": null,
+        "n_k": [
+          10851,
+          7205,
+          6069,
+          8453,
+          6406
+        ]
+      },
+      "label1": {
+        "scenario": "label_skew",
+        "alpha": 1.0,
+        "quantity_alpha": null,
+        "n_k": [
+          9399,
+          6566,
+          8419,
+          7985,
+          6615
+        ]
+      },
+      "label100": {
+        "scenario": "label_skew",
+        "alpha": 100.0,
+        "quantity_alpha": null,
+        "n_k": [
+          7568,
+          7699,
+          7817,
+          8032,
+          7868
+        ]
+      },
+      "label_quantity01": {
+        "scenario": "label_quantity_skew",
+        "alpha": 0.1,
+        "quantity_alpha": 0.1,
+        "n_k": [
+          10,
+          14119,
+          12163,
+          12574,
+          118
+        ]
+      },
+      "quantity01": {
+        "scenario": "quantity_skew",
+        "alpha": null,
+        "quantity_alpha": 0.1,
+        "n_k": [
+          10,
+          6288,
+          31362,
+          1314,
+          10
+        ]
+      },
+      "quantity100": {
+        "scenario": "quantity_skew",
+        "alpha": null,
+        "quantity_alpha": 100.0,
+        "n_k": [
+          7638,
+          8075,
+          7366,
+          7134,
+          8771
+        ]
+      }
+    },
+    "note": "Đây là split reproduction cục bộ (5 clients). Run canonical Kaggle dùng partition v1 (10 clients, label_skew alpha=0.1, test 10,917 ảnh) — hai split KHÔNG trộn lẫn."
+  },
+  "families": {
+    "scientific_canonical": {
+      "description": "Kết quả khoa học canonical (scratch, PlantVillage thuần) từ run Kaggle 20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62. Chỉ số từ metrics JSON của run; KHÔNG so sánh với họ published_demo."
+    },
+    "published_demo": {
+      "description": "Checkpoint pretrained mixed PlantVillage+PlantDoc (protocol mixed_pv_pd_v3_pretrained_seed42_validation), hash-verified khi import. Dùng cho demo web/inference, KHÔNG phải kết quả khoa học của protocol GĐ2 scratch."
+    },
+    "network_demo": {
+      "description": "Checkpoint từ các bài test mạng Flower (RTT, attack matrix, smoke network). Chỉ dùng demo kỹ thuật, cấm dùng làm chỉ số khoa học."
+    },
+    "reference": {
+      "description": "Model tham chiếu (TorchScript), không phải checkpoint FedAvg."
+    },
+    "smoke": {
+      "description": "Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM dùng trong luận văn; đã cách ly vào artifacts/checkpoints/smoke/."
+    }
+  },
+  "models": [
+    {
+      "model_id": "fedavg_canonical",
+      "family": "scientific_canonical",
+      "display_name": "FedAvg — scientific canonical",
+      "architecture": "MobileNetV3-Small",
+      "num_classes": 38,
+      "checkpoint_path": "artifacts/checkpoints/fedavg_best.pt",
+      "checkpoint_exists": false,
+      "file_sha256": null,
+      "state_sha256": null,
+      "expected_state_sha256": "a5af501306293146f21d5d3ce9446f66bc23355d1cbb4df196d55a50d4abe288",
+      "checkpoint_status": "missing_on_this_machine",
+      "preprocessing_id": "imagenet_eval_v1",
+      "protocol_id": "kaggle_pv_v1_label_skew_a0.1/run:20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62",
+      "seed": 42,
+      "metrics": {
+        "test_accuracy": 0.990932,
+        "macro_f1": 0.987155,
+        "test_loss": 0.030665,
+        "total_samples": 10917,
+        "total_rounds": 62,
+        "best_round": 52
+      },
+      "metrics_source": "artifacts/metrics/fedavg_results.json + results/fedavg/20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62/evaluations/b0cddc167068f46403c13595/test_metrics.json",
+      "status": "unverified_metrics_only",
+      "web_visible": false,
+      "display_label": "Scientific — metrics-only",
+      "notes": "Đánh giá trên Kaggle partition v1 label_skew alpha=0.1, global_test 10917 ảnh (test_metrics.json của run). Checkpoint thật không còn trên máy này (best.pt là LFS pointer chưa pull; artifacts/checkpoints/fedavg_best.pt từng bị smoke ghi đè acc=1.0)."
+    },
+    {
+      "model_id": "centralized_canonical",
+      "family": "scientific_canonical",
+      "display_name": "Centralized — scientific canonical",
+      "architecture": "MobileNetV3-Small",
+      "num_classes": 38,
+      "checkpoint_path": "artifacts/checkpoints/centralized_best.pt",
+      "checkpoint_exists": false,
+      "file_sha256": null,
+      "state_sha256": null,
+      "expected_state_sha256": null,
+      "checkpoint_status": "missing_on_this_machine",
+      "preprocessing_id": "imagenet_eval_v1",
+      "protocol_id": "kaggle_pv_v1_label_skew_a0.1/centralized",
+      "seed": null,
+      "metrics": {
+        "test_accuracy": 0.9825,
+        "macro_f1": 0.9781,
+        "test_loss": 0.0842,
+        "epochs": 10
+      },
+      "metrics_source": "artifacts/metrics/centralized_results.json",
+      "status": "historical_unverified",
+      "web_visible": false,
+      "display_label": "Scientific — historical (chưa tái kiểm chứng)",
+      "notes": "Số liệu 98.25% ghi nhận từ metrics JSON; checkpoint thật không có trên máy (slot từng chứa bản smoke 2 epochs). Chỉ trích dẫn kèm nhãn 'historical'."
+    },
+    {
+      "model_id": "local_only_canonical",
+      "family": "scientific_canonical",
+      "display_name": "Local-only — scientific canonical",
+      "architecture": "MobileNetV3-Small",
+      "num_classes": 38,
+      "checkpoint_path": null,
+      "checkpoint_exists": false,
+      "file_sha256": null,
+      "state_sha256": null,
+      "expected_state_sha256": null,
+      "checkpoint_status": "not_applicable",
+      "preprocessing_id": null,
+      "protocol_id": "kaggle_pv_v1_label_skew_a0.1/local-only",
+      "seed": null,
+      "metrics": {
+        "mean_accuracy": 0.814,
+        "std_accuracy": 0.087,
+        "mean_macro_f1": 0.7892,
+        "num_clients": 5,
+        "per_client_accuracy": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "metrics_source": "artifacts/metrics/local_only_results.json",
+      "status": "historical_unverified",
+      "web_visible": false,
+      "display_label": "Scientific — historical (chưa tái kiểm chứng)",
+      "notes": "Baseline 5 client cô lập; không có checkpoint trên máy."
+    },
+    {
+      "model_id": "demo_centralized_v6",
+      "family": "published_demo",
+      "display_name": "Centralized v6 (published demo)",
+      "architecture": "MobileNetV3-Small",
+      "num_classes": 38,
+      "checkpoint_path": "artifacts/branch_demo/20261003/centralized/checkpoint_best.pt",
+      "checkpoint_exists": true,
+      "file_sha256": "7fa1a91f20fac2f37526366d7d11256d409f23e45f0ced5dd89e837ade7bb603",
+      "state_sha256": "4b5f33dcdfe71cba5b682992eef58d12a77a059a774eba853d05c29fe33449b9",
+      "expected_state_sha256": null,
+      "checkpoint_status": "hash_verified",
+      "preprocessing_id": "canonical_v1",
+      "protocol_id": "mixed_pv_pd_v3_pretrained_seed42_validation",
+      "seed": 42,
+      "metrics": {
+        "overall": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        },
+        "plantdoc": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        },
+        "plantvillage": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        }
+      },
+      "metrics_source": "artifacts/branch_demo/20261003/centralized/validation_metrics.json",
+      "status": "verified_published_artifact",
+      "web_visible": true,
+      "display_label": "Demo (hash-verified, pretrained mixed PV+PlantDoc)",
+      "notes": "Artifact publish từ branch train, hash khớp artifact_manifest khi import. Chưa đánh giá lại cục bộ (evidence_level=published_artifact_hash_verified_not_locally_reevaluated)."
+    },
+    {
+      "model_id": "demo_fedavg_v7",
+      "family": "published_demo",
+      "display_name": "FedAvg v7 (published demo)",
+      "architecture": "MobileNetV3-Small",
+      "num_classes": 38,
+      "checkpoint_path": "artifacts/branch_demo/20261003/fedavg/checkpoint_best.pt",
+      "checkpoint_exists": true,
+      "file_sha256": "eb5b4e70c17c5e1be70fc7c493e6e8ddb32149150f81496176332e6fe62d0c5c",
+      "state_sha256": "e1f350739eeacddc9dc02b349afcb5831c25dc7ded36cabb5096a2dec9f2d34a",
+      "expected_state_sha256": null,
+      "checkpoint_status": "hash_verified",
+      "preprocessing_id": "canonical_v1",
+      "protocol_id": "mixed_pv_pd_v3_pretrained_seed42_validation",
+      "seed": 42,
+      "metrics": {
+        "overall": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        },
+        "plantdoc": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        },
+        "plantvillage": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        }
+      },
+      "metrics_source": "artifacts/branch_demo/20261003/fedavg/validation_metrics.json",
+      "status": "verified_published_artifact",
+      "web_visible": true,
+      "display_label": "Demo (hash-verified, pretrained mixed PV+PlantDoc)",
+      "notes": "Artifact publish từ branch train, hash khớp artifact_manifest khi import. Chưa đánh giá lại cục bộ (evidence_level=published_artifact_hash_verified_not_locally_reevaluated)."
+    },
+    {
+      "model_id": "demo_local_00",
+      "family": "published_demo",
+      "display_name": "Local-only client 00 (published demo)",
+      "architecture": "MobileNetV3-Small",
+      "num_classes": 38,
+      "checkpoint_path": "artifacts/branch_demo/20261003/local/client_00/checkpoint_best.pt",
+      "checkpoint_exists": true,
+      "file_sha256": "55f2b0d476cd18bda957293fd00869a95cb9ab67050d4bab83c5edff54ce86ae",
+      "state_sha256": "eaedf67f7090270cdc058acb99635481205661673f5f59f14f49e41c0aa99f4a",
+      "expected_state_sha256": null,
+      "checkpoint_status": "hash_verified",
+      "preprocessing_id": "canonical_v1",
+      "protocol_id": "mixed_pv_pd_v3_pretrained_seed42_validation",
+      "seed": 42,
+      "metrics": {
+        "overall": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        },
+        "plantdoc": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        },
+        "plantvillage": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        }
+      },
+      "metrics_source": "artifacts/branch_demo/20261003/local/client_00/validation_metrics.json",
+      "status": "verified_published_artifact",
+      "web_visible": true,
+      "display_label": "Demo (hash-verified, pretrained mixed PV+PlantDoc)",
+      "notes": "Artifact publish từ branch train, hash khớp artifact_manifest khi import. Chưa đánh giá lại cục bộ (evidence_level=published_artifact_hash_verified_not_locally_reevaluated)."
+    },
+    {
+      "model_id": "demo_local_01",
+      "family": "published_demo",
+      "display_name": "Local-only client 01 (published demo)",
+      "architecture": "MobileNetV3-Small",
+      "num_classes": 38,
+      "checkpoint_path": "artifacts/branch_demo/20261003/local/client_01/checkpoint_best.pt",
+      "checkpoint_exists": true,
+      "file_sha256": "0391db294a87c634a5e6ca9d81a90252f35cc3c17d92c1bae4607d56fc091cd1",
+      "state_sha256": "0606c6812881d3502ad1e4090b0d26f2128491001535a6d33c835ae025b3045c",
+      "expected_state_sha256": null,
+      "checkpoint_status": "hash_verified",
+      "preprocessing_id": "canonical_v1",
+      "protocol_id": "mixed_pv_pd_v3_pretrained_seed42_validation",
+      "seed": 42,
+      "metrics": {
+        "overall": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        },
+        "plantdoc": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        },
+        "plantvillage": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        }
+      },
+      "metrics_source": "artifacts/branch_demo/20261003/local/client_01/validation_metrics.json",
+      "status": "verified_published_artifact",
+      "web_visible": true,
+      "display_label": "Demo (hash-verified, pretrained mixed PV+PlantDoc)",
+      "notes": "Artifact publish từ branch train, hash khớp artifact_manifest khi import. Chưa đánh giá lại cục bộ (evidence_level=published_artifact_hash_verified_not_locally_reevaluated)."
+    },
+    {
+      "model_id": "demo_local_02",
+      "family": "published_demo",
+      "display_name": "Local-only client 02 (published demo)",
+      "architecture": "MobileNetV3-Small",
+      "num_classes": 38,
+      "checkpoint_path": "artifacts/branch_demo/20261003/local/client_02/checkpoint_best.pt",
+      "checkpoint_exists": true,
+      "file_sha256": "ba2d936eb74e3de33500c8106fbb1edfef7a59fdbe2627211c479c01639be7c4",
+      "state_sha256": "0972875de14ae87af0c341780385a3b3b73068fbbbef1688c68b21475515843a",
+      "expected_state_sha256": null,
+      "checkpoint_status": "hash_verified",
+      "preprocessing_id": "canonical_v1",
+      "protocol_id": "mixed_pv_pd_v3_pretrained_seed42_validation",
+      "seed": 42,
+      "metrics": {
+        "overall": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        },
+        "plantdoc": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        },
+        "plantvillage": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        }
+      },
+      "metrics_source": "artifacts/branch_demo/20261003/local/client_02/validation_metrics.json",
+      "status": "verified_published_artifact",
+      "web_visible": true,
+      "display_label": "Demo (hash-verified, pretrained mixed PV+PlantDoc)",
+      "notes": "Artifact publish từ branch train, hash khớp artifact_manifest khi import. Chưa đánh giá lại cục bộ (evidence_level=published_artifact_hash_verified_not_locally_reevaluated)."
+    },
+    {
+      "model_id": "demo_local_03",
+      "family": "published_demo",
+      "display_name": "Local-only client 03 (published demo)",
+      "architecture": "MobileNetV3-Small",
+      "num_classes": 38,
+      "checkpoint_path": "artifacts/branch_demo/20261003/local/client_03/checkpoint_best.pt",
+      "checkpoint_exists": true,
+      "file_sha256": "9d94ab2f7452c8940c1b74118a81e934efb96c09920bba5244bb5f91e2764f76",
+      "state_sha256": "85205b955cfce57806ac30e302f83d45f97fe5e697b117a6c4e8ef36d8fb2b0e",
+      "expected_state_sha256": null,
+      "checkpoint_status": "hash_verified",
+      "preprocessing_id": "canonical_v1",
+      "protocol_id": "mixed_pv_pd_v3_pretrained_seed42_validation",
+      "seed": 42,
+      "metrics": {
+        "overall": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        },
+        "plantdoc": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        },
+        "plantvillage": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        }
+      },
+      "metrics_source": "artifacts/branch_demo/20261003/local/client_03/validation_metrics.json",
+      "status": "verified_published_artifact",
+      "web_visible": true,
+      "display_label": "Demo (hash-verified, pretrained mixed PV+PlantDoc)",
+      "notes": "Artifact publish từ branch train, hash khớp artifact_manifest khi import. Chưa đánh giá lại cục bộ (evidence_level=published_artifact_hash_verified_not_locally_reevaluated)."
+    },
+    {
+      "model_id": "demo_local_04",
+      "family": "published_demo",
+      "display_name": "Local-only client 04 (published demo)",
+      "architecture": "MobileNetV3-Small",
+      "num_classes": 38,
+      "checkpoint_path": "artifacts/branch_demo/20261003/local/client_04/checkpoint_best.pt",
+      "checkpoint_exists": true,
+      "file_sha256": "7ff7a833777dd195b9cdf922ccba088aa706edea8dc4e9d56a9a744dea8eccb0",
+      "state_sha256": "ab92e9e3f6f9d4693c0dd427028855f78ccf7c749561f19a39b8ae2f5d074bf7",
+      "expected_state_sha256": null,
+      "checkpoint_status": "hash_verified",
+      "preprocessing_id": "canonical_v1",
+      "protocol_id": "mixed_pv_pd_v3_pretrained_seed42_validation",
+      "seed": 42,
+      "metrics": {
+        "overall": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        },
+        "plantdoc": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        },
+        "plantvillage": {
+          "count": null,
+          "top1_accuracy": null,
+          "macro_f1_supported": null,
+          "crop_accuracy": null
+        }
+      },
+      "metrics_source": "artifacts/branch_demo/20261003/local/client_04/validation_metrics.json",
+      "status": "verified_published_artifact",
+      "web_visible": true,
+      "display_label": "Demo (hash-verified, pretrained mixed PV+PlantDoc)",
+      "notes": "Artifact publish từ branch train, hash khớp artifact_manifest khi import. Chưa đánh giá lại cục bộ (evidence_level=published_artifact_hash_verified_not_locally_reevaluated)."
+    },
+    {
+      "model_id": "network_federated_global",
+      "family": "network_demo",
+      "display_name": "Flower network global (smoke)",
+      "architecture": "MobileNetV3-Small",
+      "num_classes": 38,
+      "checkpoint_path": "artifacts/checkpoints/federated_network_global.pt",
+      "checkpoint_exists": true,
+      "file_sha256": "98033e577b449932687faa55be5907d5a787132a932a668f27049da91569e31d",
+      "state_sha256": "3ead88a1f3ac070997daf6b458f1dd97ac6ca1bf9a30e8df1770efe2a764a15d",
+      "expected_state_sha256": null,
+      "checkpoint_status": "present",
+      "preprocessing_id": null,
+      "protocol_id": "network_smoke_localhost",
+      "seed": null,
+      "metrics": {
+        "source": "flower_network_fedavg",
+        "rounds": 2,
+        "num_clients": 5
+      },
+      "metrics_source": null,
+      "status": "smoke_demo_only",
+      "web_visible": false,
+      "display_label": "Network demo (không khoa học)",
+      "notes": "Checkpoint global từ smoke network localhost (5 clients, 2 rounds, synthetic). CẤM dùng accuracy từ các checkpoint này trong luận văn."
+    },
+    {
+      "model_id": "network_attack_matrix_observe",
+      "family": "network_demo",
+      "display_name": "Attack matrix — observe",
+      "architecture": "MobileNetV3-Small",
+      "num_classes": 38,
+      "checkpoint_path": "artifacts/checkpoints/attack_matrix_observe.pt",
+      "checkpoint_exists": true,
+      "file_sha256": "70504e0b3ba96d0131c079aec47579f2ef38d86c3c0a7160e9f491a21632f3ba",
+      "state_sha256": "e924fac55620dce074c774465331b55aec920bdee0bc16c5b13b018102f725f9",
+      "expected_state_sha256": null,
+      "checkpoint_status": "present",
+      "preprocessing_id": null,
+      "protocol_id": "network_smoke_localhost",
+      "seed": null,
+      "metrics": {
+        "source": "flower_network_fedavg",
+        "rounds": 1,
+        "num_clients": 4
+      },
+      "metrics_source": null,
+      "status": "smoke_demo_only",
+      "web_visible": false,
+      "display_label": "Network demo (không khoa học)",
+      "notes": "Thí nghiệm fault modes, policy observe-only. CẤM dùng accuracy từ các checkpoint này trong luận văn."
+    },
+    {
+      "model_id": "network_attack_matrix_reject",
+      "family": "network_demo",
+      "display_name": "Attack matrix — reject",
+      "architecture": "MobileNetV3-Small",
+      "num_classes": 38,
+      "checkpoint_path": "artifacts/checkpoints/attack_matrix_reject.pt",
+      "checkpoint_exists": true,
+      "file_sha256": "1f44fd136a6902f4f8b2a43bbcdb70ffd36d43bdaf2de27f780df4cbafd96173",
+      "state_sha256": "da1bbd8a663d3248b0f9a6d8441fe1af4560c47c2632588ae1694eddc7724047",
+      "expected_state_sha256": null,
+      "checkpoint_status": "present",
+      "preprocessing_id": null,
+      "protocol_id": "network_smoke_localhost",
+      "seed": null,
+      "metrics": {
+        "source": "flower_network_fedavg",
+        "rounds": 1,
+        "num_clients": 4
+      },
+      "metrics_source": null,
+      "status": "smoke_demo_only",
+      "web_visible": false,
+      "display_label": "Network demo (không khoa học)",
+      "notes": "Thí nghiệm fault modes, policy reject-suspicious. CẤM dùng accuracy từ các checkpoint này trong luận văn."
+    },
+    {
+      "model_id": "network_rtt_checkpoint_test",
+      "family": "network_demo",
+      "display_name": "RTT + checkpoint test",
+      "architecture": "MobileNetV3-Small",
+      "num_classes": 38,
+      "checkpoint_path": "artifacts/checkpoints/network_rtt_checkpoint_test.pt",
+      "checkpoint_exists": true,
+      "file_sha256": "65ae199c09e1379c644edd60f2e148847d1ac99e316b8471319480fcb8938714",
+      "state_sha256": "bc1eb21f6b3418aeffa9c335f97e810c93708b98541b9133d0b576280bf9640f",
+      "expected_state_sha256": null,
+      "checkpoint_status": "present",
+      "preprocessing_id": null,
+      "protocol_id": "network_smoke_localhost",
+      "seed": null,
+      "metrics": {
+        "source": "flower_network_fedavg",
+        "rounds": 1,
+        "num_clients": 2
+      },
+      "metrics_source": null,
+      "status": "smoke_demo_only",
+      "web_visible": false,
+      "display_label": "Network demo (không khoa học)",
+      "notes": "Bài test RTT per-client + lưu/nạp checkpoint qua mạng. CẤM dùng accuracy từ các checkpoint này trong luận văn."
+    },
+    {
+      "model_id": "plantvillage_traced_reference",
+      "family": "reference",
+      "display_name": "PlantVillage TorchScript (tham chiếu)",
+      "architecture": "MobileNetV3-Small",
+      "num_classes": 38,
+      "checkpoint_path": "artifacts/checkpoints/plantvillage_traced.pt",
+      "checkpoint_exists": true,
+      "file_sha256": "eab794cd9d9138f1e77d5dfc6166602da8a984b728c4228a23d7b84228cdf161",
+      "state_sha256": null,
+      "expected_state_sha256": null,
+      "checkpoint_status": "present",
+      "preprocessing_id": "get_default_transform(eval)",
+      "protocol_id": null,
+      "seed": null,
+      "metrics": {},
+      "metrics_source": null,
+      "status": "reference_only",
+      "web_visible": true,
+      "display_label": "Tham chiếu (không phải FedAvg)",
+      "notes": "TorchScript inference tham chiếu độc lập; softmax chưa calibration."
+    },
+    {
+      "model_id": "centralized_best_smoke",
+      "family": "smoke",
+      "display_name": "Smoke — centralized_best_smoke",
+      "architecture": "MobileNetV3-Small",
+      "num_classes": 38,
+      "checkpoint_path": "artifacts/checkpoints/smoke/centralized_best_smoke.pt",
+      "checkpoint_exists": true,
+      "file_sha256": "854f4596721de09d03c8c51ba2cb487fa85ba69552f8716504d285867d0c4095",
+      "state_sha256": "0b7e85d537ba1433fc095fa144e587cbe9b93c888be11a124f2dd471c15442fa",
+      "expected_state_sha256": null,
+      "checkpoint_status": "quarantined",
+      "preprocessing_id": null,
+      "protocol_id": null,
+      "seed": null,
+      "metrics": {
+        "test_accuracy": null,
+        "last_accuracy": null
+      },
+      "metrics_source": null,
+      "status": "smoke_quarantined",
+      "web_visible": false,
+      "display_label": "Smoke (cấm luận văn)",
+      "notes": "Được cách ly khỏi canonical slot sau đợt đồng bộ 2026-10-09."
+    },
+    {
+      "model_id": "fedavg_best_smoke",
+      "family": "smoke",
+      "display_name": "Smoke — fedavg_best_smoke",
+      "architecture": "MobileNetV3-Small",
+      "num_classes": 38,
+      "checkpoint_path": "artifacts/checkpoints/smoke/fedavg_best_smoke.pt",
+      "checkpoint_exists": true,
+      "file_sha256": "9c59cb428e8b2b41143016ca8d9af1a1606f4c9b3a01d73f79d5ef3fd5b78e26",
+      "state_sha256": "acfead80355085a51b528bbfbd83778de1d7e74652bc5a33cee2ca722364c60f",
+      "expected_state_sha256": null,
+      "checkpoint_status": "quarantined",
+      "preprocessing_id": null,
+      "protocol_id": null,
+      "seed": null,
+      "metrics": {
+        "test_accuracy": 1.0,
+        "last_accuracy": null
+      },
+      "metrics_source": null,
+      "status": "smoke_quarantined",
+      "web_visible": false,
+      "display_label": "Smoke (cấm luận văn)",
+      "notes": "Được cách ly khỏi canonical slot sau đợt đồng bộ 2026-10-09."
+    },
+    {
+      "model_id": "fedavg_last_smoke",
+      "family": "smoke",
+      "display_name": "Smoke — fedavg_last_smoke",
+      "architecture": "MobileNetV3-Small",
+      "num_classes": 38,
+      "checkpoint_path": "artifacts/checkpoints/smoke/fedavg_last_smoke.pt",
+      "checkpoint_exists": true,
+      "file_sha256": "6443aa344cfb870958c5091263c2dc3e2fbed457d355f73a586e4d090ce7a639",
+      "state_sha256": "ebaa80ed02c430b9ac416806d7db3d7f45771bd198056036bb0e652420f10d80",
+      "expected_state_sha256": null,
+      "checkpoint_status": "quarantined",
+      "preprocessing_id": null,
+      "protocol_id": null,
+      "seed": null,
+      "metrics": {
+        "test_accuracy": null,
+        "last_accuracy": 1.0
+      },
+      "metrics_source": null,
+      "status": "smoke_quarantined",
+      "web_visible": false,
+      "display_label": "Smoke (cấm luận văn)",
+      "notes": "Được cách ly khỏi canonical slot sau đợt đồng bộ 2026-10-09."
+    }
+  ],
+  "gates": {
+    "provenance": {
+      "status": "unverified",
+      "critical_issues": [
+        "fedavg_state_hash_mismatch",
+        "fedavg_accuracy_metadata_mismatch",
+        "centralized_epoch_mismatch"
+      ],
+      "warning_issues": [
+        "scientific_stage2_incomplete"
+      ],
+      "source": "artifacts/artifact_provenance_validation.json"
+    },
+    "pre_demo_check": {
+      "overall": "technical_demo_ready",
+      "source": "artifacts/pre_demo_check.json"
+    },
+    "final_acceptance": {
+      "technical": "pass",
+      "scientific": "blocked",
+      "readiness_overall": "technical_demo_ready",
+      "scientific_blockers": [
+        {
+          "name": "plantvillage_real_data",
+          "status": "warn",
+          "detail": "No --dataset-root supplied; scientific training cannot be validated."
+        },
+        {
+          "name": "canonical_provenance",
+          "status": "warn",
+          "detail": "UNVERIFIED: ['fedavg_state_hash_mismatch', 'fedavg_accuracy_metadata_mismatch', 'centralized_epoch_mismatch', 'scientific_stage2_incomplete']"
+        },
+        {
+          "name": "network_global_artifact",
+          "status": "warn",
+          "detail": "checkpoint exists but scientific gate not satisfied: require_real=False, all_real=False, real_test=False"
+        },
+        {
+          "name": "multiseed_real_summary",
+          "status": "warn",
+          "detail": "no complete verified multi-seed real summary yet"
+        }
+      ],
+      "source": "artifacts/final_acceptance.json"
+    },
+    "network_artifact": {
+      "ok": false,
+      "source": "artifacts/network_artifact_validation.json"
+    }
+  }
+}

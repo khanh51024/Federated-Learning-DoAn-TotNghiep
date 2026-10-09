@@ -57,3 +57,7 @@ data/partitions_stage2_scratch_v3/source_cache.json
 artifacts/web_runs/
 artifacts/report_experiments/
 artifacts/network_run_logs/
+
+# Checkpoint nhị phân: quản lý bằng registry (scripts/build_registry.py), không track git
+artifacts/checkpoints/*.pt
+artifacts/checkpoints/smoke/*.pt

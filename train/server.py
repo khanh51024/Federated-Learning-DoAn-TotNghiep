@@ -160,9 +160,16 @@ def run_federated_simulation(
             best_acc = eval_metrics["accuracy"]
             best_weights = copy.deepcopy(global_weights)
 
-    # Lưu best và last checkpoint
-    torch.save({"model_state": best_weights or global_weights, "test_accuracy": best_acc}, checkpoints_dir / "fedavg_best.pt")
-    torch.save({"model_state": global_weights, "last_accuracy": eval_metrics["accuracy"]}, checkpoints_dir / "fedavg_last.pt")
+    # Lưu best và last checkpoint. Smoke/không có output_dir riêng KHÔNG BAO GIỜ
+    # được ghi vào slot canonical (bài học 25/09: smoke ghi đè fedavg_best.pt).
+    if smoke and not output_dir:
+        smoke_ckpt_dir = checkpoints_dir / "smoke"
+        smoke_ckpt_dir.mkdir(parents=True, exist_ok=True)
+        torch.save({"model_state": best_weights or global_weights, "test_accuracy": best_acc}, smoke_ckpt_dir / "fedavg_best_smoke.pt")
+        torch.save({"model_state": global_weights, "last_accuracy": eval_metrics["accuracy"]}, smoke_ckpt_dir / "fedavg_last_smoke.pt")
+    else:
+        torch.save({"model_state": best_weights or global_weights, "test_accuracy": best_acc}, checkpoints_dir / "fedavg_best.pt")
+        torch.save({"model_state": global_weights, "last_accuracy": eval_metrics["accuracy"]}, checkpoints_dir / "fedavg_last.pt")
 
     results_payload = {
         "experiment": "fedavg",

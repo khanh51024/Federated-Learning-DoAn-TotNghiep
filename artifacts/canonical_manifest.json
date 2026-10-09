@@ -5,22 +5,27 @@
     "name": "PlantVillage",
     "classes": 38,
     "total_images": 54305,
-    "train_images": 38984,
-    "global_val_images": 4404,
-    "global_test_images": 10917,
-    "partition_protocol": "Dirichlet non-IID (alpha=1.0) & label skew across 5 clients"
+    "partition_protocol": "Kaggle partitions_train_v1 — label_skew Dirichlet alpha=0.1, 10 clients (theo resolved_config.yaml của run)",
+    "evaluation_dataset": "global_test (10917 ảnh, Kaggle)",
+    "local_reproduction_suite": {
+      "path": "data/partitions_stage2_scratch_v3",
+      "split": "38,984/4,400/10,921 (5 clients, seed 42)",
+      "note": "Split cục bộ để tái chạy; CHƯA có run nào trên máy hiện tại."
+    }
   },
   "benchmarks": {
     "centralized": {
       "name": "Centralized Baseline (Upper Bound)",
       "architecture": "MobileNetV3-Small",
-      "training_scope": "Full centralized training (38,984 images, 10 epochs)",
-      "evaluation_dataset": "global_test (10,917 images)",
+      "training_scope": "Full centralized training",
+      "evaluation_dataset": "global_test (10917 ảnh)",
       "test_accuracy": 0.9825,
       "test_accuracy_pct": "98.25%",
       "macro_f1": 0.9781,
       "test_loss": 0.0842,
-      "checkpoint": "artifacts/checkpoints/centralized_best.pt"
+      "checkpoint": "artifacts/checkpoints/centralized_best.pt",
+      "checkpoint_status": "missing_on_this_machine",
+      "evidence_status": "historical_unverified"
     },
     "fedavg": {
       "name": "Federated Learning FedAvg (Global Model)",
@@ -28,27 +33,28 @@
       "architecture": "MobileNetV3-Small",
       "total_rounds": 62,
       "best_round": 52,
-      "best_val_loss": 0.02832,
-      "evaluation_dataset": "global_test (10,917 images)",
+      "evaluation_dataset": "global_test (10917 ảnh)",
       "test_accuracy": 0.990932,
-      "test_accuracy_pct": "99.09%",
+      "test_accuracy_pct": "99.0932%",
       "macro_f1": 0.987155,
       "test_loss": 0.030665,
       "checkpoint": "artifacts/checkpoints/fedavg_best.pt",
       "state_dict_sha256": "a5af501306293146f21d5d3ce9446f66bc23355d1cbb4df196d55a50d4abe288",
+      "checkpoint_status": "missing_on_this_machine",
+      "evidence_status": "unverified_metrics_only",
       "scientific_stage2_complete": false
     },
     "local_only": {
       "name": "Local-only Baseline (Isolated Nodes)",
       "architecture": "MobileNetV3-Small",
-      "evaluation_dataset": "global_test (10,917 images)",
-      "mean_accuracy": 0.8140,
+      "evaluation_dataset": "global_test (10917 ảnh)",
+      "mean_accuracy": 0.814,
       "mean_accuracy_pct": "81.40%",
       "macro_f1": 0.7892,
-      "test_loss": 0.4510,
       "client_accuracy_std": 0.087,
-      "client_accuracy_std_pct": "± 8.70%",
-      "notes": "Đo đạc trung bình trên 5 mô hình client được huấn luyện cô lập không chia sẻ trọng số, chịu ảnh hưởng của đói dữ liệu và thiên lệch nhãn non-IID."
+      "evidence_status": "historical_unverified",
+      "notes": "Baseline 5 client cô lập; không có checkpoint trên máy."
     }
-  }
+  },
+  "safe_reporting_policy": "Chỉ trích dẫn accuracy/loss/F1 kèm nhãn trạng thái (verified / historical / metrics-only) và nguồn metrics. Không so sánh với họ published_demo (pretrained mixed PlantVillage+PlantDoc)."
 }
