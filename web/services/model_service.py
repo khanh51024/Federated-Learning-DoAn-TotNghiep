@@ -129,6 +129,21 @@ def predict(model_id: str, image: Any) -> Dict[str, Any]:
     return result
 
 
+def bundle_gate() -> tuple[bool, List[str]]:
+    """Bộ đối chứng published là MỘT khối (cùng protocol/split): chỉ hiển thị khi MỌI model của nó đã qua cổng web_visible."""
+    entries = [
+        e for e in registry_models().values()
+        if (e.get("inference") or {}).get("backend") == reg.BACKEND_PUBLISHED_BUNDLE
+    ]
+    if not entries:
+        return False, ["registry không có model nào thuộc bundle đã công bố — chạy scripts/update_status.py"]
+    blocked = [
+        f"{e['model_id']}: {'; '.join(e.get('web_gate_failures') or ['không rõ lý do'])}"
+        for e in entries if e.get("web_visible") is not True
+    ]
+    return (not blocked), blocked
+
+
 def list_models() -> List[Dict[str, Any]]:
     """Danh sách model được phép hiển thị trên web (đã qua cổng), kèm nhãn ngữ cảnh."""
     out: List[Dict[str, Any]] = []
@@ -143,6 +158,7 @@ def list_models() -> List[Dict[str, Any]]:
             "display_label": entry.get("display_label"),
             "role": entry.get("role"),
             "family": entry.get("family"),
+            "inference_key": (entry.get("inference") or {}).get("key"),
             "pipeline": entry.get("pipeline"),
             "dataset_id": entry.get("dataset_id"),
             "protocol_id": entry.get("protocol_id"),

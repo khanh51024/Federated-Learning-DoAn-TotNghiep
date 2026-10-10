@@ -1333,45 +1333,19 @@ test_network_artifact_validation.py
 
 # 32. Regression hiện tại
 
-Regression tổng gần nhất:
+Kết quả test KHÔNG ghi tĩnh ở đây nữa (bảng "60 passed / PASS" cũ đã lỗi thời: pipeline cũ đã chuyển sang `legacy/`,
+ngữ nghĩa reject-policy đã đổi sang strict-round). Nguồn duy nhất:
 
-```text
-60 passed
-2 warnings
-```
+- `PROJECT_STATUS.md` mục 3 (checklist do máy chấm, gồm "Full tests pass trên mã nguồn hiện tại") và mục 6 (gates);
+- `artifacts/final_acceptance.json` (kết quả từng nhóm test, kèm fingerprint mã nguồn lúc chạy).
 
-Hai warnings là dependency warnings từ `typer/click`, không phải lỗi logic project.
-
-Các khả năng đã được chứng minh bằng automated tests:
-
-```text
-FedAvg correctness                     PASS
-Flower parity                          PASS
-Real Flower socket                     PASS
-Multi-round network                    PASS
-1 server + 5 client processes          PASS
-Round-to-round feedback                PASS
-Server-side update validator           PASS
-No-train detection                     PASS
-Random/scaled/noise detection          PASS
-Observe/reject policy                  PASS
-Per-client RTT                         PASS
-Data starvation metrics                PASS
-Network checkpoint                     PASS
-Checkpoint inference                   PASS
-Held-out evaluation guard              PASS
-Reproducibility/seed guard              PASS
-Real-data guard                        PASS
-Web simulation/network separation      PASS
-Artifact provenance guard              PASS
-Artifact tamper detection              PASS
-```
+Chạy lại: `python scripts/update_status.py --full-gates`.
 
 ---
 
 # 33. Technical-ready và Scientific-ready
 
-Đây là điểm rất quan trọng.
+Đây là điểm rất quan trọng. (Trạng thái hiện hành luôn lấy từ `PROJECT_STATUS.md`; phần dưới là giải thích khái niệm.)
 
 ## Technical demo ready
 

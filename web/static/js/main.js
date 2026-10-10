@@ -1247,7 +1247,10 @@ async function submitInference() {
 
     document.getElementById("dual-results").style.display = "grid";
     const selectedBadge = document.getElementById("selected-model-badge");
-    if (selectedBadge) selectedBadge.textContent = result.selected_model_name || "Mô hình được chọn";
+    if (selectedBadge) {
+      const label = result.federated && result.federated.registry ? result.federated.registry.display_label : "";
+      selectedBadge.textContent = (result.selected_model_name || "Mô hình được chọn") + (label ? ` · ${label}` : "");
+    }
 
     // 1. Render Cột Centralized
     const cent = result.centralized;

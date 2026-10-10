@@ -3,16 +3,21 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fl-training"
-version = "0.1.0"
-description = "Federated Learning pipeline for PlantVillage MobileNetV3-Small with Flower and FedAvg"
+name = "fl-plantvillage"
+version = "0.2.0"
+description = "Federated Learning PlantVillage (MobileNetV3-Small, Flower, FedAvg) — engine src/, web demo, model registry"
 authors = [{ name = "FL Research Team" }]
 requires-python = ">=3.11"
+# Khai báo MỘT nơi: danh sách này phải trùng requirements.txt (PROJECT_STATUS.md tự kiểm).
+# Pipeline Kaggle cũ có ghim phiên bản riêng ở legacy/pyproject.toml.
 dependencies = [
-    "torch>=2.6.0,<2.7.0",
-    "torchvision>=0.21.0,<0.22.0",
-    "flwr[simulation]>=1.36.0,<1.37.0",
-    "ray>=2.55.0,<2.56.0",
+    "torch>=2.1.0",
+    "torchvision>=0.16.0",
+    "flwr>=1.30.0",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.30.0",
+    "python-multipart>=0.0.9",
+    "httpx>=0.27.0",
     "numpy>=1.24.0",
     "pandas>=2.0.0",
     "Pillow>=9.1.0",
@@ -20,7 +25,6 @@ dependencies = [
     "matplotlib>=3.7.0",
     "scikit-learn>=1.3.0",
     "scipy>=1.10.0",
-    "tqdm>=4.66.0",
 ]
 
 [project.optional-dependencies]

@@ -797,12 +797,8 @@
               <div class="form-group mt-4">
                 <label for="inference-fed-source">Nguồn Federated Model</label>
                 <select id="inference-fed-source" class="input-field">
-                  <option value="fedavg" selected>FedAvg v7 — checkpoint đã kiểm SHA</option>
-                  <option value="local_00">Local-only client 00</option>
-                  <option value="local_01">Local-only client 01</option>
-                  <option value="local_02">Local-only client 02</option>
-                  <option value="local_03">Local-only client 03</option>
-                  <option value="local_04">Local-only client 04</option>
+                  <!-- Danh sách thật được dựng từ GET /api/models (registry) bởi published_demo.js -->
+                  <option value="fedavg" selected>Đang tải danh sách model từ registry…</option>
                 </select>
               </div>
 

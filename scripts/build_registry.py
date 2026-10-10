@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src import registry as reg  # noqa: E402
+from scripts.import_branch_demo import classes_from_taxonomy  # noqa: E402
 
 import torch  # noqa: E402
 
@@ -702,8 +703,12 @@ def run_forward_test(model: dict[str, Any]) -> dict[str, Any]:
 
 def apply_web_gate(models: list[dict[str, Any]], *, forward: bool = True) -> None:
     """web_visible = True chỉ khi đạt đủ 5 điều kiện của review. Lý do rớt ghi vào web_gate_failures."""
-    # Nguồn độc lập với dataset_manifest.json: thứ tự lớp của bundle đã kiểm hash (import_manifest, khớp taxonomy.py)
-    bundle_classes = (load_json(reg.DEMO_IMPORT_MANIFEST_JSON) or {}).get("classes") or []
+    # Nguồn ĐỘC LẬP với cả dataset_manifest.json lẫn import_manifest.json: chính file hợp đồng taxonomy.py đi kèm bundle
+    # (importer đã ghim hash file này). Không đọc được => fail-closed.
+    try:
+        bundle_classes = classes_from_taxonomy(ROOT / reg.DEMO_BUNDLE_DIR / "contract" / "taxonomy.py")
+    except (OSError, ValueError, SyntaxError):
+        bundle_classes = []
     expected_taxonomy = classes_sha256(bundle_classes) if bundle_classes else None
 
     for m in models:
@@ -718,7 +723,7 @@ def apply_web_gate(models: list[dict[str, Any]], *, forward: bool = True) -> Non
             failures.append(f"1.hash: checkpoint_status={m.get('checkpoint_status')}")
         # 2. class mapping đúng thứ tự taxonomy
         if not expected_taxonomy or m.get("taxonomy_sha256") != expected_taxonomy:
-            failures.append("2.taxonomy: thứ tự 38 lớp không khớp taxonomy của bundle (nguồn độc lập)")
+            failures.append("2.taxonomy: thứ tự 38 lớp không khớp contract/taxonomy.py của bundle (nguồn độc lập)")
         # 3. preprocessing khớp phiên bản model
         if m.get("preprocessing_id") not in reg.KNOWN_PREPROCESSING:
             failures.append(f"3.preprocessing: {m.get('preprocessing_id')!r} chưa được khai báo")

@@ -144,3 +144,13 @@ def test_provenance_unlock_points_at_the_slots_the_validator_reads(evaluated):
         joined = "\n".join(result.unlock)
         assert reg.FEDAVG_BEST_PT in joined and reg.CENTRALIZED_BEST_PT in joined
         assert "Centralized" in result.needs
+
+
+def test_static_test_results_are_flagged_in_docs():
+    assert us.STATIC_TEST_RESULT_RE.search("```text\n60 passed\n2 warnings\n```")
+    assert not us.STATIC_TEST_RESULT_RE.search("Chạy lại: python scripts/update_status.py --full-gates")
+
+
+def test_dependency_declaration_is_single_sourced(evaluated):
+    _registry, ctx, _results = evaluated
+    assert us.check_deps(ctx).status == us.DONE

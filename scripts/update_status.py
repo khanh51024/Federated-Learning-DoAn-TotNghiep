@@ -36,6 +36,7 @@ JOURNAL_END = "<!-- ROADMAP-END -->"
 TIMESTAMP_RE = re.compile(r"^> \*\*Cập nhật lúc:\*\* .*$", re.M)
 
 DONE, TODO, BLOCKED = "XONG", "CHƯA", "BLOCKED"
+STATIC_TEST_RESULT_RE = re.compile(r"^\s*\d+ passed\b", re.M)  # dòng kiểu "60 passed" dán từ pytest
 PATH_LITERAL_RE = re.compile(r"^(?:artifacts[/\\][^\s]*|artifacts)$")  # cả chuỗi là một đường dẫn dưới artifacts/
 
 FAMILY_TITLES = {
@@ -266,9 +267,12 @@ def check_docs_numbers(ctx: Ctx) -> Result:
         for number in FORBIDDEN_NUMBERS:
             if number in text:
                 found.append(f"{path.name}:{number}")
+        # Kết quả test chỉ được nằm ở PROJECT_STATUS.md/final_acceptance.json, không ghi tĩnh trong docs
+        if STATIC_TEST_RESULT_RE.search(text):
+            found.append(f"{path.name}:kết quả test ghi tĩnh")
     if found:
-        return Result(TODO, f"còn số liệu mâu thuẫn đã biết: {found}")
-    return Result(DONE, f"không còn số liệu mâu thuẫn đã biết ({', '.join(FORBIDDEN_NUMBERS[:2])}...) trong README/docs")
+        return Result(TODO, f"còn số liệu mâu thuẫn/ghi tĩnh: {found}")
+    return Result(DONE, f"không còn số liệu mâu thuẫn đã biết ({', '.join(FORBIDDEN_NUMBERS[:2])}...) và không ghi tĩnh kết quả test trong README/docs")
 
 
 def check_tests_isolated(ctx: Ctx) -> Result:
@@ -278,6 +282,34 @@ def check_tests_isolated(ctx: Ctx) -> Result:
     if hits:
         return Result(TODO, f"test ghi thẳng vào artifacts/checkpoints|metrics (ghi đè artifact đang track mỗi lần chạy): {sorted(set(h.split(':')[0] for h in hits))}")
     return Result(DONE, "test không tham chiếu artifacts/checkpoints|metrics (dùng tmp_path)")
+
+
+def _requirement_set(lines: list[str]) -> set[str]:
+    out: set[str] = set()
+    for line in lines:
+        line = line.split("#", 1)[0].strip()
+        if line:
+            out.add(re.sub(r"\s+", "", line).lower())
+    return out
+
+
+def check_deps(ctx: Ctx) -> Result:
+    """Dependency chỉ khai báo MỘT nơi: pyproject.toml (dependencies + extra test) phải trùng requirements.txt."""
+    import tomllib
+
+    pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    declared = _requirement_set(pyproject["dependencies"]) | _requirement_set(
+        (pyproject.get("optional-dependencies") or {}).get("test", [])
+    )
+    required = _requirement_set((ROOT / "requirements.txt").read_text(encoding="utf-8").splitlines())
+    if declared != required:
+        return Result(
+            TODO,
+            f"pyproject.toml và requirements.txt lệch: chỉ ở pyproject={sorted(declared - required)}; chỉ ở requirements={sorted(required - declared)}",
+        )
+    if not (ROOT / "legacy/pyproject.toml").is_file():
+        return Result(TODO, "thiếu legacy/pyproject.toml (ghim phiên bản của pipeline cũ)")
+    return Result(DONE, f"{len(required)} dependency trùng giữa pyproject.toml và requirements.txt; ghim cũ nằm ở legacy/pyproject.toml")
 
 
 def check_full_tests(ctx: Ctx) -> Result:
@@ -445,6 +477,7 @@ ITEMS = [
     Item("docs_numbers", "Số liệu trong docs không mâu thuẫn artifact", check_docs_numbers),
     Item("protocol", "Chốt một protocol khoa học cho mỗi thí nghiệm", check_protocol),
     Item("tests_isolated", "Test không ghi đè artifact đang track", check_tests_isolated),
+    Item("deps", "Dependency khai báo một nơi (pyproject = requirements)", check_deps),
     Item("full_tests", "Full tests pass trên mã nguồn hiện tại", check_full_tests),
     Item("provenance", "Kiểm chứng provenance & checkpoint canonical", check_provenance),
     Item("leakage", "Audit leakage theo từng run", check_leakage),
@@ -459,7 +492,7 @@ ITEMS = [
 # Mục kỹ thuật (không cần dữ liệu ngoài): "Release sạch" chỉ xét các mục này
 TECH_KEYS = [
     "registry", "smoke_isolated", "single_engine", "web_split", "no_hardcode",
-    "docs_clean", "docs_numbers", "protocol", "tests_isolated", "full_tests",
+    "docs_clean", "docs_numbers", "protocol", "tests_isolated", "deps", "full_tests",
 ]
 RESULTS_CACHE: dict[str, Result] = {}
 

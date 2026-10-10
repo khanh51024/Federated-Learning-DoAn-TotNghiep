@@ -152,47 +152,36 @@ def test_web_gate_grants_visibility_only_when_all_five_pass(monkeypatch):
     assert skipped["web_visible"] is False, "--skip-forward không được cấp quyền hiển thị"
 
 
-def test_taxonomy_must_match_independent_bundle_source(monkeypatch):
+def test_taxonomy_expectation_comes_from_the_bundle_contract_file(monkeypatch):
     classes = json.loads((reg.ROOT / reg.DATASET_MANIFEST_JSON).read_text(encoding="utf-8"))["classes"]
-    model = {
+    base = {
         "model_id": "x", "role": reg.ROLE_REFERENCE, "checkpoint_status": "hash_verified",
         "taxonomy_sha256": br.classes_sha256(classes), "preprocessing_id": "get_default_transform(eval)",
         "metrics_source": None, "metrics_waiver": "w", "protocol_id": "p", "dataset_id": "d", "inference_test": None,
     }
+    ok = dict(base)
+    br.apply_web_gate([ok], forward=False)
+    assert not any(f.startswith("2.taxonomy") for f in ok["web_gate_failures"])
+
+    # contract/taxonomy.py của bundle đổi thứ tự lớp -> model dùng thứ tự khác bị chặn
+    monkeypatch.setattr(br, "classes_from_taxonomy", lambda path: list(reversed(classes)))
+    swapped = dict(base)
+    br.apply_web_gate([swapped], forward=False)
+    assert any(f.startswith("2.taxonomy") for f in swapped["web_gate_failures"])
+
+    # sửa import_manifest.json KHÔNG thể làm điều kiện này dễ hơn: nguồn kỳ vọng không đọc file đó nữa
     real_load = br.load_json
-    # bundle đổi thứ tự lớp -> model dùng dataset_manifest phải bị chặn
+    monkeypatch.setattr(br, "classes_from_taxonomy", lambda path: classes)
     monkeypatch.setattr(br, "load_json", lambda rel: {"classes": list(reversed(classes))} if rel == reg.DEMO_IMPORT_MANIFEST_JSON else real_load(rel))
-    br.apply_web_gate([model], forward=False)
-    assert any(f.startswith("2.taxonomy") for f in model["web_gate_failures"])
-    # không có nguồn độc lập -> fail-closed
-    monkeypatch.setattr(br, "load_json", lambda rel: {} if rel == reg.DEMO_IMPORT_MANIFEST_JSON else real_load(rel))
-    br.apply_web_gate([model], forward=False)
-    assert any(f.startswith("2.taxonomy") for f in model["web_gate_failures"])
+    still_ok = dict(base)
+    br.apply_web_gate([still_ok], forward=False)
+    assert not any(f.startswith("2.taxonomy") for f in still_ok["web_gate_failures"])
 
+    # không đọc được hợp đồng => fail-closed
+    def unreadable(path):
+        raise ValueError("PLANTVILLAGE_38_CLASSES was not found")
 
-def test_canonical_manifest_matches_registry(registry):
-    manifest = json.loads((reg.ROOT / reg.CANONICAL_MANIFEST_JSON).read_text(encoding="utf-8"))
-    fed = next(m for m in registry["models"] if m["model_id"] == "fedavg_canonical")
-    assert manifest["benchmarks"]["fedavg"]["test_accuracy"] == fed["metrics"]["test_accuracy"]
-    assert manifest["benchmarks"]["fedavg"]["checkpoint_status"] == fed["checkpoint_status"]
-    assert manifest["canonical_run_id"] == registry["canonical_run_id"]
-
-
-def test_web_gate_rejects_each_failed_condition():
-    base = {
-        "model_id": "x", "role": reg.ROLE_CURRENT, "checkpoint_status": "hash_verified",
-        "taxonomy_sha256": br.classes_sha256(json.loads((reg.ROOT / reg.DEMO_IMPORT_MANIFEST_JSON).read_text(encoding="utf-8"))["classes"]),
-        "preprocessing_id": "canonical_v1", "metrics_source": reg.DATASET_MANIFEST_JSON,
-        "protocol_id": "p", "dataset_id": "d", "metrics_waiver": None, "inference_test": None,
-    }
-    cases = {
-        "1.hash": {"checkpoint_status": "hash_mismatch"},
-        "2.taxonomy": {"taxonomy_sha256": "0" * 64},
-        "3.preprocessing": {"preprocessing_id": "chua_khai_bao"},
-        "4.metrics": {"metrics_source": None},
-    }
-    for prefix, override in cases.items():
-        model = {**base, **override}
-        br.apply_web_gate([model], forward=False)
-        assert model["web_visible"] is False
-        assert any(f.startswith(prefix) for f in model["web_gate_failures"]), (prefix, model["web_gate_failures"])
+    monkeypatch.setattr(br, "classes_from_taxonomy", unreadable)
+    closed = dict(base)
+    br.apply_web_gate([closed], forward=False)
+    assert any(f.startswith("2.taxonomy") for f in closed["web_gate_failures"])

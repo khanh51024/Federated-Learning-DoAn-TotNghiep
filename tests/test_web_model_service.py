@@ -118,3 +118,30 @@ def test_reference_model_hash_is_rechecked_on_every_use(client, monkeypatch):
     response = client.post("/api/inference/plantvillage", files={"file": ("leaf.jpg", _jpeg(), "image/jpeg")})
     assert response.status_code in (400, 503)
     assert "hash" in response.json()["detail"].lower()
+
+
+def test_models_endpoint_exposes_the_key_the_ui_posts(client):
+    models = client.get("/api/models").json()["models"]
+    keys = {m["model_id"]: m["inference_key"] for m in models}
+    assert keys["demo_fedavg_v7"] == "fedavg"
+    assert keys["demo_local_03"] == "local_03"
+    assert all(m["display_label"] for m in models)
+
+
+def test_comparison_and_evidence_are_withheld_when_any_bundle_model_is_blocked(client, monkeypatch):
+    assert client.get("/api/compare").json()["available"] is True
+    models = {m["model_id"]: dict(m) for m in reg.iter_models()}
+    models["demo_local_02"].update(web_visible=False, web_gate_failures=["1.hash: checkpoint_status=hash_mismatch"])
+    monkeypatch.setattr(model_service, "registry_models", lambda: models)
+    for path in ("/api/compare", "/api/demo/evidence"):
+        body = client.get(path).json()
+        assert body["available"] is False, path
+        assert body["models"] == []
+        assert "demo_local_02" in body["reason"] and "hash_mismatch" in body["reason"]
+    assert client.get("/api/compare").json()["rows"] == []
+
+
+def test_bundle_gate_fails_closed_without_registry(monkeypatch):
+    monkeypatch.setattr(model_service, "registry_models", lambda: {})
+    ok, reasons = model_service.bundle_gate()
+    assert ok is False and reasons

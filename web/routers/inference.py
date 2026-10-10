@@ -34,9 +34,24 @@ def get_models() -> Dict[str, Any]:
     return {"available": bool(models), "count": len(models), "models": models}
 
 
+def _gated_evidence() -> Dict[str, Any]:
+    """Số liệu đối chứng chỉ ra khi registry cho phép CẢ bộ; ngược lại giữ lại toàn bộ kèm lý do (không lọc nửa vời)."""
+    ok, reasons = model_service.bundle_gate()
+    if not ok:
+        return {
+            "available": False,
+            "protocol_id": PROTOCOL_ID,
+            "evidence_level": "withheld_by_registry_gate",
+            "reason": "Cổng registry chặn bộ đối chứng — " + "; ".join(reasons),
+            "scientific_stage2_complete": False,
+            "models": [],
+        }
+    return load_evidence()
+
+
 @router.get("/api/demo/evidence")
 def get_demo_evidence() -> Dict[str, Any]:
-    return load_evidence()
+    return _gated_evidence()
 
 
 @router.get("/api/compare")
@@ -44,7 +59,7 @@ def get_comparison_table(protocol_id: str = PROTOCOL_ID) -> Dict[str, Any]:
     """Return comparison data without inventing or silently trusting stale metrics."""
     if protocol_id != PROTOCOL_ID:
         raise HTTPException(status_code=400, detail="Protocol không có bộ đối chứng được kiểm hash.")
-    evidence = load_evidence()
+    evidence = _gated_evidence()
     if not evidence["available"]:
         return {"available": False, "reason": evidence["reason"], "rows": [], "models": []}
     rows = [

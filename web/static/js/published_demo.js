@@ -1,7 +1,44 @@
 // Published 2026-10-03 evidence is rendered only after the API verifies all bytes.
 // The Flower localhost smoke session is a separate technical demonstration.
 
+// Danh sách model chọn được lấy từ registry (chỉ model đã qua cổng web_visible), kèm nhãn ngữ cảnh.
+async function loadModelSelector() {
+  const select = document.getElementById("inference-fed-source");
+  if (!select) return;
+  try {
+    const response = await fetch("/api/models", { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const payload = await response.json();
+    const choices = payload.models.filter(m => m.role === "current" && m.inference_key && m.inference_key !== "centralized");
+    select.replaceChildren();
+    if (!choices.length) {
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = "Registry chưa cho phép model nào — chạy scripts/update_status.py";
+      select.appendChild(option);
+      select.disabled = true;
+      return;
+    }
+    select.disabled = false;
+    for (const model of choices) {
+      const option = document.createElement("option");
+      option.value = model.inference_key;
+      option.textContent = `${model.display_name} — ${model.display_label}`;
+      if (model.inference_key === "fedavg") option.selected = true;
+      select.appendChild(option);
+    }
+  } catch (error) {
+    select.replaceChildren();
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = `Không tải được danh sách model: ${error.message}`;
+    select.appendChild(option);
+    select.disabled = true;
+  }
+}
+
 async function loadPublishedDemo() {
+  await loadModelSelector();
   const badge = document.getElementById("published-evidence-badge");
   const note = document.getElementById("published-evidence-note");
   const body = document.getElementById("compare-body");

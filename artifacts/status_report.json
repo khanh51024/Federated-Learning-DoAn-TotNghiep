@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-10T19:24:08",
+      "generated_at": "2026-10-10T19:58:40",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,13 +145,13 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-10T19:24:20",
+      "generated_at": "2026-10-10T19:58:51",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
-      "generated_at": "2026-10-10T19:31:21",
-      "code_fingerprint": "1faf05a85b7764bb2d9634aff07f9c5b8b6baded633d6aee994ff507f50ece08",
+      "generated_at": "2026-10-10T20:05:33",
+      "code_fingerprint": "becc5d0c5be8d3e224065db9f918df5e625c933f9c88837ac4b1e5313277c1c2",
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
@@ -180,7 +180,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-10T19:24:16",
+      "generated_at": "2026-10-10T19:58:47",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
@@ -241,7 +241,7 @@
       "id": "docs_numbers",
       "title": "Số liệu trong docs không mâu thuẫn artifact",
       "status": "XONG",
-      "detail": "không còn số liệu mâu thuẫn đã biết (97,12, 97.12...) trong README/docs",
+      "detail": "không còn số liệu mâu thuẫn đã biết (97,12, 97.12...) và không ghi tĩnh kết quả test trong README/docs",
       "unlock": []
     },
     {
@@ -259,10 +259,17 @@
       "unlock": []
     },
     {
+      "id": "deps",
+      "title": "Dependency khai báo một nơi (pyproject = requirements)",
+      "status": "XONG",
+      "detail": "15 dependency trùng giữa pyproject.toml và requirements.txt; ghim cũ nằm ở legacy/pyproject.toml",
+      "unlock": []
+    },
+    {
       "id": "full_tests",
       "title": "Full tests pass trên mã nguồn hiện tại",
       "status": "XONG",
-      "detail": "technical_acceptance=pass lúc 2026-10-10T19:31:21 (gồm test mạng, 38 file test) trên đúng mã nguồn hiện tại",
+      "detail": "technical_acceptance=pass lúc 2026-10-10T20:05:33 (gồm test mạng, 38 file test) trên đúng mã nguồn hiện tại",
       "unlock": []
     },
     {
