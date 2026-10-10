@@ -2917,7 +2917,7 @@
   },
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-10T20:44:04",
+      "generated_at": "2026-10-10T21:01:27",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -2929,13 +2929,13 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-10T20:44:10",
+      "generated_at": "2026-10-10T21:01:33",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
-      "generated_at": "2026-10-10T20:49:17",
-      "code_fingerprint": "6f3ea8166855ed0d2e6dca35b32a216ed35cbc63832335c74efd39fbe8a0ffce",
+      "generated_at": "2026-10-10T21:06:42",
+      "code_fingerprint": "d176ef1ac7de96166c38d58982f1f596d1fdf5228c44f297e05ccfe7968d7a1c",
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
@@ -2964,7 +2964,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-10T20:44:08",
+      "generated_at": "2026-10-10T21:01:31",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"

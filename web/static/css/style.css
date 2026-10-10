@@ -487,6 +487,16 @@ body {
   border-color: var(--border-focus);
 }
 
+/* Danh sách thả xuống native mặc định nền trắng; chữ #fff của .input-field thành trắng-trên-trắng. */
+select.input-field {
+  color-scheme: dark;
+}
+
+select.input-field option {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
 /* CLIENTS GRID */
 .clients-cards-grid {
   display: grid;
