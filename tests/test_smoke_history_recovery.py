@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 
 from web import app as dashboard
+from web import state as dashboard_state
 
 
 def _run(root, name: str, *, status: str, accepted: int = 5):
@@ -33,13 +34,13 @@ def test_latest_completed_smoke_run_skips_failed_and_incomplete(monkeypatch, tmp
     valid = _run(tmp_path, "20261005T010000Z_valid", status="completed")
     _run(tmp_path, "20261005T020000Z_failed", status="failed")
     _run(tmp_path, "20261005T030000Z_wrong_audit", status="completed", accepted=4)
-    monkeypatch.setattr(dashboard, "SMOKE_RUNS_ROOT", tmp_path)
+    monkeypatch.setattr(dashboard_state, "SMOKE_RUNS_ROOT", tmp_path)
     assert dashboard.latest_completed_smoke_run() == valid
 
 
 def test_network_metrics_marks_recovered_run_historical(monkeypatch, tmp_path):
     valid = _run(tmp_path, "20261005T010000Z_valid", status="completed")
-    monkeypatch.setattr(dashboard, "SMOKE_RUNS_ROOT", tmp_path)
+    monkeypatch.setattr(dashboard_state, "SMOKE_RUNS_ROOT", tmp_path)
     monkeypatch.setattr(dashboard.NETWORK_DEMO, "run_dir", None)
     result = dashboard.get_federated_network_metrics()
     assert result["available"] is True
