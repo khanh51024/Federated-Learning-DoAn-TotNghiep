@@ -79,9 +79,15 @@ def refresh_gates(full: bool) -> list[str]:
     """Chạy lại registry + các gate. Trả về danh sách script gate bị crash (mã thoát lạ)."""
     from scripts import build_registry as br  # noqa: E402
 
+    crashed: list[str] = []
+    for rel in ("scripts/report_domain_gap.py", "scripts/report_per_class.py"):  # suy ra từ bundle đã kiểm hash
+        code, out = run_script(rel)
+        if code != 0:
+            crashed.append(rel)
+            print(f"[update_status] CẢNH BÁO: {rel} exit={code}\n{out[-500:]}")
+
     br.main_build()
 
-    crashed: list[str] = []
     for rel, ok_codes in (
         ("scripts/validate_artifact_provenance.py", (0, 2)),  # 2 = unverified (trung thực)
         ("scripts/pre_demo_check.py", (0, 2)),
@@ -348,36 +354,62 @@ def check_leakage(ctx: Ctx) -> Result:
     )
 
 
+def _per_class_report() -> dict[str, Any] | None:
+    return load_json(reg.abs_path(reg.PER_CLASS_REPORT_JSON))
+
+
+def _per_class_consistent(report: dict[str, Any]) -> bool:
+    return all(all(src["consistency"].values()) for model in report["models"].values() for src in model.values())
+
+
 def check_per_class(ctx: Ctx) -> Result:
-    gap = (ctx.registry.get("evidence_reports") or {}).get("domain_gap") or {}
-    fed = (gap.get("models") or {}).get("FedAvg v7") or {}
-    pd = (fed.get("plantdoc") or {}).get("accuracy_pct")
-    pv = (fed.get("plantvillage") or {}).get("accuracy_pct")
-    summary = f"đã có gap công bố: FedAvg v7 PlantVillage {pv}% vs PlantDoc {pd}%" if pd is not None else "chưa có số liệu gap"
+    report = _per_class_report()
+    if report is None:
+        return Result(TODO, f"chưa có {reg.PER_CLASS_REPORT_JSON} — chạy scripts/report_per_class.py")
+    if not _per_class_consistent(report):
+        return Result(TODO, "báo cáo theo lớp không khớp tổng/top-1 công bố — kiểm lại bundle")
+    s = report["summary"]
+    cmp = report["fedavg_vs_centralized_plantdoc"]
+    return Result(
+        DONE,
+        f"PlantDoc phủ {s['plantdoc_classes_covered']} lớp; {len(s['weak_classes_fedavg'])} lớp recall<50% "
+        f"({s['weak_images_fedavg']}/{report['models']['FedAvg v7']['plantdoc']['count']} ảnh); FedAvg tệ hơn Centralized ở "
+        f"{cmp['fedavg_worse_in']}/{cmp['classes_compared']} lớp (số công bố, đã kiểm nhất quán; xem mục 5)",
+    )
+
+
+def check_reeval(ctx: Ctx) -> Result:
     return Result(
         BLOCKED,
-        f"{summary}; thiếu confusion matrix đầy đủ theo lớp (mới có top-5 nhầm lẫn trong metrics công bố). [mục kiểm tay: chưa có script đánh giá theo lớp]",
-        needs="ảnh validation (269 PlantDoc + 4.344 PlantVillage) khớp validation_manifest của bundle",
+        "số theo lớp ở trên là số CÔNG BỐ; chưa tái đánh giá cục bộ nên chưa có confusion matrix đầy đủ. [mục kiểm tay]",
+        needs="ảnh validation (269 PlantDoc + 4.344 PlantVillage) khớp validation_manifest của bundle + checkpoint đã kiểm hash",
         unlock=[
-            "# chưa có script đánh giá theo lớp — viết scripts/evaluate_published_per_class.py khi có ảnh validation",
-            ".\\.venv\\Scripts\\python.exe scripts\\audit_realworld_inference.py --images <thư_mục_ảnh_ngoài> ",
+            "# chưa có script tái đánh giá — viết scripts/evaluate_published_per_class.py khi có ảnh validation",
+            "# (cùng điều kiện dữ liệu với mục audit leakage; checkpoint bundle đã có và đã kiểm hash)",
+            ".\\.venv\\Scripts\\python.exe scripts\\audit_realworld_inference.py --images <thư_mục_ảnh_ngoài>",
             ".\\.venv\\Scripts\\python.exe scripts\\evaluate_inference_audit.py --audit artifacts\\inference_audit.json --labels <nhãn.csv>",
         ],
     )
 
 
 def check_confident_errors(ctx: Ctx) -> Result:
+    report = _per_class_report()
+    if report is None:
+        return Result(TODO, f"chưa có {reg.PER_CLASS_REPORT_JSON} — chạy scripts/report_per_class.py")
     rows = []
-    for mid in ("demo_centralized_v6", "demo_fedavg_v7"):
-        m = ctx.models.get(mid) or {}
-        n = ((m.get("metrics") or {}).get("overall") or {}).get("high_confidence_wrong_count_0_9")
-        if n is not None:
-            rows.append(f"{m.get('display_name', mid).split(' (')[0]}: {n} ảnh sai với confidence > 0.9")
+    for name in ("Centralized v6", "FedAvg v7"):
+        hc = report["models"][name]["plantdoc"]["high_confidence_wrong"]
+        rows.append(f"{name}: {hc['count']}/{report['models'][name]['plantdoc']['count']} ảnh PlantDoc sai với confidence>{hc['threshold']} "
+                    f"({hc['share_of_errors']:.0%} số lỗi)")
+    return Result(DONE, "mức tổng hợp từ metrics công bố — " + "; ".join(rows) + " (xem mục 5)")
+
+
+def check_calibration(ctx: Ctx) -> Result:
     return Result(
         BLOCKED,
-        "số lượng đã có từ metrics công bố — " + ("; ".join(rows) or "chưa có") + "; chưa phân tích được từng ảnh. [mục kiểm tay: chưa có script đo calibration]",
-        needs="ảnh validation + checkpoint để liệt kê ảnh sai confidence cao và đo calibration (ECE)",
-        unlock=["# cùng điều kiện với mục 'PlantDoc theo từng lớp'; tiếp theo thêm đo ECE/temperature scaling trên tập validation độc lập"],
+        "chưa phân tích được TỪNG ảnh sai tự tin và chưa đo calibration (softmax chưa hiệu chuẩn, UI cảnh báo is_uncertain chỉ là heuristic). [mục kiểm tay]",
+        needs="ảnh validation + checkpoint để liệt kê ảnh sai confidence cao, đo ECE/reliability và thử temperature scaling trên tập validation độc lập",
+        unlock=["# cùng điều kiện dữ liệu với mục 'tái đánh giá cục bộ'; viết scripts/calibration_report.py khi có ảnh validation"],
     )
 
 
@@ -416,8 +448,10 @@ ITEMS = [
     Item("full_tests", "Full tests pass trên mã nguồn hiện tại", check_full_tests),
     Item("provenance", "Kiểm chứng provenance & checkpoint canonical", check_provenance),
     Item("leakage", "Audit leakage theo từng run", check_leakage),
-    Item("per_class", "Đánh giá PlantDoc theo từng lớp", check_per_class),
-    Item("confident_errors", "Phân tích lỗi confidence cao", check_confident_errors),
+    Item("per_class", "Đánh giá PlantDoc theo từng lớp (từ số công bố)", check_per_class),
+    Item("reeval", "Tái đánh giá cục bộ trên ảnh validation (xác nhận số công bố)", check_reeval),
+    Item("confident_errors", "Phân tích lỗi confidence cao (mức tổng hợp, từ số công bố)", check_confident_errors),
+    Item("calibration", "Phân tích từng ảnh sai tự tin + đo calibration", check_calibration),
     Item("multiseed", "Chạy multi-seed non-IID (seed 42/123/2026)", check_multiseed),
     Item("reports_synced", "Đồng bộ báo cáo & artifacts sau khi có run mới", check_reports_synced),
     Item("release", "Release sạch (mọi gate kỹ thuật XONG)", check_release),
@@ -518,6 +552,31 @@ def quality_section(registry: dict[str, Any]) -> list[str]:
     lines.append("- Nhận định: khoảng cách PlantVillage↔PlantDoc ~45 điểm ở cả hai phương pháp ⇒ vấn đề là tổng quát hóa giữa miền "
                  "dữ liệu, không phải riêng frontend. Chưa đủ bằng chứng để kết luận nguyên nhân (thiếu dữ liệu, nhãn, hay chiến lược train).")
     lines.append("- Số liệu trên là kết quả công bố của bundle, **chưa tái đánh giá cục bộ** (evidence: published_artifact_hash_verified_not_locally_reevaluated).")
+
+    report = _per_class_report()
+    if report and _per_class_consistent(report):
+        fed_pd = report["models"]["FedAvg v7"]["plantdoc"]
+        eb, hc = fed_pd["error_breakdown"], fed_pd["high_confidence_wrong"]
+        lines += [
+            "",
+            "**Theo lớp trên PlantDoc (FedAvg v7, số công bố; sắp theo recall tăng dần):**",
+            "",
+            f"- PlantDoc chỉ phủ **{report['summary']['plantdoc_classes_covered']}** lớp của taxonomy; "
+            f"{len(report['summary']['weak_classes_fedavg'])} lớp có recall < 50% chiếm {report['summary']['weak_images_fedavg']}/{fed_pd['count']} ảnh.",
+            f"- Phân rã {fed_pd['count']} ảnh: đúng {eb['correct']} · sai loại cây {eb['wrong_crop']} · đúng cây nhưng sai bệnh {eb['right_crop_wrong_disease']}; "
+            f"sai với confidence > {hc['threshold']}: {hc['count']} ảnh ({hc['share_of_errors']:.0%} số lỗi).",
+            "",
+            "| Lớp | Ảnh PlantDoc | FedAvg PlantDoc | Centralized PlantDoc | FedAvg PlantVillage | Chênh (điểm) |",
+            "|---|---:|---:|---:|---:|---:|",
+        ]
+        for row in report["fedavg_plantdoc_class_table"]:
+            note = " ⚠ ít mẫu" if row["low_support"] else ""
+            cen = row["centralized_plantdoc_recall"]
+            lines.append(
+                f"| {row['class']}{note} | {row['plantdoc_support']} | {row['fedavg_plantdoc_recall']:.0%} | "
+                f"{'—' if cen is None else format(cen, '.0%')} | {row['fedavg_plantvillage_recall']:.0%} | {row['fedavg_domain_gap_pp']} |"
+            )
+        lines += ["", "- Không có trong số công bố (cần ảnh validation): " + "; ".join(report["not_available_without_images"]) + "."]
     return lines
 
 

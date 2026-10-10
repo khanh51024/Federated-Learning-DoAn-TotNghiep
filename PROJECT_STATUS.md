@@ -1,6 +1,6 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-10 18:46 · sinh tự bởi `scripts/update_status.py`
+> **Cập nhật lúc:** 2026-10-10 19:31 · sinh tự bởi `scripts/update_status.py`
 > **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (6 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
@@ -20,7 +20,7 @@
 - Dataset cục bộ để tái lập: `data/partitions_stage2_scratch_v3` — split **38984/4400/10921** (5 clients, seed 42, protocol `stage2_scratch_clean_v3`)
 - Run Kaggle lịch sử: `20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62` — metrics CÓ, **checkpoint KHÔNG còn trên máy**
 
-## 3. Checklist nghiệm thu — XONG 11/17 · CHƯA 0 · BLOCKED 6
+## 3. Checklist nghiệm thu — XONG 13/19 · CHƯA 0 · BLOCKED 6
 
 | # | Hạng mục | Trạng thái | Bằng chứng (máy kiểm) |
 |---|---|---|---|
@@ -33,14 +33,16 @@
 | 7 | Số liệu trong docs không mâu thuẫn artifact | ✅ XONG | không còn số liệu mâu thuẫn đã biết (97,12, 97.12...) trong README/docs |
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
 | 9 | Test không ghi đè artifact đang track | ✅ XONG | test không tham chiếu artifacts/checkpoints/metrics (dùng tmp_path) |
-| 10 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-10T18:46:38 (gồm test mạng, 36 file test) trên đúng mã nguồn hiện tại |
+| 10 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-10T19:31:21 (gồm test mạng, 38 file test) trên đúng mã nguồn hiện tại |
 | 11 | Kiểm chứng provenance & checkpoint canonical | ⛔ BLOCKED | provenance=unverified; lỗi: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing'] |
 | 12 | Audit leakage theo từng run | ⛔ BLOCKED | 7/7 model hiện hành có leakage_audit=unknown (bundle chỉ công bố validation_manifest_sha256, không kèm manifest train). [mục kiểm tay: chưa có script đọc kết quả audit để tự chuyển trạng thái] |
-| 13 | Đánh giá PlantDoc theo từng lớp | ⛔ BLOCKED | đã có gap công bố: FedAvg v7 PlantVillage 93.12% vs PlantDoc 47.21%; thiếu confusion matrix đầy đủ theo lớp (mới có top-5 nhầm lẫn trong metrics công bố). [mục kiểm tay: chưa có script đánh giá theo lớp] |
-| 14 | Phân tích lỗi confidence cao | ⛔ BLOCKED | số lượng đã có từ metrics công bố — Centralized v6: 98 ảnh sai với confidence > 0.9; FedAvg v7: 100 ảnh sai với confidence > 0.9; chưa phân tích được từng ảnh. [mục kiểm tay: chưa có script đo calibration] |
-| 15 | Chạy multi-seed non-IID (seed 42/123/2026) | ⛔ BLOCKED | chưa có multi-seed THẬT (chỉ có bản smoke accuracy 0.0263 trên ảnh tổng hợp) |
-| 16 | Đồng bộ báo cáo & artifacts sau khi có run mới | ⛔ BLOCKED | phụ thuộc multi-seed thật |
-| 17 | Release sạch (mọi gate kỹ thuật XONG) | ✅ XONG | mọi mục kỹ thuật XONG; trước khi nộp vẫn phải `git status` sạch và gắn tag |
+| 13 | Đánh giá PlantDoc theo từng lớp (từ số công bố) | ✅ XONG | PlantDoc phủ 13/38 lớp; 6 lớp recall<50% (136/269 ảnh); FedAvg tệ hơn Centralized ở 5/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5) |
+| 14 | Tái đánh giá cục bộ trên ảnh validation (xác nhận số công bố) | ⛔ BLOCKED | số theo lớp ở trên là số CÔNG BỐ; chưa tái đánh giá cục bộ nên chưa có confusion matrix đầy đủ. [mục kiểm tay] |
+| 15 | Phân tích lỗi confidence cao (mức tổng hợp, từ số công bố) | ✅ XONG | mức tổng hợp từ metrics công bố — Centralized v6: 77/269 ảnh PlantDoc sai với confidence>0.9 (62% số lỗi); FedAvg v7: 41/269 ảnh PlantDoc sai với confidence>0.9 (29% số lỗi) (xem mục 5) |
+| 16 | Phân tích từng ảnh sai tự tin + đo calibration | ⛔ BLOCKED | chưa phân tích được TỪNG ảnh sai tự tin và chưa đo calibration (softmax chưa hiệu chuẩn, UI cảnh báo is_uncertain chỉ là heuristic). [mục kiểm tay] |
+| 17 | Chạy multi-seed non-IID (seed 42/123/2026) | ⛔ BLOCKED | chưa có multi-seed THẬT (chỉ có bản smoke accuracy 0.0263 trên ảnh tổng hợp) |
+| 18 | Đồng bộ báo cáo & artifacts sau khi có run mới | ⛔ BLOCKED | phụ thuộc multi-seed thật |
+| 19 | Release sạch (mọi gate kỹ thuật XONG) | ✅ XONG | mọi mục kỹ thuật XONG; trước khi nộp vẫn phải `git status` sạch và gắn tag |
 
 ### Việc đang BLOCKED — cần gì và mở khóa bằng lệnh nào
 
@@ -64,22 +66,23 @@ Copy-Item <centralized_best.pt tải về> artifacts/checkpoints/centralized_bes
 # audit split của bundle: cần manifest train từ nhánh train-* (chưa có trên máy)
 ```
 
-**Đánh giá PlantDoc theo từng lớp**
-- Cần: ảnh validation (269 PlantDoc + 4.344 PlantVillage) khớp validation_manifest của bundle
+**Tái đánh giá cục bộ trên ảnh validation (xác nhận số công bố)**
+- Cần: ảnh validation (269 PlantDoc + 4.344 PlantVillage) khớp validation_manifest của bundle + checkpoint đã kiểm hash
 - Mở khóa:
 
 ```powershell
-# chưa có script đánh giá theo lớp — viết scripts/evaluate_published_per_class.py khi có ảnh validation
-.\.venv\Scripts\python.exe scripts\audit_realworld_inference.py --images <thư_mục_ảnh_ngoài> 
+# chưa có script tái đánh giá — viết scripts/evaluate_published_per_class.py khi có ảnh validation
+# (cùng điều kiện dữ liệu với mục audit leakage; checkpoint bundle đã có và đã kiểm hash)
+.\.venv\Scripts\python.exe scripts\audit_realworld_inference.py --images <thư_mục_ảnh_ngoài>
 .\.venv\Scripts\python.exe scripts\evaluate_inference_audit.py --audit artifacts\inference_audit.json --labels <nhãn.csv>
 ```
 
-**Phân tích lỗi confidence cao**
-- Cần: ảnh validation + checkpoint để liệt kê ảnh sai confidence cao và đo calibration (ECE)
+**Phân tích từng ảnh sai tự tin + đo calibration**
+- Cần: ảnh validation + checkpoint để liệt kê ảnh sai confidence cao, đo ECE/reliability và thử temperature scaling trên tập validation độc lập
 - Mở khóa:
 
 ```powershell
-# cùng điều kiện với mục 'PlantDoc theo từng lớp'; tiếp theo thêm đo ECE/temperature scaling trên tập validation độc lập
+# cùng điều kiện dữ liệu với mục 'tái đánh giá cục bộ'; viết scripts/calibration_report.py khi có ảnh validation
 ```
 
 **Chạy multi-seed non-IID (seed 42/123/2026)**
@@ -178,6 +181,29 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
 - Nhận định: khoảng cách PlantVillage↔PlantDoc ~45 điểm ở cả hai phương pháp ⇒ vấn đề là tổng quát hóa giữa miền dữ liệu, không phải riêng frontend. Chưa đủ bằng chứng để kết luận nguyên nhân (thiếu dữ liệu, nhãn, hay chiến lược train).
 - Số liệu trên là kết quả công bố của bundle, **chưa tái đánh giá cục bộ** (evidence: published_artifact_hash_verified_not_locally_reevaluated).
 
+**Theo lớp trên PlantDoc (FedAvg v7, số công bố; sắp theo recall tăng dần):**
+
+- PlantDoc chỉ phủ **13/38** lớp của taxonomy; 6 lớp có recall < 50% chiếm 136/269 ảnh.
+- Phân rã 269 ảnh: đúng 127 · sai loại cây 66 · đúng cây nhưng sai bệnh 76; sai với confidence > 0.9: 41 ảnh (29% số lỗi).
+
+| Lớp | Ảnh PlantDoc | FedAvg PlantDoc | Centralized PlantDoc | FedAvg PlantVillage | Chênh (điểm) |
+|---|---:|---:|---:|---:|---:|
+| Tomato___Tomato_mosaic_virus | 29 | 0% | 66% | 83% | 83.33 |
+| Tomato___Early_blight | 5 | 0% | 20% | 52% | 52.5 |
+| Tomato___Bacterial_spot | 16 | 6% | 0% | 81% | 75.15 |
+| Apple___Apple_scab | 25 | 44% | 32% | 85% | 41.42 |
+| Potato___Late_blight | 22 | 45% | 45% | 95% | 49.55 |
+| Tomato___Septoria_leaf_spot | 39 | 49% | 64% | 89% | 40.64 |
+| Tomato___Leaf_Mold | 32 | 50% | 44% | 93% | 43.42 |
+| Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot | 6 | 50% | 67% | 54% | 3.66 |
+| Potato___Early_blight | 36 | 56% | 44% | 100% | 44.44 |
+| Tomato___Late_blight | 20 | 60% | 60% | 96% | 36.05 |
+| Grape___Black_rot | 6 | 67% | 67% | 38% | -29.17 |
+| Corn_(maize)___Common_rust_ | 9 | 89% | 89% | 98% | 9.01 |
+| Squash___Powdery_mildew | 24 | 96% | 100% | 100% | 4.17 |
+
+- Không có trong số công bố (cần ảnh validation): confusion matrix đầy đủ trên ảnh PlantDoc; danh sách từng ảnh sai với confidence cao; calibration (ECE / temperature scaling) trên tập validation độc lập; tỷ lệ PlantDoc trong dữ liệu huấn luyện (bundle chỉ công bố validation_manifest, không kèm manifest train).
+
 ## 6. Gates kỹ thuật
 
 | Gate | Kết quả | Chi tiết |
@@ -202,6 +228,9 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
   (5) Test: 5 test mạng từng ghi đè artifact đang track (checkpoint/metrics) nay dùng `tmp_path`; `attack_matrix` và
   `network_heldout` (lỗi sẵn có từ trước) sửa theo hợp đồng strict-round / partition contract hiện hành.
   (6) Review độc lập (harness-reviewer) 12 phát hiện → đã sửa các mục HIGH/MEDIUM.
+- 2026-10-10 (tiếp): khai thác số công bố của bundle — `scripts/report_per_class.py` phân tích PlantDoc theo lớp
+  (13/38 lớp được phủ; 6 lớp recall<50%; `Tomato___Tomato_mosaic_virus` 0% trên 29 ảnh; FedAvg tệ hơn Centralized ở 5/13 lớp;
+  41/142 lỗi PlantDoc có confidence>0.9). Tách mục review thành "làm được từ số công bố" (XONG) và "cần ảnh" (BLOCKED).
 - 2026-10-10 — số test legacy (`pytest legacy/tests`): 149 pass / 29 fail / 10 error. 22 fail + 10 error trùng baseline trước khi gom
   (thiếu PlantVillage gốc và `data/partitions_train_v*`, thiếu fixture `kaggle_calibration` bị `.gitignore *kaggle*`);
   thêm 7 test `stage1_compat` lỗi vì manifest hash upstream tính trên checkout CRLF còn cây này là LF (không do mã).

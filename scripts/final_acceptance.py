@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -19,20 +20,35 @@ OUT = reg.abs_path(reg.FINAL_ACCEPTANCE_JSON)
 
 def run_command(name: str, cmd: List[str], timeout: int) -> Dict[str, Any]:
     started = time.perf_counter()
-    proc = subprocess.run(
-        cmd,
-        cwd=ROOT,
-        text=True,
-        capture_output=True,
-        timeout=timeout,
-    )
+    # Ép UTF-8 hai đầu: trên Windows text=True mặc định giải mã bằng code page (cp1258) ở luồng đọc nền; tiến trình con in
+    # tiếng Việt/UTF-8 làm luồng đó lỗi âm thầm và proc.stdout thành None (gate crash không có kết quả).
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"}
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=ROOT,
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+            env=env,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as exc:
+        return {
+            "name": name,
+            "status": "fail",
+            "returncode": None,
+            "elapsed_s": round(time.perf_counter() - started, 3),
+            "stdout_tail": f"TIMEOUT sau {timeout}s",
+            "stderr_tail": str(exc)[-1000:],
+        }
     return {
         "name": name,
         "status": "pass" if proc.returncode == 0 else "fail",
         "returncode": proc.returncode,
         "elapsed_s": round(time.perf_counter() - started, 3),
-        "stdout_tail": proc.stdout[-6000:],
-        "stderr_tail": proc.stderr[-4000:],
+        "stdout_tail": (proc.stdout or "")[-6000:],
+        "stderr_tail": (proc.stderr or "")[-4000:],
     }
 
 

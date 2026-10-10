@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-10T18:39:41",
+      "generated_at": "2026-10-10T19:24:08",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,13 +145,13 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-10T18:39:50",
+      "generated_at": "2026-10-10T19:24:20",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
-      "generated_at": "2026-10-10T18:46:38",
-      "code_fingerprint": "b50509f915714293a8826533e467077f3a71f8ebedce4ce622dfb089c08d0e78",
+      "generated_at": "2026-10-10T19:31:21",
+      "code_fingerprint": "1faf05a85b7764bb2d9634aff07f9c5b8b6baded633d6aee994ff507f50ece08",
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
@@ -180,7 +180,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-10T18:39:47",
+      "generated_at": "2026-10-10T19:24:16",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
@@ -262,7 +262,7 @@
       "id": "full_tests",
       "title": "Full tests pass trên mã nguồn hiện tại",
       "status": "XONG",
-      "detail": "technical_acceptance=pass lúc 2026-10-10T18:46:38 (gồm test mạng, 36 file test) trên đúng mã nguồn hiện tại",
+      "detail": "technical_acceptance=pass lúc 2026-10-10T19:31:21 (gồm test mạng, 38 file test) trên đúng mã nguồn hiện tại",
       "unlock": []
     },
     {
@@ -289,22 +289,37 @@
     },
     {
       "id": "per_class",
-      "title": "Đánh giá PlantDoc theo từng lớp",
+      "title": "Đánh giá PlantDoc theo từng lớp (từ số công bố)",
+      "status": "XONG",
+      "detail": "PlantDoc phủ 13/38 lớp; 6 lớp recall<50% (136/269 ảnh); FedAvg tệ hơn Centralized ở 5/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5)",
+      "unlock": []
+    },
+    {
+      "id": "reeval",
+      "title": "Tái đánh giá cục bộ trên ảnh validation (xác nhận số công bố)",
       "status": "BLOCKED",
-      "detail": "đã có gap công bố: FedAvg v7 PlantVillage 93.12% vs PlantDoc 47.21%; thiếu confusion matrix đầy đủ theo lớp (mới có top-5 nhầm lẫn trong metrics công bố). [mục kiểm tay: chưa có script đánh giá theo lớp]",
+      "detail": "số theo lớp ở trên là số CÔNG BỐ; chưa tái đánh giá cục bộ nên chưa có confusion matrix đầy đủ. [mục kiểm tay]",
       "unlock": [
-        "# chưa có script đánh giá theo lớp — viết scripts/evaluate_published_per_class.py khi có ảnh validation",
-        ".\\.venv\\Scripts\\python.exe scripts\\audit_realworld_inference.py --images <thư_mục_ảnh_ngoài> ",
+        "# chưa có script tái đánh giá — viết scripts/evaluate_published_per_class.py khi có ảnh validation",
+        "# (cùng điều kiện dữ liệu với mục audit leakage; checkpoint bundle đã có và đã kiểm hash)",
+        ".\\.venv\\Scripts\\python.exe scripts\\audit_realworld_inference.py --images <thư_mục_ảnh_ngoài>",
         ".\\.venv\\Scripts\\python.exe scripts\\evaluate_inference_audit.py --audit artifacts\\inference_audit.json --labels <nhãn.csv>"
       ]
     },
     {
       "id": "confident_errors",
-      "title": "Phân tích lỗi confidence cao",
+      "title": "Phân tích lỗi confidence cao (mức tổng hợp, từ số công bố)",
+      "status": "XONG",
+      "detail": "mức tổng hợp từ metrics công bố — Centralized v6: 77/269 ảnh PlantDoc sai với confidence>0.9 (62% số lỗi); FedAvg v7: 41/269 ảnh PlantDoc sai với confidence>0.9 (29% số lỗi) (xem mục 5)",
+      "unlock": []
+    },
+    {
+      "id": "calibration",
+      "title": "Phân tích từng ảnh sai tự tin + đo calibration",
       "status": "BLOCKED",
-      "detail": "số lượng đã có từ metrics công bố — Centralized v6: 98 ảnh sai với confidence > 0.9; FedAvg v7: 100 ảnh sai với confidence > 0.9; chưa phân tích được từng ảnh. [mục kiểm tay: chưa có script đo calibration]",
+      "detail": "chưa phân tích được TỪNG ảnh sai tự tin và chưa đo calibration (softmax chưa hiệu chuẩn, UI cảnh báo is_uncertain chỉ là heuristic). [mục kiểm tay]",
       "unlock": [
-        "# cùng điều kiện với mục 'PlantDoc theo từng lớp'; tiếp theo thêm đo ECE/temperature scaling trên tập validation độc lập"
+        "# cùng điều kiện dữ liệu với mục 'tái đánh giá cục bộ'; viết scripts/calibration_report.py khi có ảnh validation"
       ]
     },
     {

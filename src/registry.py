@@ -52,6 +52,7 @@ PRE_DEMO_CHECK_JSON = "artifacts/pre_demo_check.json"
 FINAL_ACCEPTANCE_JSON = "artifacts/final_acceptance.json"
 STATUS_REPORT_JSON = "artifacts/status_report.json"
 DOMAIN_GAP_REPORT_JSON = "artifacts/plantdoc_domain_gap_report.json"
+PER_CLASS_REPORT_JSON = "artifacts/plantdoc_per_class_report.json"
 TELEMETRY_HISTORY_JSON = "artifacts/metrics/telemetry_history.json"
 NETWORK_FLOWER_HISTORY_JSON = "artifacts/metrics/network_flower_history.json"
 

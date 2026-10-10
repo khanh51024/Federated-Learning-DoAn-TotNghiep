@@ -35,7 +35,7 @@ dataset_truth: { protocol, total_images, split{train,val,test}, num_clients, spl
 families: { <family>: {description} }
 models: [ <model>, ... ]
 artifact_groups: [ {group_id, role, description, count, paths[], lfs_oids?} ]   # .pt ngoài danh sách model
-evidence_reports: { domain_gap, inference_audit }
+evidence_reports: { domain_gap, per_class, inference_audit }   # suy ra từ bundle: report_domain_gap.py, report_per_class.py
 gates: { provenance, pre_demo_check, final_acceptance, network_artifact, checkpoint_catalog }
 ```
 

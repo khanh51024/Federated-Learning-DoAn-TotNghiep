@@ -113,6 +113,18 @@ Mục tiêu: provenance `verified`, scientific blockers = 0, PROJECT_STATUS.md
 hiển thị "SẴN SÀNG NGHIỆM THU KHOA HỌC". Hiện tại đang ở mức
 `technical_demo_ready` — xem PROJECT_STATUS.md mục 3.
 
+## 6b. Báo cáo suy ra từ bundle (không cần ảnh)
+
+`update_status.py` tự chạy hai script này; chạy tay khi cần:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\report_domain_gap.py    # PlantVillage vs PlantDoc theo model  -> artifacts/plantdoc_domain_gap_report.json
+.\.venv\Scripts\python.exe scripts\report_per_class.py     # recall theo lớp, phân rã lỗi, lỗi confidence cao -> artifacts/plantdoc_per_class_report.json
+```
+
+Đây là phân tích trên số liệu ĐÃ CÔNG BỐ (kèm kiểm nhất quán: recall có trọng số = top-1, phân rã lỗi cộng đúng tổng).
+Không thay thế tái đánh giá cục bộ — cần ảnh validation, xem mục BLOCKED trong `PROJECT_STATUS.md`.
+
 ## 7. Nhận kết quả train ngoài (bundle mới)
 
 Train chạy ở Kaggle/branch `train-*`, xuất bundle có `artifact_manifest.json` + SHA-256. Trên máy này:

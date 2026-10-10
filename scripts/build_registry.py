@@ -855,6 +855,18 @@ def build_evidence_reports() -> dict[str, Any]:
             "models": gap.get("models"),
             "recommendation": gap.get("recommendation"),
         }
+    per_class = load_json(reg.PER_CLASS_REPORT_JSON)
+    if per_class:
+        consistent = all(
+            all(src["consistency"].values()) for model in per_class["models"].values() for src in model.values()
+        )
+        reports["per_class"] = {
+            "source": reg.PER_CLASS_REPORT_JSON,
+            "evidence": per_class.get("evidence"),
+            "internally_consistent": consistent,
+            "plantdoc_classes_covered": per_class["summary"]["plantdoc_classes_covered"],
+            "weak_classes_fedavg": per_class["summary"]["weak_classes_fedavg"],
+        }
     audit = load_json(reg.INFERENCE_AUDIT_JSON)
     if audit:
         images = audit.get("images") or []

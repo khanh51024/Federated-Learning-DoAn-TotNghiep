@@ -2893,6 +2893,20 @@
       },
       "recommendation": "Evaluate and improve real-world/domain robustness before optimizing confidence display."
     },
+    "per_class": {
+      "source": "artifacts/plantdoc_per_class_report.json",
+      "evidence": "published validation_metrics.json (hash-verified bundle); not locally re-evaluated — no validation images on this machine",
+      "internally_consistent": true,
+      "plantdoc_classes_covered": "13/38",
+      "weak_classes_fedavg": [
+        "Tomato___Tomato_mosaic_virus",
+        "Tomato___Early_blight",
+        "Tomato___Bacterial_spot",
+        "Apple___Apple_scab",
+        "Potato___Late_blight",
+        "Tomato___Septoria_leaf_spot"
+      ]
+    },
     "inference_audit": {
       "source": "artifacts/inference_audit.json",
       "note": "Unlabelled images: predictions only, NOT ground-truth accuracy.",
@@ -2903,7 +2917,7 @@
   },
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-10T18:39:41",
+      "generated_at": "2026-10-10T19:24:08",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -2915,13 +2929,13 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-10T18:39:50",
+      "generated_at": "2026-10-10T19:24:20",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
-      "generated_at": "2026-10-10T18:46:38",
-      "code_fingerprint": "b50509f915714293a8826533e467077f3a71f8ebedce4ce622dfb089c08d0e78",
+      "generated_at": "2026-10-10T19:31:21",
+      "code_fingerprint": "1faf05a85b7764bb2d9634aff07f9c5b8b6baded633d6aee994ff507f50ece08",
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
@@ -2950,7 +2964,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-10T18:39:47",
+      "generated_at": "2026-10-10T19:24:16",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
