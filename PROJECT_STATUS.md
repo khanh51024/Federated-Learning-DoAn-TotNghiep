@@ -1,6 +1,6 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-10 23:23 · sinh tự bởi `scripts/update_status.py`
+> **Cập nhật lúc:** 2026-10-11 02:04 · sinh tự bởi `scripts/update_status.py`
 > **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
@@ -34,7 +34,7 @@
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
 | 9 | Test không ghi đè artifact đang track | ✅ XONG | test không tham chiếu artifacts/checkpoints/metrics (dùng tmp_path) |
 | 10 | Dependency khai báo một nơi (pyproject = requirements) | ✅ XONG | 15 dependency trùng giữa pyproject.toml và requirements.txt; ghim cũ nằm ở legacy/pyproject.toml |
-| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-10T23:23:16 (gồm test mạng, 40 file test) trên đúng mã nguồn hiện tại |
+| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-11T02:04:31 (gồm test mạng, 41 file test) trên đúng mã nguồn hiện tại |
 | 12 | Kiểm chứng provenance & checkpoint canonical | ⛔ BLOCKED | provenance=unverified; lỗi: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing'] |
 | 13 | Audit leakage theo từng run | ✅ XONG | release mixed_pv_pd_v3: train 37.238 / val 4.613 / calibration 4.225 rời nhau trên 5 khóa (giao nhau tổng = 0); 12 partition đều là tập con train; 46.076 ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train) |
 | 14 | Đánh giá PlantDoc theo từng lớp (từ số công bố) | ✅ XONG | PlantDoc phủ 13/38 lớp; 6 lớp recall<50% (136/269 ảnh); FedAvg tệ hơn Centralized ở 5/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5) |
@@ -269,6 +269,15 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
 - 2026-10-10 — số test legacy (`pytest legacy/tests`): 149 pass / 29 fail / 10 error. 22 fail + 10 error trùng baseline trước khi gom
   (thiếu PlantVillage gốc và `data/partitions_train_v*`, thiếu fixture `kaggle_calibration` bị `.gitignore *kaggle*`);
   thêm 7 test `stage1_compat` lỗi vì manifest hash upstream tính trên checkout CRLF còn cây này là LF (không do mã).
+- 2026-10-11 (làm lại giao diện web): chỉ đổi `web/static/` (+ `web/app.py` thêm mimetype woff2 và cache 1 ngày cho `/static/fonts`,
+  `/static/vendor`); mọi ID, `data-tab`, handler và hợp đồng API giữ nguyên. Nền sáng kiểu báo cáo, phông Be Vietnam Pro tự host (có
+  subset tiếng Việt), Chart.js 4.4.1 ghim và tự host (demo chạy được khi không có Internet), toast thay cả 7 `alert()`, thanh tiến
+  trình/độ tin cậy đổi bằng `transform`, bỏ `backdrop-filter` và `transition: all`, poll 4 giây chỉ ghi DOM khi đổi và dừng khi tab ẩn.
+  Kiểm bằng Chrome headless qua CDP: 6 tab, suy luận ảnh mẫu thật, 4 loại toast, không tràn ngang ở 390 px, không lỗi console,
+  khung hình 16,7 ms ở render phần mềm (số trên GPU thật chưa đo). Reviewer độc lập: 14 phát hiện (không HIGH), đã sửa các mục đáng kể
+  (đồng bộ badge khi chữ ký bảng không đổi, focus bàn phím cho vùng tải ảnh và sidebar mobile, tách lỗi mạng khỏi lỗi dựng giao diện…).
+  Sửa kèm: bảng Weight Inspector ở tab Clients trước đây không bao giờ được nạp (hàm `loadLayerList` không ai gọi) — nay nạp khi mở tab.
+  Test mới `tests/test_web_static_frontend.py` (9 test hợp đồng giao diện). Chưa đưa lên server public.
 <!-- ROADMAP-END -->
 
 ## 8. Cách đồng bộ

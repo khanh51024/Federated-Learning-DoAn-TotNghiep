@@ -1,10 +1,12 @@
 // Published 2026-10-03 evidence is rendered only after the API verifies all bytes.
 // The Flower localhost smoke session is a separate technical demonstration.
+// Helper dùng chung (setText, setMetric, notify, esc…) nằm trong main.js, được nạp trước file này.
 
 // Danh sách model chọn được lấy từ registry (chỉ model đã qua cổng web_visible), kèm nhãn ngữ cảnh.
 async function loadModelSelector() {
   const select = document.getElementById("inference-fed-source");
   if (!select) return;
+  const previous = select.value; // giữ lựa chọn của người dùng khi danh sách được nạp lại sau mỗi tác vụ
   try {
     const response = await fetch("/api/models", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -20,11 +22,12 @@ async function loadModelSelector() {
       return;
     }
     select.disabled = false;
+    const keepPrevious = choices.some(m => m.inference_key === previous);
     for (const model of choices) {
       const option = document.createElement("option");
       option.value = model.inference_key;
       option.textContent = `${model.display_name} — ${model.display_label}`;
-      if (model.inference_key === "fedavg") option.selected = true;
+      if (keepPrevious ? model.inference_key === previous : model.inference_key === "fedavg") option.selected = true;
       select.appendChild(option);
     }
   } catch (error) {
@@ -37,26 +40,39 @@ async function loadModelSelector() {
   }
 }
 
+let publishedDemoFailureNotified = false;
+
 async function loadPublishedDemo() {
   await loadModelSelector();
   const badge = document.getElementById("published-evidence-badge");
   const note = document.getElementById("published-evidence-note");
   const body = document.getElementById("compare-body");
   const clientsContainer = document.getElementById("clients-container");
-  const setText = (id, value) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value;
+  const metricIds = ["dash-acc", "dash-loss", "cent-acc", "cent-f1", "cent-loss"];
+  const setMetricById = (id, value) => setMetric(document.getElementById(id), value);
+  const clearCharts = () => {
+    for (const chart of [distributionChart, centralizedChart, federatedChart, alphaChart, faultyChart, convergenceChart]) {
+      if (chart) { chart.data.labels = []; chart.data.datasets.forEach(dataset => dataset.data = []); chart.update("none"); }
+    }
   };
   const unavailable = reason => {
     if (badge) { badge.textContent = "ARTIFACT CHƯA HỢP LỆ"; badge.className = "status-badge error"; }
     if (note) note.textContent = `Không hiển thị metric/checkpoint: ${reason}`;
-    for (const id of ["dash-acc", "dash-loss", "cent-acc", "cent-f1", "cent-loss"]) setText(id, "—");
-    if (body) body.innerHTML = '<tr><td colspan="4" class="text-muted">Chưa có bộ artifact hợp lệ.</td></tr>';
-    if (clientsContainer) clientsContainer.textContent = "Không có shard/model Local-only đã kiểm hash.";
-    for (const chart of [distributionChart, centralizedChart, federatedChart, alphaChart, faultyChart, convergenceChart]) {
-      if (chart) { chart.data.labels = []; chart.data.datasets.forEach(dataset => dataset.data = []); chart.update(); }
+    for (const id of metricIds) setMetricById(id, "—");
+    if (body) {
+      body.removeAttribute("aria-busy");
+      body.innerHTML = '<tr><td colspan="4" class="text-muted">Chưa có bộ artifact hợp lệ.</td></tr>';
     }
+    if (clientsContainer) {
+      clientsContainer.removeAttribute("aria-busy");
+      clientsContainer.textContent = "Không có shard/model Local-only đã kiểm hash.";
+    }
+    clearCharts();
     document.querySelectorAll("#inference-fed-source option").forEach(option => option.disabled = true);
+    if (!publishedDemoFailureNotified) {
+      publishedDemoFailureNotified = true;
+      notify("error", "Artifact chưa hợp lệ", "Web không hiển thị số liệu khi chưa kiểm được SHA-256.", { detail: reason });
+    }
   };
 
   try {
@@ -64,6 +80,7 @@ async function loadPublishedDemo() {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const evidence = await response.json();
     if (!evidence.available) { unavailable(evidence.reason || "Chưa nhập artifact"); return; }
+    publishedDemoFailureNotified = false;
 
     if (badge) { badge.textContent = "SHA-256 ĐÃ ĐỐI SOÁT"; badge.className = "status-badge success"; }
     if (note) note.textContent = "Validation nội bộ từ ba nhánh GitHub, seed 42; SHA-256 file và checkpoint đã khớp. Chưa có bộ ảnh gốc để tái đánh giá. GĐ2 chỉ có một kịch bản lệch nhãn α=0,1; chưa hoàn tất nhiều seed.";
@@ -77,14 +94,14 @@ async function loadPublishedDemo() {
       }
     }
     const models = Object.fromEntries(evidence.models.map(model => [model.model_id, model]));
-    setText("dash-acc", (models.fedavg.metrics.plantvillage.top1_accuracy * 100).toFixed(2) + "%");
-    setText("dash-loss", (models.fedavg.metrics.plantdoc.top1_accuracy * 100).toFixed(2) + "%");
-    setText("cent-acc", (models.centralized.metrics.plantvillage.top1_accuracy * 100).toFixed(2) + "%");
-    setText("cent-f1", models.centralized.metrics.plantvillage.macro_f1_supported.toFixed(4));
-    setText("cent-loss", (models.centralized.metrics.plantdoc.top1_accuracy * 100).toFixed(2) + "%");
+    setMetricById("dash-acc", (models.fedavg.metrics.plantvillage.top1_accuracy * 100).toFixed(2) + "%");
+    setMetricById("dash-loss", (models.fedavg.metrics.plantdoc.top1_accuracy * 100).toFixed(2) + "%");
+    setMetricById("cent-acc", (models.centralized.metrics.plantvillage.top1_accuracy * 100).toFixed(2) + "%");
+    setMetricById("cent-f1", models.centralized.metrics.plantvillage.macro_f1_supported.toFixed(4));
+    setMetricById("cent-loss", (models.centralized.metrics.plantdoc.top1_accuracy * 100).toFixed(2) + "%");
 
     if (clientsContainer) {
-      clientsContainer.replaceChildren();
+      const fragment = document.createDocumentFragment();
       for (let clientId = 0; clientId < 5; clientId++) {
         const model = models[`local_${String(clientId).padStart(2, "0")}`];
         const shardName = `client_${String(clientId).padStart(2, "0")}`;
@@ -105,12 +122,15 @@ async function loadPublishedDemo() {
           row.textContent = value;
           card.appendChild(row);
         }
-        clientsContainer.appendChild(card);
+        fragment.appendChild(card);
       }
+      clientsContainer.replaceChildren(fragment);
+      clientsContainer.removeAttribute("aria-busy");
+      revealItems(clientsContainer.children, { stagger: 60 });
     }
 
     if (body) {
-      body.replaceChildren();
+      const fragment = document.createDocumentFragment();
       for (const model of evidence.models) {
         for (const source of ["plantdoc", "plantvillage"]) {
           const metric = model.metrics[source];
@@ -122,9 +142,11 @@ async function loadPublishedDemo() {
             `${model.branch} @ ${model.commit.slice(0, 8)} · SHA ${model.checkpoint_sha256.slice(0, 12)}…`,
           ];
           values.forEach(value => { const td = document.createElement("td"); td.textContent = value; tr.appendChild(td); });
-          body.appendChild(tr);
+          fragment.appendChild(tr);
         }
       }
+      body.replaceChildren(fragment);
+      body.removeAttribute("aria-busy");
     }
     if (distributionChart) {
       distributionChart.data.labels = Object.keys(evidence.shard_counts).map(name => name.replace("client_", "Client "));
@@ -146,10 +168,10 @@ async function loadPublishedDemo() {
     // FedAvg v7 publishes only selected-checkpoint validation, no per-round
     // history. Do not synthesize a convergence curve from a single endpoint.
     for (const chart of [federatedChart, convergenceChart, faultyChart]) {
-      if (chart) { chart.data.labels = []; chart.data.datasets.forEach(dataset => dataset.data = []); chart.update(); }
+      if (chart) { chart.data.labels = []; chart.data.datasets.forEach(dataset => dataset.data = []); chart.update("none"); }
     }
     document.querySelectorAll("#inference-fed-source option").forEach(option => option.disabled = false);
-    setText("cent-live-badge", "Artifact Centralized v6 · validation");
+    setText(document.getElementById("cent-live-badge"), "Artifact Centralized v6 · validation");
   } catch (error) {
     unavailable(error.message);
   }

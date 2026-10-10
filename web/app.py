@@ -13,6 +13,7 @@ training nặng nề bên trong và không tự hardcode đường dẫn checkpo
 """
 from __future__ import annotations
 
+import mimetypes
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -82,12 +83,19 @@ app.add_middleware(
 @app.middleware("http")
 async def add_no_cache_headers(request: Request, call_next):
     response = await call_next(request)
-    if request.url.path == "/" or request.url.path.startswith("/static/"):
+    path = request.url.path
+    if path.startswith(("/static/fonts/", "/static/vendor/")) and response.status_code == 200:
+        # Phông và thư viện ghim phiên bản hiếm khi đổi: cho trình duyệt giữ một ngày để mở tab/đổi tab không tải lại.
+        response.headers["Cache-Control"] = "public, max-age=86400"
+    elif path == "/" or path.startswith("/static/"):
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
     return response
 
+
+# Windows/Python thường không biết .woff2 và trả text/plain; khai báo tường minh để không phụ thuộc registry của OS.
+mimetypes.add_type("font/woff2", ".woff2")
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"

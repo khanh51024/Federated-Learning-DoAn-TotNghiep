@@ -1,11 +1,14 @@
 // web/static/js/main.js: Điều khiển tương tác giao diện và tích hợp API REST
 // Đáp ứng toàn bộ các yêu cầu kiểm thử và chuẩn hóa dữ liệu thực tế.
+//
+// Quy ước hiệu năng (xem style.css): chỉ ghi DOM khi giá trị đổi, thanh tiến trình đổi bằng transform,
+// không alert() — mọi thông báo đi qua window.toast (toast.js).
 
 const SVG_ICONS = {
   play: `<svg class="svg-icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,
   zap: `<svg class="svg-icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
   stop: `<svg class="svg-icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>`,
-  spinner: `<svg class="svg-icon icon-sm spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`,
+  spinner: `<svg class="svg-icon icon-sm spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`,
   microscope: `<svg class="svg-icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>`,
   server: `<svg class="svg-icon icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>`,
   clock: `<svg class="svg-icon icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
@@ -25,17 +28,168 @@ let selectedFile = null;
 let isChartLibAvailable = true;
 let currentTask = null;
 
+const STATUS_POLL_MS = 4000;
+
+// ───────── Helper giao diện ─────────
+const HTML_ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+
+// Escape chuỗi do server trả về trước khi ghép vào innerHTML.
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, ch => HTML_ESCAPES[ch]);
+}
+
+function prefersReducedMotion() {
+  return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+}
+
+function cssVar(name, fallback) {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+}
+
+function withAlpha(hex, alpha) {
+  if (!/^#[0-9a-f]{6}$/i.test(hex)) return hex;
+  return hex + Math.round(alpha * 255).toString(16).padStart(2, "0");
+}
+
+// Chỉ ghi khi giá trị đổi: poll 4 giây không còn buộc trình duyệt tính lại layout vô ích.
+function setText(el, text) {
+  const next = String(text);
+  if (el && el.textContent !== next) {
+    el.textContent = next;
+    delete el.dataset.html; // bộ nhớ đệm của setHtml không còn đúng
+  }
+}
+
+function setHtml(el, html) {
+  if (el && el.dataset.html !== html) {
+    el.innerHTML = html;
+    el.dataset.html = html;
+  }
+}
+
+function setClass(el, className) {
+  if (el && el.className !== className) el.className = className;
+}
+
+function setDisplay(el, display) {
+  if (el && el.style.display !== display) el.style.display = display;
+}
+
+function setDisabled(el, disabled) {
+  if (el && el.disabled !== disabled) el.disabled = disabled;
+}
+
+// Thanh tiến trình/độ tin cậy đổi bằng transform (không kích hoạt layout).
+function setBar(el, pct) {
+  if (!el) return;
+  const clamped = Math.max(0, Math.min(100, Number(pct) || 0));
+  el.style.transform = `scaleX(${clamped / 100})`;
+}
+
+// Số KPI đếm lên bằng rAF; chữ không phải số ("UNVERIFIED", "—") hiện luôn.
+function setMetric(el, text) {
+  if (!el) return;
+  el.classList.remove("is-loading");
+  const final = String(text);
+  if (el.dataset.final === final) return;
+  el.dataset.final = final;
+  if (el._raf) cancelAnimationFrame(el._raf);
+  const match = /^(-?\d+(?:[.,]\d+)?)(.*)$/.exec(final);
+  if (!match || prefersReducedMotion()) {
+    el.textContent = final;
+    return;
+  }
+  const decimals = (match[1].split(/[.,]/)[1] || "").length;
+  const separator = match[1].includes(",") ? "," : ".";
+  const target = parseFloat(match[1].replace(",", "."));
+  const suffix = match[2];
+  const duration = 700;
+  const start = performance.now();
+  const tick = (now) => {
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.textContent = (target * eased).toFixed(decimals).replace(".", separator) + suffix;
+    if (t < 1) {
+      el._raf = requestAnimationFrame(tick);
+    } else {
+      el.textContent = final;
+      el._raf = 0;
+    }
+  };
+  el._raf = requestAnimationFrame(tick);
+}
+
+// Hiện lần lượt các phần tử (opacity + translateY, composited). Bỏ qua khi người dùng chọn giảm chuyển động.
+function revealItems(elements, options = {}) {
+  const list = Array.from(elements).filter(Boolean);
+  if (prefersReducedMotion() || list.length === 0 || typeof list[0].animate !== "function") return;
+  const { stagger = 70, offset = 10, duration = 320 } = options;
+  list.forEach((el, index) => {
+    el.animate(
+      [
+        { opacity: 0, transform: `translateY(${offset}px)` },
+        { opacity: 1, transform: "translateY(0)" },
+      ],
+      { duration, delay: index * stagger, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)", fill: "backwards" }
+    );
+  });
+}
+
+// Thông điệp lỗi từ FastAPI: detail có thể là chuỗi, mảng lỗi validate hoặc object.
+function formatApiError(data, fallback) {
+  if (!data) return fallback;
+  const detail = data.detail ?? data.message;
+  if (typeof detail === "string" && detail) return detail;
+  if (Array.isArray(detail) && detail.length) {
+    return detail.map(item => (item && (item.msg || item.message)) || JSON.stringify(item)).join("; ");
+  }
+  if (detail && typeof detail === "object") return JSON.stringify(detail);
+  return fallback;
+}
+
+function notify(type, title, message, options) {
+  if (window.toast && typeof window.toast[type] === "function") {
+    return window.toast[type](title, message, options);
+  }
+  console[type === "error" ? "error" : "log"](`[${type}] ${title}${message ? ": " + message : ""}`);
+  return { close() {} };
+}
+
+// ───────── Khởi động ─────────
+let statusTimer = null;
+let serverOnline = null;
+let offlineToast = null;
+let layerListRequested = false;
+
 document.addEventListener("DOMContentLoaded", () => {
   initTabs();
+  initA11y();
+  initDropzone();
   initCharts();
   loadSystemStatus();
   loadPublishedDemo();
   loadNetworkMetrics();
   toggleFederatedEngineFields();
 
-  // Polling chu kỳ 4 giây để đồng bộ trạng thái server và tác vụ
-  setInterval(loadSystemStatus, 4000);
+  // Poll trạng thái server/tác vụ; tạm dừng khi tab trình duyệt bị ẩn để không tốn CPU/mạng.
+  scheduleStatusPoll();
+  document.addEventListener("visibilitychange", () => {
+    clearTimeout(statusTimer);
+    if (!document.hidden) {
+      loadSystemStatus().finally(scheduleStatusPoll);
+    }
+  });
 });
+
+function scheduleStatusPoll() {
+  clearTimeout(statusTimer);
+  if (document.hidden) return;
+  statusTimer = setTimeout(async () => {
+    await loadSystemStatus();
+    scheduleStatusPoll();
+  }, STATUS_POLL_MS);
+}
 
 // 1. CHUYỂN ĐỔI TAB & BỐ CỤC
 function initTabs() {
@@ -43,6 +197,7 @@ function initTabs() {
   const tabPanes = document.querySelectorAll(".tab-pane");
   const pageTitle = document.getElementById("page-title");
   const pageDesc = document.getElementById("page-desc");
+  const menu = document.querySelector(".nav-menu");
 
   const titles = {
     "tab-dashboard": ["Tổng Quan Hệ Thống", "Theo dõi tiến trình huấn luyện phân tán và hiệu năng toàn cục"],
@@ -53,48 +208,150 @@ function initTabs() {
     "tab-inference": ["Chẩn Đoán Bệnh Lá Cây", "So checkpoint Centralized với FedAvg hoặc từng Local-only trên ảnh vùng lá"],
   };
 
+  // Thanh chỉ báo trượt theo mục đang chọn (transform + height, không đụng layout của mục).
+  let indicator = null;
+  if (menu) {
+    indicator = document.createElement("span");
+    indicator.className = "nav-indicator";
+    indicator.setAttribute("aria-hidden", "true");
+    menu.prepend(indicator);
+    menu.classList.add("has-indicator");
+  }
+
+  const placeIndicator = (item, animate) => {
+    if (!indicator || !item) return;
+    if (!animate) indicator.style.transition = "none";
+    indicator.style.height = `${item.offsetHeight}px`;
+    indicator.style.transform = `translateY(${item.offsetTop}px)`;
+    if (!animate) {
+      void indicator.offsetWidth;
+      indicator.style.transition = "";
+    }
+  };
+
+  const activeItem = () => document.querySelector(".nav-item.active");
+  placeIndicator(activeItem(), false);
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => placeIndicator(activeItem(), false));
+  }
+  window.addEventListener("resize", () => placeIndicator(activeItem(), false));
+
   navItems.forEach(item => {
+    if (item.classList.contains("active")) item.setAttribute("aria-current", "page");
     item.addEventListener("click", () => {
       const targetId = item.getAttribute("data-tab");
 
-      navItems.forEach(n => n.classList.remove("active"));
+      navItems.forEach(n => {
+        n.classList.remove("active");
+        n.removeAttribute("aria-current");
+      });
       tabPanes.forEach(p => p.classList.remove("active"));
 
       item.classList.add("active");
+      item.setAttribute("aria-current", "page");
+      placeIndicator(item, true);
       const targetPane = document.getElementById(targetId);
       if (targetPane) targetPane.classList.add("active");
 
+      // Bảng Weight Inspector chỉ cần dữ liệu khi người dùng mở tab Clients (nạp một lần, tránh đọc checkpoint lúc khởi động).
+      if (targetId === "tab-clients" && !layerListRequested) {
+        layerListRequested = true;
+        loadLayerList();
+      }
+
       if (titles[targetId]) {
-        pageTitle.innerText = titles[targetId][0];
-        pageDesc.innerText = titles[targetId][1];
+        setText(pageTitle, titles[targetId][0]);
+        setText(pageDesc, titles[targetId][1]);
       }
     });
   });
 }
 
-// 2. KHỞI TẠO BIỂU ĐỒ CHART.JS (CÓ BẢO VỆ CDN CHỐNG CRASH)
+// Thẻ chọn chế độ là <div>: cho phép dùng bàn phím (Enter/Space).
+function initA11y() {
+  document.querySelectorAll('.mode-option-card[role="button"]').forEach(card => {
+    card.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        card.click();
+      }
+    });
+  });
+}
+
+// Hiệu ứng viền khi kéo ảnh vào vùng tải (input phủ kín nên sự kiện nổi lên vùng cha).
+function initDropzone() {
+  const zone = document.getElementById("upload-dropzone");
+  if (!zone) return;
+  const on = () => zone.classList.add("is-dragover");
+  const off = () => zone.classList.remove("is-dragover");
+  ["dragenter", "dragover"].forEach(name => zone.addEventListener(name, on));
+  ["dragleave", "drop", "dragend"].forEach(name => zone.addEventListener(name, off));
+}
+
+// 2. KHỞI TẠO BIỂU ĐỒ CHART.JS (CÓ BẢO VỆ KHI THƯ VIỆN KHÔNG NẠP ĐƯỢC)
 function initCharts() {
   if (typeof Chart === "undefined") {
-    console.warn("[Chart.js] Không tìm thấy thư viện Chart.js (CDN lỗi hoặc mạng offline). Bỏ qua vẽ biểu đồ.");
+    console.warn("[Chart.js] Không tìm thấy thư viện Chart.js (/static/vendor/chart.umd.js). Bỏ qua vẽ biểu đồ.");
     isChartLibAvailable = false;
     document.querySelectorAll(".chart-container").forEach(c => {
       const notice = document.createElement("div");
       notice.className = "chart-fallback-notice";
-      notice.style.padding = "20px";
-      notice.style.color = "#9ca3af";
-      notice.style.textAlign = "center";
-      notice.style.fontSize = "13px";
-      notice.innerText = "Biểu đồ đang hoạt động ở chế độ văn bản (CDN Chart.js không khả dụng).";
+      notice.textContent = "Biểu đồ không khả dụng: không nạp được thư viện Chart.js.";
       c.appendChild(notice);
     });
     return;
   }
 
-  const chartDefaults = {
-    color: "#9ca3af",
-    font: { family: "'Outfit', sans-serif" },
-    gridColor: "rgba(255, 255, 255, 0.05)",
-  };
+  // Một nơi cấu hình chung, lấy màu/chữ từ token CSS để biểu đồ luôn khớp giao diện.
+  const colors = [1, 2, 3, 4, 5].map(i => cssVar(`--chart-${i}`, "#059669"));
+  const textColor = cssVar("--text-secondary", "#46515f");
+  Chart.defaults.font.family = cssVar("--font-main", "sans-serif");
+  Chart.defaults.font.size = 12;
+  Chart.defaults.color = textColor;
+  Chart.defaults.borderColor = cssVar("--chart-grid", "rgba(17,24,39,0.08)");
+  Chart.defaults.animation.duration = prefersReducedMotion() ? 0 : 450;
+  Chart.defaults.elements.line.borderWidth = 2.5;
+  Chart.defaults.elements.point.radius = 3;
+  Chart.defaults.elements.point.hoverRadius = 5;
+  Chart.defaults.plugins.legend.labels.usePointStyle = true;
+  Chart.defaults.plugins.legend.labels.boxWidth = 8;
+  Chart.defaults.plugins.tooltip.backgroundColor = "#111827";
+  Chart.defaults.plugins.tooltip.padding = 10;
+  Chart.defaults.plugins.tooltip.cornerRadius = 8;
+
+  // Biểu đồ chưa có dữ liệu (ví dụ FedAvg v7 không công bố từng vòng): ghi rõ thay vì để lưới trống khó hiểu.
+  Chart.register({
+    id: "emptyState",
+    afterDraw(chart) {
+      const hasData = chart.data.datasets.some(ds => Array.isArray(ds.data) && ds.data.length > 0);
+      const area = chart.chartArea;
+      if (hasData || !area) return;
+      const { ctx } = chart;
+      const label = "Chưa có dữ liệu để vẽ";
+      const cx = (area.left + area.right) / 2;
+      const cy = (area.top + area.bottom) / 2;
+      ctx.save();
+      ctx.font = `500 13px ${Chart.defaults.font.family}`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const width = ctx.measureText(label).width + 28;
+      ctx.fillStyle = cssVar("--bg-surface", "#ffffff");
+      ctx.strokeStyle = cssVar("--border-color", "#dde2e9");
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(cx - width / 2, cy - 17, width, 34, 17);
+      else ctx.rect(cx - width / 2, cy - 17, width, 34);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = cssVar("--text-secondary", "#46515f");
+      ctx.fillText(label, cx, cy + 1);
+      ctx.restore();
+    },
+  });
+
+  const noGridX = { grid: { display: false } };
+  const base = { responsive: true, maintainAspectRatio: false };
+  const subtitle = (text) => ({ display: true, text, color: textColor, font: { size: 12, weight: "500" } });
 
   // Chart 1: Dashboard Convergence
   const ctxConv = document.getElementById("chart-dashboard-convergence")?.getContext("2d");
@@ -107,29 +364,27 @@ function initCharts() {
           {
             label: "Global Accuracy (%)",
             data: [],
-            borderColor: "#10b981",
-            backgroundColor: "rgba(16, 185, 129, 0.1)",
+            borderColor: colors[0],
+            backgroundColor: withAlpha(colors[0], 0.12),
             tension: 0.3,
             fill: true,
           },
           {
             label: "Global Loss",
             data: [],
-            borderColor: "#0ea5e9",
+            borderColor: colors[1],
             tension: 0.3,
             yAxisID: "y1",
           }
         ]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        ...base,
         scales: {
-          x: { grid: { color: chartDefaults.gridColor }, ticks: { color: chartDefaults.color } },
-          y: { grid: { color: chartDefaults.gridColor }, ticks: { color: chartDefaults.color }, title: { display: true, text: "Accuracy (%)", color: chartDefaults.color } },
-          y1: { position: "right", grid: { drawOnChartArea: false }, ticks: { color: chartDefaults.color }, title: { display: true, text: "Loss", color: chartDefaults.color } }
+          x: {},
+          y: { title: { display: true, text: "Accuracy (%)" } },
+          y1: { position: "right", grid: { drawOnChartArea: false }, title: { display: true, text: "Loss" } }
         },
-        plugins: { legend: { labels: { color: chartDefaults.color } } }
       }
     });
   }
@@ -144,17 +399,13 @@ function initCharts() {
         datasets: [{
           label: "Số Mẫu Huấn Luyện (n_k)",
           data: [],
-          backgroundColor: ["#10b981", "#0ea5e9", "#8b5cf6", "#f59e0b", "#f43f5e"],
+          backgroundColor: colors,
           borderRadius: 6,
         }]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: { grid: { display: false }, ticks: { color: chartDefaults.color } },
-          y: { grid: { color: chartDefaults.gridColor }, ticks: { color: chartDefaults.color } }
-        },
+        ...base,
+        scales: { x: noGridX, y: {} },
         plugins: { legend: { display: false } }
       }
     });
@@ -168,19 +419,11 @@ function initCharts() {
       data: {
         labels: [],
         datasets: [
-          { label: "Train Acc (%)", data: [], borderColor: "#0ea5e9", tension: 0.2 },
-          { label: "Val Acc (%)", data: [], borderColor: "#10b981", tension: 0.2 }
+          { label: "Train Acc (%)", data: [], borderColor: colors[1], tension: 0.2 },
+          { label: "Val Acc (%)", data: [], borderColor: colors[0], tension: 0.2 }
         ]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: { grid: { color: chartDefaults.gridColor }, ticks: { color: chartDefaults.color } },
-          y: { grid: { color: chartDefaults.gridColor }, ticks: { color: chartDefaults.color } }
-        },
-        plugins: { legend: { labels: { color: chartDefaults.color } } }
-      }
+      options: { ...base, scales: { x: {}, y: {} } }
     });
   }
 
@@ -192,25 +435,15 @@ function initCharts() {
       data: {
         labels: [],
         datasets: [
-          { label: "Global Test Acc (%)", data: [], borderColor: "#10b981", tension: 0.3, fill: true, backgroundColor: "rgba(16, 185, 129, 0.08)" }
+          { label: "Global Test Acc (%)", data: [], borderColor: colors[0], tension: 0.3, fill: true, backgroundColor: withAlpha(colors[0], 0.1) }
         ]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        ...base,
         scales: {
-          x: { grid: { color: chartDefaults.gridColor }, ticks: { color: chartDefaults.color } },
-          y: {
-            min: 0,
-            max: 100,
-            grid: { color: chartDefaults.gridColor },
-            ticks: {
-              color: chartDefaults.color,
-              callback: (v) => v + "%"
-            }
-          }
+          x: {},
+          y: { min: 0, max: 100, ticks: { callback: (v) => v + "%" } }
         },
-        plugins: { legend: { labels: { color: chartDefaults.color } } }
       }
     });
   }
@@ -223,20 +456,13 @@ function initCharts() {
       data: {
         labels: [],
         datasets: [
-          { label: "FedAvg validation PlantVillage (%)", data: [], backgroundColor: "#10b981", borderRadius: 6 }
+          { label: "FedAvg validation PlantVillage (%)", data: [], backgroundColor: colors[0], borderRadius: 6 }
         ]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: { grid: { display: false }, ticks: { color: chartDefaults.color } },
-          y: { grid: { color: chartDefaults.gridColor }, ticks: { color: chartDefaults.color }, min: 70, max: 100 }
-        },
-        plugins: {
-          legend: { labels: { color: chartDefaults.color } },
-          title: { display: true, text: "Một kịch bản α=0,1; chưa đủ đường suy giảm", color: "#9ca3af", font: { size: 12 } }
-        }
+        ...base,
+        scales: { x: noGridX, y: { min: 70, max: 100 } },
+        plugins: { title: subtitle("Một kịch bản α=0,1; chưa đủ đường suy giảm") }
       }
     });
   }
@@ -251,20 +477,16 @@ function initCharts() {
         datasets: [{
           label: "Độ Chính Xác Sau 5 Vòng (%)",
           data: [],
-          backgroundColor: ["#10b981", "#0ea5e9", "#f59e0b", "#f43f5e"],
+          backgroundColor: [colors[0], colors[1], colors[3], colors[4]],
           borderRadius: 6
         }]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: { grid: { display: false }, ticks: { color: chartDefaults.color } },
-          y: { grid: { color: chartDefaults.gridColor }, ticks: { color: chartDefaults.color }, min: 60, max: 100 }
-        },
+        ...base,
+        scales: { x: noGridX, y: { min: 60, max: 100 } },
         plugins: {
           legend: { display: false },
-          title: { display: true, text: "Chưa có số liệu cùng protocol", color: "#9ca3af", font: { size: 12 } }
+          title: subtitle("Chưa có số liệu cùng protocol")
         }
       }
     });
@@ -274,52 +496,109 @@ function initCharts() {
 // 3. NẠP DỮ LIỆU TỪ REST API
 let previousTaskStatus = "idle";
 
+// Cập nhật khối tiến trình (thanh + nhãn + chi tiết) theo tác vụ nền.
+function updateProgressBlock(prefix, show, pct, label, detail) {
+  const box = document.getElementById(`${prefix}-progress-bar-box`);
+  const fill = document.getElementById(`${prefix}-progress-fill`);
+  const labelEl = document.getElementById(`${prefix}-progress-label`);
+  const detailEl = document.getElementById(`${prefix}-progress-detail`);
+  if (show) setDisplay(box, "block");
+  if (pct !== null) setBar(fill, pct);
+  if (label !== null) setText(labelEl, label);
+  if (detail !== null) setText(detailEl, detail);
+}
+
+function notifyTaskFinished(task, wasCent, wasFed) {
+  const kind = wasCent ? "Centralized" : (wasFed ? "FedAvg" : "Tác vụ");
+  if (task.status === "completed") {
+    notify("success", `Huấn luyện ${kind} hoàn tất`, task.message || "");
+  } else if (task.status === "cancelled") {
+    notify("warning", `Đã dừng huấn luyện ${kind}`, task.message || "Tiến trình đã dừng theo yêu cầu.");
+  } else if (task.status === "failed") {
+    notify("error", `Huấn luyện ${kind} thất bại`, task.message || "Tác vụ nền báo lỗi.");
+  }
+}
+
+// Chỉ lỗi mạng/HTTP mới được coi là "mất kết nối"; lỗi dựng giao diện chỉ ghi console, không bật toast sai.
 async function loadSystemStatus() {
+  const statusIndicator = document.getElementById("server-status-text");
+  const taskBadge = document.getElementById("task-badge");
+
+  let data;
+  try {
+    const res = await fetch("/api/status");
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    data = await res.json();
+  } catch (err) {
+    if (statusIndicator) {
+      setText(statusIndicator, "Server: Mất kết nối (Offline)");
+      statusIndicator.parentElement?.classList.add("offline");
+    }
+    if (taskBadge) {
+      setText(taskBadge, "Mất kết nối API");
+      setClass(taskBadge, "status-badge error");
+    }
+    if (serverOnline !== false) {
+      offlineToast = notify("error", "Mất kết nối máy chủ", "Giao diện sẽ tự thử lại sau vài giây.", { detail: err.message, duration: 0 });
+    }
+    serverOnline = false;
+    return;
+  }
+
+  if (serverOnline === false) {
+    if (offlineToast) offlineToast.close();
+    offlineToast = null;
+    notify("success", "Đã kết nối lại máy chủ");
+  }
+  serverOnline = true;
+
+  try {
+    await renderSystemStatus(data);
+  } catch (err) {
+    console.error("[Status] Lỗi dựng trạng thái hệ thống:", err);
+  }
+}
+
+async function renderSystemStatus(data) {
   const statusIndicator = document.getElementById("server-status-text");
   const taskBadge = document.getElementById("task-badge");
   const deviceText = document.getElementById("system-device");
   const btnCent = document.getElementById("btn-train-centralized");
   const btnFed = document.getElementById("btn-train-federated");
 
-  try {
-    const res = await fetch("/api/status");
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-    const data = await res.json();
-
+  {
     if (statusIndicator) {
-      statusIndicator.innerText = `Server: ${data.server_status === "online" ? "Online" : "Offline"}`;
+      setText(statusIndicator, `Server: ${data.server_status === "online" ? "Online" : "Offline"}`);
       statusIndicator.parentElement?.classList.remove("offline");
     }
     if (deviceText) {
       const flText = data.flower_server_active ? "Flower: Live" : "Flower: Idle";
-      deviceText.innerText = `Device: ${data.device} | ${flText}`;
+      setText(deviceText, `Device: ${data.device} | ${flText}`);
     }
 
     currentTask = data.task || { status: "idle", message: "Hệ thống sẵn sàng" };
     const network = data.network_processes || {};
     const dashClients = document.getElementById("dash-clients");
     const dashRtt = document.getElementById("dash-rtt");
-    if (dashClients) dashClients.innerText = `${currentTask.type === "federated-network" && currentTask.status === "completed" ? network.accepted_clients_last_round || 0 : network.connected_clients || 0} / 5`;
-    if (dashRtt) dashRtt.innerText = Number.isFinite(network.mean_probe_rtt_ms) ? `${Number(network.mean_probe_rtt_ms).toFixed(2)} ms (localhost)` : "—";
-    if (taskBadge) {
-      taskBadge.innerText = currentTask.message || "Hệ thống sẵn sàng";
-      taskBadge.className = "status-badge";
-      if (currentTask.status === "running") taskBadge.classList.add("running");
-      else if (currentTask.status === "completed") taskBadge.classList.add("success");
-      else if (currentTask.status === "failed" || currentTask.status === "cancelled") taskBadge.classList.add("error");
+    if (dashClients) {
+      const shown = currentTask.type === "federated-network" && currentTask.status === "completed"
+        ? network.accepted_clients_last_round || 0
+        : network.connected_clients || 0;
+      setText(dashClients, `${shown} / 5`);
     }
-
-    const centBarBox = document.getElementById("cent-progress-bar-box");
-    const centBarFill = document.getElementById("cent-progress-fill");
-    const centBarLabel = document.getElementById("cent-progress-label");
-    const centBarDetail = document.getElementById("cent-progress-detail");
-
-    const fedBarBox = document.getElementById("fed-progress-bar-box");
-    const fedBarFill = document.getElementById("fed-progress-fill");
-    const fedBarLabel = document.getElementById("fed-progress-label");
-    const fedBarDetail = document.getElementById("fed-progress-detail");
+    if (dashRtt) {
+      setText(dashRtt, Number.isFinite(network.mean_probe_rtt_ms) ? `${Number(network.mean_probe_rtt_ms).toFixed(2)} ms (localhost)` : "—");
+    }
+    if (taskBadge) {
+      setText(taskBadge, currentTask.message || "Hệ thống sẵn sàng");
+      let cls = "status-badge";
+      if (currentTask.status === "running") cls += " running";
+      else if (currentTask.status === "completed") cls += " success";
+      else if (currentTask.status === "failed" || currentTask.status === "cancelled") cls += " error";
+      setClass(taskBadge, cls);
+    }
 
     const btnStopCent = document.getElementById("btn-stop-centralized");
     const btnStopFed = document.getElementById("btn-stop-federated");
@@ -327,105 +606,83 @@ async function loadSystemStatus() {
     const isRunning = currentTask.status === "running";
     const isCent = currentTask.type === "centralized" || currentTask.experiment === "Centralized";
     const isFed = currentTask.type === "federated" || currentTask.type === "federated-network" || currentTask.experiment === "Federated";
+    const stopLabel = currentTask.cancel_requested ? `${SVG_ICONS.spinner} Đang Dừng...` : `${SVG_ICONS.stop} Dừng Huấn Luyện`;
 
     // Quản lý trạng thái nút và tiến trình theo trạng thái thật của tác vụ nền
     if (isRunning) {
       if (btnCent) {
-        btnCent.disabled = true;
-        btnCent.innerHTML = `${SVG_ICONS.spinner} Đang Huấn Luyện...`;
+        setDisabled(btnCent, true);
+        setHtml(btnCent, `${SVG_ICONS.spinner} Đang Huấn Luyện...`);
       }
       if (btnFed) {
-        btnFed.disabled = true;
-        btnFed.innerHTML = `${SVG_ICONS.spinner} Đang Điều Phối FedAvg...`;
+        setDisabled(btnFed, true);
+        setHtml(btnFed, `${SVG_ICONS.spinner} Đang Điều Phối FedAvg...`);
       }
 
+      const pct = Math.max(5, Math.min(100, currentTask.progress || 5));
       if (isCent) {
         if (btnStopCent) {
-          btnStopCent.style.display = "inline-flex";
-          btnStopCent.disabled = currentTask.cancel_requested || false;
-          btnStopCent.innerHTML = currentTask.cancel_requested ? `${SVG_ICONS.spinner} Đang Dừng...` : `${SVG_ICONS.stop} Dừng Huấn Luyện`;
+          setDisplay(btnStopCent, "inline-flex");
+          setDisabled(btnStopCent, currentTask.cancel_requested || false);
+          setHtml(btnStopCent, stopLabel);
         }
-        if (btnStopFed) btnStopFed.style.display = "none";
-
-        if (centBarBox) centBarBox.style.display = "block";
-        const pct = Math.max(5, Math.min(100, currentTask.progress || 5));
-        if (centBarFill) centBarFill.style.width = `${pct}%`;
-        if (centBarLabel) centBarLabel.innerText = `Tiến trình: ${pct}%`;
-        if (centBarDetail) centBarDetail.innerText = currentTask.message || "Đang tính toán epoch...";
-
+        setDisplay(btnStopFed, "none");
+        updateProgressBlock("cent", true, pct, `Tiến trình: ${pct}%`, currentTask.message || "Đang tính toán epoch...");
         if (currentTask.live_progress) {
           renderCentralizedProgress(currentTask.live_progress, true, currentTask);
         }
       } else if (isFed) {
         if (btnStopFed) {
-          btnStopFed.style.display = "inline-flex";
-          btnStopFed.disabled = currentTask.cancel_requested || false;
-          btnStopFed.innerHTML = currentTask.cancel_requested ? `${SVG_ICONS.spinner} Đang Dừng...` : `${SVG_ICONS.stop} Dừng Huấn Luyện`;
+          setDisplay(btnStopFed, "inline-flex");
+          setDisabled(btnStopFed, currentTask.cancel_requested || false);
+          setHtml(btnStopFed, stopLabel);
         }
-        if (btnStopCent) btnStopCent.style.display = "none";
-
-        if (fedBarBox) fedBarBox.style.display = "block";
-        const pct = Math.max(5, Math.min(100, currentTask.progress || 5));
-        if (fedBarFill) fedBarFill.style.width = `${pct}%`;
-        if (fedBarLabel) fedBarLabel.innerText = `Tiến trình: ${pct}%`;
-        if (fedBarDetail) fedBarDetail.innerText = currentTask.message || "Đang tổng hợp vòng...";
-
+        setDisplay(btnStopCent, "none");
+        updateProgressBlock("fed", true, pct, `Tiến trình: ${pct}%`, currentTask.message || "Đang tổng hợp vòng...");
         if (currentTask.live_progress) {
           renderFederatedProgress(currentTask.live_progress, true, currentTask);
         }
       }
     } else {
       if (btnCent && btnCent.disabled) {
-        btnCent.disabled = false;
-        btnCent.innerHTML = `${SVG_ICONS.play} Bắt Đầu Huấn Luyện`;
+        setDisabled(btnCent, false);
+        setHtml(btnCent, `${SVG_ICONS.play} Bắt Đầu Huấn Luyện`);
       }
       if (btnFed && btnFed.disabled) {
-        btnFed.disabled = false;
-        btnFed.innerHTML = `${SVG_ICONS.zap} Khởi Động Vòng FedAvg`;
+        setDisabled(btnFed, false);
+        setHtml(btnFed, `${SVG_ICONS.zap} Khởi Động Vòng FedAvg`);
       }
-      if (btnStopCent) btnStopCent.style.display = "none";
-      if (btnStopFed) btnStopFed.style.display = "none";
+      setDisplay(btnStopCent, "none");
+      setDisplay(btnStopFed, "none");
 
       if (currentTask.status === "completed") {
-        if (centBarFill && isCent) centBarFill.style.width = "100%";
-        if (centBarLabel && isCent) centBarLabel.innerText = "Tiến trình: 100% (Hoàn thành)";
-        if (centBarDetail && isCent) centBarDetail.innerText = currentTask.message || "Huấn luyện Centralized hoàn tất!";
-        if (fedBarFill && isFed) fedBarFill.style.width = "100%";
-        if (fedBarLabel && isFed) fedBarLabel.innerText = "Tiến trình: 100% (Hoàn thành)";
-        if (fedBarDetail && isFed) fedBarDetail.innerText = currentTask.message || "Huấn luyện FedAvg hoàn tất!";
+        if (isCent) updateProgressBlock("cent", false, 100, "Tiến trình: 100% (Hoàn thành)", currentTask.message || "Huấn luyện Centralized hoàn tất!");
+        if (isFed) updateProgressBlock("fed", false, 100, "Tiến trình: 100% (Hoàn thành)", currentTask.message || "Huấn luyện FedAvg hoàn tất!");
         if (currentTask.type === "federated-network") {
           const badge = document.getElementById("fed-live-badge");
-          if (badge) { badge.className = "status-badge success"; badge.textContent = "Flower smoke · hoàn tất"; }
+          if (badge) { setClass(badge, "status-badge success"); setText(badge, "Flower smoke · hoàn tất"); }
         }
       } else if (currentTask.status === "cancelled") {
-        if (centBarLabel && isCent) centBarLabel.innerText = "Tiến trình: Đã dừng theo yêu cầu";
-        if (centBarDetail && isCent) centBarDetail.innerText = currentTask.message || "Đã dừng.";
-        if (fedBarLabel && isFed) fedBarLabel.innerText = "Tiến trình: Đã dừng theo yêu cầu";
-        if (fedBarDetail && isFed) fedBarDetail.innerText = currentTask.message || "Đã dừng.";
+        if (isCent) updateProgressBlock("cent", false, null, "Tiến trình: Đã dừng theo yêu cầu", currentTask.message || "Đã dừng.");
+        if (isFed) updateProgressBlock("fed", false, null, "Tiến trình: Đã dừng theo yêu cầu", currentTask.message || "Đã dừng.");
+      } else if (currentTask.status === "failed") {
+        if (isCent) updateProgressBlock("cent", false, null, "Tiến trình: Thất bại", currentTask.message || "Tác vụ báo lỗi.");
+        if (isFed) updateProgressBlock("fed", false, null, "Tiến trình: Thất bại", currentTask.message || "Tác vụ báo lỗi.");
       }
     }
 
-    // Tự động làm mới khi tác vụ hoàn tất hoặc bị hủy
-    if (previousTaskStatus === "running" && (currentTask.status === "completed" || currentTask.status === "cancelled")) {
-      console.log("[Status] Tác vụ hoàn tất/hủy, nạp lại toàn bộ metrics và telemetry...");
-      const wasCent = isCent;
-      const wasFed = isFed;
-      await Promise.all([
-        loadPublishedDemo(),
-        loadNetworkMetrics(),
-      ]);
+    // Khi tác vụ vừa kết thúc: thông báo và làm mới số liệu
+    if (previousTaskStatus === "running" && currentTask.status !== "running") {
+      notifyTaskFinished(currentTask, isCent, isFed);
+      if (currentTask.status === "completed" || currentTask.status === "cancelled") {
+        console.log("[Status] Tác vụ hoàn tất/hủy, nạp lại toàn bộ metrics và telemetry...");
+        await Promise.all([
+          loadPublishedDemo(),
+          loadNetworkMetrics(),
+        ]);
+      }
     }
     previousTaskStatus = currentTask.status || "idle";
-
-  } catch (err) {
-    if (statusIndicator) {
-      statusIndicator.innerText = "Server: Mất kết nối (Offline)";
-      statusIndicator.parentElement?.classList.add("offline");
-    }
-    if (taskBadge) {
-      taskBadge.innerText = "Mất kết nối API";
-      taskBadge.className = "status-badge error";
-    }
   }
 }
 
@@ -439,73 +696,70 @@ async function loadClientsData() {
 
     if (data.clients && data.clients.length > 0) {
       const dashClients = document.getElementById("dash-clients");
-      if (dashClients) dashClients.innerText = `${data.clients.length} / ${data.total_clients || data.clients.length}`;
+      if (dashClients) setText(dashClients, `${data.clients.length} / ${data.total_clients || data.clients.length}`);
 
       const validRtts = data.clients.filter(c => typeof c.network_rtt_ms === "number" && c.network_rtt_ms > 0);
       const avgRtt = validRtts.length > 0
         ? (validRtts.reduce((sum, c) => sum + c.network_rtt_ms, 0) / validRtts.length).toFixed(1) + " ms"
         : "N/A (Mô phỏng)";
       const dashRtt = document.getElementById("dash-rtt");
-      if (dashRtt) dashRtt.innerText = avgRtt;
+      if (dashRtt) setText(dashRtt, avgRtt);
 
       // Cập nhật biểu đồ phân bổ nếu có
       if (distributionChart) {
         distributionChart.data.labels = data.clients.map(c => `Node ${c.client_id}`);
         distributionChart.data.datasets[0].data = data.clients.map(c => c.samples);
-        distributionChart.update();
+        distributionChart.update("none");
       }
     } else {
-      container.innerHTML = `<div class="empty-state p-4 text-center text-muted">Chưa có dữ liệu clients. Hãy chạy FedAvg để thu thập telemetry.</div>`;
+      container.innerHTML = `<div class="empty-state p-4">Chưa có dữ liệu clients. Hãy chạy FedAvg để thu thập telemetry.</div>`;
       return;
     }
 
-    container.innerHTML = "";
+    container.replaceChildren();
+    container.removeAttribute("aria-busy");
     data.clients.forEach(c => {
       const card = document.createElement("div");
       card.className = "client-card";
 
       const trainTimeDisplay = c.local_train_time_s !== null && c.local_train_time_s !== undefined
-        ? `${c.local_train_time_s} s`
+        ? `${esc(c.local_train_time_s)} s`
         : `<span class="text-muted">Chờ chạy vòng FedAvg</span>`;
 
       const normDisplay = c.update_norm !== null && c.update_norm !== undefined
-        ? c.update_norm
+        ? esc(c.update_norm)
         : `<span class="text-muted">Chờ tính gradient</span>`;
 
       card.innerHTML = `
         <div class="client-card-header">
           <div>
-            <div class="client-card-title">${c.client_name}</div>
-            <div style="margin-top: 6px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-              <span class="badge-role">
-                ${c.role_badge}
-              </span>
-              <span class="badge-contrib">
-                Tỷ trọng: ${c.total_dataset_pct}
-              </span>
+            <div class="client-card-title">${esc(c.client_name)}</div>
+            <div class="client-badges">
+              <span class="badge-role">${esc(c.role_badge)}</span>
+              <span class="badge-contrib">Tỷ trọng: ${esc(c.total_dataset_pct)}</span>
             </div>
           </div>
-          <span class="status-badge connected" style="padding: 3px 8px; font-size: 11px; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;">
-            <span class="live-dot"></span> ${c.status}
+          <span class="status-badge connected">
+            <span class="live-dot"></span> ${esc(c.status)}
           </span>
         </div>
 
         <div class="crop-focus-box">
-          <div class="crop-focus-title">${SVG_ICONS.layers} ${c.crop_focus}</div>
-          <div class="crop-focus-sub">Phạm vi: ${c.classes_present} / 38 lớp thực vật</div>
+          <div class="crop-focus-title">${SVG_ICONS.layers} ${esc(c.crop_focus)}</div>
+          <div class="crop-focus-sub">Phạm vi: ${esc(c.classes_present)} / 38 lớp thực vật</div>
         </div>
 
         <div class="client-stat-row">
-          <span style="display: flex; align-items: center; gap: 6px;">${SVG_ICONS.server} Dữ liệu cục bộ:</span>
-          <span class="client-stat-val text-sky" style="font-weight: 600;">${Number(c.samples).toLocaleString()} ảnh</span>
+          <span class="client-stat-label">${SVG_ICONS.server} Dữ liệu cục bộ:</span>
+          <span class="client-stat-val text-sky fw-600">${Number(c.samples).toLocaleString()} ảnh</span>
         </div>
         <div class="client-stat-row">
-          <span style="display: flex; align-items: center; gap: 6px;">${SVG_ICONS.clock} Thời gian huấn luyện:</span>
+          <span class="client-stat-label">${SVG_ICONS.clock} Thời gian huấn luyện:</span>
           <span class="client-stat-val">${trainTimeDisplay}</span>
         </div>
         <div class="client-stat-row">
-          <span style="display: flex; align-items: center; gap: 6px;">${SVG_ICONS.activity} Cập nhật trọng số (Δw):</span>
-          <span class="client-stat-val text-emerald" style="font-family: var(--font-mono); font-weight: 600;">${normDisplay}</span>
+          <span class="client-stat-label">${SVG_ICONS.activity} Cập nhật trọng số (Δw):</span>
+          <span class="client-stat-val text-emerald fw-600">${normDisplay}</span>
         </div>
       `;
       container.appendChild(card);
@@ -523,14 +777,15 @@ async function loadCompareData() {
     const tbody = document.getElementById("compare-body");
     if (!tbody || !data.rows) return;
 
-    tbody.innerHTML = "";
+    tbody.replaceChildren();
+    tbody.removeAttribute("aria-busy");
     data.rows.forEach(r => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td style="font-weight: 600; color: #fff;">${r.metric}</td>
-        <td class="text-sky">${r.centralized}</td>
-        <td class="text-emerald" style="font-weight: 600;">${r.fedavg}</td>
-        <td class="text-muted">${r.local_only}</td>
+        <td class="fw-600">${esc(r.metric)}</td>
+        <td class="text-sky">${esc(r.centralized)}</td>
+        <td class="text-emerald fw-600">${esc(r.fedavg)}</td>
+        <td class="text-muted">${esc(r.local_only)}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -542,29 +797,33 @@ async function loadCompareData() {
 async function loadLayerList() {
   try {
     const res = await fetch("/api/weights/inspect");
-    if (!res.ok) return;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const selector = document.getElementById("layer-selector");
     if (!selector) return;
 
     if (!data.available) {
-      selector.innerHTML = `<option value="">— ${data.message} —</option>`;
+      selector.innerHTML = `<option value="">— ${esc(data.message)} —</option>`;
       const tbody = document.getElementById("layer-stats-body");
-      if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">${data.message}</td></tr>`;
+      if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">${esc(data.message)}</td></tr>`;
+      layerListRequested = false; // lần mở tab Clients sau sẽ thử nạp lại
       return;
     }
 
-    selector.innerHTML = "";
+    selector.replaceChildren();
     data.available_layers.forEach(l => {
       const opt = document.createElement("option");
       opt.value = l;
-      opt.innerText = l;
+      opt.textContent = l;
       selector.appendChild(opt);
     });
 
     renderLayerStats(data.selected_layer_stats, data.has_reference);
   } catch (err) {
     console.warn("Lỗi load layer list:", err);
+    layerListRequested = false;
+    const tbody = document.getElementById("layer-stats-body");
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Không đọc được thống kê trọng số: ${esc(err.message)}</td></tr>`;
   }
 }
 
@@ -575,11 +834,12 @@ async function loadLayerStats() {
 
   try {
     const res = await fetch(`/api/weights/inspect?layer=${encodeURIComponent(layer)}`);
-    if (!res.ok) return;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     renderLayerStats(data.selected_layer_stats, data.has_reference);
   } catch (err) {
     console.warn("Lỗi load layer stats:", err);
+    notify("error", "Không tải được thống kê trọng số", `Lớp ${layer}`, { detail: err.message });
   }
 }
 
@@ -593,18 +853,18 @@ function renderLayerStats(stats, hasReference) {
   }
 
   const updateNormDisplay = stats.update_norm !== null && stats.update_norm !== undefined
-    ? stats.update_norm
+    ? esc(stats.update_norm)
     : `<span class="text-muted" title="Cần có checkpoint vòng trước để đo khoảng cách delta">— (Chưa có reference)</span>`;
 
   tbody.innerHTML = `
     <tr>
-      <td style="color: #fff; font-weight: 600;">${stats.layer_name}</td>
-      <td>${JSON.stringify(stats.shape)}</td>
+      <td class="fw-600">${esc(stats.layer_name)}</td>
+      <td>${esc(JSON.stringify(stats.shape))}</td>
       <td>${Number(stats.param_count).toLocaleString()}</td>
-      <td class="text-sky">${stats.l2_norm}</td>
+      <td class="text-sky">${esc(stats.l2_norm)}</td>
       <td class="text-emerald">${updateNormDisplay}</td>
-      <td>${stats.mean} &plusmn; ${stats.std}</td>
-      <td style="color: #9ca3af; font-size: 11px;">[${stats.sample_values ? stats.sample_values.join(", ") : ""}]</td>
+      <td>${esc(stats.mean)} &plusmn; ${esc(stats.std)}</td>
+      <td class="text-muted mono">[${stats.sample_values ? esc(stats.sample_values.join(", ")) : ""}]</td>
     </tr>
   `;
 }
@@ -625,22 +885,22 @@ async function loadCentralizedData(sourceOverride = "canonical") {
       const isVerified = data.scientific_valid === true;
 
       if (!isVerified && data.source === "canonical") {
-        if (elAcc) elAcc.innerText = "UNVERIFIED";
-        if (elF1) elF1.innerText = "UNVERIFIED";
-        if (elLoss) elLoss.innerText = "UNVERIFIED";
+        setMetric(elAcc, "UNVERIFIED");
+        setMetric(elF1, "UNVERIFIED");
+        setMetric(elLoss, "UNVERIFIED");
         const badge = document.getElementById("cent-live-badge");
         if (badge) {
-          badge.className = "status-badge error";
-          badge.innerText = "Historical / UNVERIFIED";
+          setClass(badge, "status-badge error");
+          setText(badge, "Historical / UNVERIFIED");
           badge.title = data.scientific_reason || "Canonical provenance chưa xác minh";
         }
       } else {
         const acc = data.test_metrics.accuracy !== undefined ? (data.test_metrics.accuracy * 100).toFixed(2) + "%" : "—";
         const f1 = data.test_metrics.macro_f1 !== undefined ? Number(data.test_metrics.macro_f1).toFixed(4) : "—";
         const loss = data.test_metrics.loss !== undefined ? Number(data.test_metrics.loss).toFixed(4) : "—";
-        if (elAcc) elAcc.innerText = acc;
-        if (elF1) elF1.innerText = f1;
-        if (elLoss) elLoss.innerText = loss;
+        setMetric(elAcc, acc);
+        setMetric(elF1, f1);
+        setMetric(elLoss, loss);
       }
     }
 
@@ -648,7 +908,7 @@ async function loadCentralizedData(sourceOverride = "canonical") {
       centralizedChart.data.labels = data.history.map(h => `Epoch ${h.epoch}`);
       centralizedChart.data.datasets[0].data = data.history.map(h => Number(((h.train_accuracy || 0) * 100).toFixed(1)));
       centralizedChart.data.datasets[1].data = data.history.map(h => Number(((h.val_accuracy || 0) * 100).toFixed(1)));
-      centralizedChart.update();
+      centralizedChart.update("none");
     }
 
     if (data.history && data.history.length > 0) {
@@ -659,35 +919,52 @@ async function loadCentralizedData(sourceOverride = "canonical") {
   }
 }
 
+// Bảng tiến trình được dựng lại chỉ khi dữ liệu thật sự đổi (poll 4 giây không còn thay DOM vô ích).
+function progressSignature(history, isLive, currentTask) {
+  const first = currentTask && currentTask.live_progress && currentTask.live_progress[0];
+  return JSON.stringify({
+    history,
+    isLive,
+    status: currentTask ? currentTask.status : null,
+    total: first ? (first.total_epochs ?? first.total_rounds ?? null) : null,
+  });
+}
+
 function renderCentralizedProgress(history, isLive, currentTask) {
   const tbody = document.getElementById("cent-progress-body");
   const badge = document.getElementById("cent-live-badge");
   if (!tbody) return;
 
+  const signature = progressSignature(history, isLive, currentTask);
+
   if (badge) {
     if (isLive) {
       const cur = history ? history.length : 0;
       const tot = (currentTask && currentTask.live_progress && currentTask.live_progress[0]?.total_epochs) || "?";
-      badge.className = "status-badge running";
-      badge.innerHTML = `<span class="live-dot pulse"></span> Đang huấn luyện (${cur}/${tot} Epochs)`;
+      setClass(badge, "status-badge running");
+      setHtml(badge, `<span class="live-dot pulse"></span> Đang huấn luyện (${cur}/${esc(tot)} Epochs)`);
     } else if (currentTask && currentTask.status === "cancelled") {
-      badge.className = "status-badge error";
-      badge.innerHTML = `<span class="live-dot" style="background:#f43f5e;"></span> Đã dừng`;
+      setClass(badge, "status-badge error");
+      setHtml(badge, `<span class="live-dot"></span> Đã dừng`);
     } else if (history && history.length > 0) {
-      badge.className = "status-badge success";
-      badge.innerHTML = `${SVG_ICONS.check} Hoàn tất`;
+      setClass(badge, "status-badge success");
+      setHtml(badge, `${SVG_ICONS.check} Hoàn tất`);
     } else {
-      badge.className = "status-badge";
-      badge.innerText = "Sẵn sàng";
+      setClass(badge, "status-badge");
+      setHtml(badge, "Sẵn sàng");
     }
   }
+
+  // Chỉ dựng lại các hàng khi dữ liệu đổi (badge ở trên luôn được đồng bộ vì loadPublishedDemo có thể ghi đè nó).
+  if (tbody.dataset.sig === signature) return;
+  tbody.dataset.sig = signature;
 
   if (!history || history.length === 0) {
     tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Chưa có tiến trình huấn luyện. Bấm "Bắt Đầu Huấn Luyện" để theo dõi.</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = "";
+  const frag = document.createDocumentFragment();
   history.forEach((item, idx) => {
     const tr = document.createElement("tr");
     const trainAcc = formatAcc(item.train_accuracy);
@@ -712,17 +989,18 @@ function renderCentralizedProgress(history, isLive, currentTask) {
     }
 
     tr.innerHTML = `
-      <td style="font-weight: 600; color: #fff;">Epoch ${item.epoch}</td>
+      <td class="fw-600">Epoch ${esc(item.epoch)}</td>
       <td class="text-sky">${trainAcc}</td>
       <td>${trainLoss}</td>
-      <td class="text-emerald" style="font-weight: 600;">${valAcc}</td>
+      <td class="text-emerald fw-600">${valAcc}</td>
       <td>${valLoss}</td>
       <td>${f1}</td>
-      <td style="color: #9ca3af;">${dur}</td>
+      <td class="text-muted">${dur}</td>
       <td class="${statusCls}">● ${statusText}</td>
     `;
-    tbody.appendChild(tr);
+    frag.appendChild(tr);
   });
+  tbody.replaceChildren(frag);
 }
 
 async function loadFederatedData(sourceOverride = "canonical") {
@@ -735,26 +1013,21 @@ async function loadFederatedData(sourceOverride = "canonical") {
     const data = await res.json();
 
     if (data.source === "canonical" && data.scientific_valid !== true) {
-      const elDashAcc = document.getElementById("dash-acc");
-      const elDashLoss = document.getElementById("dash-loss");
-      if (elDashAcc) elDashAcc.innerText = "UNVERIFIED";
-      if (elDashLoss) elDashLoss.innerText = "UNVERIFIED";
+      setMetric(document.getElementById("dash-acc"), "UNVERIFIED");
+      setMetric(document.getElementById("dash-loss"), "UNVERIFIED");
       const badge = document.getElementById("fed-live-badge");
       if (badge) {
-        badge.className = "status-badge error";
-        badge.innerText = "Historical / UNVERIFIED";
+        setClass(badge, "status-badge error");
+        setText(badge, "Historical / UNVERIFIED");
         badge.title = data.scientific_reason || "Canonical provenance chưa xác minh";
       }
       return;
     }
 
     if (data.best_accuracy !== undefined) {
-      const elDashAcc = document.getElementById("dash-acc");
-      if (elDashAcc) {
-        const b = data.best_accuracy;
-        const bPct = b <= 1.0 && b > 0 ? (b * 100).toFixed(2) : Number(b).toFixed(2);
-        elDashAcc.innerText = bPct + "%";
-      }
+      const b = data.best_accuracy;
+      const bPct = b <= 1.0 && b > 0 ? (b * 100).toFixed(2) : Number(b).toFixed(2);
+      setMetric(document.getElementById("dash-acc"), bPct + "%");
     }
 
     if (data.history && data.history.length > 0) {
@@ -768,20 +1041,17 @@ async function loadFederatedData(sourceOverride = "canonical") {
       if (federatedChart) {
         federatedChart.data.labels = rounds;
         federatedChart.data.datasets[0].data = accs;
-        federatedChart.update();
+        federatedChart.update("none");
       }
       if (convergenceChart) {
         convergenceChart.data.labels = rounds;
         convergenceChart.data.datasets[0].data = accs;
         convergenceChart.data.datasets[1].data = losses;
-        convergenceChart.update();
+        convergenceChart.update("none");
       }
-      const elDashLoss = document.getElementById("dash-loss");
-      if (elDashLoss) {
-        const testLoss = data.test_metrics?.loss ?? data.best_val_loss ?? data.history[data.history.length - 1]?.global_loss;
-        if (testLoss !== undefined) {
-          elDashLoss.innerText = Number(testLoss).toFixed(3);
-        }
+      const testLoss = data.test_metrics?.loss ?? data.best_val_loss ?? data.history[data.history.length - 1]?.global_loss;
+      if (testLoss !== undefined) {
+        setMetric(document.getElementById("dash-loss"), Number(testLoss).toFixed(3));
       }
 
       renderFederatedProgress(data.history, false, null);
@@ -796,30 +1066,36 @@ function renderFederatedProgress(history, isLive, currentTask) {
   const badge = document.getElementById("fed-live-badge");
   if (!tbody) return;
 
+  const signature = progressSignature(history, isLive, currentTask);
+
   if (badge) {
     if (isLive) {
       const cur = history ? history.length : 0;
       const tot = (currentTask && currentTask.live_progress && currentTask.live_progress[0]?.total_rounds) || "?";
-      badge.className = "status-badge running";
-      badge.innerHTML = `<span class="live-dot pulse"></span> Đang giao tiếp (Vòng ${cur}/${tot})`;
+      setClass(badge, "status-badge running");
+      setHtml(badge, `<span class="live-dot pulse"></span> Đang giao tiếp (Vòng ${cur}/${esc(tot)})`);
     } else if (currentTask && currentTask.status === "cancelled") {
-      badge.className = "status-badge error";
-      badge.innerHTML = `<span class="live-dot" style="background:#f43f5e;"></span> Đã dừng`;
+      setClass(badge, "status-badge error");
+      setHtml(badge, `<span class="live-dot"></span> Đã dừng`);
     } else if (history && history.length > 0) {
-      badge.className = "status-badge success";
-      badge.innerHTML = `${SVG_ICONS.check} Hoàn tất`;
+      setClass(badge, "status-badge success");
+      setHtml(badge, `${SVG_ICONS.check} Hoàn tất`);
     } else {
-      badge.className = "status-badge";
-      badge.innerText = "Sẵn sàng";
+      setClass(badge, "status-badge");
+      setHtml(badge, "Sẵn sàng");
     }
   }
+
+  // Chỉ dựng lại các hàng khi dữ liệu đổi (badge ở trên luôn được đồng bộ vì loadPublishedDemo có thể ghi đè nó).
+  if (tbody.dataset.sig === signature) return;
+  tbody.dataset.sig = signature;
 
   if (!history || history.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Chưa có phiên đang theo dõi. Bấm "Khởi Động Vòng FedAvg" để chạy smoke; audit của phiên hoàn tất nằm ở bảng Flower bên dưới.</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = "";
+  const frag = document.createDocumentFragment();
   history.forEach((item, idx) => {
     const tr = document.createElement("tr");
     const acc = formatAcc(item.global_accuracy);
@@ -843,16 +1119,17 @@ function renderFederatedProgress(history, isLive, currentTask) {
     }
 
     tr.innerHTML = `
-      <td style="font-weight: 600; color: #fff;">Vòng ${item.round}</td>
-      <td class="text-emerald" style="font-weight: 600;">${acc}</td>
+      <td class="fw-600">Vòng ${esc(item.round)}</td>
+      <td class="text-emerald fw-600">${acc}</td>
       <td class="text-sky">${loss}</td>
       <td>${f1}</td>
-      <td style="color: #c084fc;">${agg}</td>
-      <td style="color: #9ca3af;">${dur}</td>
+      <td class="text-purple">${agg}</td>
+      <td class="text-muted">${dur}</td>
       <td class="${statusCls}">● ${statusText}</td>
     `;
-    tbody.appendChild(tr);
+    frag.appendChild(tr);
   });
+  tbody.replaceChildren(frag);
 }
 
 function formatAcc(val) {
@@ -885,15 +1162,9 @@ function setCentralizedMode(isDemo) {
   const inputVal = document.getElementById("cent-smoke-val");
 
   if (cardDemo && cardFull && inputVal) {
-    if (isDemo) {
-      cardDemo.className = "mode-card active sky";
-      cardFull.className = "mode-card";
-      inputVal.value = "true";
-    } else {
-      cardDemo.className = "mode-card";
-      cardFull.className = "mode-card active sky";
-      inputVal.value = "false";
-    }
+    cardDemo.classList.add("active", "sky");
+    cardFull.classList.remove("active", "sky");
+    inputVal.value = "true";
     loadPublishedDemo();
   }
 }
@@ -908,16 +1179,16 @@ function toggleFederatedEngineFields() {
   const epochs = document.getElementById("fl-epochs");
 
   if (engine === "network") {
-    if (networkFields) networkFields.style.display = "block";
-    if (scaleBlock) scaleBlock.style.display = "none";
-    if (help) help.innerText = "Demo kỹ thuật: một server và năm tiến trình client localhost, ảnh tổng hợp, cố định hai vòng và một local epoch. RTT đo trên cùng máy.";
+    setDisplay(networkFields, "block");
+    setDisplay(scaleBlock, "none");
+    if (help) help.textContent = "Demo kỹ thuật: một server và năm tiến trình client localhost, ảnh tổng hợp, cố định hai vòng và một local epoch. RTT đo trên cùng máy.";
     if (alpha) alpha.disabled = true;
     if (rounds) { rounds.value = "2"; rounds.max = "2"; rounds.min = "2"; rounds.disabled = true; }
     if (epochs) { epochs.value = "1"; epochs.max = "1"; epochs.min = "1"; epochs.disabled = true; }
   } else {
-    if (networkFields) networkFields.style.display = "none";
-    if (scaleBlock) scaleBlock.style.display = "block";
-    if (help) help.innerText = "Simulation chạy các client trong cùng máy/process workflow; không được dùng để chứng minh latency mạng thật.";
+    setDisplay(networkFields, "none");
+    setDisplay(scaleBlock, "block");
+    if (help) help.textContent = "Simulation chạy các client trong cùng máy/process workflow; không được dùng để chứng minh latency mạng thật.";
     if (alpha) alpha.disabled = false;
     if (rounds) { rounds.max = "50"; rounds.min = "1"; rounds.disabled = false; }
     if (epochs) { epochs.max = "10"; epochs.min = "1"; epochs.disabled = false; }
@@ -935,21 +1206,21 @@ async function loadNetworkMetrics() {
     if (!res.ok) throw new Error(data.detail || "Không đọc được network metrics");
     const finalSummary = document.getElementById("network-final-test-summary");
     if (!data.available || !Array.isArray(data.rounds) || data.rounds.length === 0) {
-      if (runContext) runContext.innerText = "Chưa có phiên Flower smoke hoàn tất.";
+      if (runContext) setText(runContext, "Chưa có phiên Flower smoke hoàn tất.");
       tbody.innerHTML = `<tr><td colspan="12" class="text-center text-muted">Chưa có dữ liệu Flower network thật.</td></tr>`;
       if (clientBody) clientBody.innerHTML = `<tr><td colspan="10" class="text-center text-muted">Chưa có audit per-client.</td></tr>`;
-      if (finalSummary) finalSummary.innerText = "Final held-out test: chưa có evaluator.";
+      if (finalSummary) setText(finalSummary, "Final held-out test: chưa có evaluator.");
       return;
     }
-    if (runContext) runContext.innerText = data.historical_run
+    if (runContext) setText(runContext, data.historical_run
       ? `Lịch sử smoke đã kiểm: ${String(data.run_dir || "").split(/[\\/]/).pop()} · 2 vòng, 5 client; không phải phiên đang chạy.`
-      : "Phiên Flower hiện tại · dữ liệu tổng hợp, không dùng làm kết quả khoa học.";
+      : "Phiên Flower hiện tại · dữ liệu tổng hợp, không dùng làm kết quả khoa học.");
     tbody.innerHTML = data.rounds.map(r => `
       <tr>
-        <td>${r.round}</td>
-        <td>${r.accepted_clients ?? "—"}</td>
-        <td>${r.suspicious_clients ?? "—"}</td>
-        <td>${r.rejected_clients ?? "—"}</td>
+        <td>${esc(r.round)}</td>
+        <td>${esc(r.accepted_clients ?? "—")}</td>
+        <td>${esc(r.suspicious_clients ?? "—")}</td>
+        <td>${esc(r.rejected_clients ?? "—")}</td>
         <td>${r.mean_received_update_norm !== undefined ? Number(r.mean_received_update_norm).toFixed(4) : "—"}</td>
         <td>${r.server_val_accuracy !== undefined ? (Number(r.server_val_accuracy) * 100).toFixed(2) + "%" : "—"}</td>
         <td>${r.server_val_loss !== undefined ? Number(r.server_val_loss).toFixed(4) : "—"}</td>
@@ -963,9 +1234,9 @@ async function loadNetworkMetrics() {
 
     if (finalSummary) {
       const tm = data.final_test_metrics;
-      finalSummary.innerText = tm
+      setText(finalSummary, tm
         ? `Final held-out test — Accuracy: ${(Number(tm.accuracy) * 100).toFixed(2)}% | Loss: ${Number(tm.loss).toFixed(4)} | Macro-F1: ${Number(tm.macro_f1).toFixed(4)}`
-        : "Final held-out test: chưa có evaluator hoặc chưa cấu hình evaluation dataset root.";
+        : "Final held-out test: chưa có evaluator hoặc chưa cấu hình evaluation dataset root.");
     }
 
     if (clientBody) {
@@ -974,24 +1245,24 @@ async function loadNetworkMetrics() {
       );
       clientBody.innerHTML = clientRows.length ? clientRows.map(row => `
         <tr>
-          <td>${row.round}</td>
-          <td>Client ${row.client_id}</td>
+          <td>${esc(row.round)}</td>
+          <td>Client ${esc(row.client_id)}</td>
           <td>${row.probe_rtt_ms !== null && row.probe_rtt_ms !== undefined ? Number(row.probe_rtt_ms).toFixed(2) + " ms" : "—"}</td>
           <td>${row.local_train_time_s !== undefined ? Number(row.local_train_time_s).toFixed(3) + " s" : "—"}</td>
-          <td>${row.data_mode || "—"}</td>
-          <td>${row.training_seed !== undefined ? row.training_seed : "—"}</td>
-          <td title="${row.partition_config_sha256 || ""}">${row.partition_id || "—"}</td>
+          <td>${esc(row.data_mode || "—")}</td>
+          <td>${row.training_seed !== undefined ? esc(row.training_seed) : "—"}</td>
+          <td title="${esc(row.partition_config_sha256 || "")}">${esc(row.partition_id || "—")}</td>
           <td>${row.received_update_norm !== undefined ? Number(row.received_update_norm).toFixed(4) : "—"}</td>
-          <td>${row.status || "—"}</td>
-          <td>${row.validation_reason || "—"}</td>
+          <td>${esc(row.status || "—")}</td>
+          <td>${esc(row.validation_reason || "—")}</td>
         </tr>
       `).join("") : `<tr><td colspan="10" class="text-center text-muted">Chưa có audit per-client.</td></tr>`;
     }
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="12" class="text-center text-muted">Lỗi đọc network metrics: ${err.message}</td></tr>`;
-    if (clientBody) clientBody.innerHTML = `<tr><td colspan="10" class="text-center text-muted">${err.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" class="text-center text-muted">Lỗi đọc network metrics: ${esc(err.message)}</td></tr>`;
+    if (clientBody) clientBody.innerHTML = `<tr><td colspan="10" class="text-center text-muted">${esc(err.message)}</td></tr>`;
     const finalSummary = document.getElementById("network-final-test-summary");
-    if (finalSummary) finalSummary.innerText = `Final held-out test: lỗi đọc metrics (${err.message})`;
+    if (finalSummary) setText(finalSummary, `Final held-out test: lỗi đọc metrics (${err.message})`);
   }
 }
 
@@ -1002,15 +1273,9 @@ function setFederatedMode(isDemo) {
   const inputVal = document.getElementById("fl-smoke-val");
 
   if (cardDemo && cardFull && inputVal) {
-    if (isDemo) {
-      cardDemo.className = "mode-card active";
-      cardFull.className = "mode-card";
-      inputVal.value = "true";
-    } else {
-      cardDemo.className = "mode-card";
-      cardFull.className = "mode-card active";
-      inputVal.value = "false";
-    }
+    cardDemo.classList.add("active");
+    cardFull.classList.remove("active");
+    inputVal.value = "true";
     loadPublishedDemo();
   }
 }
@@ -1018,21 +1283,38 @@ function setFederatedMode(isDemo) {
 async function triggerStopTrain() {
   const btnStopCent = document.getElementById("btn-stop-centralized");
   const btnStopFed = document.getElementById("btn-stop-federated");
-  if (btnStopCent) { btnStopCent.disabled = true; btnStopCent.innerHTML = `${SVG_ICONS.spinner} Đang Dừng...`; }
-  if (btnStopFed) { btnStopFed.disabled = true; btnStopFed.innerHTML = `${SVG_ICONS.spinner} Đang Dừng...`; }
+  for (const btn of [btnStopCent, btnStopFed]) {
+    if (btn) { btn.disabled = true; setHtml(btn, `${SVG_ICONS.spinner} Đang Dừng...`); }
+  }
 
   try {
     const res = await fetch("/api/train/stop", { method: "POST" });
-    const data = await res.json();
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data) throw new Error(formatApiError(data, `HTTP ${res.status}`));
     const taskBadge = document.getElementById("task-badge");
     if (taskBadge) {
-      taskBadge.innerText = data.message || "Đang gửi lệnh dừng...";
-      taskBadge.className = "status-badge running";
+      setText(taskBadge, data.message || "Đang gửi lệnh dừng...");
+      setClass(taskBadge, "status-badge running");
+    }
+    if (data.stopped === false) {
+      notify("warning", "Không có tác vụ để dừng", data.message || "Hiện không có tiến trình huấn luyện nào đang chạy.");
+    } else {
+      notify("info", "Đã gửi lệnh dừng", data.message || "Tiến trình sẽ dừng ở điểm kiểm tra gần nhất.");
     }
     await loadSystemStatus();
   } catch (err) {
-    alert("Lỗi dừng huấn luyện: " + err.message);
+    for (const btn of [btnStopCent, btnStopFed]) {
+      if (btn) { btn.disabled = false; setHtml(btn, `${SVG_ICONS.stop} Dừng Huấn Luyện`); }
+    }
+    notify("error", "Không dừng được huấn luyện", err.message);
   }
+}
+
+// Khôi phục nút/thanh tiến trình khi yêu cầu huấn luyện bị từ chối hoặc lỗi mạng.
+function resetTrainUi(btn, btnStop, barBox, idleHtml) {
+  if (btn) { btn.disabled = false; setHtml(btn, idleHtml); }
+  setDisplay(btnStop, "none");
+  setDisplay(barBox, "none");
 }
 
 async function triggerCentralizedTrain() {
@@ -1043,26 +1325,23 @@ async function triggerCentralizedTrain() {
   const isSmoke = document.getElementById("cent-smoke-val") ? document.getElementById("cent-smoke-val").value === "true" : true;
 
   btn.disabled = true;
-  btn.innerHTML = `${SVG_ICONS.spinner} Đang Huấn Luyện...`;
+  setHtml(btn, `${SVG_ICONS.spinner} Đang Huấn Luyện...`);
   if (btnStop) {
-    btnStop.style.display = "inline-flex";
+    setDisplay(btnStop, "inline-flex");
     btnStop.disabled = false;
-    btnStop.innerHTML = `${SVG_ICONS.stop} Dừng Huấn Luyện`;
+    setHtml(btnStop, `${SVG_ICONS.stop} Dừng Huấn Luyện`);
   }
 
   const barBox = document.getElementById("cent-progress-bar-box");
-  const barFill = document.getElementById("cent-progress-fill");
-  const barLabel = document.getElementById("cent-progress-label");
-  const barDetail = document.getElementById("cent-progress-detail");
-  if (barBox) barBox.style.display = "block";
-  if (barFill) barFill.style.width = "5%";
-  if (barLabel) barLabel.innerText = "Tiến trình: 5%";
-  if (barDetail) barDetail.innerText = "Đang khởi tạo mô hình...";
+  updateProgressBlock("cent", true, 5, "Tiến trình: 5%", "Đang khởi tạo mô hình...");
 
   const tbody = document.getElementById("cent-progress-body");
-  if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Đang khởi tạo kiến trúc mạng và phân bổ batch...</td></tr>`;
+  if (tbody) {
+    delete tbody.dataset.sig;
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Đang khởi tạo kiến trúc mạng và phân bổ batch...</td></tr>`;
+  }
   const badge = document.getElementById("cent-live-badge");
-  if (badge) { badge.className = "status-badge running"; badge.innerHTML = `<span class="live-dot pulse"></span> Đang khởi tạo...`; }
+  if (badge) { setClass(badge, "status-badge running"); setHtml(badge, `<span class="live-dot pulse"></span> Đang khởi tạo...`); }
 
   try {
     const res = await fetch("/api/centralized/train", {
@@ -1075,25 +1354,20 @@ async function triggerCentralizedTrain() {
       }),
     });
 
-    const data = await res.json();
-    if (!res.ok) {
-      const errorMsg = data.detail || data.message || "Yêu cầu huấn luyện thất bại";
-      alert("Lỗi: " + errorMsg);
-      btn.disabled = false;
-      btn.innerHTML = `${SVG_ICONS.play} Bắt Đầu Huấn Luyện`;
-      if (btnStop) btnStop.style.display = "none";
-      if (barBox) barBox.style.display = "none";
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data) {
+      notify("error", "Không bắt đầu được huấn luyện Centralized", formatApiError(data, `Yêu cầu huấn luyện thất bại (HTTP ${res.status})`));
+      resetTrainUi(btn, btnStop, barBox, `${SVG_ICONS.play} Bắt Đầu Huấn Luyện`);
       return;
     }
 
-    document.getElementById("task-badge").innerText = data.message;
+    previousTaskStatus = "running";
+    notify("info", "Đã bắt đầu huấn luyện Centralized", data.message || `${epochs} epoch, seed ${seed}`);
+    setText(document.getElementById("task-badge"), data.message || "Đang huấn luyện Centralized");
     await loadSystemStatus();
   } catch (err) {
-    alert("Không thể kết nối máy chủ: " + err.message);
-    btn.disabled = false;
-    btn.innerHTML = `${SVG_ICONS.play} Bắt Đầu Huấn Luyện`;
-    if (btnStop) btnStop.style.display = "none";
-    if (barBox) barBox.style.display = "none";
+    notify("error", "Không thể kết nối máy chủ", "Yêu cầu huấn luyện chưa được gửi đi.", { detail: err.message });
+    resetTrainUi(btn, btnStop, barBox, `${SVG_ICONS.play} Bắt Đầu Huấn Luyện`);
   }
 }
 
@@ -1116,26 +1390,23 @@ async function triggerFederatedTrain() {
   const maxUpdateNorm = maxUpdateNormRaw === "" ? null : parseFloat(maxUpdateNormRaw);
 
   btn.disabled = true;
-  btn.innerHTML = `${SVG_ICONS.spinner} Đang Điều Phối FedAvg...`;
+  setHtml(btn, `${SVG_ICONS.spinner} Đang Điều Phối FedAvg...`);
   if (btnStop) {
-    btnStop.style.display = "inline-flex";
+    setDisplay(btnStop, "inline-flex");
     btnStop.disabled = false;
-    btnStop.innerHTML = `${SVG_ICONS.stop} Dừng Huấn Luyện`;
+    setHtml(btnStop, `${SVG_ICONS.stop} Dừng Huấn Luyện`);
   }
 
   const barBox = document.getElementById("fed-progress-bar-box");
-  const barFill = document.getElementById("fed-progress-fill");
-  const barLabel = document.getElementById("fed-progress-label");
-  const barDetail = document.getElementById("fed-progress-detail");
-  if (barBox) barBox.style.display = "block";
-  if (barFill) barFill.style.width = "5%";
-  if (barLabel) barLabel.innerText = "Tiến trình: 5%";
-  if (barDetail) barDetail.innerText = "Đang khởi tạo 5 trạm client...";
+  updateProgressBlock("fed", true, 5, "Tiến trình: 5%", "Đang khởi tạo 5 trạm client...");
 
   const tbody = document.getElementById("fed-progress-body");
-  if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Đang phân phối trọng số khởi tạo toàn cục tới 5 client...</td></tr>`;
+  if (tbody) {
+    delete tbody.dataset.sig;
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Đang phân phối trọng số khởi tạo toàn cục tới 5 client...</td></tr>`;
+  }
   const badge = document.getElementById("fed-live-badge");
-  if (badge) { badge.className = "status-badge running"; badge.innerHTML = `<span class="live-dot pulse"></span> Đang khởi tạo...`; }
+  if (badge) { setClass(badge, "status-badge running"); setHtml(badge, `<span class="live-dot pulse"></span> Đang khởi tạo...`); }
 
   try {
     const res = await fetch("/api/federated/train", {
@@ -1158,43 +1429,47 @@ async function triggerFederatedTrain() {
       }),
     });
 
-    const data = await res.json();
-    if (!res.ok) {
-      const errorMsg = data.detail || data.message || "Yêu cầu huấn luyện FedAvg thất bại";
-      alert("Lỗi: " + errorMsg);
-      btn.disabled = false;
-      btn.innerHTML = `${SVG_ICONS.zap} Khởi Động Vòng FedAvg`;
-      if (btnStop) btnStop.style.display = "none";
-      if (barBox) barBox.style.display = "none";
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data) {
+      notify("error", "Không bắt đầu được huấn luyện FedAvg", formatApiError(data, `Yêu cầu huấn luyện FedAvg thất bại (HTTP ${res.status})`));
+      resetTrainUi(btn, btnStop, barBox, `${SVG_ICONS.zap} Khởi Động Vòng FedAvg`);
       return;
     }
 
-    document.getElementById("task-badge").innerText = data.message;
+    previousTaskStatus = "running";
+    notify("info", "Đã bắt đầu huấn luyện FedAvg", data.message || `${rounds} vòng, ${epochs} epoch cục bộ`);
+    setText(document.getElementById("task-badge"), data.message || "Đang huấn luyện FedAvg");
     await loadSystemStatus();
   } catch (err) {
-    alert("Không thể kết nối máy chủ: " + err.message);
-    btn.disabled = false;
-    btn.innerHTML = `${SVG_ICONS.zap} Khởi Động Vòng FedAvg`;
-    if (btnStop) btnStop.style.display = "none";
-    if (barBox) barBox.style.display = "none";
+    notify("error", "Không thể kết nối máy chủ", "Yêu cầu huấn luyện chưa được gửi đi.", { detail: err.message });
+    resetTrainUi(btn, btnStop, barBox, `${SVG_ICONS.zap} Khởi Động Vòng FedAvg`);
   }
 }
 
 // 5. INFERENCE XỬ LÝ ẢNH & DUAL MODEL ĐỐI CHIẾU
+function showSelectedPreview(src) {
+  const img = document.getElementById("preview-image");
+  img.src = src;
+  img.classList.remove("hidden");
+  document.querySelector(".upload-placeholder")?.classList.add("hidden");
+  document.getElementById("btn-diagnose").disabled = false;
+  document.getElementById("btn-plantvillage").disabled = false;
+}
+
 function handleImageSelected(input) {
   if (input.files && input.files[0]) {
-    selectedFile = input.files[0];
+    const file = input.files[0];
+    if (file.type && !file.type.startsWith("image/")) {
+      notify("warning", "Tệp không phải ảnh", `"${file.name}" có định dạng ${file.type}. Hãy chọn ảnh JPG, PNG hoặc WEBP.`);
+      input.value = "";
+      return;
+    }
+    selectedFile = file;
     const pvResult = document.getElementById("plantvillage-result");
     if (pvResult) pvResult.textContent = "";
     const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = document.getElementById("preview-image");
-      img.src = e.target.result;
-      img.classList.remove("hidden");
-      document.querySelector(".upload-placeholder")?.classList.add("hidden");
-      document.getElementById("btn-diagnose").disabled = false;
-      document.getElementById("btn-plantvillage").disabled = false;
-    };
+    reader.onload = (e) => showSelectedPreview(e.target.result);
+    reader.onerror = () => notify("error", "Không đọc được ảnh", file.name);
     reader.readAsDataURL(selectedFile);
   }
 }
@@ -1209,18 +1484,13 @@ async function loadSampleLeaf(url, label) {
     const pvResult = document.getElementById("plantvillage-result");
     if (pvResult) pvResult.textContent = "";
 
-    const img = document.getElementById("preview-image");
-    img.src = url;
-    img.classList.remove("hidden");
-    document.querySelector(".upload-placeholder")?.classList.add("hidden");
-    document.getElementById("btn-diagnose").disabled = false;
-      document.getElementById("btn-plantvillage").disabled = false;
+    showSelectedPreview(url);
 
     // Tự động kích hoạt đối chiếu song song
     await submitInference();
   } catch (err) {
     console.error("Lỗi tải ảnh mẫu:", err);
-    alert("Không thể tải ảnh mẫu: " + err.message);
+    notify("error", "Không thể tải ảnh mẫu", label || "", { detail: err.message });
   }
 }
 
@@ -1228,8 +1498,19 @@ async function submitInference() {
   if (!selectedFile) return;
 
   const btn = document.getElementById("btn-diagnose");
+  const results = document.getElementById("dual-results");
+  const skeleton = document.getElementById("inference-skeleton");
+  const placeholder = document.getElementById("inference-empty-placeholder");
+  const hadResults = results.style.display === "grid";
+
   btn.disabled = true;
-  btn.innerHTML = `${SVG_ICONS.spinner} Đang Phân Tích Song Song...`;
+  setHtml(btn, `${SVG_ICONS.spinner} Đang Phân Tích Song Song...`);
+  if (hadResults) {
+    results.classList.add("is-busy");
+  } else {
+    setDisplay(placeholder, "none");
+    setDisplay(skeleton, "grid");
+  }
 
   const formData = new FormData();
   formData.append("file", selectedFile);
@@ -1244,49 +1525,53 @@ async function submitInference() {
     });
     const result = await res.json();
     if (!res.ok) {
-      throw new Error(result.detail || result.message || "Lỗi suy luận");
+      throw new Error(formatApiError(result, "Lỗi suy luận"));
     }
 
-    document.getElementById("dual-results").style.display = "grid";
+    setDisplay(skeleton, "none");
+    setDisplay(placeholder, "none");
+    setDisplay(results, "grid");
+    void results.offsetWidth; // chốt style ban đầu (thanh = 0) để thanh độ tin cậy chạy từ 0 → giá trị
+
     const selectedBadge = document.getElementById("selected-model-badge");
     if (selectedBadge) {
       const label = result.federated && result.federated.registry ? result.federated.registry.display_label : "";
-      selectedBadge.textContent = (result.selected_model_name || "Mô hình được chọn") + (label ? ` · ${label}` : "");
+      setText(selectedBadge, (result.selected_model_name || "Mô hình được chọn") + (label ? ` · ${label}` : ""));
     }
 
     // 1. Render Cột Centralized
     const cent = result.centralized;
     if (cent && cent.ready) {
-      document.getElementById("cent-disease").innerText = formatDiseaseName(cent.predicted_class);
-      document.getElementById("cent-conf-bar").style.width = cent.confidence_pct + "%";
-      document.getElementById("cent-conf-val").innerText = cent.confidence_pct + "%";
-      document.getElementById("cent-test-acc").innerText = cent.model_validation
+      setText(document.getElementById("cent-disease"), formatDiseaseName(cent.predicted_class));
+      setBar(document.getElementById("cent-conf-bar"), cent.confidence_pct);
+      setText(document.getElementById("cent-conf-val"), cent.confidence_pct + "%");
+      setText(document.getElementById("cent-test-acc"), cent.model_validation
         ? (cent.model_validation.plantvillage.top1_accuracy * 100).toFixed(2) + "%"
-        : "—";
+        : "—");
       renderTop3("cent-top3-list", cent.top3);
     } else {
-      document.getElementById("cent-disease").innerText = cent?.error || "Mô hình Centralized chưa sẵn sàng";
-      document.getElementById("cent-conf-bar").style.width = "0%";
-      document.getElementById("cent-conf-val").innerText = "—";
-      document.getElementById("cent-test-acc").innerText = "Chưa huấn luyện";
+      setText(document.getElementById("cent-disease"), cent?.error || "Mô hình Centralized chưa sẵn sàng");
+      setBar(document.getElementById("cent-conf-bar"), 0);
+      setText(document.getElementById("cent-conf-val"), "—");
+      setText(document.getElementById("cent-test-acc"), "Chưa huấn luyện");
       renderTop3("cent-top3-list", []);
     }
 
     // 2. Render Cột Federated
     const fed = result.federated;
     if (fed && fed.ready) {
-      document.getElementById("fed-disease").innerText = formatDiseaseName(fed.predicted_class);
-      document.getElementById("fed-conf-bar").style.width = fed.confidence_pct + "%";
-      document.getElementById("fed-conf-val").innerText = fed.confidence_pct + "%";
-      document.getElementById("fed-test-acc").innerText = fed.model_validation
+      setText(document.getElementById("fed-disease"), formatDiseaseName(fed.predicted_class));
+      setBar(document.getElementById("fed-conf-bar"), fed.confidence_pct);
+      setText(document.getElementById("fed-conf-val"), fed.confidence_pct + "%");
+      setText(document.getElementById("fed-test-acc"), fed.model_validation
         ? (fed.model_validation.plantvillage.top1_accuracy * 100).toFixed(2) + "%"
-        : "—";
+        : "—");
       renderTop3("fed-top3-list", fed.top3);
     } else {
-      document.getElementById("fed-disease").innerText = fed?.error || "Mô hình FedAvg chưa sẵn sàng";
-      document.getElementById("fed-conf-bar").style.width = "0%";
-      document.getElementById("fed-conf-val").innerText = "—";
-      document.getElementById("fed-test-acc").innerText = "Chưa huấn luyện";
+      setText(document.getElementById("fed-disease"), fed?.error || "Mô hình FedAvg chưa sẵn sàng");
+      setBar(document.getElementById("fed-conf-bar"), 0);
+      setText(document.getElementById("fed-conf-val"), "—");
+      setText(document.getElementById("fed-test-acc"), "Chưa huấn luyện");
       renderTop3("fed-top3-list", []);
     }
     renderShardContext(fed && fed.ready ? result.shard_context : null, result.federated_source, result.selected_model_name);
@@ -1300,25 +1585,31 @@ async function submitInference() {
       const evidenceNote = "Checkpoint đã kiểm SHA-256; số validation từ artifact công bố, chưa tái đánh giá tại máy demo. Xác suất softmax của một ảnh không phải độ chính xác trên ảnh ngoài thực địa. Chỉ dùng ảnh vùng lá đã cắt.";
       if (centUncertain || fedUncertain || lowConf) {
         advisory.innerHTML = `
-          <div style="display: flex; gap: 10px; align-items: flex-start;">
+          <div class="advisory-row">
             ${SVG_ICONS.info}
             <div>
               <b>Cần kiểm tra ảnh và nhãn dự đoán:</b> ${evidenceNote}
             </div>
           </div>
         `;
-        advisory.style.display = "block";
       } else {
         advisory.textContent = evidenceNote;
-        advisory.style.display = "block";
       }
+      setDisplay(advisory, "block");
     }
 
+    // Hiện kết quả lần lượt: hai thẻ, rồi khuyến nghị
+    revealItems([...results.querySelectorAll(".diagnosis-card"), advisory], { stagger: 80 });
+    notify("success", "Chẩn đoán hoàn tất", result.selected_model_name ? `So Centralized với ${result.selected_model_name}.` : "");
+
   } catch (err) {
-    alert("Lỗi chẩn đoán: " + err.message);
+    setDisplay(skeleton, "none");
+    if (!hadResults) setDisplay(placeholder, "block");
+    notify("error", "Không thể chẩn đoán ảnh", "Kiểm tra ảnh đầu vào hoặc kết nối rồi thử lại.", { detail: err.message });
   } finally {
+    results.classList.remove("is-busy");
     btn.disabled = false;
-    btn.innerHTML = `${SVG_ICONS.microscope} Chạy Chẩn Đoán Song Song`;
+    setHtml(btn, `${SVG_ICONS.microscope} Chạy Chẩn Đoán Song Song`);
   }
 }
 
@@ -1338,14 +1629,14 @@ function renderShardContext(ctx, federatedSource, modelName) {
   }
   const fmt = n => Number(n).toLocaleString("vi-VN");
   const title = document.createElement("div");
-  title.style.fontWeight = "600";
-  title.style.color = "#cbd5e1";
+  title.className = "shard-context-title";
   title.textContent = ctx.client
     ? `Dữ liệu huấn luyện của ${modelName} (${fmt(ctx.client_n_k)} ảnh, ${ctx.client_classes_with_images}/38 lớp có ảnh):`
     : "Dữ liệu huấn luyện: FedAvg học từ cả 5 client, không client nào gửi ảnh về server:";
   box.appendChild(title);
   for (const item of ctx.classes) {
     const line = document.createElement("div");
+    line.className = "shard-context-line";
     const name = formatDiseaseName(item.class);
     const tag = item.is_true_label ? "[Nhãn thật] " : (item.in_top3 ? "[Dự đoán] " : "");
     if (ctx.client) {
@@ -1353,7 +1644,7 @@ function renderShardContext(ctx, federatedSource, modelName) {
       line.textContent = none
         ? `• ${tag}${name}: 0 ảnh trong shard này (cả 5 client: ${fmt(item.all_clients_count)}) — client này chưa từng thấy lớp này`
         : `• ${tag}${name}: ${fmt(item.client_count)} ảnh (${item.client_share_pct}% của ${fmt(item.all_clients_count)} ảnh trên cả 5 client)`;
-      if (none) line.style.color = "#fbbf24";
+      if (none) line.classList.add("is-warn");
     } else {
       line.textContent = `• ${tag}${name}: ${fmt(item.all_clients_count)} ảnh trên cả 5 client`;
     }
@@ -1366,18 +1657,22 @@ function renderTop3(containerId, top3List) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  container.innerHTML = "";
+  container.replaceChildren();
   if (!top3List || top3List.length === 0) {
-    container.innerHTML = `<li class="text-muted" style="border:none;">Không có dữ liệu top-3</li>`;
+    const li = document.createElement("li");
+    li.className = "text-muted";
+    li.textContent = "Không có dữ liệu top-3";
+    container.appendChild(li);
     return;
   }
 
   top3List.forEach(item => {
     const li = document.createElement("li");
-    li.innerHTML = `
-      <span>${formatDiseaseName(item.class)}</span>
-      <b style="color: #fff;">${item.confidence}%</b>
-    `;
+    const name = document.createElement("span");
+    name.textContent = formatDiseaseName(item.class);
+    const conf = document.createElement("b");
+    conf.textContent = `${item.confidence}%`;
+    li.append(name, conf);
     container.appendChild(li);
   });
 }
@@ -1394,11 +1689,12 @@ async function submitPlantVillageReference() {
   try {
     const response = await fetch("/api/inference/plantvillage", {method: "POST", body: form});
     const data = await response.json();
-    if (!response.ok) throw new Error(data.detail || "Inference failed");
+    if (!response.ok) throw new Error(formatApiError(data, "Inference failed"));
     const top = data.top3.map((r, index) => `${index + 1}. ${formatDiseaseName(r.class)}: ${r.confidence}%`).join("\n");
     output.textContent = `Dự đoán: ${formatDiseaseName(data.predicted_class)} (${data.confidence_pct}%)\nTop 3:\n${top}\n${data.is_uncertain ? "⚠ Mô hình không chắc chắn.\n" : ""}Lưu ý: Confidence chưa hiệu chuẩn; kết quả có thể sai trên ảnh thực tế.`;
   } catch (error) {
     output.textContent = `Không thể nhận diện: ${error.message}`;
+    notify("error", "Không thể nhận diện bằng PlantVillage", "", { detail: error.message });
   } finally {
     btn.disabled = false;
   }
