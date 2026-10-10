@@ -5,11 +5,16 @@ import importlib.metadata
 import json
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "artifacts" / "pre_demo_check.json"
+sys.path.insert(0, str(ROOT))
+
+from src import registry as reg  # noqa: E402
+
+OUT = reg.abs_path(reg.PRE_DEMO_CHECK_JSON)
 
 
 def add(checks: List[Dict[str, Any]], name: str, status: str, detail: str) -> None:
@@ -65,7 +70,7 @@ def main() -> int:
     if args.dataset_root is None:
         add(checks, "plantvillage_real_data", "warn", "No --dataset-root supplied; scientific training cannot be validated.")
     else:
-        preflight_out = ROOT / "artifacts" / "data_preflight_demo_gate.json"
+        preflight_out = reg.abs_path(reg.DATA_PREFLIGHT_DEMO_GATE_JSON)
         proc = subprocess.run(
             [
                 sys.executable,
@@ -88,7 +93,7 @@ def main() -> int:
         )
 
     # Canonical provenance
-    provenance = load_json(ROOT / "artifacts" / "artifact_provenance_validation.json")
+    provenance = load_json(reg.abs_path(reg.PROVENANCE_VALIDATION_JSON))
     if provenance.get("status") == "verified":
         add(checks, "canonical_provenance", "pass", "canonical metrics/checkpoints verified")
     else:
@@ -96,7 +101,7 @@ def main() -> int:
         add(checks, "canonical_provenance", "warn", f"UNVERIFIED: {issue_codes}")
 
     # Network artifact scientific validity
-    network_history = load_json(ROOT / "artifacts" / "metrics" / "network_flower_history.json")
+    network_history = load_json(reg.abs_path(reg.NETWORK_FLOWER_HISTORY_JSON))
     audits = network_history.get("audit_rounds", []) or []
     clients = [c for r in audits for c in (r.get("clients", []) or [])]
     require_real = bool(network_history.get("require_real_clients", False))
@@ -108,7 +113,7 @@ def main() -> int:
         and isinstance(final_test_metrics, dict)
         and all(k in final_test_metrics for k in ("accuracy", "loss", "macro_f1"))
     )
-    network_ckpt = ROOT / "artifacts" / "checkpoints" / "federated_network_global.pt"
+    network_ckpt = reg.abs_path(reg.FEDERATED_NETWORK_GLOBAL_PT)
     if network_ckpt.exists() and require_real and all_real and has_real_test:
         add(
             checks,
@@ -121,13 +126,14 @@ def main() -> int:
             checks,
             "network_global_artifact",
             "warn",
-            f"checkpoint exists but scientific gate not satisfied: require_real={require_real}, all_real={all_real}, real_test={has_real_test}",
+            "chưa có run mạng KHOA HỌC: checkpoint hiện có chỉ là smoke kỹ thuật "
+            f"(require_real={require_real}, all_real={all_real}, real_test={has_real_test})",
         )
     else:
         add(checks, "network_global_artifact", "warn", "no network global checkpoint yet")
 
     # Multi-seed real summary
-    multi = load_json(ROOT / "artifacts" / "report_experiments" / "multiseed_real_summary.json")
+    multi = load_json(reg.abs_path(reg.REPORT_EXPERIMENTS_DIR) / "multiseed_real_summary.json")
     if multi.get("scientific_valid"):
         add(checks, "multiseed_real_summary", "pass", "3-seed real summary available and complete")
     else:
@@ -138,6 +144,7 @@ def main() -> int:
     overall = "ready" if fail_count == 0 and warn_count == 0 else "technical_demo_ready" if fail_count == 0 else "not_ready"
 
     report = {
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
         "overall": overall,
         "fail_count": fail_count,
         "warn_count": warn_count,
@@ -150,7 +157,7 @@ def main() -> int:
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(json.dumps(report, indent=2, ensure_ascii=False))
+    print(json.dumps(report, indent=2))  # stdout ASCII: console Windows không in được tiếng Việt
     return 0 if fail_count == 0 else 2
 
 

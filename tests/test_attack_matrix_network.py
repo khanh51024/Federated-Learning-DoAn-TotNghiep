@@ -42,12 +42,9 @@ def _client(client_id: int, port: int, fault_mode: str) -> None:
     )
 
 
-def _run_case(port: int, reject: bool, stem: str):
-    metrics = Path(f"artifacts/metrics/{stem}.json")
-    checkpoint = Path(f"artifacts/checkpoints/{stem}.pt")
-    for path in (metrics, checkpoint):
-        if path.exists():
-            path.unlink()
+def _run_case(port: int, reject: bool, stem: str, out_dir: Path, expect_abort: bool = False):
+    metrics = out_dir / f"{stem}.json"
+    checkpoint = out_dir / f"{stem}.pt"
 
     server = multiprocessing.Process(target=_server, args=(port, reject, str(metrics), str(checkpoint)))
     clients = [
@@ -58,10 +55,17 @@ def _run_case(port: int, reject: bool, stem: str):
     for proc in clients:
         proc.start()
     for proc in clients:
-        proc.join(timeout=120)
+        proc.join(timeout=30 if expect_abort else 120)
     server.join(timeout=40)
 
     try:
+        if expect_abort:
+            # Hợp đồng strict-round: update bị loại làm vòng không đủ N client hợp lệ -> server hủy vòng,
+            # không lặng lẽ gộp phần còn lại và không ghi checkpoint.
+            # Thông điệp chính xác được kiểm ở tests/test_demo_server_contract.py::test_reject_policy_aborts_round_...
+            assert server.exitcode not in (None, 0), "server phải hủy vòng khi có update bị loại"
+            assert not checkpoint.exists()
+            return None
         for proc in clients:
             assert proc.exitcode == 0, f"client {proc.pid} exit={proc.exitcode}"
         assert server.exitcode == 0
@@ -74,8 +78,8 @@ def _run_case(port: int, reject: bool, stem: str):
                 proc.terminate()
 
 
-def test_attack_matrix_observe_then_reject():
-    observed = _run_case(18120, False, "attack_matrix_observe")
+def test_attack_matrix_observe_then_reject(tmp_path):
+    observed = _run_case(18120, False, "attack_matrix_observe", tmp_path)
     row = observed["audit_rounds"][0]
     assert row["accepted_clients"] == 4
     assert row["suspicious_clients"] == 3
@@ -88,12 +92,5 @@ def test_attack_matrix_observe_then_reject():
         assert "update_norm_above_threshold" in by_id[cid]["validation_reason"]
         assert by_id[cid]["received_update_norm"] > 5.0
 
-    rejected = _run_case(18122, True, "attack_matrix_reject")
-    row = rejected["audit_rounds"][0]
-    assert row["accepted_clients"] == 1
-    assert row["suspicious_clients"] == 3
-    assert row["rejected_clients"] == 3
-    by_id = {r["client_id"]: r for r in row["clients"]}
-    assert by_id[0]["status"] == "ok"
-    for cid in (1, 2, 3):
-        assert by_id[cid]["status"] == "rejected_suspicious"
+    # reject-suspicious + strict round: 3 update dị thường bị loại => chỉ còn 1/4 hợp lệ => server hủy vòng
+    assert _run_case(18122, True, "attack_matrix_reject", tmp_path, expect_abort=True) is None

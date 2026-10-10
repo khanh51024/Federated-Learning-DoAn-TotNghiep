@@ -1,5 +1,5 @@
 {
-  "source_csv": "artifacts\\branch_demo\\20261003\\fedavg\\validation_comparison.csv",
+  "source_csv": "artifacts/branch_demo/20261003/fedavg/validation_comparison.csv",
   "evidence": "published comparison artifact; not a locally repeated validation",
   "models": {
     "Centralized v6": {

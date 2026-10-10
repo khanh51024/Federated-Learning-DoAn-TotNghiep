@@ -9,11 +9,15 @@ Xem hợp đồng đầy đủ trong docs/MODEL_REGISTRY.md.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+
+# schema_version của artifacts/registry.json (v2: pipeline/role/dataset/taxonomy + cổng web + danh mục .pt)
+SCHEMA_VERSION = 2
 
 # ---------------------------------------------------------------------------
 # Thư mục chính
@@ -24,6 +28,10 @@ SMOKE_CHECKPOINTS_DIR = "artifacts/checkpoints/smoke"
 METRICS_DIR = "artifacts/metrics"
 DEMO_BUNDLE_DIR = "artifacts/branch_demo/20261003"
 WEB_RUNS_DIR = "artifacts/web_runs"
+VERIFIED_DIR = "artifacts/verified"
+VERIFIED_NETWORK_DIR = "artifacts/verified_network"
+DATA_PREFLIGHT_JSON = "artifacts/data_preflight.json"
+CLIENT_PREFLIGHT_DIR = "artifacts/client_preflight"
 REPORT_EXPERIMENTS_DIR = "artifacts/report_experiments"
 
 # ---------------------------------------------------------------------------
@@ -54,7 +62,19 @@ CENTRALIZED_BEST_PT = "artifacts/checkpoints/centralized_best.pt"
 FEDAVG_BEST_PT = "artifacts/checkpoints/fedavg_best.pt"
 FEDAVG_LAST_PT = "artifacts/checkpoints/fedavg_last.pt"
 FEDERATED_NETWORK_GLOBAL_PT = "artifacts/checkpoints/federated_network_global.pt"
+NETWORK_SMOKE_RUNS_DIR = "artifacts/web_runs/network_smoke"
+ATTACK_MATRIX_OBSERVE_PT = "artifacts/checkpoints/attack_matrix_observe.pt"
+ATTACK_MATRIX_REJECT_PT = "artifacts/checkpoints/attack_matrix_reject.pt"
+NETWORK_RTT_CHECKPOINT_PT = "artifacts/checkpoints/network_rtt_checkpoint_test.pt"
 PLANTVILLAGE_TRACED_PT = "artifacts/checkpoints/plantvillage_traced.pt"
+# Ghim độc lập: trùng oid LFS ghi trong git (git lfs ls-files -l). Đổi file = phải sửa hằng số này có chủ đích.
+PLANTVILLAGE_TRACED_SHA256 = "eab794cd9d9138f1e77d5dfc6166602da8a984b728c4228a23d7b84228cdf161"
+DATASET_CLASSES_JSON = DATASET_MANIFEST_JSON  # nguồn thứ tự 38 lớp của model tham chiếu
+SAMPLE_IMAGE = "artifacts/sample_test_leaf.jpg"  # ảnh dùng cho bài kiểm tra forward bắt buộc
+INFERENCE_AUDIT_JSON = "artifacts/inference_audit.json"
+LABELED_EVAL_JSON = "artifacts/labeled_inference_evaluation.json"
+DEMO_RUNS_DIR = "artifacts/demo_runs"
+DATA_PREFLIGHT_DEMO_GATE_JSON = "artifacts/data_preflight_demo_gate.json"
 
 # Metrics chuẩn (họ scientific_canonical)
 CENTRALIZED_RESULTS_JSON = "artifacts/metrics/centralized_results.json"
@@ -72,6 +92,34 @@ CANONICAL_RESOLVED_CONFIG = f"results/fedavg/{CANONICAL_RUN_ID}/resolved_config.
 # Published demo bundle (hash-verified, pretrained mixed PV+PlantDoc)
 DEMO_IMPORT_MANIFEST_JSON = f"{DEMO_BUNDLE_DIR}/import_manifest.json"
 DEMO_PROTOCOL_ID = "mixed_pv_pd_v3_pretrained_seed42_validation"
+
+# Thư mục quét .pt để chắc chắn mọi checkpoint trên đĩa đều có tên trong danh mục
+# Chỉ loại ở gốc repo (không loại thư mục trùng tên nằm sâu trong artifacts/...)
+CHECKPOINT_SCAN_EXCLUDE_ROOT = (".venv", ".git", ".tmp-agent", ".zcode", "tmp")
+# Loại ở mọi độ sâu (tên hoặc tiền tố)
+CHECKPOINT_SCAN_EXCLUDE_ANY = ("__pycache__", "pytest-of-", "torchinductor_")
+REPORT_EXPERIMENTS_GLOB = "artifacts/report_experiments"
+WEB_RUNS_GLOB = "artifacts/web_runs"
+KAGGLE_RESULTS_DIR = "results/fedavg"
+
+# ---------------------------------------------------------------------------
+# Vai trò (role) — trả lời "model này dùng vào việc gì"
+# ---------------------------------------------------------------------------
+ROLE_CURRENT = "current"              # kết quả hiện hành (bundle đã kiểm hash)
+ROLE_HISTORICAL = "historical"        # kết quả lịch sử, chỉ còn metrics
+ROLE_TECHNICAL_DEMO = "technical_demo"  # smoke kỹ thuật (Flower/mạng), không khoa học
+ROLE_REFERENCE = "reference"
+ROLE_QUARANTINED = "quarantined"      # smoke bị cách ly
+
+PIPELINE_EXTERNAL = "external_branch"  # train ngoài repo, import bundle
+PIPELINE_LEGACY = "legacy_kaggle"      # pipeline Kaggle cũ (code ở legacy/)
+PIPELINE_SRC = "src"                   # engine trong repo (Flower demo, simulation)
+
+# Backend suy luận mà web/services/model_service.py biết cách gọi
+BACKEND_PUBLISHED_BUNDLE = "published_bundle"        # web/demo_evidence.predict_published (kiểm hash bundle)
+BACKEND_TORCHSCRIPT_REFERENCE = "torchscript_reference"  # web/plantvillage_reference.predict_plantvillage
+
+KNOWN_PREPROCESSING = frozenset({"imagenet_eval_v1", "canonical_v1", "get_default_transform(eval)"})
 
 # ---------------------------------------------------------------------------
 # Family & status semantics (bảng tra cho build_registry + UI)
@@ -118,7 +166,7 @@ def load_registry() -> dict[str, Any]:
             "(hoặc python scripts/update_status.py) để sinh registry."
         )
     registry = json.loads(path.read_text(encoding="utf-8"))
-    if registry.get("schema_version") != 1:
+    if registry.get("schema_version") != SCHEMA_VERSION:
         raise ValueError(
             f"{REGISTRY_JSON} có schema_version={registry.get('schema_version')!r} "
             "không tương thích — chạy lại scripts/build_registry.py."
@@ -146,5 +194,27 @@ def iter_models(family: str | None = None) -> list[dict[str, Any]]:
 
 
 def web_visible_models() -> list[dict[str, Any]]:
-    """Các model được phép hiển thị trên web (đã qua gate của registry)."""
+    """Các model được phép hiển thị trên web (đã qua đủ 5 điều kiện của cổng registry)."""
     return [m for m in iter_models() if m.get("web_visible") is True]
+
+
+def code_fingerprint() -> str:
+    """Dấu vân tay mã nguồn (src/web/scripts/tests) đọc thẳng từ đĩa, chuẩn hóa xuống dòng.
+
+    Dùng để biết một kết quả gate (vd. final_acceptance) có còn đúng với mã hiện tại không,
+    mà không phụ thuộc commit (commit đổi mỗi khi chính file trạng thái được commit)."""
+    digest = hashlib.sha256()
+    for top in ("src", "web", "scripts", "tests"):
+        base = ROOT / top
+        if not base.is_dir():
+            continue
+        for path in sorted(base.rglob("*")):
+            if (
+                path.is_file()
+                and path.suffix in {".py", ".js", ".html", ".css"}
+                and "__pycache__" not in path.parts
+            ):
+                digest.update(path.relative_to(ROOT).as_posix().encode("utf-8"))
+                digest.update(b"\x00")
+                digest.update(hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).digest())
+    return digest.hexdigest()

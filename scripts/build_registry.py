@@ -11,6 +11,7 @@ Chạy: python scripts/build_registry.py
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import sys
@@ -70,7 +71,10 @@ def stable_state_hash(state: dict[str, torch.Tensor]) -> str:
     return h.hexdigest()
 
 
-def inspect_checkpoint(rel_path: str) -> dict[str, Any]:
+def inspect_checkpoint(rel_path: str, expected_sha256: str | None = None) -> dict[str, Any]:
+    """Băm file; chỉ nạp (unpickle) khi không khai báo hash mong đợi hoặc hash khớp.
+
+    Checkpoint của bundle công bố mà hash lệch manifest KHÔNG được torch.load (pickle có thể thực thi mã)."""
     path = ROOT / rel_path
     out: dict[str, Any] = {
         "checkpoint_path": rel_path,
@@ -84,6 +88,9 @@ def inspect_checkpoint(rel_path: str) -> dict[str, Any]:
         return out
     out["file_sha256"] = file_sha256(path)
     out["bytes"] = path.stat().st_size
+    if expected_sha256 is not None and out["file_sha256"] != expected_sha256:
+        out["metadata"] = {"load_skipped": "hash khác manifest — không nạp checkpoint chưa tin cậy"}
+        return out
     try:
         payload = torch.load(path, map_location="cpu", weights_only=False)
     except Exception as exc:  # TorchScript / format lạ
@@ -104,11 +111,18 @@ def inspect_checkpoint(rel_path: str) -> dict[str, Any]:
     return out
 
 
+def classes_sha256(classes: list[str]) -> str:
+    """Hash thứ tự 38 lớp — hai model chỉ so sánh được khi cùng hash này."""
+    return hashlib.sha256("\n".join(classes).encode("utf-8")).hexdigest()
+
+
 def base_model(model_id: str, family: str, display_name: str) -> dict[str, Any]:
     return {
         "model_id": model_id,
         "family": family,
         "display_name": display_name,
+        "pipeline": None,
+        "role": None,
         "architecture": "MobileNetV3-Small",
         "num_classes": 38,
         "checkpoint_path": None,
@@ -118,12 +132,20 @@ def base_model(model_id: str, family: str, display_name: str) -> dict[str, Any]:
         "expected_state_sha256": None,
         "checkpoint_status": None,
         "preprocessing_id": None,
+        "dataset_id": None,
         "protocol_id": None,
+        "validation_manifest_sha256": None,
+        "taxonomy_sha256": None,
+        "leakage_audit": "unknown",
         "seed": None,
         "metrics": {},
         "metrics_source": None,
+        "metrics_waiver": None,
         "status": None,
+        "inference": None,
+        "inference_test": None,
         "web_visible": False,
+        "web_gate_failures": [],
         "display_label": None,
         "notes": None,
     }
@@ -168,7 +190,7 @@ def _canonical_eval_note() -> str:
         f"Đánh giá trên Kaggle partition v1 label_skew alpha=0.1, global_test "
         f"{test_metrics.get('total_samples', '?')} ảnh (test_metrics.json của run). "
         "Checkpoint thật không còn trên máy này (best.pt là LFS pointer chưa pull; "
-        "artifacts/checkpoints/fedavg_best.pt từng bị smoke ghi đè acc=1.0)."
+        f"{reg.FEDAVG_BEST_PT} từng bị smoke ghi đè acc=1.0)."
     )
 
 
@@ -213,7 +235,7 @@ def build_scientific_canonical() -> list[dict[str, Any]]:
             m["status"] = "verified_checkpoint"
         elif meta_acc == 1.0 or meta_acc == 0.0263:
             m["checkpoint_status"] = "smoke_overwrite_detected"
-            m["notes"] = (m["notes"] or "") + " HIỆN TẠI slot này đang chứa checkpoint smoke — cần cách ly vào artifacts/checkpoints/smoke/."
+            m["notes"] = (m["notes"] or "") + f" HIỆN TẠI slot này đang chứa checkpoint smoke — cần cách ly vào {reg.SMOKE_CHECKPOINTS_DIR}/."
         else:
             m["checkpoint_status"] = "unknown_mismatch"
     else:
@@ -309,15 +331,22 @@ def _demo_metrics(file_data: dict[str, Any] | None) -> dict[str, Any]:
             "crop_accuracy": s.get("crop_accuracy"),
         }
 
+    quality_by_source = (validation.get("quality") or {}).get("by_source") or {}
     return {
         "overall": {
             "count": overall.get("count"),
             "top1_accuracy": overall.get("top1_accuracy"),
             "macro_f1_supported": overall.get("macro_f1_supported"),
             "crop_accuracy": overall.get("crop_accuracy"),
+            "high_confidence_wrong_count_0_9": overall.get("high_confidence_wrong_count_0_9"),
         },
         "plantdoc": src("plantdoc"),
         "plantvillage": src("plantvillage"),
+        "quality": {
+            "high_confidence_threshold": (validation.get("quality") or {}).get("high_confidence_threshold"),
+            "by_source": quality_by_source,
+            "top_confusions": (validation.get("top_confusions") or [])[:5],
+        },
     }
 
 
@@ -327,6 +356,8 @@ def build_published_demo() -> list[dict[str, Any]]:
         return []
     protocol_id = import_manifest.get("protocol_id", reg.DEMO_PROTOCOL_ID)
     seed = import_manifest.get("seed")
+    bundle_taxonomy = classes_sha256(import_manifest.get("classes") or [])
+    validation_manifest = import_manifest.get("validation_manifest_sha256")
 
     specs = [
         ("demo_centralized_v6", "Centralized v6 (published demo)", "centralized", "centralized"),
@@ -345,7 +376,7 @@ def build_published_demo() -> list[dict[str, Any]]:
             art_manifest = load_json(f"{reg.DEMO_BUNDLE_DIR}/local/artifact_manifest.json")
         expected = _find_in_artifact_manifest(art_manifest, f"{rel_dir.split('/')[-1]}/checkpoint_best.pt") or \
             _find_in_artifact_manifest(art_manifest, "checkpoint_best.pt")
-        insp = inspect_checkpoint(ckpt_rel)
+        insp = inspect_checkpoint(ckpt_rel, expected_sha256=(expected or {}).get("sha256"))
         validation = load_json(f"{reg.DEMO_BUNDLE_DIR}/{rel_dir}/validation_metrics.json")
         m.update(
             checkpoint_path=ckpt_rel,
@@ -359,7 +390,13 @@ def build_published_demo() -> list[dict[str, Any]]:
                 else ("missing" if not insp["checkpoint_exists"] else "hash_mismatch")
             ),
             preprocessing_id=import_manifest.get("transform", "canonical_v1"),
+            inference={
+                "backend": reg.BACKEND_PUBLISHED_BUNDLE,
+                "key": rel_dir.replace("local/client_", "local_"),
+            },
             protocol_id=protocol_id,
+            validation_manifest_sha256=validation_manifest,
+            taxonomy_sha256=bundle_taxonomy,
             seed=seed,
             metrics=_demo_metrics(validation),
             metrics_source=f"{reg.DEMO_BUNDLE_DIR}/{rel_dir}/validation_metrics.json",
@@ -385,11 +422,11 @@ def build_network_and_reference() -> list[dict[str, Any]]:
     net_specs = [
         ("network_federated_global", "Flower network global (smoke)", reg.FEDERATED_NETWORK_GLOBAL_PT,
          "Checkpoint global từ smoke network localhost (5 clients, 2 rounds, synthetic)."),
-        ("network_attack_matrix_observe", "Attack matrix — observe", "artifacts/checkpoints/attack_matrix_observe.pt",
+        ("network_attack_matrix_observe", "Attack matrix — observe", reg.ATTACK_MATRIX_OBSERVE_PT,
          "Thí nghiệm fault modes, policy observe-only."),
-        ("network_attack_matrix_reject", "Attack matrix — reject", "artifacts/checkpoints/attack_matrix_reject.pt",
+        ("network_attack_matrix_reject", "Attack matrix — reject", reg.ATTACK_MATRIX_REJECT_PT,
          "Thí nghiệm fault modes, policy reject-suspicious."),
-        ("network_rtt_checkpoint_test", "RTT + checkpoint test", "artifacts/checkpoints/network_rtt_checkpoint_test.pt",
+        ("network_rtt_checkpoint_test", "RTT + checkpoint test", reg.NETWORK_RTT_CHECKPOINT_PT,
          "Bài test RTT per-client + lưu/nạp checkpoint qua mạng."),
     ]
     for model_id, display_name, rel_path, note in net_specs:
@@ -415,10 +452,20 @@ def build_network_and_reference() -> list[dict[str, Any]]:
         checkpoint_path=reg.PLANTVILLAGE_TRACED_PT,
         checkpoint_exists=insp["checkpoint_exists"],
         file_sha256=insp["file_sha256"],
-        checkpoint_status="present" if insp["checkpoint_exists"] else "missing",
+        expected_state_sha256=None,
+        checkpoint_status=(
+            "missing" if not insp["checkpoint_exists"]
+            else "hash_verified" if insp["file_sha256"] == reg.PLANTVILLAGE_TRACED_SHA256
+            else "hash_mismatch"
+        ),
         preprocessing_id="get_default_transform(eval)",
+        protocol_id="plantvillage_traced_reference",
+        inference={"backend": reg.BACKEND_TORCHSCRIPT_REFERENCE},
+        metrics_waiver=(
+            "Model tham chiếu độc lập, không công bố accuracy; web luôn gắn nhãn 'Tham chiếu' "
+            "và không dùng để so sánh với FedAvg."
+        ),
         status="reference_only",
-        web_visible=insp["checkpoint_exists"],
         display_label="Tham chiếu (không phải FedAvg)",
         notes="TorchScript inference tham chiếu độc lập; softmax chưa calibration.",
     )
@@ -458,6 +505,7 @@ def build_gates() -> dict[str, Any]:
     provenance = load_json(reg.PROVENANCE_VALIDATION_JSON)
     if provenance is not None:
         gates["provenance"] = {
+            "generated_at": provenance.get("generated_at"),
             "status": provenance.get("status"),
             "critical_issues": [i.get("code") for i in provenance.get("issues", []) if i.get("severity") == "critical"],
             "warning_issues": [i.get("code") for i in provenance.get("issues", []) if i.get("severity") == "warning"],
@@ -466,12 +514,15 @@ def build_gates() -> dict[str, Any]:
     pre_demo = load_json(reg.PRE_DEMO_CHECK_JSON)
     if pre_demo is not None:
         gates["pre_demo_check"] = {
+            "generated_at": pre_demo.get("generated_at"),
             "overall": pre_demo.get("overall"),
             "source": reg.PRE_DEMO_CHECK_JSON,
         }
     final = load_json(reg.FINAL_ACCEPTANCE_JSON)
     if final is not None:
         gates["final_acceptance"] = {
+            "generated_at": final.get("generated_at"),
+            "code_fingerprint": final.get("code_fingerprint"),
             "technical": final.get("technical_acceptance"),
             "scientific": final.get("scientific_acceptance"),
             "readiness_overall": final.get("readiness_overall"),
@@ -481,7 +532,9 @@ def build_gates() -> dict[str, Any]:
     network = load_json(reg.NETWORK_ARTIFACT_VALIDATION_JSON)
     if network is not None:
         gates["network_artifact"] = {
+            "generated_at": network.get("generated_at"),
             "ok": network.get("ok"),
+            "require_real_clients": (network.get("checks") or {}).get("require_real_clients"),
             "source": reg.NETWORK_ARTIFACT_VALIDATION_JSON,
         }
     return gates
@@ -570,38 +623,320 @@ def build_canonical_manifest(models: list[dict[str, Any]]) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
-def build_registry() -> dict[str, Any]:
+FAMILY_DEFAULTS: dict[str, dict[str, str]] = {
+    reg.FAMILY_SCIENTIFIC_CANONICAL: {
+        "pipeline": reg.PIPELINE_LEGACY,
+        "role": reg.ROLE_HISTORICAL,
+        "dataset_id": "PlantVillage 54.305 ảnh — Kaggle partitions_train_v1 (10 clients, label_skew alpha=0.1)",
+    },
+    reg.FAMILY_PUBLISHED_DEMO: {
+        "pipeline": reg.PIPELINE_EXTERNAL,
+        "role": reg.ROLE_CURRENT,
+        "dataset_id": "Mixed PlantVillage + PlantDoc (validation: 4.344 PV + 269 PlantDoc)",
+    },
+    reg.FAMILY_NETWORK_DEMO: {
+        "pipeline": reg.PIPELINE_SRC,
+        "role": reg.ROLE_TECHNICAL_DEMO,
+        "dataset_id": "Ảnh tổng hợp (smoke Flower localhost)",
+    },
+    reg.FAMILY_REFERENCE: {
+        "pipeline": reg.PIPELINE_EXTERNAL,
+        "role": reg.ROLE_REFERENCE,
+        "dataset_id": "PlantVillage 38 lớp (model tham chiếu độc lập)",
+    },
+    reg.FAMILY_SMOKE: {
+        "pipeline": reg.PIPELINE_SRC,
+        "role": reg.ROLE_QUARANTINED,
+        "dataset_id": "Dữ liệu dummy (smoke)",
+    },
+}
+
+def apply_family_defaults(models: list[dict[str, Any]]) -> None:
+    repo_classes = (load_json(reg.DATASET_MANIFEST_JSON) or {}).get("classes") or []
+    repo_taxonomy = classes_sha256(repo_classes) if repo_classes else None
+    for m in models:
+        for key, value in FAMILY_DEFAULTS[m["family"]].items():
+            if m.get(key) is None:
+                m[key] = value
+        if m.get("taxonomy_sha256") is None:
+            m["taxonomy_sha256"] = repo_taxonomy
+
+
+# ---------------------------------------------------------------------------
+# Bài kiểm tra forward bắt buộc + cổng web_visible (5 điều kiện)
+# ---------------------------------------------------------------------------
+def run_forward_test(model: dict[str, Any]) -> dict[str, Any]:
+    """Chạy một ảnh mẫu qua đúng đường inference mà web dùng. Không bao giờ ném lỗi."""
+    sample = ROOT / reg.SAMPLE_IMAGE
+    result: dict[str, Any] = {"status": "not_run", "sample": reg.SAMPLE_IMAGE}
+    if not sample.exists():
+        result["detail"] = "thiếu ảnh mẫu"
+        result["status"] = "fail"
+        return result
+    try:
+        from PIL import Image
+
+        with Image.open(sample) as img:
+            image = img.convert("RGB")
+        from web.services import model_service
+
+        out = model_service.run_backend(model, image)
+        confidences = [float(t["confidence"]) for t in out.get("top3", [])]
+        classes = (load_json(reg.DATASET_MANIFEST_JSON) or {}).get("classes", [])
+        ok = (
+            out.get("ready") is True
+            and len(confidences) == 3
+            and all(0.0 <= c <= 100.0 for c in confidences)
+            and sum(confidences) <= 100.01
+            and out.get("predicted_class") in classes
+        )
+        result.update(
+            status="pass" if ok else "fail",
+            top1=out.get("predicted_class"),
+            top1_confidence_pct=out.get("confidence_pct"),
+        )
+    except Exception as exc:  # noqa: BLE001 — gate phải báo lỗi, không được làm sập build
+        result.update(status="fail", detail=f"{type(exc).__name__}: {exc}"[:300])
+    return result
+
+
+def apply_web_gate(models: list[dict[str, Any]], *, forward: bool = True) -> None:
+    """web_visible = True chỉ khi đạt đủ 5 điều kiện của review. Lý do rớt ghi vào web_gate_failures."""
+    # Nguồn độc lập với dataset_manifest.json: thứ tự lớp của bundle đã kiểm hash (import_manifest, khớp taxonomy.py)
+    bundle_classes = (load_json(reg.DEMO_IMPORT_MANIFEST_JSON) or {}).get("classes") or []
+    expected_taxonomy = classes_sha256(bundle_classes) if bundle_classes else None
+
+    for m in models:
+        failures: list[str] = []
+        if m["role"] not in (reg.ROLE_CURRENT, reg.ROLE_REFERENCE):
+            m["web_visible"] = False
+            m["web_gate_failures"] = [f"role={m['role']} không thuộc diện hiển thị"]
+            continue
+
+        # 1. checkpoint + hash hợp lệ
+        if m.get("checkpoint_status") != "hash_verified":
+            failures.append(f"1.hash: checkpoint_status={m.get('checkpoint_status')}")
+        # 2. class mapping đúng thứ tự taxonomy
+        if not expected_taxonomy or m.get("taxonomy_sha256") != expected_taxonomy:
+            failures.append("2.taxonomy: thứ tự 38 lớp không khớp taxonomy của bundle (nguồn độc lập)")
+        # 3. preprocessing khớp phiên bản model
+        if m.get("preprocessing_id") not in reg.KNOWN_PREPROCESSING:
+            failures.append(f"3.preprocessing: {m.get('preprocessing_id')!r} chưa được khai báo")
+        # 4. metrics gắn được với dataset + protocol
+        has_metrics = bool(m.get("metrics_source")) and (ROOT / str(m["metrics_source"])).exists()
+        waived = bool(m.get("metrics_waiver")) and m["role"] == reg.ROLE_REFERENCE
+        if not (has_metrics or waived) or not m.get("protocol_id") or not m.get("dataset_id"):
+            failures.append("4.metrics: thiếu metrics_source/protocol_id/dataset_id")
+        # 5. bài kiểm tra forward bắt buộc (chỉ chạy khi 1-4 đã đạt)
+        if not failures and forward:
+            m["inference_test"] = run_forward_test(m)
+            if m["inference_test"]["status"] != "pass":
+                detail = m["inference_test"].get("detail") or m["inference_test"]["status"]
+                failures.append(f"5.inference: {detail}")
+        elif failures:
+            m["inference_test"] = {"status": "not_run", "detail": "chưa đạt điều kiện 1-4"}
+        else:
+            m["inference_test"] = {"status": "not_run", "detail": "bỏ qua bằng --skip-forward"}
+            failures.append("5.inference: chưa chạy bài forward (--skip-forward)")
+
+        m["web_gate_failures"] = failures
+        m["web_visible"] = not failures
+
+
+# ---------------------------------------------------------------------------
+# Danh mục .pt trên đĩa — không file nào được "vô danh"
+# ---------------------------------------------------------------------------
+def _excluded_dir(name: str, at_root: bool) -> bool:
+    if at_root and name in reg.CHECKPOINT_SCAN_EXCLUDE_ROOT:
+        return True
+    return any(name == ex or (ex.endswith(("-", "_")) and name.startswith(ex)) for ex in reg.CHECKPOINT_SCAN_EXCLUDE_ANY)
+
+
+def _walk_pt_files() -> list[str]:
+    import os
+
+    found: list[str] = []
+    for dirpath, dirnames, filenames in os.walk(ROOT):
+        at_root = Path(dirpath) == ROOT
+        dirnames[:] = sorted(d for d in dirnames if not _excluded_dir(d, at_root))
+        for name in filenames:
+            if name.endswith(".pt"):
+                found.append((Path(dirpath) / name).relative_to(ROOT).as_posix())
+    return sorted(found)
+
+
+def _lfs_pointer_oid(path: Path) -> str | None:
+    try:
+        if path.stat().st_size > 1024:
+            return None
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+    if not text.startswith("version https://git-lfs"):
+        return None
+    for line in text.splitlines():
+        if line.startswith("oid sha256:"):
+            return line.split(":", 1)[1].strip()
+    return None
+
+
+def build_artifact_catalog(models: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Phân loại mọi *.pt trên đĩa vào model đã đăng ký hoặc một nhóm khai báo; còn lại = unclassified."""
+    in_models = {m["checkpoint_path"] for m in models if m.get("checkpoint_path")}
+    groups: dict[str, dict[str, Any]] = {}
+    unclassified: list[str] = []
+    all_pt = _walk_pt_files()
+
+    def add(group_id: str, role: str, description: str, rel: str, oid: str | None = None) -> None:
+        g = groups.setdefault(group_id, {"group_id": group_id, "role": role, "description": description, "paths": []})
+        g["paths"].append(rel)
+        if oid:
+            g.setdefault("lfs_oids", {})[rel] = oid
+
+    smoke_runs: dict[str, bool] = {}
+    for rel in all_pt:
+        if rel in in_models:
+            continue
+        path = ROOT / rel
+        if rel.startswith(reg.REPORT_EXPERIMENTS_GLOB + "/"):
+            run_dir = "/".join(rel.split("/")[:3])
+            if run_dir not in smoke_runs:
+                plan = load_json(f"{run_dir}/plan.json") or {}
+                smoke_runs[run_dir] = plan.get("mode") == "smoke"
+            if smoke_runs[run_dir]:
+                add("report_experiments_smoke", reg.ROLE_QUARANTINED,
+                    "Run report_experiments mode=smoke (dữ liệu tổng hợp, accuracy 0.0263) — cấm dùng trong luận văn", rel)
+            else:
+                add("report_experiments_real", reg.ROLE_TECHNICAL_DEMO,
+                    "Run report_experiments mode=real CHƯA promote — chỉ là bằng chứng sau khi qua scripts/promote_verified_run.py", rel)
+        elif rel.startswith(reg.VERIFIED_DIR + "/") or rel.startswith(reg.VERIFIED_NETWORK_DIR + "/"):
+            add("verified_promoted", reg.ROLE_CURRENT,
+                "Artifact đã promote bởi promote_verified_run.py / promote_verified_network_run.py sau khi qua gate", rel)
+        elif rel.startswith(reg.WEB_RUNS_GLOB + "/"):
+            add("web_runs", reg.ROLE_TECHNICAL_DEMO,
+                "Checkpoint từ run do web khởi động (smoke Flower hoặc demo huấn luyện); chưa có bằng chứng khoa học", rel)
+        elif rel.startswith(reg.KAGGLE_RESULTS_DIR + "/"):
+            oid = _lfs_pointer_oid(path)
+            if oid:
+                add("kaggle_run_lfs_pointer", reg.ROLE_HISTORICAL,
+                    "Checkpoint run Kaggle canonical: chỉ còn con trỏ Git-LFS, bytes thật KHÔNG có trên máy "
+                    "(repo không có remote) — cần tải lại từ Kaggle", rel, oid)
+            else:
+                add("kaggle_run_checkpoint_real", reg.ROLE_HISTORICAL,
+                    "Checkpoint run Kaggle đã có bytes thật; để provenance kiểm được phải đặt vào slot canonical (xem PROJECT_STATUS)", rel)
+        else:
+            unclassified.append(rel)
+
+    group_list = [groups[k] for k in sorted(groups)]
+    for g in group_list:
+        g["paths"] = sorted(g["paths"])
+        g["count"] = len(g["paths"])
+    catalog_gate = {
+        "status": "complete" if not unclassified else "incomplete",
+        "total_pt_files": len(all_pt),
+        "in_models": sum(1 for rel in all_pt if rel in in_models),
+        "in_groups": sum(g["count"] for g in group_list),
+        "unclassified": unclassified,
+        "source": "quét đĩa (scripts/build_registry.py)",
+    }
+    return group_list, catalog_gate
+
+
+# ---------------------------------------------------------------------------
+# Báo cáo bằng chứng đã có (domain gap, audit ảnh ngoài)
+# ---------------------------------------------------------------------------
+def build_evidence_reports() -> dict[str, Any]:
+    reports: dict[str, Any] = {}
+    gap = load_json(reg.DOMAIN_GAP_REPORT_JSON)
+    if gap:
+        reports["domain_gap"] = {
+            "source": reg.DOMAIN_GAP_REPORT_JSON,
+            "evidence": gap.get("evidence"),
+            "models": gap.get("models"),
+            "recommendation": gap.get("recommendation"),
+        }
+    audit = load_json(reg.INFERENCE_AUDIT_JSON)
+    if audit:
+        images = audit.get("images") or []
+        reports["inference_audit"] = {
+            "source": reg.INFERENCE_AUDIT_JSON,
+            "note": audit.get("note"),
+            "image_count": len(images),
+            "models_disagree_count": sum(1 for i in images if i.get("models_disagree")),
+            "uncertain_flagged_count": sum(
+                1 for i in images for k in ("centralized", "fedavg") if (i.get(k) or {}).get("is_uncertain")
+            ),
+        }
+    return reports
+
+
+def build_registry(*, forward: bool = True) -> dict[str, Any]:
     models = (
         build_scientific_canonical()
         + build_published_demo()
         + build_network_and_reference()
         + build_smoke()
     )
+    apply_family_defaults(models)
+    apply_web_gate(models, forward=forward)
+    artifact_groups, catalog_gate = build_artifact_catalog(models)
+    gates = build_gates()
+    gates["checkpoint_catalog"] = catalog_gate
     return {
-        "schema_version": 1,
+        "schema_version": reg.SCHEMA_VERSION,
         "generator": "scripts/build_registry.py",
         "canonical_run_id": reg.CANONICAL_RUN_ID,
+        "official_direction": {
+            "current_family": reg.FAMILY_PUBLISHED_DEMO,
+            "protocol_id": reg.DEMO_PROTOCOL_ID,
+            "flow": (
+                "train ngoài repo (Kaggle/branch) -> bundle + manifest + SHA-256 -> "
+                "import/kiểm hash -> registry -> status/web/báo cáo"
+            ),
+        },
         "dataset_truth": build_dataset_truth(),
         "families": {
             name: {"description": desc}
             for name, desc in reg.FAMILY_DESCRIPTIONS.items()
         },
         "models": models,
-        "gates": build_gates(),
+        "artifact_groups": artifact_groups,
+        "evidence_reports": build_evidence_reports(),
+        "gates": gates,
     }
 
 
-def main() -> int:
-    registry = build_registry()
-    out_path = ROOT / reg.REGISTRY_JSON
-    out_path.write_text(json.dumps(registry, indent=2, ensure_ascii=False), encoding="utf-8")
+def main_build(*, forward: bool = True) -> dict[str, Any]:
+    """Sinh registry.json + canonical_manifest.json từ sự thật trên đĩa. Dùng bởi update_status.py."""
+    registry = build_registry(forward=forward)
+    (ROOT / reg.REGISTRY_JSON).write_text(json.dumps(registry, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"[build_registry] wrote {reg.REGISTRY_JSON} ({len(registry['models'])} models)")
 
     canonical = build_canonical_manifest(registry["models"])
     (ROOT / reg.CANONICAL_MANIFEST_JSON).write_text(
-        json.dumps(canonical, indent=2, ensure_ascii=False), encoding="utf-8"
+        json.dumps(canonical, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
     print(f"[build_registry] rewrote {reg.CANONICAL_MANIFEST_JSON} (honest regeneration)")
+    return registry
+
+
+def refresh_registry_gates() -> None:
+    """Đọc lại các file gate vừa chạy và ghi vào registry.json (không build lại model)."""
+    path = ROOT / reg.REGISTRY_JSON
+    registry = json.loads(path.read_text(encoding="utf-8"))
+    catalog = (registry.get("gates") or {}).get("checkpoint_catalog")
+    registry["gates"] = build_gates()
+    if catalog is not None:
+        registry["gates"]["checkpoint_catalog"] = catalog
+    path.write_text(json.dumps(registry, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--skip-forward", action="store_true",
+                        help="Bỏ qua bài forward (nhanh; web_visible sẽ không được cấp)")
+    args = parser.parse_args()
+    main_build(forward=not args.skip_forward)
     return 0
 
 

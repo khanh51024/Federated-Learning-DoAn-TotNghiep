@@ -10,6 +10,11 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 ROOT = Path(__file__).resolve().parents[1]
+import sys as _sys
+if str(ROOT) not in _sys.path:
+    _sys.path.insert(0, str(ROOT))
+from src import registry as reg  # noqa: E402
+
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -81,7 +86,7 @@ def main() -> int:
     ap.add_argument("--rounds", type=int, default=1)
     ap.add_argument("--epochs", type=int, default=1)
     ap.add_argument("--seed", type=int, default=42, help="Training/model-init seed; partition manifests remain fixed unless regenerated separately")
-    ap.add_argument("--output", default="artifacts/report_experiments")
+    ap.add_argument("--output", default=reg.REPORT_EXPERIMENTS_DIR)
     args = ap.parse_args()
 
     dataset_root = _real_dataset_root(args.dataset_root)

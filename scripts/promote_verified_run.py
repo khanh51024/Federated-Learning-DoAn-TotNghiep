@@ -12,6 +12,11 @@ import torch
 ROOT = Path(__file__).resolve().parents[1]
 
 
+import sys as _sys
+if str(ROOT) not in _sys.path:
+    _sys.path.insert(0, str(ROOT))
+from src import registry as reg  # noqa: E402
+
 def sha256_file(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as f:
@@ -44,8 +49,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Promote one verified REAL report run into immutable verified artifacts.")
     ap.add_argument("run_dir", type=Path, help="One artifacts/report_experiments/<timestamp> directory")
     ap.add_argument("--scenario", default="label1", choices=["label100", "label1", "label01", "quantity01"])
-    ap.add_argument("--preflight", type=Path, default=Path("artifacts/data_preflight.json"))
-    ap.add_argument("--verified-root", type=Path, default=Path("artifacts/verified"))
+    ap.add_argument("--preflight", type=Path, default=Path(reg.DATA_PREFLIGHT_JSON))
+    ap.add_argument("--verified-root", type=Path, default=Path(reg.VERIFIED_DIR))
     args = ap.parse_args()
 
     run_dir = args.run_dir if args.run_dir.is_absolute() else ROOT / args.run_dir

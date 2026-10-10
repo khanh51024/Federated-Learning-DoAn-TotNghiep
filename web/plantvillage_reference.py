@@ -9,11 +9,12 @@ import json
 
 import torch
 from PIL import Image, ImageOps
+from src import registry as reg
 from src.data.plantvillage import get_default_transform
 
 ROOT = Path(__file__).resolve().parents[1]
-MODEL_FILE = ROOT / "artifacts/checkpoints/plantvillage_traced.pt"
-MANIFEST_FILE = ROOT / "data/dataset_manifest.json"
+MODEL_FILE = reg.abs_path(reg.PLANTVILLAGE_TRACED_PT)
+MANIFEST_FILE = reg.abs_path(reg.DATASET_MANIFEST_JSON)
 
 
 @lru_cache(maxsize=1)

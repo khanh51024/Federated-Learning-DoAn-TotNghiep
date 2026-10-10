@@ -5,7 +5,25 @@ Tài liệu này đóng băng toàn bộ thông số kỹ thuật, cấu hình m
 
 ---
 
+## 0. Các protocol đang tồn tại — mỗi con số chỉ thuộc về MỘT protocol
+
+| Protocol ID | Vai trò | Dữ liệu | Nơi train | Trạng thái |
+|---|---|---|---|---|
+| `mixed_pv_pd_v3_pretrained_seed42_validation` | **Kết quả hiện hành** (Centralized v6, FedAvg v7, 5 Local-only v7) | Mixed PlantVillage + PlantDoc; validation 4.344 PV + 269 PlantDoc; seed 42; pretrained; non-IID label alpha=0.1 | Ngoài repo (branch `train-*`), import bundle bằng `scripts/import_branch_demo.py` | Đã kiểm hash; **chưa tái đánh giá cục bộ**; chưa multi-seed |
+| `stage2_scratch_clean_v3` | Tái lập khoa học cục bộ GĐ2 (scratch, 5 client) | PlantVillage 54.305 ảnh, split 38.984/4.400/10.921 (`data/partitions_stage2_scratch_v3/`) | Cần dataset gốc + máy train | **BLOCKED**: chưa có run cục bộ |
+| `kaggle_pv_v1_label_skew_a0.1` | Lịch sử (run Kaggle 99,09% / 98,25% / 81,40%) | PlantVillage, partition v1, 10 client, test 10.917 ảnh | Kaggle (pipeline cũ ở `legacy/`) | Chỉ còn metrics; checkpoint mất; chỉ trích dẫn kèm nhãn "historical" |
+
+Quy tắc:
+
+1. Không so sánh hay lập bảng chung giữa số liệu của hai protocol khác nhau.
+2. "Quy tắc vàng" ở mục 1 (cùng một tập kiểm thử cố định) áp dụng **trong phạm vi từng protocol**.
+3. Mọi con số trong báo cáo phải truy được về một entry của `artifacts/registry.json` (xem `PROJECT_STATUS.md`).
+
+---
+
 ## 1. Khóa Phạm Vi & Tập Dữ Liệu (Dataset Protocol)
+
+> Mục 1–6 dưới đây mô tả protocol `stage2_scratch_clean_v3` (tái lập cục bộ).
 
 - **Tập dữ liệu duy nhất**: PlantVillage (Color Variant), định dạng RGB.
 - **Tổng số ảnh thực tế trên máy**: **54.305 ảnh**, phân bổ đầy đủ trên **38 lớp bệnh cây trồng**.

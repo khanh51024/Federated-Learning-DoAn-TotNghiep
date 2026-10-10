@@ -4,12 +4,18 @@ import argparse
 import hashlib
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 
 import torch
 
 ROOT = Path(__file__).resolve().parents[1]
+import sys as _sys
+if str(ROOT) not in _sys.path:
+    _sys.path.insert(0, str(ROOT))
+from src import registry as reg  # noqa: E402
+
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -26,11 +32,11 @@ def sha256_file(path: Path) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Validate a Flower network run as a scientific artifact.")
-    ap.add_argument("--metrics", default="artifacts/metrics/network_flower_history.json")
-    ap.add_argument("--checkpoint", default="artifacts/checkpoints/federated_network_global.pt")
+    ap.add_argument("--metrics", default=reg.NETWORK_FLOWER_HISTORY_JSON)
+    ap.add_argument("--checkpoint", default=reg.FEDERATED_NETWORK_GLOBAL_PT)
     ap.add_argument("--expected-clients", type=int, default=5)
     ap.add_argument("--expected-rounds", type=int, default=5)
-    ap.add_argument("--output", default="artifacts/network_artifact_validation.json")
+    ap.add_argument("--output", default=reg.NETWORK_ARTIFACT_VALIDATION_JSON)
     args = ap.parse_args()
 
     metrics_path = Path(args.metrics)
@@ -86,11 +92,12 @@ def main() -> int:
         details["checkpoint_model_hash"] = ckpt.get("model_hash")
         details["recomputed_model_hash"] = recomputed_model_hash
         report = {"ok": all(bool(v) for v in checks.values()), "checks": checks, "details": details}
+    report["generated_at"] = datetime.now().isoformat(timespec="seconds")
 
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(json.dumps(report, indent=2, ensure_ascii=False))
+    print(json.dumps(report, indent=2))  # stdout ASCII: console Windows không in được tiếng Việt
     return 0 if report["ok"] else 2
 
 

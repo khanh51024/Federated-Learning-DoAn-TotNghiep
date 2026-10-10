@@ -12,6 +12,11 @@ from typing import Any, Dict, List
 ROOT = Path(__file__).resolve().parents[1]
 
 
+import sys as _sys
+if str(ROOT) not in _sys.path:
+    _sys.path.insert(0, str(ROOT))
+from src import registry as reg  # noqa: E402
+
 def _safe_stats(values: List[float]) -> Dict[str, Any]:
     vals = [float(v) for v in values if isinstance(v, (int, float)) and math.isfinite(float(v))]
     if not vals:
@@ -27,7 +32,7 @@ def _safe_stats(values: List[float]) -> Dict[str, Any]:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Aggregate report experiment summaries across training seeds.")
-    ap.add_argument("--input", default="artifacts/report_experiments")
+    ap.add_argument("--input", default=reg.REPORT_EXPERIMENTS_DIR)
     ap.add_argument("--mode", choices=["smoke", "real"], required=True)
     ap.add_argument("--seeds", nargs="*", type=int, default=[42, 123, 2026])
     ap.add_argument("--output", default=None)

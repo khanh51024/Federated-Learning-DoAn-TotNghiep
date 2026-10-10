@@ -11,8 +11,11 @@ from src.federated.client_app import PlantVillageClient, FlowerClientAdapter
 from src.federated.server_app import start_flower_server
 
 
-def _run_audited_server(port: int) -> None:
-    start_flower_server(server_address=f"127.0.0.1:{port}", num_clients=1, rounds=2)
+def _run_audited_server(port: int, metrics: str, checkpoint: str) -> None:
+    start_flower_server(
+        server_address=f"127.0.0.1:{port}", num_clients=1, rounds=2,
+        metrics_file=metrics, checkpoint_file=checkpoint,
+    )
 
 
 def _run_client(port: int) -> None:
@@ -22,9 +25,11 @@ def _run_client(port: int) -> None:
     fl.client.start_client(server_address=f"127.0.0.1:{port}", client=adapter.to_client())
 
 
-def test_audited_server_validates_two_network_rounds():
+def test_audited_server_validates_two_network_rounds(tmp_path):
     port = 18100
-    server = multiprocessing.Process(target=_run_audited_server, args=(port,))
+    server = multiprocessing.Process(
+        target=_run_audited_server, args=(port, str(tmp_path / "audited.json"), str(tmp_path / "audited.pt"))
+    )
     client = multiprocessing.Process(target=_run_client, args=(port,))
     server.start()
     client.start()

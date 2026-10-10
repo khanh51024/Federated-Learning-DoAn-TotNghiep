@@ -18,6 +18,11 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+import sys as _sys
+if str(ROOT) not in _sys.path:
+    _sys.path.insert(0, str(ROOT))
+from src import registry as reg  # noqa: E402
+
 SOURCES = {
     "centralized": ("train-centralized-v6", "2294de21c93e28d611013a75413995a128b303b7"),
     "fedavg": ("train-fedavg-non-iid-v7", "b37488fbaf99d94cc0d66e66a9649c99dd9e1257"),
@@ -184,7 +189,7 @@ def import_results(sources_root: Path, target: Path) -> Path:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sources-root", type=Path, default=ROOT / ".tmp-agent/branch-demo-import/sources")
-    parser.add_argument("--target", type=Path, default=ROOT / "artifacts/branch_demo/20261003")
+    parser.add_argument("--target", type=Path, default=reg.abs_path(reg.DEMO_BUNDLE_DIR))
     args = parser.parse_args()
     print(import_results(args.sources_root, args.target))
 

@@ -1,7 +1,6 @@
 {
-  "schema_version": 1,
-  "generated_at": "2026-10-09T17:01:48",
-  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (checkpoint canonical mất, chưa multi-seed)",
+  "schema_version": 2,
+  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (6 mục BLOCKED cần dữ liệu/máy train, 2 mục kỹ thuật chưa XONG)",
   "canonical_run_id": "20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62",
   "dataset_truth": {
     "source": "data/partitions_stage2_scratch_v3/suite.json",
@@ -122,28 +121,23 @@
     "reference": 1,
     "smoke": 3
   },
-  "canonical_checkpoint_status": {
-    "fedavg_canonical": {
-      "checkpoint_exists": false,
-      "checkpoint_status": "missing_on_this_machine",
-      "status": "unverified_metrics_only"
-    },
-    "centralized_canonical": {
-      "checkpoint_exists": false,
-      "checkpoint_status": "missing_on_this_machine",
-      "status": "historical_unverified"
-    },
-    "local_only_canonical": {
-      "checkpoint_exists": false,
-      "checkpoint_status": "not_applicable",
-      "status": "historical_unverified"
-    }
-  },
+  "web_visible_models": [
+    "demo_centralized_v6",
+    "demo_fedavg_v7",
+    "demo_local_00",
+    "demo_local_01",
+    "demo_local_02",
+    "demo_local_03",
+    "demo_local_04",
+    "plantvillage_traced_reference"
+  ],
   "gates": {
     "provenance": {
+      "generated_at": "2026-10-10T18:30:12",
       "status": "unverified",
       "critical_issues": [
-        "fedavg_state_hash_mismatch"
+        "fedavg_checkpoint_missing",
+        "centralized_checkpoint_missing"
       ],
       "warning_issues": [
         "scientific_stage2_incomplete"
@@ -151,10 +145,13 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
+      "generated_at": "2026-10-10T18:30:14",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
+      "generated_at": null,
+      "code_fingerprint": null,
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
@@ -183,21 +180,159 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
+      "generated_at": "2026-10-10T18:30:19",
       "ok": false,
+      "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
+    },
+    "checkpoint_catalog": {
+      "status": "complete",
+      "total_pt_files": 58,
+      "in_models": 15,
+      "in_groups": 43,
+      "unclassified": [],
+      "source": "quét đĩa (scripts/build_registry.py)"
     }
   },
-  "open_checklist_items": [
-    "Tách web inference/training/monitoring đọc qua registry",
-    "Dọn tài liệu mâu thuẫn (xóa archive, tạo RUNBOOK/MODEL_REGISTRY)",
-    "Kiểm chứng provenance & checkpoint (cần tái chạy run canonical hoặc khôi phục weights từ Kaggle)",
-    "Chốt một protocol khoa học duy nhất cho mỗi thí nghiệm",
-    "Audit leakage theo từng run (cần dataset gốc)",
-    "Đánh giá PlantDoc theo từng lớp",
-    "Phân tích lỗi confidence cao (100 ảnh sai với confidence > 0.9 ở FedAvg v7)",
-    "Chạy multi-seed non-IID (seed 42/123/2026)",
-    "Đồng bộ báo cáo & artifacts sau khi có run mới",
-    "Full tests + release sạch"
+  "checklist": [
+    {
+      "id": "registry",
+      "title": "Registry v2 + danh mục mọi checkpoint trên đĩa",
+      "status": "XONG",
+      "detail": "schema v2; 18 model; 58 file .pt đều có tên (15 trong model, 43 trong nhóm)",
+      "unlock": []
+    },
+    {
+      "id": "smoke_isolated",
+      "title": "Smoke cách ly khỏi slot canonical",
+      "status": "XONG",
+      "detail": "slot canonical không chứa smoke; 3 checkpoint smoke nằm ở artifacts/checkpoints/smoke/",
+      "unlock": []
+    },
+    {
+      "id": "single_engine",
+      "title": "Một engine train (pipeline cũ gom vào legacy/)",
+      "status": "XONG",
+      "detail": "engine duy nhất là src/; pipeline Kaggle/stage* nằm trong legacy/ (chạy riêng: pytest legacy/tests)",
+      "unlock": []
+    },
+    {
+      "id": "web_split",
+      "title": "Web tách router/service, inference đi một cửa",
+      "status": "XONG",
+      "detail": "app.py chỉ mount router; inference chỉ đi qua web/services/model_service.py (cổng web_visible)",
+      "unlock": []
+    },
+    {
+      "id": "no_hardcode",
+      "title": "Không hardcode đường dẫn artifact",
+      "status": "XONG",
+      "detail": "mọi đường dẫn artifacts/ trong src/web/scripts lấy từ src/registry.py (quét AST)",
+      "unlock": []
+    },
+    {
+      "id": "docs_clean",
+      "title": "Dọn tài liệu mâu thuẫn",
+      "status": "XONG",
+      "detail": "gốc repo chỉ còn README.md + PROJECT_STATUS.md; docs/ chỉ gồm tài liệu hiện hành",
+      "unlock": []
+    },
+    {
+      "id": "docs_numbers",
+      "title": "Số liệu trong docs không mâu thuẫn artifact",
+      "status": "XONG",
+      "detail": "không còn số liệu mâu thuẫn đã biết (97,12, 97.12...) trong README/docs",
+      "unlock": []
+    },
+    {
+      "id": "protocol",
+      "title": "Chốt một protocol khoa học cho mỗi thí nghiệm",
+      "status": "XONG",
+      "detail": "mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md",
+      "unlock": []
+    },
+    {
+      "id": "tests_isolated",
+      "title": "Test không ghi đè artifact đang track",
+      "status": "XONG",
+      "detail": "test không tham chiếu artifacts/checkpoints|metrics (dùng tmp_path)",
+      "unlock": []
+    },
+    {
+      "id": "full_tests",
+      "title": "Full tests pass trên mã nguồn hiện tại",
+      "status": "CHƯA",
+      "detail": "kết quả cũ (?) không còn khớp mã nguồn hiện tại — chạy lại --full-gates",
+      "unlock": []
+    },
+    {
+      "id": "provenance",
+      "title": "Kiểm chứng provenance & checkpoint canonical",
+      "status": "BLOCKED",
+      "detail": "provenance=unverified; lỗi: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing']",
+      "unlock": [
+        "# 1) tải hai file từ Kaggle, 2) đặt đúng vào slot canonical (đường mà provenance validator và registry đọc):",
+        "Copy-Item <fedavg_best.pt tải về> artifacts/checkpoints/fedavg_best.pt",
+        "Copy-Item <centralized_best.pt tải về> artifacts/checkpoints/centralized_best.pt",
+        ".\\.venv\\Scripts\\python.exe scripts\\update_status.py   # so state-hash với canonical_manifest"
+      ]
+    },
+    {
+      "id": "leakage",
+      "title": "Audit leakage theo từng run",
+      "status": "BLOCKED",
+      "detail": "7/7 model hiện hành có leakage_audit=unknown (bundle chỉ công bố validation_manifest_sha256, không kèm manifest train). [mục kiểm tay: chưa có script đọc kết quả audit để tự chuyển trạng thái]",
+      "unlock": [
+        ".\\.venv\\Scripts\\python.exe scripts\\verify_integrity.py --all   # chỉ audit split cục bộ partitions_*",
+        "# audit split của bundle: cần manifest train từ nhánh train-* (chưa có trên máy)"
+      ]
+    },
+    {
+      "id": "per_class",
+      "title": "Đánh giá PlantDoc theo từng lớp",
+      "status": "BLOCKED",
+      "detail": "đã có gap công bố: FedAvg v7 PlantVillage 93.12% vs PlantDoc 47.21%; thiếu confusion matrix đầy đủ theo lớp (mới có top-5 nhầm lẫn trong metrics công bố). [mục kiểm tay: chưa có script đánh giá theo lớp]",
+      "unlock": [
+        "# chưa có script đánh giá theo lớp — viết scripts/evaluate_published_per_class.py khi có ảnh validation",
+        ".\\.venv\\Scripts\\python.exe scripts\\audit_realworld_inference.py --images <thư_mục_ảnh_ngoài> ",
+        ".\\.venv\\Scripts\\python.exe scripts\\evaluate_inference_audit.py --audit artifacts\\inference_audit.json --labels <nhãn.csv>"
+      ]
+    },
+    {
+      "id": "confident_errors",
+      "title": "Phân tích lỗi confidence cao",
+      "status": "BLOCKED",
+      "detail": "số lượng đã có từ metrics công bố — Centralized v6: 98 ảnh sai với confidence > 0.9; FedAvg v7: 100 ảnh sai với confidence > 0.9; chưa phân tích được từng ảnh. [mục kiểm tay: chưa có script đo calibration]",
+      "unlock": [
+        "# cùng điều kiện với mục 'PlantDoc theo từng lớp'; tiếp theo thêm đo ECE/temperature scaling trên tập validation độc lập"
+      ]
+    },
+    {
+      "id": "multiseed",
+      "title": "Chạy multi-seed non-IID (seed 42/123/2026)",
+      "status": "BLOCKED",
+      "detail": "chưa có multi-seed THẬT (chỉ có bản smoke accuracy 0.0263 trên ảnh tổng hợp)",
+      "unlock": [
+        ".\\scripts\\run_real_multiseed_report.ps1 -DatasetRoot D:\\PlantVillage -CentralizedEpochs 10 -FederatedRounds 10 -Seeds 42,123,2026",
+        "# hoặc train ngoài rồi import bundle: python scripts/import_branch_demo.py (xem docs/MODEL_REGISTRY.md)"
+      ]
+    },
+    {
+      "id": "reports_synced",
+      "title": "Đồng bộ báo cáo & artifacts sau khi có run mới",
+      "status": "BLOCKED",
+      "detail": "phụ thuộc multi-seed thật",
+      "unlock": [
+        ".\\.venv\\Scripts\\python.exe scripts\\update_status.py"
+      ]
+    },
+    {
+      "id": "release",
+      "title": "Release sạch (mọi gate kỹ thuật XONG)",
+      "status": "CHƯA",
+      "detail": "còn mục kỹ thuật chưa XONG: ['full_tests']",
+      "unlock": []
+    }
   ],
   "source": "scripts/update_status.py"
 }

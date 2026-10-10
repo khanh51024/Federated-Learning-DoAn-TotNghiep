@@ -19,6 +19,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
+from src import registry as reg
+
 
 ROOT = Path(__file__).resolve().parents[1]
 PARTITION = ROOT / "data/partitions_stage2_scratch_v3/label01"
@@ -131,7 +133,7 @@ class NetworkDemoManager:
                 raise RuntimeError("A Flower demo is already running")
             self._running = True
             self._processes.clear()
-        run_dir = ROOT / "artifacts/web_runs/network_smoke" / (
+        run_dir = reg.abs_path(reg.NETWORK_SMOKE_RUNS_DIR) / (
             datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "_" + uuid.uuid4().hex[:8]
         )
         run_dir.mkdir(parents=True, exist_ok=False)

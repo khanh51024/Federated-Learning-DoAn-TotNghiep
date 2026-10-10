@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from src import registry as reg
 from scripts.import_branch_demo import (
     CONTRACT_FILES,
     RELEASE_SHA,
@@ -24,8 +25,8 @@ from scripts.import_branch_demo import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
-STORE = ROOT / "artifacts/branch_demo/20261003"
-PROTOCOL_ID = "mixed_pv_pd_v3_pretrained_seed42_validation"
+STORE = reg.abs_path(reg.DEMO_BUNDLE_DIR)
+PROTOCOL_ID = reg.DEMO_PROTOCOL_ID
 MODEL_FILES = {
     "centralized": ("centralized", "checkpoint_best.pt", "Centralized v6", "GĐ1"),
     "fedavg": ("fedavg", "checkpoint_best.pt", "FedAvg v7", "GĐ2"),

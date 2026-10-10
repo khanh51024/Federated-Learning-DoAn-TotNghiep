@@ -8,6 +8,11 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
+import sys as _sys
+if str(ROOT) not in _sys.path:
+    _sys.path.insert(0, str(ROOT))
+from src import registry as reg  # noqa: E402
+
 MANIFEST = ROOT / "data" / "dataset_manifest.json"
 PART_ROOT = ROOT / "data" / "partitions_stage2_scratch_v3" / "label100"
 
@@ -61,7 +66,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Validate a PlantVillage image root against the locked thesis protocol.")
     ap.add_argument("dataset_root", type=Path)
     ap.add_argument("--full-path-check", action="store_true", help="Check every manifest path, not only a deterministic sample.")
-    ap.add_argument("--output", default="artifacts/data_preflight.json")
+    ap.add_argument("--output", default=reg.DATA_PREFLIGHT_JSON)
     args = ap.parse_args()
 
     root = args.dataset_root.resolve()

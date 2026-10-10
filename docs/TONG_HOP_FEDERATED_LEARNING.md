@@ -77,7 +77,7 @@ Các thành phần chính:
 ```text
 src/centralized/train.py
 src/centralized/evaluate.py
-src/centralized/inference.py
+web/services/model_service.py
 ```
 
 ---
@@ -1779,7 +1779,7 @@ src/data/plantvillage.py
 src/data/partition.py
 src/centralized/train.py
 src/centralized/evaluate.py
-src/centralized/inference.py
+web/services/model_service.py
 src/federated/client_app.py
 src/federated/server_app.py
 src/federated/strategy.py

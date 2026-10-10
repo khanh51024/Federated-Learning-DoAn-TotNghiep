@@ -14,7 +14,7 @@
 | [RUNBOOK.md](RUNBOOK.md) | Lệnh vận hành: preflight dataset, scientific run, multi-seed, attack, gate cuối |
 | [EXPERIMENT_PROTOCOL.md](EXPERIMENT_PROTOCOL.md) | Giao thức thực nghiệm đóng băng (scratch GĐ2) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Sơ đồ kiến trúc Mermaid (Centralized vs FL, Flower topology) |
-| [TRAINING.md](TRAINING.md) | Hướng dẫn vận hành pipeline fl_training (CLI prepare/preflight/train/sweep) |
+| [../legacy/README.md](../legacy/README.md) | Pipeline Kaggle/stage* cũ (chỉ để tra cứu/tái lập lịch sử, chạy riêng) |
 | [TONG_HOP_FEDERATED_LEARNING.md](TONG_HOP_FEDERATED_LEARNING.md) | Tài liệu tổng hợp lý thuyết 42 mục (FedAvg math, validator, RTT, provenance) |
 | [WEB_DEMO_GD1_GD2.md](WEB_DEMO_GD1_GD2.md) | Hướng dẫn demo web + nguồn số liệu published_demo hash-verified |
 | [AWS_DEPLOYMENT_GUIDE.md](AWS_DEPLOYMENT_GUIDE.md) | Triển khai EC2 end-to-end |

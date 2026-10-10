@@ -3,10 +3,12 @@ from __future__ import annotations
 import csv
 import json
 import multiprocessing
+import shutil
 import time
 from pathlib import Path
 
 import flwr as fl
+import pytest
 from PIL import Image
 
 from src.federated.client_app import FlowerClientAdapter, PlantVillageClient
@@ -52,7 +54,15 @@ def test_real_heldout_evaluator_produces_round_and_final_metrics(tmp_path: Path)
     Image.new("RGB", (32, 32), "green").save(eval_root / "ClassA" / "val.jpg")
     Image.new("RGB", (32, 32), "yellow").save(eval_root / "ClassA" / "test.jpg")
 
-    eval_part = tmp_path / "eval_partition"
+    # Server ràng buộc client_id với partition đã công bố (partition_config.json + clients/client_XX.csv);
+    # client smoke dùng partition label100 cục bộ nên eval_partition phải là bản sao cùng tên.
+    real = Path(__file__).resolve().parents[1] / "data/partitions_stage2_scratch_v3/label100"
+    if not (real / "partition_config.json").is_file() or not (real / "clients/client_00.csv").is_file():
+        pytest.skip("cần partition label100 cục bộ (data/partitions_stage2_scratch_v3) để dựng hợp đồng client")
+    eval_part = tmp_path / "label100"
+    (eval_part / "clients").mkdir(parents=True)
+    shutil.copy(real / "partition_config.json", eval_part / "partition_config.json")
+    shutil.copy(real / "clients/client_00.csv", eval_part / "clients/client_00.csv")
     _write_manifest(
         eval_part / "global_val.csv",
         [{"relative_path": "ClassA/val.jpg", "label": 0, "class_name": "ClassA"}],

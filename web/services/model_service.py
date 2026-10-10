@@ -8,23 +8,20 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import torch
 
 from src import registry as reg
 
-try:
-    from src.federated.weight_inspector import inspect_layer_weights
-except ImportError:
-    from train.weight_inspector import inspect_layer_weights
+from src.federated.weight_inspector import inspect_layer_weights
 
 
 def registry_models() -> Dict[str, Dict[str, Any]]:
-    """Trả về {model_id: entry} từ registry; dict rỗng nếu registry chưa sinh."""
+    """Trả về {model_id: entry} từ registry; dict rỗng nếu registry chưa sinh hoặc đang bị ghi dở."""
     try:
         return {m["model_id"]: m for m in reg.iter_models()}
-    except (FileNotFoundError, ValueError, json.JSONDecodeError):
+    except (OSError, ValueError, KeyError, json.JSONDecodeError):
         return {}
 
 
@@ -42,31 +39,149 @@ def status_checkpoints_info() -> Dict[str, bool]:
     }
 
 
+_HASH_CACHE: Dict[Any, str] = {}
+
+
+def _file_sha256(path: Path) -> str:
+    """SHA-256 của file, cache theo (đường dẫn, kích thước, mtime) để không băm lại mỗi request."""
+    import hashlib
+
+    stat = path.stat()
+    key = (str(path), stat.st_size, stat.st_mtime_ns)
+    if key not in _HASH_CACHE:
+        digest = hashlib.sha256()
+        with path.open("rb") as stream:
+            for chunk in iter(lambda: stream.read(1 << 20), b""):
+                digest.update(chunk)
+        _HASH_CACHE[key] = digest.hexdigest()
+    return _HASH_CACHE[key]
+
+
+def is_web_visible(model_id: str) -> bool:
+    return registry_models().get(model_id, {}).get("web_visible") is True
+
+
 def status_models_available() -> Dict[str, bool]:
-    """Model inference có thực sự dùng được (web_visible + checkpoint tồn tại)."""
+    """Model inference có thực sự dùng được: đã qua đủ 5 điều kiện của cổng registry (web_visible)."""
     return {
-        "centralized": model_exists("demo_centralized_v6"),
-        "fedavg": model_exists("demo_fedavg_v7"),
-        "traced_reference": model_exists("plantvillage_traced_reference"),
+        "centralized": is_web_visible("demo_centralized_v6"),
+        "fedavg": is_web_visible("demo_fedavg_v7"),
+        "traced_reference": is_web_visible("plantvillage_traced_reference"),
     }
+
+
+# ---------------------------------------------------------------------------
+# Một cửa inference: mọi dự đoán trên web đi qua predict()
+# ---------------------------------------------------------------------------
+class RegistryUnavailable(RuntimeError):
+    """artifacts/registry.json chưa được sinh hoặc không đọc được."""
+
+
+class UnknownModel(KeyError):
+    """model_id không có trong registry."""
+
+
+class ModelNotAllowed(RuntimeError):
+    """Model có trong registry nhưng chưa đạt cổng web_visible."""
+
+    def __init__(self, model_id: str, reasons: List[str]):
+        self.model_id = model_id
+        self.reasons = reasons
+        super().__init__(f"{model_id} chưa đạt cổng hiển thị: {'; '.join(reasons) or 'không rõ lý do'}")
+
+
+def run_backend(entry: Dict[str, Any], image: Any) -> Dict[str, Any]:
+    """Gọi đúng backend mà entry registry khai báo. Không kiểm web_visible (dành cho bài kiểm tra của registry)."""
+    inference = entry.get("inference") or {}
+    backend = inference.get("backend")
+    if backend == reg.BACKEND_PUBLISHED_BUNDLE:
+        from web.demo_evidence import predict_published
+
+        return predict_published(image, inference["key"])
+    if backend == reg.BACKEND_TORCHSCRIPT_REFERENCE:
+        from web import plantvillage_reference as reference
+
+        # Kiểm lại hash MỖI lần dùng (bundle published tự kiểm hash trong load_evidence; TorchScript thì chưa)
+        if _file_sha256(reference.MODEL_FILE) != reg.PLANTVILLAGE_TRACED_SHA256:
+            raise ValueError("PlantVillage TorchScript đã đổi so với hash đã ghim — chạy lại scripts/update_status.py")
+        return reference.predict_plantvillage(image)
+    raise ValueError(f"{entry.get('model_id')}: backend inference {backend!r} không được hỗ trợ")
+
+
+def predict(model_id: str, image: Any) -> Dict[str, Any]:
+    """Dự đoán qua registry: từ chối model không tồn tại hoặc chưa đạt cổng web_visible."""
+    models = registry_models()
+    if not models:
+        raise RegistryUnavailable("Chưa có artifacts/registry.json — chạy scripts/update_status.py")
+    entry = models.get(model_id)
+    if entry is None:
+        raise UnknownModel(model_id)
+    if entry.get("web_visible") is not True:
+        raise ModelNotAllowed(model_id, list(entry.get("web_gate_failures") or []))
+    result = dict(run_backend(entry, image))
+    result["registry"] = {
+        "model_id": entry["model_id"],
+        "role": entry.get("role"),
+        "display_label": entry.get("display_label"),
+        "pipeline": entry.get("pipeline"),
+        "dataset_id": entry.get("dataset_id"),
+    }
+    return result
+
+
+def list_models() -> List[Dict[str, Any]]:
+    """Danh sách model được phép hiển thị trên web (đã qua cổng), kèm nhãn ngữ cảnh."""
+    out: List[Dict[str, Any]] = []
+    for entry in registry_models().values():
+        if entry.get("web_visible") is not True:
+            continue
+        metrics = entry.get("metrics") or {}
+        has_metrics = bool(metrics.get("plantdoc") or metrics.get("plantvillage"))
+        out.append({
+            "model_id": entry["model_id"],
+            "display_name": entry.get("display_name"),
+            "display_label": entry.get("display_label"),
+            "role": entry.get("role"),
+            "family": entry.get("family"),
+            "pipeline": entry.get("pipeline"),
+            "dataset_id": entry.get("dataset_id"),
+            "protocol_id": entry.get("protocol_id"),
+            "checkpoint_status": entry.get("checkpoint_status"),
+            "inference_test": (entry.get("inference_test") or {}).get("status"),
+            "metrics_summary": {
+                "plantdoc_top1": (metrics.get("plantdoc") or {}).get("top1_accuracy"),
+                "plantvillage_top1": (metrics.get("plantvillage") or {}).get("top1_accuracy"),
+            } if has_metrics else None,
+            "metrics_source": entry.get("metrics_source"),
+        })
+    return sorted(out, key=lambda m: m["model_id"])
+
+
+def _trusted_checkpoint(model_id: str, expected_status: str) -> Optional[Path]:
+    """Đường dẫn checkpoint CHỈ khi registry xác nhận trạng thái tin cậy và hash trên đĩa khớp entry."""
+    entry = registry_models().get(model_id) or {}
+    if entry.get("checkpoint_status") != expected_status or not entry.get("checkpoint_path"):
+        return None
+    path = reg.abs_path(entry["checkpoint_path"])
+    if not path.is_file() or _file_sha256(path) != entry.get("file_sha256"):
+        return None
+    return path
 
 
 def inspect_weights(layer: Optional[str] = None) -> Dict[str, Any]:
     """
-    Thống kê trọng số layer của checkpoint FedAvg.
-    Ưu tiên slot canonical (chỉ run khoa học thật mới ghi); nếu chưa có thì dùng
-    checkpoint demo hash-verified. Không fallback âm thầm sang model ngẫu nhiên.
+    Thống kê trọng số layer của checkpoint FedAvg — cùng cổng tin cậy với inference:
+    ưu tiên slot canonical nếu registry xác nhận `matches_manifest`; nếu không dùng checkpoint demo
+    chỉ khi model đó `web_visible` và hash trên đĩa khớp registry. Không fallback âm thầm.
     """
-    fedavg_ckpt = reg.abs_path(reg.FEDAVG_BEST_PT)
-    if not fedavg_ckpt.exists():
-        fallback = reg.abs_path(reg.DEMO_BUNDLE_DIR) / "fedavg" / "checkpoint_best.pt"
-        if fallback.exists() and model_exists("demo_fedavg_v7"):
-            fedavg_ckpt = fallback
+    fedavg_ckpt = _trusted_checkpoint("fedavg_canonical", "matches_manifest")
+    if fedavg_ckpt is None and is_web_visible("demo_fedavg_v7"):
+        fedavg_ckpt = _trusted_checkpoint("demo_fedavg_v7", "hash_verified")
 
-    if not fedavg_ckpt.exists():
+    if fedavg_ckpt is None:
         return {
             "available": False,
-            "message": "Chưa có checkpoint FedAvg (canonical slot trống và demo chưa import) để kiểm tra trọng số.",
+            "message": "Chưa có checkpoint FedAvg đủ tin cậy (canonical chưa khớp manifest, demo chưa qua cổng registry) để kiểm tra trọng số.",
             "available_layers": [],
             "selected_layer_stats": None,
         }
@@ -83,30 +198,15 @@ def inspect_weights(layer: Optional[str] = None) -> Dict[str, Any]:
             "selected_layer_stats": None,
         }
 
-    # Reference để tính update norm: slot canonical nếu có
-    ref_weights = None
-    ref_path = reg.abs_path(reg.FEDAVG_LAST_PT)
-    if not ref_path.exists():
-        ref_path = reg.abs_path(reg.CENTRALIZED_BEST_PT)
-    if ref_path.exists():
-        try:
-            r_ckpt = torch.load(ref_path, map_location="cpu", weights_only=False)
-            r_state = r_ckpt.get("model_state", r_ckpt) if isinstance(r_ckpt, dict) else r_ckpt
-            ref_weights = {k: v.cpu().detach() if hasattr(v, "cpu") else torch.tensor(v) for k, v in r_state.items()}
-        except Exception:
-            ref_weights = None
-
     all_layers = sorted(weights.keys())
     selected_layer = layer if layer and layer in weights else all_layers[0]
-
-    ref_tensor = ref_weights.get(selected_layer) if ref_weights else None
-    stats = inspect_layer_weights(weights[selected_layer], reference_tensor=ref_tensor, layer_name=selected_layer)
+    stats = inspect_layer_weights(weights[selected_layer], reference_tensor=None, layer_name=selected_layer)
 
     return {
         "available": True,
         "available_layers": all_layers,
         "selected_layer_stats": stats,
-        "has_reference": ref_tensor is not None,
+        "has_reference": False,
         "checkpoint_source": fedavg_ckpt.name,
     }
 

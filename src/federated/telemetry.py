@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 import numpy as np
 
+from src import registry as reg
+
 
 @dataclass
 class ClientRoundTelemetry:
@@ -48,7 +50,7 @@ class TelemetryManager:
     """Quản lý lưu trữ và xuất báo cáo độ trễ / mạng."""
 
     def __init__(self, log_dir: Optional[str | Path] = None):
-        self.log_dir = Path(log_dir) if log_dir else Path("artifacts/metrics")
+        self.log_dir = Path(log_dir) if log_dir else Path(reg.METRICS_DIR)
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.history: List[ServerRoundTelemetry] = []
 

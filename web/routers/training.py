@@ -15,12 +15,8 @@ from src import registry as reg
 from web import state
 from web.state import CURRENT_TASK, NETWORK_DEMO, check_port_open
 
-try:
-    from src.centralized.train import run_centralized_training
-    from src.federated.server_app import run_federated_simulation
-except ImportError:
-    from train.centralized import run_centralized_training
-    from train.server import run_federated_simulation
+from src.centralized.train import run_centralized_training
+from src.federated.server_app import run_federated_simulation
 
 router = APIRouter()
 

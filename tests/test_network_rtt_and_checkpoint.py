@@ -13,18 +13,14 @@ from src.federated.server_app import start_flower_server
 from src.model.mobilenetv3 import create_model, set_parameters
 
 
-METRICS = Path("artifacts/metrics/network_rtt_checkpoint_test.json")
-CHECKPOINT = Path("artifacts/checkpoints/network_rtt_checkpoint_test.pt")
-
-
-def _server(port: int) -> None:
+def _server(port: int, metrics: str, checkpoint: str) -> None:
     start_flower_server(
         server_address=f"127.0.0.1:{port}",
         num_clients=2,
         rounds=1,
         local_epochs=1,
-        metrics_file=METRICS,
-        checkpoint_file=CHECKPOINT,
+        metrics_file=metrics,
+        checkpoint_file=checkpoint,
     )
 
 
@@ -43,13 +39,12 @@ def _client(client_id: int, port: int) -> None:
     )
 
 
-def test_per_client_probe_rtt_and_network_checkpoint_are_real():
-    for path in (METRICS, CHECKPOINT):
-        if path.exists():
-            path.unlink()
+def test_per_client_probe_rtt_and_network_checkpoint_are_real(tmp_path):
+    METRICS = tmp_path / "network_rtt_checkpoint_test.json"
+    CHECKPOINT = tmp_path / "network_rtt_checkpoint_test.pt"
 
     port = 18110
-    server = multiprocessing.Process(target=_server, args=(port,))
+    server = multiprocessing.Process(target=_server, args=(port, str(METRICS), str(CHECKPOINT)))
     clients = [multiprocessing.Process(target=_client, args=(cid, port)) for cid in range(2)]
     server.start()
     for proc in clients:

@@ -16,10 +16,7 @@ from src import registry as reg
 from web.services import model_service
 from web.state import NETWORK_DEMO, check_port_open
 
-try:
-    from src.data.partition import calculate_data_scarcity
-except ImportError:
-    from train.data import calculate_data_scarcity
+from src.data.partition import calculate_data_scarcity
 
 router = APIRouter()
 
@@ -32,7 +29,7 @@ def get_system_status() -> Dict[str, Any]:
     cuda_avail = torch.cuda.is_available()
     dev_name = torch.cuda.get_device_name(0) if cuda_avail else "CPU"
 
-    traced_ready = model_service.model_exists("plantvillage_traced_reference")
+    traced_ready = model_service.is_web_visible("plantvillage_traced_reference")
     flower_active = NETWORK_DEMO.snapshot()["server_running"]
 
     return {
@@ -76,7 +73,7 @@ def get_metrics(mode: str, source: str | None = Query(None)) -> Any:
         candidates = [
             reg.abs_path(reg.WEB_RUNS_DIR) / f"{mode}_demo" / "metrics" / f"{stem}.json",
             reg.abs_path(reg.WEB_RUNS_DIR) / f"{mode}_full" / "metrics" / f"{stem}.json",
-            Path(f"artifacts/demo_runs/{mode}/metrics/{stem}.json"),
+            reg.abs_path(reg.DEMO_RUNS_DIR) / mode / "metrics" / f"{stem}.json",
         ]
         for target in candidates:
             if target.exists():
@@ -157,7 +154,7 @@ def get_clients_info(alpha: float = Query(1.0)) -> Dict[str, Any]:
 
     telemetry_file = reg.abs_path(reg.TELEMETRY_HISTORY_JSON)
     if not telemetry_file.exists():
-        telemetry_file = Path("artifacts/demo_runs/fedavg/metrics/telemetry_history.json")
+        telemetry_file = reg.abs_path(reg.DEMO_RUNS_DIR) / "fedavg" / "metrics" / "telemetry_history.json"
 
     last_round_telemetry: Dict[int, Any] = {}
     if telemetry_file.exists():

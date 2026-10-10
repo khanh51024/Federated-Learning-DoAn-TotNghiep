@@ -11,13 +11,14 @@ from src.federated.client_app import FlowerClientAdapter, PlantVillageClient
 from src.federated.server_app import start_flower_server
 
 
-def _server(port: int) -> None:
+def _server(port: int, metrics: str, checkpoint: str) -> None:
     start_flower_server(
         server_address=f"127.0.0.1:{port}",
         num_clients=5,
         rounds=2,
         local_epochs=1,
-        metrics_file="artifacts/metrics/network_flower_history_5clients_test.json",
+        metrics_file=metrics,
+        checkpoint_file=checkpoint,
     )
 
 
@@ -31,9 +32,11 @@ def _client(client_id: int, port: int) -> None:
     )
 
 
-def test_five_clients_two_rounds_over_real_flower_network():
+def test_five_clients_two_rounds_over_real_flower_network(tmp_path):
     port = 18105
-    server = multiprocessing.Process(target=_server, args=(port,))
+    server = multiprocessing.Process(
+        target=_server, args=(port, str(tmp_path / "five_clients.json"), str(tmp_path / "five_clients.pt"))
+    )
     clients = [multiprocessing.Process(target=_client, args=(cid, port)) for cid in range(5)]
     server.start()
     for proc in clients:

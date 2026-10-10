@@ -1,0 +1,9 @@
+#!/bin/sh
+# Chặn commit khi PROJECT_STATUS.md lệch trạng thái thật (checklist do máy chấm).
+# Bật một lần:  git config core.hooksPath scripts/hooks
+PY=".venv/Scripts/python.exe"
+[ -x "$PY" ] || PY="python"
+"$PY" scripts/update_status.py --check || {
+  echo "PROJECT_STATUS.md đang lệch. Chạy: python scripts/update_status.py  rồi git add PROJECT_STATUS.md artifacts/status_report.json" >&2
+  exit 1
+}

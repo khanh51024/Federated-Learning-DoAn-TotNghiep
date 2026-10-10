@@ -11,6 +11,11 @@ from typing import Any, Dict
 ROOT = Path(__file__).resolve().parents[1]
 
 
+import sys as _sys
+if str(ROOT) not in _sys.path:
+    _sys.path.insert(0, str(ROOT))
+from src import registry as reg  # noqa: E402
+
 def sha256_file(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as f:
@@ -77,7 +82,7 @@ def main() -> int:
 
     output = args.output
     if output is None:
-        output = ROOT / "artifacts" / "client_preflight" / f"{partition_dir.name}_client_{args.client_id:02d}.json"
+        output = reg.abs_path(reg.CLIENT_PREFLIGHT_DIR) / f"{partition_dir.name}_client_{args.client_id:02d}.json"
     elif not output.is_absolute():
         output = ROOT / output
     output.parent.mkdir(parents=True, exist_ok=True)

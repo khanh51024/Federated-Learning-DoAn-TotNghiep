@@ -8,10 +8,30 @@ from fastapi import File, HTTPException, Query, UploadFile
 from fastapi.routing import APIRouter
 from PIL import Image
 
-from web.demo_evidence import PROTOCOL_ID, load_evidence, predict_published
-from web.plantvillage_reference import predict_plantvillage
+from web.demo_evidence import PROTOCOL_ID, load_evidence
+from web.services import model_service
 
 router = APIRouter()
+
+
+def _predict(model_id: str, image: Image.Image) -> Dict[str, Any]:
+    """Cửa duy nhất tới model: lỗi registry/cổng được đổi thành HTTP có lý do rõ ràng."""
+    try:
+        return model_service.predict(model_id, image)
+    except model_service.UnknownModel as exc:
+        # model_id do server tự suy ra từ lựa chọn đã kiểm; thiếu nghĩa là registry chưa được sinh đúng
+        raise HTTPException(status_code=503, detail=f"Registry chưa có model: {exc} — chạy scripts/update_status.py") from exc
+    except model_service.ModelNotAllowed as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except model_service.RegistryUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@router.get("/api/models")
+def get_models() -> Dict[str, Any]:
+    """Các model được phép dùng trên web (đã qua 5 điều kiện của registry), kèm nhãn Demo/Tham chiếu."""
+    models = model_service.list_models()
+    return {"available": bool(models), "count": len(models), "models": models}
 
 
 @router.get("/api/demo/evidence")
@@ -67,7 +87,7 @@ async def run_plantvillage_reference(file: UploadFile = File(...)) -> Dict[str, 
     contents = await file.read()
     try:
         with Image.open(io.BytesIO(contents)) as image:
-            return predict_plantvillage(image)
+            return _predict("plantvillage_traced_reference", image)
     except (OSError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=f"Ảnh hoặc model PlantVillage không hợp lệ: {exc}") from exc
 
@@ -92,9 +112,10 @@ async def run_dual_inference(
 
     if federated_source not in {"fedavg", *(f"local_{i:02d}" for i in range(5))}:
         raise HTTPException(status_code=400, detail="Chỉ chọn FedAvg v7 hoặc một trong năm Local-only v7 cùng protocol.")
+    selected_id = "demo_fedavg_v7" if federated_source == "fedavg" else f"demo_{federated_source}"
     try:
-        central = predict_published(image, "centralized")
-        selected = predict_published(image, federated_source)
+        central = _predict("demo_centralized_v6", image)
+        selected = _predict(selected_id, image)
     except ValueError as exc:
         raise HTTPException(status_code=503, detail=f"Artifact suy luận chưa sẵn sàng: {exc}") from exc
     selected_name = "FedAvg v7" if federated_source == "fedavg" else f"Local {federated_source[-2:]}"

@@ -1,3 +1,18 @@
+# LEGACY — pipeline Kaggle / stage* (chỉ để tra cứu và tái lập lịch sử)
+
+> Từ 2026-10-10 toàn bộ code thuộc pipeline cũ (`fl_training`, `stage1_compat`, `stage2_matched`,
+> `stage2_scratch`, `experiments`, `team_runner.py`, notebook Kaggle, `release_manifest_v*`, config Kaggle)
+> nằm ở đây. **Engine duy nhất của dự án là `src/`.** Hướng chính thức và trạng thái: `../PROJECT_STATUS.md`.
+>
+> - Chạy test riêng: `.\.venv\Scripts\python.exe -m pytest legacy/tests -q`
+> - Chạy CLI: đặt `PYTHONPATH=legacy` rồi `python -m fl_training.cli ...` (các lệnh bên dưới viết cho gốc repo cũ).
+> - Config nằm ở `legacy/configs/`; dữ liệu `data/`, `results/` vẫn ở gốc repo.
+> - `legacy/scripts/package_*`, `deploy_and_train_kaggle.py`: đóng gói Kaggle cũ, **đã đóng băng**, không đảm bảo chạy.
+> - Một số test legacy cần dữ liệu gốc (PlantVillage, `data/partitions_train_v*`) hoặc checkout CRLF để khớp hash
+>   manifest — lỗi do thiếu dữ liệu/EOL, không do mã. Danh sách xem `PROJECT_STATUS.md` (mục Nhật ký).
+
+---
+
 # Hướng dẫn Huấn luyện Federated Learning (FedAvg + MobileNetV3)
 
 Tài liệu hướng dẫn triển khai, vận hành và nghiệm thu hệ thống huấn luyện Federated Learning (FedAvg) trên bộ dữ liệu PlantVillage (38 lớp cây–bệnh) bằng Flower Message API và PyTorch.

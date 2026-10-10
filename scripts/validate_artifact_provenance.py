@@ -2,14 +2,20 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 
 import torch
 
 ROOT = Path(__file__).resolve().parents[1]
-MANIFEST = ROOT / "artifacts" / "canonical_manifest.json"
-OUT = ROOT / "artifacts" / "artifact_provenance_validation.json"
+sys.path.insert(0, str(ROOT))
+
+from src import registry as reg  # noqa: E402
+
+MANIFEST = reg.abs_path(reg.CANONICAL_MANIFEST_JSON)
+OUT = reg.abs_path(reg.PROVENANCE_VALIDATION_JSON)
 
 
 def _state_dict_from_checkpoint(payload: Any) -> Dict[str, torch.Tensor] | None:
@@ -35,7 +41,7 @@ def _stable_state_hash(state: Dict[str, torch.Tensor]) -> str:
 
 def _inspect_checkpoint(path: Path) -> Dict[str, Any]:
     result: Dict[str, Any] = {
-        "path": str(path.relative_to(ROOT)) if path.exists() else str(path),
+        "path": path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path),
         "exists": path.exists(),
         "file_sha256": None,
         "state_sha256": None,
@@ -69,16 +75,35 @@ def main() -> int:
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     benchmarks = manifest.get("benchmarks", {})
 
-    central_path = ROOT / benchmarks.get("centralized", {}).get("checkpoint", "artifacts/checkpoints/centralized_best.pt")
-    fed_path = ROOT / benchmarks.get("fedavg", {}).get("checkpoint", "artifacts/checkpoints/fedavg_best.pt")
+    central_path = ROOT / benchmarks.get("centralized", {}).get("checkpoint", reg.CENTRALIZED_BEST_PT)
+    fed_path = ROOT / benchmarks.get("fedavg", {}).get("checkpoint", reg.FEDAVG_BEST_PT)
 
     central = _inspect_checkpoint(central_path)
     fed = _inspect_checkpoint(fed_path)
 
     issues = []
 
+    # Tách "không có file" khỏi "có file nhưng sai hash": hai tình huống cần hành động khác nhau.
+    if not fed["exists"]:
+        issues.append(
+            {
+                "severity": "critical",
+                "code": "fedavg_checkpoint_missing",
+                "message": f"Không có {fed['path']} trên máy này; chỉ còn metrics của run canonical. "
+                           "Cần tải lại checkpoint thật từ Kaggle (results/fedavg/<run>/best.pt hiện là con trỏ Git-LFS).",
+            }
+        )
+    if not central["exists"]:
+        issues.append(
+            {
+                "severity": "critical",
+                "code": "centralized_checkpoint_missing",
+                "message": f"Không có {central['path']} trên máy này; số liệu Centralized chỉ là metrics lịch sử.",
+            }
+        )
+
     manifest_fed_hash = benchmarks.get("fedavg", {}).get("state_dict_sha256")
-    if manifest_fed_hash and fed.get("state_sha256") != manifest_fed_hash:
+    if fed["exists"] and manifest_fed_hash and fed.get("state_sha256") != manifest_fed_hash:
         issues.append(
             {
                 "severity": "critical",
@@ -105,7 +130,7 @@ def main() -> int:
 
     manifest_c_epochs_text = benchmarks.get("centralized", {}).get("training_scope", "")
     ckpt_c_epochs = central.get("metadata", {}).get("epochs")
-    if "10 epochs" in str(manifest_c_epochs_text) and ckpt_c_epochs != 10:
+    if central["exists"] and "10 epochs" in str(manifest_c_epochs_text) and ckpt_c_epochs != 10:
         issues.append(
             {
                 "severity": "critical",
@@ -128,6 +153,7 @@ def main() -> int:
 
     status = "verified" if not any(i["severity"] == "critical" for i in issues) else "unverified"
     report = {
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
         "status": status,
         "canonical_run_id": manifest.get("canonical_run_id"),
         "centralized_checkpoint": central,
@@ -138,7 +164,7 @@ def main() -> int:
         ),
     }
     OUT.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(json.dumps(report, indent=2, ensure_ascii=False))
+    print(json.dumps(report, indent=2))  # stdout ASCII: console Windows không in được tiếng Việt
     return 0 if status == "verified" else 2
 
 

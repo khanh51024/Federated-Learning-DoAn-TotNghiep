@@ -8,8 +8,13 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "artifacts/branch_demo/20261003/fedavg/validation_comparison.csv"
-OUTPUT = ROOT / "artifacts/plantdoc_domain_gap_report.json"
+import sys as _sys
+if str(ROOT) not in _sys.path:
+    _sys.path.insert(0, str(ROOT))
+from src import registry as reg  # noqa: E402
+
+SOURCE = reg.abs_path(f"{reg.DEMO_BUNDLE_DIR}/fedavg/validation_comparison.csv")
+OUTPUT = reg.abs_path(reg.DOMAIN_GAP_REPORT_JSON)
 
 
 def build_report(path: Path) -> dict:
@@ -31,7 +36,7 @@ def build_report(path: Path) -> dict:
         sources["plantvillage_minus_plantdoc_accuracy_pp"] = round(
             sources["plantvillage"]["accuracy_pct"] - sources["plantdoc"]["accuracy_pct"], 2)
     return {
-        "source_csv": str(path.relative_to(ROOT)),
+        "source_csv": path.relative_to(ROOT).as_posix(),
         "evidence": "published comparison artifact; not a locally repeated validation",
         "models": by_model,
         "note": "Crop accuracy is a separately reported metric; do not interpret as full 38-class top-1 accuracy.",

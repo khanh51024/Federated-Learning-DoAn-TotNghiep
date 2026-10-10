@@ -26,7 +26,7 @@ CURRENT_TASK: Dict[str, Any] = {
 
 NETWORK_DEMO = NetworkDemoManager()
 
-SMOKE_RUNS_ROOT = reg.abs_path(reg.WEB_RUNS_DIR) / "network_smoke"
+SMOKE_RUNS_ROOT = reg.abs_path(reg.NETWORK_SMOKE_RUNS_DIR)
 
 
 def latest_completed_smoke_run() -> Optional[Path]:

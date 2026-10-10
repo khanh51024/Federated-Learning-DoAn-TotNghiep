@@ -20,6 +20,14 @@ Mở `http://127.0.0.1:8088`. Web chỉ nghe trên localhost. Một lệnh này 
 
 Nếu artifact thiếu, sai hash, khác class map hoặc khác protocol/split, web ẩn toàn bộ số liệu và khóa chọn checkpoint. Không có fallback sang số liệu scratch cũ.
 
+### Cổng registry cho inference
+
+Mọi dự đoán đi qua một cửa `web/services/model_service.py` và chỉ chạy được với model có `web_visible=true` trong
+`artifacts/registry.json` (đủ 5 điều kiện: hash, taxonomy, preprocessing, metrics↔protocol, bài forward — xem
+[MODEL_REGISTRY.md](MODEL_REGISTRY.md)). `GET /api/models` liệt kê các model được phép kèm nhãn (Demo / Tham chiếu) và
+tóm tắt PlantVillage/PlantDoc công bố. Model bị chặn trả HTTP 503 kèm lý do; registry chưa sinh cũng trả 503 (không
+fallback). Sau khi đổi checkpoint hoặc bundle, chạy `python scripts/update_status.py` để cổng tính lại.
+
 ## Nguồn đối chứng đã ghim
 
 | Phương pháp | Nhánh | Commit |

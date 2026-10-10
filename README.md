@@ -9,8 +9,10 @@ Hệ thống được tổ chức theo cấu trúc **Monorepo hoàn chỉnh**:
 - **`web/`**: Giao diện điều khiển, giám sát thời gian thực và suy luận song song (FastAPI Backend + Modern Dark-mode Frontend).
 - **`tests/`**: Bộ kiểm thử toán học độc lập (`test_fedavg.py`, `test_model.py`, `test_parameters.py`, `test_partition.py`, `test_integration.py`).
 - **`configs/`**: Cấu hình YAML chuẩn hóa cho các kịch bản thực nghiệm (`centralized.yaml`, `federated.yaml`, `non_iid.yaml`).
-- **`experiments/`**: Kịch bản thực nghiệm tái lập cho Centralized, FedAvg, Non-IID Dirichlet Sweep và Faulty Clients.
+- **`legacy/`**: Pipeline Kaggle/stage* cũ, notebook, config và test của chúng — chỉ để tra cứu/tái lập lịch sử, chạy riêng ([legacy/README.md](legacy/README.md)).
 - **`docs/`**: Hợp đồng model registry ([docs/MODEL_REGISTRY.md](docs/MODEL_REGISTRY.md)), Runbook vận hành ([docs/RUNBOOK.md](docs/RUNBOOK.md)), Giao thức thực nghiệm ([docs/EXPERIMENT_PROTOCOL.md](docs/EXPERIMENT_PROTOCOL.md)), Sơ đồ kiến trúc Mermaid ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
+
+> **Hướng chính thức (một chiều):** train NGOÀI repo (Kaggle/branch) → bundle + manifest + SHA-256 → `scripts/import_branch_demo.py` kiểm hash → `artifacts/registry.json` → web/báo cáo. Máy dev chỉ CPU, không train; engine trong repo là `src/`. Chi tiết: [docs/MODEL_REGISTRY.md](docs/MODEL_REGISTRY.md).
 
 > **Trạng thái tiến độ:** xem [PROJECT_STATUS.md](PROJECT_STATUS.md) — file thống kê duy nhất, tự sinh bởi `python scripts/update_status.py`. Mọi con số accuracy trong repo phải truy được về `artifacts/registry.json`.
 
@@ -135,17 +137,19 @@ Federated-Learning-DoAn-TotNghiep/
 │       └── config.py        # YAML config loader
 │
 ├── web/                     # ỨNG DỤNG WEB QUAN SÁT & SUY LUẬN
-│   ├── app.py               # Máy chủ FastAPI REST API
+│   ├── app.py               # FastAPI: chỉ mount router
+│   ├── routers/             # monitoring.py, inference.py, training.py
+│   ├── services/model_service.py  # MỘT CỬA inference — chỉ mở cho model đã qua cổng web_visible của registry
+│   ├── state.py             # trạng thái background task + Flower demo
 │   └── static/              # Giao diện Dark-mode Glassmorphism (HTML/CSS/JS)
 │       ├── index.html       # 6 tab trực quan (Dashboard, Centralized, FedAvg, Clients, Benchmarks, Inference)
 │       ├── css/style.css
 │       └── js/main.js
 │
-├── experiments/             # KỊCH BẢN THỰC NGHIỆM TÁI LẬP
-│   ├── centralized/         # run_centralized.py
-│   ├── federated/           # run_fedavg.py
-│   ├── non_iid/             # run_non_iid_sweep.py
-│   └── faulty_clients/      # run_faulty_eval.py
+├── legacy/                  # PIPELINE CŨ (Kaggle/stage*) — chỉ tra cứu, chạy riêng
+│   ├── fl_training/ stage1_compat/ stage2_matched/ stage2_scratch/ experiments/
+│   ├── tests/               # pytest legacy/tests
+│   └── configs/ scripts/ *.ipynb release_manifest_v*.json
 │
 ├── tests/                   # BỘ KIỂM THỬ TOÁN HỌC & ĐỘ TOÀN VẸN
 │   ├── test_fedavg.py       # Kiểm định trọng số toán học FedAvg
@@ -154,10 +158,8 @@ Federated-Learning-DoAn-TotNghiep/
 │   ├── test_partition.py    # Kiểm định phân hoạch Dirichlet & đói dữ liệu
 │   └── test_integration.py  # Kiểm thử tích hợp luồng 5 clients x 1 round
 │
-├── configs/                 # TỆP CẤU HÌNH YAML
-│   ├── centralized.yaml
-│   ├── federated.yaml
-│   └── non_iid.yaml
+├── configs/                 # CẤU HÌNH PHÂN HOẠCH DỮ LIỆU
+│   └── partition_config.yaml
 │
 ├── artifacts/               # SẢN PHẨM THỰC NGHIỆM
 │   ├── checkpoints/         # centralized_best.pt, fedavg_best.pt

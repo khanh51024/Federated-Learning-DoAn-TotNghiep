@@ -6,7 +6,7 @@
     "require_real_clients": false,
     "require_real_evaluation": false,
     "expected_clients": false,
-    "expected_rounds": true,
+    "expected_rounds": false,
     "final_test_metrics_present": false,
     "checkpoint_test_metrics_present": false,
     "seed_present": true,
@@ -14,7 +14,7 @@
     "checkpoint_source": true,
     "checkpoint_model_state_present": true,
     "checkpoint_model_hash_matches": true,
-    "audit_round_count": true,
+    "audit_round_count": false,
     "all_clients_real": false,
     "all_rounds_have_expected_clients": false,
     "no_synthetic_rejections": true
@@ -22,9 +22,10 @@
   "details": {
     "final_test_metrics": {},
     "seed": 42,
-    "checkpoint_sha256": "d53bed626ce683fe2aaf6ab44cb7f86c7fd254f8a346ba55928ff13eabef4352",
-    "metrics_sha256": "4f256160f9e26c6e89cd1ea95196122409829720569353b36393c7c6f4260b07",
-    "checkpoint_model_hash": "067a6721e2fba647d7b74aee88525afe54f7924209b0effddc9d02d72c8f8490",
-    "recomputed_model_hash": "067a6721e2fba647d7b74aee88525afe54f7924209b0effddc9d02d72c8f8490"
-  }
+    "checkpoint_sha256": "98033e577b449932687faa55be5907d5a787132a932a668f27049da91569e31d",
+    "metrics_sha256": "35af90eb56e4f34cd47d71ce20fd131b10fe8f810f12bb83872671fc5c4ff26b",
+    "checkpoint_model_hash": "29fb4c7970c5c8842a407488d422442afad81f9d136606b7c2ad62fbf51d796c",
+    "recomputed_model_hash": "29fb4c7970c5c8842a407488d422442afad81f9d136606b7c2ad62fbf51d796c"
+  },
+  "generated_at": "2026-10-10T18:30:19"
 }

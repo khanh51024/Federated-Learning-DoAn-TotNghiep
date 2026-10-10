@@ -29,6 +29,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
+from src import registry as reg
 from src.centralized.evaluate import evaluate
 from src.data.plantvillage import PlantVillageDataset
 from src.model.mobilenetv3 import (
@@ -105,7 +106,7 @@ def run_federated_simulation(
     part_path = Path(partition_dir)
     val_csv = part_path / "global_val.csv" if (part_path / "global_val.csv").exists() else (part_path / "global_test.csv")
     test_csv = part_path / "global_test.csv"
-    output_path = Path(output_dir) if output_dir else Path("artifacts")
+    output_path = Path(output_dir) if output_dir else Path(reg.ARTIFACTS_DIR)
     checkpoints_dir = output_path / "checkpoints"
     metrics_dir = output_path / "metrics"
     checkpoints_dir.mkdir(parents=True, exist_ok=True)
@@ -657,8 +658,8 @@ def start_flower_server(
     evaluation_partition_dir: str | Path = "data/partitions_stage2_scratch_v3/label100",
     require_real_evaluation: bool = False,
     evaluation_batch_size: int = 64,
-    metrics_file: Optional[str | Path] = "artifacts/metrics/network_flower_history.json",
-    checkpoint_file: Optional[str | Path] = "artifacts/checkpoints/federated_network_global.pt",
+    metrics_file: Optional[str | Path] = reg.NETWORK_FLOWER_HISTORY_JSON,
+    checkpoint_file: Optional[str | Path] = reg.FEDERATED_NETWORK_GLOBAL_PT,
     progress_file: Optional[str | Path] = None,
     expected_smoke: Optional[bool] = None,
 ) -> Any:
@@ -838,8 +839,8 @@ if __name__ == "__main__":
     parser.add_argument("--evaluation-partition-dir", type=str, default="data/partitions_stage2_scratch_v3/label100")
     parser.add_argument("--require-real-evaluation", action="store_true")
     parser.add_argument("--evaluation-batch-size", type=int, default=64)
-    parser.add_argument("--metrics-file", type=str, default="artifacts/metrics/network_flower_history.json")
-    parser.add_argument("--checkpoint-file", type=str, default="artifacts/checkpoints/federated_network_global.pt")
+    parser.add_argument("--metrics-file", type=str, default=reg.NETWORK_FLOWER_HISTORY_JSON)
+    parser.add_argument("--checkpoint-file", type=str, default=reg.FEDERATED_NETWORK_GLOBAL_PT)
     parser.add_argument("--progress-file", type=str, default=None)
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--partition-dir", type=str, default="data/partitions_stage2_scratch_v3/label100")

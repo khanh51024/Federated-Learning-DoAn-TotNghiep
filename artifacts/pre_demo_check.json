@@ -1,4 +1,5 @@
 {
+  "generated_at": "2026-10-10T18:30:14",
   "overall": "technical_demo_ready",
   "fail_count": 0,
   "warn_count": 4,
@@ -26,12 +27,12 @@
     {
       "name": "canonical_provenance",
       "status": "warn",
-      "detail": "UNVERIFIED: ['fedavg_state_hash_mismatch', 'scientific_stage2_incomplete']"
+      "detail": "UNVERIFIED: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing', 'scientific_stage2_incomplete']"
     },
     {
       "name": "network_global_artifact",
       "status": "warn",
-      "detail": "checkpoint exists but scientific gate not satisfied: require_real=False, all_real=False, real_test=False"
+      "detail": "chưa có run mạng KHOA HỌC: checkpoint hiện có chỉ là smoke kỹ thuật (require_real=False, all_real=False, real_test=False)"
     },
     {
       "name": "multiseed_real_summary",

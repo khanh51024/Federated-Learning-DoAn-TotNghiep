@@ -106,11 +106,25 @@ flowchart TD
 
 ## 5. Kiến Trúc Tầng Ứng Dụng Web (Web Presentation & Inference)
 
+Web chỉ làm Presentation + API + Inference. Mọi dự đoán đi qua **một cửa**
+(`web/services/model_service.py`), cửa này chỉ mở cho model đã qua cổng `web_visible` của registry.
+
 ```mermaid
 graph LR
-    UI["Frontend Web (Dashboard, Charts, Upload)"] 
-    -->|REST API / HTTP| API["FastAPI Backend (web/app.py)"]
-    API -->|Gọi module| TrainCore["train/ (centralized, server, telemetry)"]
-    TrainCore -->|Lưu/Đọc| Artifacts[("artifacts/ (checkpoints, metrics)")]
-    API -->|Phản hồi JSON| UI
+    UI["Frontend Web (Dashboard, Charts, Upload)"]
+    -->|REST API / HTTP| APP["web/app.py (mount router)"]
+    APP --> MON["routers/monitoring.py<br/>status, metrics, clients, weights"]
+    APP --> INF["routers/inference.py<br/>/api/models, /api/inference, /api/compare"]
+    APP --> TRN["routers/training.py<br/>điều khiển demo Flower"]
+    INF --> SVC["services/model_service.py<br/>predict(model_id) — một cửa"]
+    MON --> SVC
+    SVC -->|đọc| REG[("artifacts/registry.json<br/>(sinh bởi scripts/build_registry.py)")]
+    SVC -->|chỉ khi web_visible| BUN["web/demo_evidence.py (bundle đã kiểm hash)<br/>web/plantvillage_reference.py (TorchScript)"]
+    TRN --> ENG["src/ (centralized, federated, telemetry)"]
+    ENG -->|Lưu/Đọc| ART[("artifacts/ (checkpoints, metrics)")]
+    APP -->|Phản hồi JSON| UI
 ```
+
+Cổng `web_visible` (5 điều kiện, tính tự động trong `build_registry.py`): hash checkpoint khớp manifest;
+thứ tự 38 lớp khớp taxonomy; `preprocessing_id` đã khai báo; metrics gắn được với dataset + protocol;
+bài forward bắt buộc trên ảnh mẫu đạt. Xem [MODEL_REGISTRY.md](MODEL_REGISTRY.md).

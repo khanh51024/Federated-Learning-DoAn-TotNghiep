@@ -10,8 +10,14 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import sys
 from collections import Counter
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from src import registry as reg  # noqa: E402
 
 
 def evaluate(audit: dict, rows: list[dict], valid_classes: set[str]) -> dict:
@@ -61,7 +67,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--audit", type=Path, required=True)
     parser.add_argument("--labels", type=Path, required=True)
-    parser.add_argument("--output", type=Path, default=Path("artifacts/labeled_inference_evaluation.json"))
+    parser.add_argument("--output", type=Path, default=Path(reg.LABELED_EVAL_JSON))
     args = parser.parse_args()
     from sys import path as syspath
     syspath.insert(0, str(Path(__file__).resolve().parents[1]))

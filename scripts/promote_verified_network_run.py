@@ -13,6 +13,11 @@ from typing import Any, Dict
 ROOT = Path(__file__).resolve().parents[1]
 
 
+import sys as _sys
+if str(ROOT) not in _sys.path:
+    _sys.path.insert(0, str(ROOT))
+from src import registry as reg  # noqa: E402
+
 def sha256_file(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as f:
@@ -23,17 +28,17 @@ def sha256_file(path: Path) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Promote a scientifically valid Flower network run into immutable verified artifacts.")
-    ap.add_argument("--metrics", default="artifacts/metrics/network_flower_history.json")
-    ap.add_argument("--checkpoint", default="artifacts/checkpoints/federated_network_global.pt")
+    ap.add_argument("--metrics", default=reg.NETWORK_FLOWER_HISTORY_JSON)
+    ap.add_argument("--checkpoint", default=reg.FEDERATED_NETWORK_GLOBAL_PT)
     ap.add_argument("--expected-clients", type=int, default=5)
     ap.add_argument("--expected-rounds", type=int, required=True)
     ap.add_argument("--tag", default="network")
-    ap.add_argument("--output-root", default="artifacts/verified_network")
+    ap.add_argument("--output-root", default=reg.VERIFIED_NETWORK_DIR)
     args = ap.parse_args()
 
     metrics = (ROOT / args.metrics).resolve() if not Path(args.metrics).is_absolute() else Path(args.metrics).resolve()
     checkpoint = (ROOT / args.checkpoint).resolve() if not Path(args.checkpoint).is_absolute() else Path(args.checkpoint).resolve()
-    validation_path = ROOT / "artifacts" / "network_artifact_validation.json"
+    validation_path = reg.abs_path(reg.NETWORK_ARTIFACT_VALIDATION_JSON)
 
     cmd = [
         sys.executable,

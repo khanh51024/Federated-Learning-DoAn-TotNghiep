@@ -22,6 +22,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
+from src import registry as reg
 from src.data.plantvillage import PlantVillageDataset
 from src.model.mobilenetv3 import create_model, get_parameters, set_parameters
 from .evaluate import evaluate
@@ -75,7 +76,7 @@ def run_centralized_training(
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
-    output_path = Path(output_dir) if output_dir else Path("artifacts")
+    output_path = Path(output_dir) if output_dir else Path(reg.ARTIFACTS_DIR)
     checkpoints_dir = output_path / "checkpoints"
     metrics_dir = output_path / "metrics"
     checkpoints_dir.mkdir(parents=True, exist_ok=True)

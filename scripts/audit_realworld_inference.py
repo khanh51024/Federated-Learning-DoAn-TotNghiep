@@ -19,13 +19,14 @@ from PIL import Image, UnidentifiedImageError
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+from src import registry as reg  # noqa: E402
 from web.demo_evidence import predict_published, load_evidence  # noqa: E402
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--images", type=Path, required=True, help="Image file or directory")
-    parser.add_argument("--output", type=Path, default=ROOT / "artifacts" / "inference_audit.json")
+    parser.add_argument("--output", type=Path, default=reg.abs_path(reg.INFERENCE_AUDIT_JSON))
     args = parser.parse_args()
     image_path = args.images.resolve()
     files = sorted(p for p in (image_path.iterdir() if image_path.is_dir() else [image_path])
