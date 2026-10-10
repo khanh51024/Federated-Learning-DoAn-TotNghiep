@@ -241,8 +241,11 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
   `khanh51024/Federated-Learning-DoAn-TotNghiep` (remote có `main` riêng, lịch sử không liên quan nên KHÔNG đẩy `main`).
   Nhánh `train-*` của remote đã kiểm: có mã hợp đồng dữ liệu (ràng buộc group-disjoint giữa client) và hash release,
   KHÔNG có manifest ảnh train/val → mục audit leakage vẫn BLOCKED, cần manifest/dataset từ nhóm train.
-  Server EC2: bản mới đã dựng ở `/home/ubuntu/fl-demo-20261010` (registry sinh trên server, 8/8 model qua cổng, canary 8091 đúng),
-  nhưng dịch vụ `cropfed-demo.service` vẫn trỏ bản `fl-demo-20261005` — chưa chuyển (cần người chạy lệnh restart).
+  Server EC2 (đã chuyển 2026-10-10): bản mới ở `/home/ubuntu/fl-demo-20261010` (registry sinh trên server, 8/8 model qua cổng,
+  canary 8091 đúng); `cropfed-demo.service` đã trỏ sang bản này, kiểm qua HTTPS: `/api/models` 8 model, `/api/compare` 14 dòng,
+  suy luận FedAvg 200. Bản cũ `fl-demo-20261005` giữ nguyên; quay lui = chép `/home/ubuntu/cropfed-demo.service.bak-20261010`
+  về `/etc/systemd/system/cropfed-demo.service` rồi `daemon-reload` + `restart`. Server dùng mã commit `fe8bdd3`
+  (các commit sau chỉ đổi tài liệu/nội dung trạng thái).
 - 2026-10-10 — số test legacy (`pytest legacy/tests`): 149 pass / 29 fail / 10 error. 22 fail + 10 error trùng baseline trước khi gom
   (thiếu PlantVillage gốc và `data/partitions_train_v*`, thiếu fixture `kaggle_calibration` bị `.gitignore *kaggle*`);
   thêm 7 test `stage1_compat` lỗi vì manifest hash upstream tính trên checkout CRLF còn cây này là LF (không do mã).

@@ -3,6 +3,7 @@
 ## Trạng thái
 
 - Trang: `https://datn.tranngochung.id.vn/`, nginx chuyển về `127.0.0.1:8088`.
+- **Cập nhật 2026-10-10:** dịch vụ đã chuyển sang `/home/ubuntu/fl-demo-20261010` (registry v2 + cổng web_visible, mã commit `fe8bdd3`); bản 20261005 bên dưới giữ để quay lui. Unit cũ sao lưu ở `/home/ubuntu/cropfed-demo.service.bak-20261010`.
 - Release: `/home/ubuntu/fl-demo-20261005`; bản cũ `/home/ubuntu/fl-project` còn giữ nguyên để khôi phục khi cần.
 - Dịch vụ: `cropfed-demo.service` chạy user `ubuntu`, tự khởi động khi reboot và tự chạy lại khi tiến trình lỗi. Unit nguồn: `deploy/cropfed-demo.service`.
 - Web đọc bảy checkpoint của ba nhánh đã ghim và hiển thị 14 dòng đối chứng cùng validation. Số liệu này là artifact công bố đã kiểm hash, chưa tái đánh giá bằng ảnh gốc trên EC2.
