@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (6 mục BLOCKED cần dữ liệu/máy train, 2 mục kỹ thuật chưa XONG)",
+  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (6 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)",
   "canonical_run_id": "20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62",
   "dataset_truth": {
     "source": "data/partitions_stage2_scratch_v3/suite.json",
@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-10T18:30:12",
+      "generated_at": "2026-10-10T18:39:41",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,13 +145,13 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-10T18:30:14",
+      "generated_at": "2026-10-10T18:39:50",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
-      "generated_at": null,
-      "code_fingerprint": null,
+      "generated_at": "2026-10-10T18:46:38",
+      "code_fingerprint": "b50509f915714293a8826533e467077f3a71f8ebedce4ce622dfb089c08d0e78",
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
@@ -164,12 +164,12 @@
         {
           "name": "canonical_provenance",
           "status": "warn",
-          "detail": "UNVERIFIED: ['fedavg_state_hash_mismatch', 'fedavg_accuracy_metadata_mismatch', 'centralized_epoch_mismatch', 'scientific_stage2_incomplete']"
+          "detail": "UNVERIFIED: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing', 'scientific_stage2_incomplete']"
         },
         {
           "name": "network_global_artifact",
           "status": "warn",
-          "detail": "checkpoint exists but scientific gate not satisfied: require_real=False, all_real=False, real_test=False"
+          "detail": "chưa có run mạng KHOA HỌC: checkpoint hiện có chỉ là smoke kỹ thuật (require_real=False, all_real=False, real_test=False)"
         },
         {
           "name": "multiseed_real_summary",
@@ -180,7 +180,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-10T18:30:19",
+      "generated_at": "2026-10-10T18:39:47",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
@@ -261,8 +261,8 @@
     {
       "id": "full_tests",
       "title": "Full tests pass trên mã nguồn hiện tại",
-      "status": "CHƯA",
-      "detail": "kết quả cũ (?) không còn khớp mã nguồn hiện tại — chạy lại --full-gates",
+      "status": "XONG",
+      "detail": "technical_acceptance=pass lúc 2026-10-10T18:46:38 (gồm test mạng, 36 file test) trên đúng mã nguồn hiện tại",
       "unlock": []
     },
     {
@@ -329,8 +329,8 @@
     {
       "id": "release",
       "title": "Release sạch (mọi gate kỹ thuật XONG)",
-      "status": "CHƯA",
-      "detail": "còn mục kỹ thuật chưa XONG: ['full_tests']",
+      "status": "XONG",
+      "detail": "mọi mục kỹ thuật XONG; trước khi nộp vẫn phải `git status` sạch và gắn tag",
       "unlock": []
     }
   ],

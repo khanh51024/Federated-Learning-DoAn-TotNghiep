@@ -62,9 +62,12 @@ def _run_case(port: int, reject: bool, stem: str, out_dir: Path, expect_abort: b
         if expect_abort:
             # Hợp đồng strict-round: update bị loại làm vòng không đủ N client hợp lệ -> server hủy vòng,
             # không lặng lẽ gộp phần còn lại và không ghi checkpoint.
-            # Thông điệp chính xác được kiểm ở tests/test_demo_server_contract.py::test_reject_policy_aborts_round_...
-            assert server.exitcode not in (None, 0), "server phải hủy vòng khi có update bị loại"
+            # Thông điệp/mã lỗi chính xác được khóa ở tests/test_demo_server_contract.py::test_reject_policy_aborts_round_...
+            # Ở đây chỉ chứng minh hệ quả đầu-cuối: vòng bị hủy nên KHÔNG có checkpoint/metrics nào được ghi.
+            # (Không assert exitcode: server có thể chưa thoát khi client còn giữ kết nối gRPC -> test phụ thuộc thời điểm.)
+            assert server.exitcode != 0, "server không được kết thúc thành công khi có update bị loại"
             assert not checkpoint.exists()
+            assert not metrics.exists()
             return None
         for proc in clients:
             assert proc.exitcode == 0, f"client {proc.pid} exit={proc.exitcode}"

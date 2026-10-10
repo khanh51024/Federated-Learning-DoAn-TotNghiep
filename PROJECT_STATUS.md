@@ -1,7 +1,7 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-10 18:30 · sinh tự bởi `scripts/update_status.py`
-> **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (6 mục BLOCKED cần dữ liệu/máy train, 2 mục kỹ thuật chưa XONG)
+> **Cập nhật lúc:** 2026-10-10 18:46 · sinh tự bởi `scripts/update_status.py`
+> **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (6 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
 > con số nào trong repo phải truy được về `artifacts/registry.json`. Không sửa tay — chỉ khối Nhật ký cuối file.
@@ -20,7 +20,7 @@
 - Dataset cục bộ để tái lập: `data/partitions_stage2_scratch_v3` — split **38984/4400/10921** (5 clients, seed 42, protocol `stage2_scratch_clean_v3`)
 - Run Kaggle lịch sử: `20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62` — metrics CÓ, **checkpoint KHÔNG còn trên máy**
 
-## 3. Checklist nghiệm thu — XONG 9/17 · CHƯA 2 · BLOCKED 6
+## 3. Checklist nghiệm thu — XONG 11/17 · CHƯA 0 · BLOCKED 6
 
 | # | Hạng mục | Trạng thái | Bằng chứng (máy kiểm) |
 |---|---|---|---|
@@ -33,14 +33,14 @@
 | 7 | Số liệu trong docs không mâu thuẫn artifact | ✅ XONG | không còn số liệu mâu thuẫn đã biết (97,12, 97.12...) trong README/docs |
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
 | 9 | Test không ghi đè artifact đang track | ✅ XONG | test không tham chiếu artifacts/checkpoints/metrics (dùng tmp_path) |
-| 10 | Full tests pass trên mã nguồn hiện tại | ⬜ CHƯA | kết quả cũ (?) không còn khớp mã nguồn hiện tại — chạy lại --full-gates |
+| 10 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-10T18:46:38 (gồm test mạng, 36 file test) trên đúng mã nguồn hiện tại |
 | 11 | Kiểm chứng provenance & checkpoint canonical | ⛔ BLOCKED | provenance=unverified; lỗi: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing'] |
 | 12 | Audit leakage theo từng run | ⛔ BLOCKED | 7/7 model hiện hành có leakage_audit=unknown (bundle chỉ công bố validation_manifest_sha256, không kèm manifest train). [mục kiểm tay: chưa có script đọc kết quả audit để tự chuyển trạng thái] |
 | 13 | Đánh giá PlantDoc theo từng lớp | ⛔ BLOCKED | đã có gap công bố: FedAvg v7 PlantVillage 93.12% vs PlantDoc 47.21%; thiếu confusion matrix đầy đủ theo lớp (mới có top-5 nhầm lẫn trong metrics công bố). [mục kiểm tay: chưa có script đánh giá theo lớp] |
 | 14 | Phân tích lỗi confidence cao | ⛔ BLOCKED | số lượng đã có từ metrics công bố — Centralized v6: 98 ảnh sai với confidence > 0.9; FedAvg v7: 100 ảnh sai với confidence > 0.9; chưa phân tích được từng ảnh. [mục kiểm tay: chưa có script đo calibration] |
 | 15 | Chạy multi-seed non-IID (seed 42/123/2026) | ⛔ BLOCKED | chưa có multi-seed THẬT (chỉ có bản smoke accuracy 0.0263 trên ảnh tổng hợp) |
 | 16 | Đồng bộ báo cáo & artifacts sau khi có run mới | ⛔ BLOCKED | phụ thuộc multi-seed thật |
-| 17 | Release sạch (mọi gate kỹ thuật XONG) | ⬜ CHƯA | còn mục kỹ thuật chưa XONG: ['full_tests'] |
+| 17 | Release sạch (mọi gate kỹ thuật XONG) | ✅ XONG | mọi mục kỹ thuật XONG; trước khi nộp vẫn phải `git status` sạch và gắn tag |
 
 ### Việc đang BLOCKED — cần gì và mở khóa bằng lệnh nào
 
@@ -101,8 +101,7 @@ Copy-Item <centralized_best.pt tải về> artifacts/checkpoints/centralized_bes
 
 ### Việc làm được ngay (chưa BLOCKED)
 
-1. Full tests pass trên mã nguồn hiện tại — kết quả cũ (?) không còn khớp mã nguồn hiện tại — chạy lại --full-gates
-2. Release sạch (mọi gate kỹ thuật XONG) — còn mục kỹ thuật chưa XONG: ['full_tests']
+_(không còn mục kỹ thuật nào mở)_
 
 ## 4. Kết quả chuẩn theo họ (không trộn lẫn)
 
@@ -185,7 +184,7 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
 |---|---|---|
 | Provenance checkpoint canonical | **unverified** | lỗi: fedavg_checkpoint_missing, centralized_checkpoint_missing |
 | Pre-demo check | **technical_demo_ready** | artifacts/pre_demo_check.json |
-| Final acceptance | technical **pass** / scientific **blocked** | 4 blocker khoa học — **CŨ**: mã nguồn đã đổi kể từ lần chạy |
+| Final acceptance | technical **pass** / scientific **blocked** | 4 blocker khoa học |
 | Network artifact | **CHƯA CÓ run mạng khoa học (artifact hiện tại là smoke kỹ thuật)** | artifacts/network_artifact_validation.json |
 | Danh mục checkpoint | **complete** | 58 file .pt, vô danh: 0 |
 
