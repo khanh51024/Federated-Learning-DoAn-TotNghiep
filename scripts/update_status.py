@@ -377,11 +377,14 @@ def check_leakage(ctx: Ctx) -> Result:
         return Result(DONE, "mọi model hiện hành có leakage_audit=passed")
     return Result(
         BLOCKED,
-        f"{len(unknown)}/{len(cur)} model hiện hành có leakage_audit=unknown (bundle chỉ công bố validation_manifest_sha256, không kèm manifest train). [mục kiểm tay: chưa có script đọc kết quả audit để tự chuyển trạng thái]",
-        needs="manifest train/val của bundle (hoặc dataset gốc để dựng lại split) để kiểm leaf_group không giao nhau",
+        f"{len(unknown)}/{len(cur)} model hiện hành có leakage_audit=unknown. Các nhánh train-* trên GitHub (đã kiểm 2026-10-10) chỉ có MÃ "
+        "ràng buộc group-disjoint giữa client (plant_data_contract/partitions.py) và hash release, KHÔNG có manifest ảnh train/val "
+        "nên không audit được dữ liệu thật. [mục kiểm tay: chưa có script đọc kết quả audit để tự chuyển trạng thái]",
+        needs="manifest ảnh train/val của release `dataset/mixed/pv_pd_v3` (hash 6d2c6b40…, nằm ở Kaggle/Drive của nhóm train, không nằm trong repo) "
+              "hoặc chính dataset gốc để dựng lại split",
         unlock=[
-            ".\\.venv\\Scripts\\python.exe scripts\\verify_integrity.py --all   # chỉ audit split cục bộ partitions_*",
-            "# audit split của bundle: cần manifest train từ nhánh train-* (chưa có trên máy)",
+            "# 1) lấy dataset/mixed/pv_pd_v3 (hoặc riêng manifest train/val) từ nhóm train, đặt ở thư mục cục bộ, rồi:",
+            ".\\.venv\\Scripts\\python.exe scripts\\verify_integrity.py --all   # hiện chỉ audit split cục bộ partitions_*; cần mở rộng cho manifest bundle",
         ],
     )
 

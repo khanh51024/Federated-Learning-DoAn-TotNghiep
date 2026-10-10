@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-10T19:58:40",
+      "generated_at": "2026-10-10T20:44:04",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,13 +145,13 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-10T19:58:51",
+      "generated_at": "2026-10-10T20:44:10",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
-      "generated_at": "2026-10-10T20:05:33",
-      "code_fingerprint": "becc5d0c5be8d3e224065db9f918df5e625c933f9c88837ac4b1e5313277c1c2",
+      "generated_at": "2026-10-10T20:49:17",
+      "code_fingerprint": "6f3ea8166855ed0d2e6dca35b32a216ed35cbc63832335c74efd39fbe8a0ffce",
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
@@ -180,7 +180,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-10T19:58:47",
+      "generated_at": "2026-10-10T20:44:08",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
@@ -269,7 +269,7 @@
       "id": "full_tests",
       "title": "Full tests pass trên mã nguồn hiện tại",
       "status": "XONG",
-      "detail": "technical_acceptance=pass lúc 2026-10-10T20:05:33 (gồm test mạng, 38 file test) trên đúng mã nguồn hiện tại",
+      "detail": "technical_acceptance=pass lúc 2026-10-10T20:49:17 (gồm test mạng, 38 file test) trên đúng mã nguồn hiện tại",
       "unlock": []
     },
     {
@@ -288,10 +288,10 @@
       "id": "leakage",
       "title": "Audit leakage theo từng run",
       "status": "BLOCKED",
-      "detail": "7/7 model hiện hành có leakage_audit=unknown (bundle chỉ công bố validation_manifest_sha256, không kèm manifest train). [mục kiểm tay: chưa có script đọc kết quả audit để tự chuyển trạng thái]",
+      "detail": "7/7 model hiện hành có leakage_audit=unknown. Các nhánh train-* trên GitHub (đã kiểm 2026-10-10) chỉ có MÃ ràng buộc group-disjoint giữa client (plant_data_contract/partitions.py) và hash release, KHÔNG có manifest ảnh train/val nên không audit được dữ liệu thật. [mục kiểm tay: chưa có script đọc kết quả audit để tự chuyển trạng thái]",
       "unlock": [
-        ".\\.venv\\Scripts\\python.exe scripts\\verify_integrity.py --all   # chỉ audit split cục bộ partitions_*",
-        "# audit split của bundle: cần manifest train từ nhánh train-* (chưa có trên máy)"
+        "# 1) lấy dataset/mixed/pv_pd_v3 (hoặc riêng manifest train/val) từ nhóm train, đặt ở thư mục cục bộ, rồi:",
+        ".\\.venv\\Scripts\\python.exe scripts\\verify_integrity.py --all   # hiện chỉ audit split cục bộ partitions_*; cần mở rộng cho manifest bundle"
       ]
     },
     {

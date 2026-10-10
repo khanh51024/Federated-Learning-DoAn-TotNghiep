@@ -1,6 +1,6 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-10 20:05 · sinh tự bởi `scripts/update_status.py`
+> **Cập nhật lúc:** 2026-10-10 20:49 · sinh tự bởi `scripts/update_status.py`
 > **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (6 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
@@ -34,9 +34,9 @@
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
 | 9 | Test không ghi đè artifact đang track | ✅ XONG | test không tham chiếu artifacts/checkpoints/metrics (dùng tmp_path) |
 | 10 | Dependency khai báo một nơi (pyproject = requirements) | ✅ XONG | 15 dependency trùng giữa pyproject.toml và requirements.txt; ghim cũ nằm ở legacy/pyproject.toml |
-| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-10T20:05:33 (gồm test mạng, 38 file test) trên đúng mã nguồn hiện tại |
+| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-10T20:49:17 (gồm test mạng, 38 file test) trên đúng mã nguồn hiện tại |
 | 12 | Kiểm chứng provenance & checkpoint canonical | ⛔ BLOCKED | provenance=unverified; lỗi: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing'] |
-| 13 | Audit leakage theo từng run | ⛔ BLOCKED | 7/7 model hiện hành có leakage_audit=unknown (bundle chỉ công bố validation_manifest_sha256, không kèm manifest train). [mục kiểm tay: chưa có script đọc kết quả audit để tự chuyển trạng thái] |
+| 13 | Audit leakage theo từng run | ⛔ BLOCKED | 7/7 model hiện hành có leakage_audit=unknown. Các nhánh train-* trên GitHub (đã kiểm 2026-10-10) chỉ có MÃ ràng buộc group-disjoint giữa client (plant_data_contract/partitions.py) và hash release, KHÔNG có manifest ảnh train/val nên không audit được dữ liệu thật. [mục kiểm tay: chưa có script đọc kết quả audit để tự chuyển trạng thái] |
 | 14 | Đánh giá PlantDoc theo từng lớp (từ số công bố) | ✅ XONG | PlantDoc phủ 13/38 lớp; 6 lớp recall<50% (136/269 ảnh); FedAvg tệ hơn Centralized ở 5/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5) |
 | 15 | Tái đánh giá cục bộ trên ảnh validation (xác nhận số công bố) | ⛔ BLOCKED | số theo lớp ở trên là số CÔNG BỐ; chưa tái đánh giá cục bộ nên chưa có confusion matrix đầy đủ. [mục kiểm tay] |
 | 16 | Phân tích lỗi confidence cao (mức tổng hợp, từ số công bố) | ✅ XONG | mức tổng hợp từ metrics công bố — Centralized v6: 77/269 ảnh PlantDoc sai với confidence>0.9 (62% số lỗi); FedAvg v7: 41/269 ảnh PlantDoc sai với confidence>0.9 (29% số lỗi) (xem mục 5) |
@@ -59,12 +59,12 @@ Copy-Item <centralized_best.pt tải về> artifacts/checkpoints/centralized_bes
 ```
 
 **Audit leakage theo từng run**
-- Cần: manifest train/val của bundle (hoặc dataset gốc để dựng lại split) để kiểm leaf_group không giao nhau
+- Cần: manifest ảnh train/val của release `dataset/mixed/pv_pd_v3` (hash 6d2c6b40…, nằm ở Kaggle/Drive của nhóm train, không nằm trong repo) hoặc chính dataset gốc để dựng lại split
 - Mở khóa:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\verify_integrity.py --all   # chỉ audit split cục bộ partitions_*
-# audit split của bundle: cần manifest train từ nhánh train-* (chưa có trên máy)
+# 1) lấy dataset/mixed/pv_pd_v3 (hoặc riêng manifest train/val) từ nhóm train, đặt ở thư mục cục bộ, rồi:
+.\.venv\Scripts\python.exe scripts\verify_integrity.py --all   # hiện chỉ audit split cục bộ partitions_*; cần mở rộng cho manifest bundle
 ```
 
 **Tái đánh giá cục bộ trên ảnh validation (xác nhận số công bố)**
@@ -237,6 +237,12 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
   tĩnh trong TONG_HOP, `check_docs_numbers` chặn quay lại. (C) dependency khai báo một nơi (pyproject = requirements),
   ghim cũ ở `legacy/pyproject.toml`. (D) điều kiện taxonomy lấy từ `contract/taxonomy.py` của bundle, độc lập với manifest.
   Chưa kiểm được UI bằng trình duyệt thật (không có công cụ Chrome trong phiên này): đã kiểm HTTP 8 endpoint + cú pháp JS.
+- 2026-10-10 (GitHub + server): đã đẩy nhánh `integration-gd1-gd2` + tag `v0.2.0-sync-20261010` lên
+  `khanh51024/Federated-Learning-DoAn-TotNghiep` (remote có `main` riêng, lịch sử không liên quan nên KHÔNG đẩy `main`).
+  Nhánh `train-*` của remote đã kiểm: có mã hợp đồng dữ liệu (ràng buộc group-disjoint giữa client) và hash release,
+  KHÔNG có manifest ảnh train/val → mục audit leakage vẫn BLOCKED, cần manifest/dataset từ nhóm train.
+  Server EC2: bản mới đã dựng ở `/home/ubuntu/fl-demo-20261010` (registry sinh trên server, 8/8 model qua cổng, canary 8091 đúng),
+  nhưng dịch vụ `cropfed-demo.service` vẫn trỏ bản `fl-demo-20261005` — chưa chuyển (cần người chạy lệnh restart).
 - 2026-10-10 — số test legacy (`pytest legacy/tests`): 149 pass / 29 fail / 10 error. 22 fail + 10 error trùng baseline trước khi gom
   (thiếu PlantVillage gốc và `data/partitions_train_v*`, thiếu fixture `kaggle_calibration` bị `.gitignore *kaggle*`);
   thêm 7 test `stage1_compat` lỗi vì manifest hash upstream tính trên checkout CRLF còn cây này là LF (không do mã).
