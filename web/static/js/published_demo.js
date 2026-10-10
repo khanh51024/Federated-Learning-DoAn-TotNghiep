@@ -67,6 +67,15 @@ async function loadPublishedDemo() {
 
     if (badge) { badge.textContent = "SHA-256 ĐÃ ĐỐI SOÁT"; badge.className = "status-badge success"; }
     if (note) note.textContent = "Validation nội bộ từ ba nhánh GitHub, seed 42; SHA-256 file và checkpoint đã khớp. Chưa có bộ ảnh gốc để tái đánh giá. GĐ2 chỉ có một kịch bản lệch nhãn α=0,1; chưa hoàn tất nhiều seed.";
+    const trueSelect = document.getElementById("inference-true-class");
+    if (trueSelect && Array.isArray(evidence.classes) && trueSelect.options.length <= 1) {
+      for (const cls of evidence.classes) {
+        const option = document.createElement("option");
+        option.value = cls;
+        option.textContent = cls.replace("___", " — ").replaceAll("_", " ");
+        trueSelect.appendChild(option);
+      }
+    }
     const models = Object.fromEntries(evidence.models.map(model => [model.model_id, model]));
     setText("dash-acc", (models.fedavg.metrics.plantvillage.top1_accuracy * 100).toFixed(2) + "%");
     setText("dash-loss", (models.fedavg.metrics.plantdoc.top1_accuracy * 100).toFixed(2) + "%");

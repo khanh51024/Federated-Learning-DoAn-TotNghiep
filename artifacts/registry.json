@@ -2907,6 +2907,20 @@
         "Tomato___Septoria_leaf_spot"
       ]
     },
+    "client_shards": {
+      "source": "artifacts/client_shard_class_counts.json",
+      "evidence": "đếm từ manifest release đã kiểm hash; đối chiếu n_k với local/combined_summary.json của bundle",
+      "partition_scheme": "label_alpha_0_1",
+      "consistent": true,
+      "client_n_k": {
+        "client_00": 5434,
+        "client_01": 7858,
+        "client_02": 5376,
+        "client_03": 8495,
+        "client_04": 10075
+      },
+      "total_train_samples": 37238
+    },
     "inference_audit": {
       "source": "artifacts/inference_audit.json",
       "note": "Unlabelled images: predictions only, NOT ground-truth accuracy.",
@@ -2917,7 +2931,7 @@
   },
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-10T21:01:27",
+      "generated_at": "2026-10-10T22:24:06",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -2929,13 +2943,13 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-10T21:01:33",
+      "generated_at": "2026-10-10T22:24:12",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
-      "generated_at": "2026-10-10T21:06:42",
-      "code_fingerprint": "d176ef1ac7de96166c38d58982f1f596d1fdf5228c44f297e05ccfe7968d7a1c",
+      "generated_at": "2026-10-10T22:29:50",
+      "code_fingerprint": "22fe0808b518037bc5241f297abd110331f2434172ae3e39d656c3c71a220449",
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
@@ -2964,7 +2978,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-10T21:01:31",
+      "generated_at": "2026-10-10T22:24:10",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"

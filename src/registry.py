@@ -53,6 +53,11 @@ FINAL_ACCEPTANCE_JSON = "artifacts/final_acceptance.json"
 STATUS_REPORT_JSON = "artifacts/status_report.json"
 DOMAIN_GAP_REPORT_JSON = "artifacts/plantdoc_domain_gap_report.json"
 PER_CLASS_REPORT_JSON = "artifacts/plantdoc_per_class_report.json"
+CLIENT_SHARD_COUNTS_JSON = "artifacts/client_shard_class_counts.json"
+# Dataset đã tải từ nhánh dataset-sources của GitHub (gitignored); chỉ máy có dataset mới sinh lại được báo cáo shard
+DATASET_SOURCES_DIR = "data/dataset_sources"
+RELEASE_V3_DIR = f"{DATASET_SOURCES_DIR}/mixed/pv_pd_v3"
+PARTITION_SCHEME = "label_alpha_0_1"  # scheme mà FedAvg v7 và 5 Local-only v7 dùng (bundle local/combined_summary.json)
 TELEMETRY_HISTORY_JSON = "artifacts/metrics/telemetry_history.json"
 NETWORK_FLOWER_HISTORY_JSON = "artifacts/metrics/network_flower_history.json"
 

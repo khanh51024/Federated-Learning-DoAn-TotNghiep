@@ -111,6 +111,7 @@ async def run_plantvillage_reference(file: UploadFile = File(...)) -> Dict[str, 
 async def run_dual_inference(
     file: UploadFile = File(...),
     federated_source: str = Query("fedavg"),
+    true_class: str | None = Query(None, description="Nhãn thật của ảnh nếu biết (chỉ để giải thích shard, không ảnh hưởng dự đoán)"),
 ) -> Dict[str, Any]:
     """
     Inference song song độc lập (Dual Model) trên bộ checkpoint published demo
@@ -127,6 +128,10 @@ async def run_dual_inference(
 
     if federated_source not in {"fedavg", *(f"local_{i:02d}" for i in range(5))}:
         raise HTTPException(status_code=400, detail="Chỉ chọn FedAvg v7 hoặc một trong năm Local-only v7 cùng protocol.")
+    if true_class:
+        classes = model_service.known_classes()
+        if classes and true_class not in classes:
+            raise HTTPException(status_code=400, detail="true_class không thuộc 38 lớp của taxonomy.")
     selected_id = "demo_fedavg_v7" if federated_source == "fedavg" else f"demo_{federated_source}"
     try:
         central = _predict("demo_centralized_v6", image)
@@ -146,4 +151,6 @@ async def run_dual_inference(
         },
         "centralized": central,
         "federated": selected,
+        # Vì sao Local-only sai: shard huấn luyện của client đó có (hay không có) ảnh của lớp được dự đoán
+        "shard_context": model_service.shard_context(federated_source, selected.get("top3") or [], true_class or None),
     }

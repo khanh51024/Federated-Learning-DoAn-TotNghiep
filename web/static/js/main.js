@@ -1236,7 +1236,9 @@ async function submitInference() {
 
   try {
     const fedSource = document.getElementById("inference-fed-source")?.value || "fedavg";
-    const res = await fetch(`/api/inference?federated_source=${encodeURIComponent(fedSource)}`, {
+    const trueClass = document.getElementById("inference-true-class")?.value || "";
+    const query = `federated_source=${encodeURIComponent(fedSource)}` + (trueClass ? `&true_class=${encodeURIComponent(trueClass)}` : "");
+    const res = await fetch(`/api/inference?${query}`, {
       method: "POST",
       body: formData,
     });
@@ -1287,6 +1289,7 @@ async function submitInference() {
       document.getElementById("fed-test-acc").innerText = "Chưa huấn luyện";
       renderTop3("fed-top3-list", []);
     }
+    renderShardContext(fed && fed.ready ? result.shard_context : null, result.federated_source, result.selected_model_name);
 
     // 3. Cảnh báo phân vân / dữ liệu ngoài miền (OOD)
     const advisory = document.getElementById("inference-advisory");
@@ -1322,6 +1325,41 @@ async function submitInference() {
 function formatDiseaseName(raw) {
   if (!raw) return "—";
   return raw.replace(/___/g, " - ").replace(/_/g, " ");
+}
+
+// Giải thích vì sao Local-only sai/đúng: shard huấn luyện của client đó có bao nhiêu ảnh của các lớp top-3.
+function renderShardContext(ctx, federatedSource, modelName) {
+  const box = document.getElementById("fed-shard-context");
+  if (!box) return;
+  box.replaceChildren();
+  if (!ctx || !Array.isArray(ctx.classes) || ctx.classes.length === 0) {
+    box.style.display = "none";
+    return;
+  }
+  const fmt = n => Number(n).toLocaleString("vi-VN");
+  const title = document.createElement("div");
+  title.style.fontWeight = "600";
+  title.style.color = "#cbd5e1";
+  title.textContent = ctx.client
+    ? `Dữ liệu huấn luyện của ${modelName} (${fmt(ctx.client_n_k)} ảnh, ${ctx.client_classes_with_images}/38 lớp có ảnh):`
+    : "Dữ liệu huấn luyện: FedAvg học từ cả 5 client, không client nào gửi ảnh về server:";
+  box.appendChild(title);
+  for (const item of ctx.classes) {
+    const line = document.createElement("div");
+    const name = formatDiseaseName(item.class);
+    const tag = item.is_true_label ? "[Nhãn thật] " : (item.in_top3 ? "[Dự đoán] " : "");
+    if (ctx.client) {
+      const none = item.client_count === 0;
+      line.textContent = none
+        ? `• ${tag}${name}: 0 ảnh trong shard này (cả 5 client: ${fmt(item.all_clients_count)}) — client này chưa từng thấy lớp này`
+        : `• ${tag}${name}: ${fmt(item.client_count)} ảnh (${item.client_share_pct}% của ${fmt(item.all_clients_count)} ảnh trên cả 5 client)`;
+      if (none) line.style.color = "#fbbf24";
+    } else {
+      line.textContent = `• ${tag}${name}: ${fmt(item.all_clients_count)} ảnh trên cả 5 client`;
+    }
+    box.appendChild(line);
+  }
+  box.style.display = "block";
 }
 
 function renderTop3(containerId, top3List) {

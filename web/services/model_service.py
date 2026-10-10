@@ -129,6 +129,74 @@ def predict(model_id: str, image: Any) -> Dict[str, Any]:
     return result
 
 
+_SHARD_CACHE: Dict[str, Any] = {}
+
+
+def _shard_report() -> Optional[Dict[str, Any]]:
+    """artifacts/client_shard_class_counts.json (cache theo kích thước+mtime); None nếu thiếu, hỏng hoặc không nhất quán."""
+    path = reg.abs_path(reg.CLIENT_SHARD_COUNTS_JSON)
+    try:
+        stat = path.stat()
+    except OSError:
+        return None
+    key = (stat.st_size, stat.st_mtime_ns)
+    if _SHARD_CACHE.get("key") != key:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            data = None
+        if not isinstance(data, dict) or data.get("consistent") is not True:
+            data = None
+        _SHARD_CACHE.update(key=key, data=data)
+    return _SHARD_CACHE.get("data")
+
+
+def known_classes() -> List[str]:
+    """38 lớp theo báo cáo shard (nguồn kiểm hash); rỗng nếu chưa có báo cáo."""
+    report = _shard_report()
+    return list(report.get("classes") or []) if report else []
+
+
+def shard_context(
+    federated_source: str, top3: List[Dict[str, Any]], true_class: Optional[str] = None
+) -> Optional[Dict[str, Any]]:
+    """Giải thích kết quả: với mỗi lớp trong top-3, shard huấn luyện của client đang chọn có bao nhiêu ảnh.
+
+    Chỉ trả khi báo cáo shard tồn tại và nhất quán; không có thì None (web vẫn chạy bình thường)."""
+    report = _shard_report()
+    if report is None:
+        return None
+    client = federated_source.replace("local_", "client_") if federated_source.startswith("local_") else None
+    shard = (report.get("clients") or {}).get(client) if client else None
+    if client and shard is None:
+        return None
+    totals = report.get("totals_all_clients") or {}
+    classes = []
+    # Nhãn thật (nếu người dùng biết) đứng đầu: đây là thông điệp giải thích mạnh nhất ("client này có 0 ảnh lớp đó")
+    wanted = ([true_class] if true_class in totals else []) + [
+        e.get("class") for e in (top3 or []) if e.get("class") in totals and e.get("class") != true_class
+    ]
+    for name in wanted:
+        in_client = None if shard is None else int(shard["per_class"].get(name, 0))
+        total = int(totals[name])
+        classes.append({
+            "class": name,
+            "is_true_label": name == true_class,
+            "in_top3": any(e.get("class") == name for e in (top3 or [])),
+            "client_count": in_client,
+            "all_clients_count": total,
+            "client_share_pct": None if in_client is None or total == 0 else round(100.0 * in_client / total, 1),
+        })
+    return {
+        "partition_scheme": report.get("partition_scheme"),
+        "client": client,
+        "client_n_k": None if shard is None else int(shard["n_k"]),
+        "client_classes_with_images": None if shard is None else int(shard["classes_with_images"]),
+        "classes": classes,
+        "evidence": report.get("evidence"),
+    }
+
+
 def bundle_gate() -> tuple[bool, List[str]]:
     """Bộ đối chứng published là MỘT khối (cùng protocol/split): chỉ hiển thị khi MỌI model của nó đã qua cổng web_visible."""
     entries = [

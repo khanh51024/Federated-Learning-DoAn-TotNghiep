@@ -872,6 +872,16 @@ def build_evidence_reports() -> dict[str, Any]:
             "plantdoc_classes_covered": per_class["summary"]["plantdoc_classes_covered"],
             "weak_classes_fedavg": per_class["summary"]["weak_classes_fedavg"],
         }
+    shards = load_json(reg.CLIENT_SHARD_COUNTS_JSON)
+    if shards:
+        reports["client_shards"] = {
+            "source": reg.CLIENT_SHARD_COUNTS_JSON,
+            "evidence": shards.get("evidence"),
+            "partition_scheme": shards.get("partition_scheme"),
+            "consistent": shards.get("consistent"),
+            "client_n_k": {name: c["n_k"] for name, c in (shards.get("clients") or {}).items()},
+            "total_train_samples": shards.get("total_train_samples"),
+        }
     audit = load_json(reg.INFERENCE_AUDIT_JSON)
     if audit:
         images = audit.get("images") or []

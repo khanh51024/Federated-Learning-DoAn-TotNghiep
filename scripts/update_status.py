@@ -81,7 +81,8 @@ def refresh_gates(full: bool) -> list[str]:
     from scripts import build_registry as br  # noqa: E402
 
     crashed: list[str] = []
-    for rel in ("scripts/report_domain_gap.py", "scripts/report_per_class.py"):  # suy ra từ bundle đã kiểm hash
+    # suy ra từ bundle/release đã kiểm hash; report_client_shards giữ file cũ khi máy không có dataset
+    for rel in ("scripts/report_domain_gap.py", "scripts/report_per_class.py", "scripts/report_client_shards.py"):
         code, out = run_script(rel)
         if code != 0:
             crashed.append(rel)
@@ -560,6 +561,33 @@ def results_table(models: list[dict[str, Any]], family: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _shard_table_lines() -> list[str]:
+    """Vì sao Local-only sai: số ảnh train của từng client cho các lớp Tomato (partition label_alpha_0_1)."""
+    report = load_json(reg.abs_path(reg.CLIENT_SHARD_COUNTS_JSON))
+    if not report or report.get("consistent") is not True:
+        return []
+    clients = report["clients"]
+    names = sorted(clients)
+    out = [
+        "",
+        f"**Vì sao Local-only sai: số ảnh train mỗi client có cho từng lớp cà chua (partition `{report['partition_scheme']}`, "
+        f"tổng {report['total_train_samples']:,} ảnh):**".replace(",", "."),
+        "",
+        "| Lớp | " + " | ".join(n.replace("client_", "c") for n in names) + " | Cả 5 |",
+        "|---|" + "---:|" * (len(names) + 1),
+    ]
+    for cls in report["classes"]:
+        if not cls.startswith("Tomato___"):
+            continue
+        cells = [str(clients[n]["per_class"][cls]) for n in names]
+        out.append(f"| {cls.split('___', 1)[1]} | " + " | ".join(cells) + f" | {report['totals_all_clients'][cls]} |")
+    out.append("")
+    out.append("- Mỗi lớp bệnh dồn gần như vào một client; Local-only không nhận ra bệnh mà shard của nó không có ảnh "
+               "(khớp recall công bố, vd. Bacterial_spot: c02 có 1.549 ảnh và đạt 99%, bốn client còn lại 0%). "
+               "Đây là minh họa trực tiếp cho giá trị của FedAvg.")
+    return out
+
+
 def quality_section(registry: dict[str, Any]) -> list[str]:
     models = {m["model_id"]: m for m in registry["models"]}
     lines = ["| Model | PlantVillage | PlantDoc | Chênh | Đúng cây (PlantDoc) | Sai mà confidence > 0.9 |", "|---|---|---|---|---|---|"]
@@ -588,6 +616,7 @@ def quality_section(registry: dict[str, Any]) -> list[str]:
     lines.append("- Nhận định: khoảng cách PlantVillage↔PlantDoc ~45 điểm ở cả hai phương pháp ⇒ vấn đề là tổng quát hóa giữa miền "
                  "dữ liệu, không phải riêng frontend. Chưa đủ bằng chứng để kết luận nguyên nhân (thiếu dữ liệu, nhãn, hay chiến lược train).")
     lines.append("- Số liệu trên là kết quả công bố của bundle, **chưa tái đánh giá cục bộ** (evidence: published_artifact_hash_verified_not_locally_reevaluated).")
+    lines += _shard_table_lines()
 
     report = _per_class_report()
     if report and _per_class_consistent(report):
