@@ -263,6 +263,12 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
   suy luận FedAvg 200. Bản cũ `fl-demo-20261005` giữ nguyên; quay lui = chép `/home/ubuntu/cropfed-demo.service.bak-20261010`
   về `/etc/systemd/system/cropfed-demo.service` rồi `daemon-reload` + `restart`. Server dùng mã commit `fe8bdd3`
   (các commit sau chỉ đổi tài liệu/nội dung trạng thái).
+- 2026-10-10 (dataset + giải thích Local-only): đã tải nhánh `dataset-sources` của GitHub vào `data/dataset_sources/` (gitignored,
+  2,2 GB; 41.851 ảnh train+val khớp `byte_sha256` của manifest release `mixed_pv_pd_v3`). Audit leakage trên split của release:
+  train và val không giao nhau ở group_id/scene/byte_sha256/sample_id; partition `label_alpha_0_1` và `iid` là tập con của train
+  (số liệu mới, mục audit trong checklist chưa tự chuyển trạng thái — cần script audit riêng). Web hiện thêm "ảnh train của client
+  này cho lớp được dự đoán / nhãn thật" (`shard_context`); đã đưa lên server `fl-demo-20261010` (commit 208fc76), sao lưu bản trước ở
+  `/home/ubuntu/backup-20261010-shard`.
 - 2026-10-10 — số test legacy (`pytest legacy/tests`): 149 pass / 29 fail / 10 error. 22 fail + 10 error trùng baseline trước khi gom
   (thiếu PlantVillage gốc và `data/partitions_train_v*`, thiếu fixture `kaggle_calibration` bị `.gitignore *kaggle*`);
   thêm 7 test `stage1_compat` lỗi vì manifest hash upstream tính trên checkout CRLF còn cây này là LF (không do mã).
