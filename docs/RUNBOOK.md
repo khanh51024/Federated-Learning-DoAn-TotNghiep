@@ -125,6 +125,27 @@ hiển thị "SẴN SÀNG NGHIỆM THU KHOA HỌC". Hiện tại đang ở mức
 Đây là phân tích trên số liệu ĐÃ CÔNG BỐ (kèm kiểm nhất quán: recall có trọng số = top-1, phân rã lỗi cộng đúng tổng).
 Không thay thế tái đánh giá cục bộ — cần ảnh validation, xem mục BLOCKED trong `PROJECT_STATUS.md`.
 
+## 6c. Dùng dataset đã tải (`data/dataset_sources/`, gitignored)
+
+Nguồn: nhánh `dataset-sources` của `khanh51024/Federated-Learning-DoAn-TotNghiep` (PlantVillage, PlantDoc, release `mixed/pv_pd_v3`).
+Lấy lại khi máy chưa có (tải ~4 GB vào `.git`, giải nén phần release cần ~2,2 GB):
+
+```powershell
+git fetch origin dataset-sources
+git -c core.autocrlf=false archive origin/dataset-sources mixed/pv_pd_v3 mixed/pv_pd_v1 PlantVillage-Dataset/raw/color PlantVillage-Dataset/leaf-map.json PlantVillage-Dataset/leaf_grouping THONG_TIN_NGUON_DATASET.txt | tar -x -C data/dataset_sources
+```
+
+Có dataset thì ba script sau chạy được (CPU, không cần GPU):
+
+```powershell
+.\.venv\Scripts\python.exe scripts\audit_release_leakage.py       # ~8 phút: train/val/calibration rời nhau + băm 46.076 ảnh -> artifacts/release_leakage_audit.json
+.\.venv\Scripts\python.exe scripts\evaluate_published_models.py   # ~10 phút: tái đánh giá 7 model trên val, ECE + temperature scaling -> artifacts/local_reeval_report.json
+.\.venv\Scripts\python.exe scripts\report_client_shards.py        # phân bố lớp theo client -> artifacts/client_shard_class_counts.json
+```
+
+Dùng `--reuse` ở script thứ hai để phân tích lại từ logits đã lưu (`data/reeval/`) mà không chạy lại suy luận.
+Server demo không có dataset: các báo cáo trên được sinh ở máy này rồi chép lên cùng mã.
+
 ## 7. Nhận kết quả train ngoài (bundle mới)
 
 Train chạy ở Kaggle/branch `train-*`, xuất bundle có `artifact_manifest.json` + SHA-256. Trên máy này:

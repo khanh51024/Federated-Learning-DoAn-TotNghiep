@@ -185,3 +185,44 @@ def test_taxonomy_expectation_comes_from_the_bundle_contract_file(monkeypatch):
     closed = dict(base)
     br.apply_web_gate([closed], forward=False)
     assert any(f.startswith("2.taxonomy") for f in closed["web_gate_failures"])
+
+
+def test_leakage_audit_is_only_granted_to_bundle_models_when_the_audit_passed(registry):
+    audit_path = reg.ROOT / reg.RELEASE_LEAKAGE_AUDIT_JSON
+    if not audit_path.is_file():
+        pytest.skip("chưa có artifacts/release_leakage_audit.json")
+    audit = json.loads(audit_path.read_text(encoding="utf-8"))
+    for model in registry["models"]:
+        is_bundle = model["family"] == reg.FAMILY_PUBLISHED_DEMO
+        if audit["passed"] and is_bundle and model["web_visible"]:
+            assert model["leakage_audit"] == "passed", model["model_id"]
+            assert model["leakage_audit_scope"]
+        else:
+            assert model["leakage_audit"] == "unknown", f"{model['model_id']} không có bằng chứng leakage"
+
+
+def test_apply_leakage_audit_fails_closed(monkeypatch):
+    base = {"model_id": "x", "pipeline": reg.PIPELINE_EXTERNAL, "family": reg.FAMILY_PUBLISHED_DEMO,
+            "checkpoint_status": "hash_verified", "validation_manifest_sha256": "v" * 64,
+            "inference_test": {"status": "pass"}, "leakage_audit": "unknown"}
+    good_audit = {"passed": True, "validation_manifest_sha256": "v" * 64, "release_name": "r"}
+    cases = {
+        "audit không đạt": ({**good_audit, "passed": False}, base),
+        "val hash khác": (good_audit, {**base, "validation_manifest_sha256": "0" * 64}),
+        "forward test không đạt": (good_audit, {**base, "inference_test": {"status": "fail"}}),
+        "checkpoint chưa kiểm hash": (good_audit, {**base, "checkpoint_status": "hash_mismatch"}),
+        "không phải bundle": (good_audit, {**base, "family": reg.FAMILY_SMOKE}),
+    }
+    for label, (audit, model) in cases.items():
+        monkeypatch.setattr(br, "load_json", lambda rel, a=audit: a)
+        entry = dict(model)
+        br.apply_leakage_audit([entry])
+        assert entry["leakage_audit"] == "unknown", label
+    monkeypatch.setattr(br, "load_json", lambda rel: good_audit)
+    ok = dict(base)
+    br.apply_leakage_audit([ok])
+    assert ok["leakage_audit"] == "passed" and ok["leakage_audit_scope"]
+    monkeypatch.setattr(br, "load_json", lambda rel: None)
+    none = dict(base)
+    br.apply_leakage_audit([none])
+    assert none["leakage_audit"] == "unknown"

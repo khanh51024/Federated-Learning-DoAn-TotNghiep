@@ -154,3 +154,12 @@ def test_static_test_results_are_flagged_in_docs():
 def test_dependency_declaration_is_single_sourced(evaluated):
     _registry, ctx, _results = evaluated
     assert us.check_deps(ctx).status == us.DONE
+
+
+def test_vietnamese_number_formatting_touches_only_numbers():
+    assert us.vn(37238) == "37.238"
+    assert us.vn(999) == "999"
+    assert us.vn(1234567) == "1.234.567"
+    # câu có dấu phẩy phải giữ nguyên dấu phẩy (lỗi cũ: .replace(",", ".") áp lên cả câu)
+    sentence = f"T=1.15, fit trên {us.vn(4225)} ảnh"
+    assert sentence == "T=1.15, fit trên 4.225 ảnh"

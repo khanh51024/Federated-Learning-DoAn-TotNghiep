@@ -157,6 +157,7 @@
       "validation_manifest_sha256": null,
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
       "leakage_audit": "unknown",
+      "leakage_audit_scope": null,
       "seed": 42,
       "metrics": {
         "test_accuracy": 0.990932,
@@ -198,6 +199,7 @@
       "validation_manifest_sha256": null,
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
       "leakage_audit": "unknown",
+      "leakage_audit_scope": null,
       "seed": null,
       "metrics": {
         "test_accuracy": 0.9825,
@@ -237,6 +239,7 @@
       "validation_manifest_sha256": null,
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
       "leakage_audit": "unknown",
+      "leakage_audit_scope": null,
       "seed": null,
       "metrics": {
         "mean_accuracy": 0.814,
@@ -282,7 +285,8 @@
       "protocol_id": "mixed_pv_pd_v3_pretrained_seed42_validation",
       "validation_manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
-      "leakage_audit": "unknown",
+      "leakage_audit": "passed",
+      "leakage_audit_scope": "split của release mixed_pv_pd_v3 (train/val/calibration rời nhau theo group, scene, byte, sample); checkpoint ràng buộc release qua metadata, chưa kiểm lại từng bước train",
       "seed": 42,
       "metrics": {
         "overall": {
@@ -598,7 +602,8 @@
       "protocol_id": "mixed_pv_pd_v3_pretrained_seed42_validation",
       "validation_manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
-      "leakage_audit": "unknown",
+      "leakage_audit": "passed",
+      "leakage_audit_scope": "split của release mixed_pv_pd_v3 (train/val/calibration rời nhau theo group, scene, byte, sample); checkpoint ràng buộc release qua metadata, chưa kiểm lại từng bước train",
       "seed": 42,
       "metrics": {
         "overall": {
@@ -914,7 +919,8 @@
       "protocol_id": "mixed_pv_pd_v3_pretrained_seed42_validation",
       "validation_manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
-      "leakage_audit": "unknown",
+      "leakage_audit": "passed",
+      "leakage_audit_scope": "split của release mixed_pv_pd_v3 (train/val/calibration rời nhau theo group, scene, byte, sample); checkpoint ràng buộc release qua metadata, chưa kiểm lại từng bước train",
       "seed": 42,
       "metrics": {
         "overall": {
@@ -1230,7 +1236,8 @@
       "protocol_id": "mixed_pv_pd_v3_pretrained_seed42_validation",
       "validation_manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
-      "leakage_audit": "unknown",
+      "leakage_audit": "passed",
+      "leakage_audit_scope": "split của release mixed_pv_pd_v3 (train/val/calibration rời nhau theo group, scene, byte, sample); checkpoint ràng buộc release qua metadata, chưa kiểm lại từng bước train",
       "seed": 42,
       "metrics": {
         "overall": {
@@ -1546,7 +1553,8 @@
       "protocol_id": "mixed_pv_pd_v3_pretrained_seed42_validation",
       "validation_manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
-      "leakage_audit": "unknown",
+      "leakage_audit": "passed",
+      "leakage_audit_scope": "split của release mixed_pv_pd_v3 (train/val/calibration rời nhau theo group, scene, byte, sample); checkpoint ràng buộc release qua metadata, chưa kiểm lại từng bước train",
       "seed": 42,
       "metrics": {
         "overall": {
@@ -1862,7 +1870,8 @@
       "protocol_id": "mixed_pv_pd_v3_pretrained_seed42_validation",
       "validation_manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
-      "leakage_audit": "unknown",
+      "leakage_audit": "passed",
+      "leakage_audit_scope": "split của release mixed_pv_pd_v3 (train/val/calibration rời nhau theo group, scene, byte, sample); checkpoint ràng buộc release qua metadata, chưa kiểm lại từng bước train",
       "seed": 42,
       "metrics": {
         "overall": {
@@ -2178,7 +2187,8 @@
       "protocol_id": "mixed_pv_pd_v3_pretrained_seed42_validation",
       "validation_manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
-      "leakage_audit": "unknown",
+      "leakage_audit": "passed",
+      "leakage_audit_scope": "split của release mixed_pv_pd_v3 (train/val/calibration rời nhau theo group, scene, byte, sample); checkpoint ràng buộc release qua metadata, chưa kiểm lại từng bước train",
       "seed": 42,
       "metrics": {
         "overall": {
@@ -2495,6 +2505,7 @@
       "validation_manifest_sha256": null,
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
       "leakage_audit": "unknown",
+      "leakage_audit_scope": null,
       "seed": null,
       "metrics": {
         "source": "flower_network_fedavg",
@@ -2533,6 +2544,7 @@
       "validation_manifest_sha256": null,
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
       "leakage_audit": "unknown",
+      "leakage_audit_scope": null,
       "seed": null,
       "metrics": {
         "source": "flower_network_fedavg",
@@ -2571,6 +2583,7 @@
       "validation_manifest_sha256": null,
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
       "leakage_audit": "unknown",
+      "leakage_audit_scope": null,
       "seed": null,
       "metrics": {
         "source": "flower_network_fedavg",
@@ -2609,6 +2622,7 @@
       "validation_manifest_sha256": null,
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
       "leakage_audit": "unknown",
+      "leakage_audit_scope": null,
       "seed": null,
       "metrics": {
         "source": "flower_network_fedavg",
@@ -2647,6 +2661,7 @@
       "validation_manifest_sha256": null,
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
       "leakage_audit": "unknown",
+      "leakage_audit_scope": null,
       "seed": null,
       "metrics": {},
       "metrics_source": null,
@@ -2686,6 +2701,7 @@
       "validation_manifest_sha256": null,
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
       "leakage_audit": "unknown",
+      "leakage_audit_scope": null,
       "seed": null,
       "metrics": {
         "test_accuracy": null,
@@ -2723,6 +2739,7 @@
       "validation_manifest_sha256": null,
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
       "leakage_audit": "unknown",
+      "leakage_audit_scope": null,
       "seed": null,
       "metrics": {
         "test_accuracy": 1.0,
@@ -2760,6 +2777,7 @@
       "validation_manifest_sha256": null,
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
       "leakage_audit": "unknown",
+      "leakage_audit_scope": null,
       "seed": null,
       "metrics": {
         "test_accuracy": null,
@@ -2931,7 +2949,7 @@
   },
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-10T22:24:06",
+      "generated_at": "2026-10-10T23:15:41",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -2943,13 +2961,13 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-10T22:24:12",
+      "generated_at": "2026-10-10T23:15:52",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
-      "generated_at": "2026-10-10T22:29:50",
-      "code_fingerprint": "22fe0808b518037bc5241f297abd110331f2434172ae3e39d656c3c71a220449",
+      "generated_at": "2026-10-10T23:23:16",
+      "code_fingerprint": "7b29eef8be4fc1efa5c3d34751d2a7159528a98ed5dfc934a330275664ae55d2",
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
@@ -2978,7 +2996,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-10T22:24:10",
+      "generated_at": "2026-10-10T23:15:49",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"

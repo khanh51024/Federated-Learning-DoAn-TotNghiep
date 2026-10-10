@@ -138,6 +138,7 @@ def base_model(model_id: str, family: str, display_name: str) -> dict[str, Any]:
         "validation_manifest_sha256": None,
         "taxonomy_sha256": None,
         "leakage_audit": "unknown",
+        "leakage_audit_scope": None,
         "seed": None,
         "metrics": {},
         "metrics_source": None,
@@ -701,6 +702,29 @@ def run_forward_test(model: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+def apply_leakage_audit(models: list[dict[str, Any]]) -> None:
+    """leakage_audit=passed CHỈ cho model của bundle khi: audit release đạt, val hash khớp, và bài forward xác nhận checkpoint
+    ràng buộc đúng release (predict_published kiểm release_manifest_sha256/W0 trong metadata checkpoint)."""
+    audit = load_json(reg.RELEASE_LEAKAGE_AUDIT_JSON)
+    for model in models:
+        model["leakage_audit_scope"] = None
+        if not audit or audit.get("passed") is not True:
+            continue
+        bound = (
+            model.get("pipeline") == reg.PIPELINE_EXTERNAL
+            and model.get("family") == reg.FAMILY_PUBLISHED_DEMO
+            and model.get("checkpoint_status") == "hash_verified"
+            and model.get("validation_manifest_sha256") == audit.get("validation_manifest_sha256")
+            and (model.get("inference_test") or {}).get("status") == "pass"
+        )
+        if bound:
+            model["leakage_audit"] = "passed"
+            model["leakage_audit_scope"] = (
+                f"split của release {audit.get('release_name')} (train/val/calibration rời nhau theo group, scene, byte, sample); "
+                "checkpoint ràng buộc release qua metadata, chưa kiểm lại từng bước train"
+            )
+
+
 def apply_web_gate(models: list[dict[str, Any]], *, forward: bool = True) -> None:
     """web_visible = True chỉ khi đạt đủ 5 điều kiện của review. Lý do rớt ghi vào web_gate_failures."""
     # Nguồn ĐỘC LẬP với cả dataset_manifest.json lẫn import_manifest.json: chính file hợp đồng taxonomy.py đi kèm bundle
@@ -906,6 +930,7 @@ def build_registry(*, forward: bool = True) -> dict[str, Any]:
     )
     apply_family_defaults(models)
     apply_web_gate(models, forward=forward)
+    apply_leakage_audit(models)
     artifact_groups, catalog_gate = build_artifact_catalog(models)
     gates = build_gates()
     gates["checkpoint_catalog"] = catalog_gate

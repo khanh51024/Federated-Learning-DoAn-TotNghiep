@@ -54,6 +54,8 @@ STATUS_REPORT_JSON = "artifacts/status_report.json"
 DOMAIN_GAP_REPORT_JSON = "artifacts/plantdoc_domain_gap_report.json"
 PER_CLASS_REPORT_JSON = "artifacts/plantdoc_per_class_report.json"
 CLIENT_SHARD_COUNTS_JSON = "artifacts/client_shard_class_counts.json"
+LOCAL_REEVAL_JSON = "artifacts/local_reeval_report.json"  # scripts/evaluate_published_models.py
+RELEASE_LEAKAGE_AUDIT_JSON = "artifacts/release_leakage_audit.json"  # scripts/audit_release_leakage.py
 # Dataset đã tải từ nhánh dataset-sources của GitHub (gitignored); chỉ máy có dataset mới sinh lại được báo cáo shard
 DATASET_SOURCES_DIR = "data/dataset_sources"
 RELEASE_V3_DIR = f"{DATASET_SOURCES_DIR}/mixed/pv_pd_v3"

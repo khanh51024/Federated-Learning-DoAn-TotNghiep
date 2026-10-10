@@ -82,6 +82,8 @@ def refresh_gates(full: bool) -> list[str]:
 
     crashed: list[str] = []
     # suy ra từ bundle/release đã kiểm hash; report_client_shards giữ file cũ khi máy không có dataset
+    # Việc NẶNG (audit băm 46.076 ảnh ~8 phút, tái đánh giá 7 model ~10 phút) KHÔNG chạy ở đây: chạy tay theo docs/RUNBOOK.md 6c,
+    # build_registry/checklist chỉ đọc báo cáo đã sinh.
     for rel in ("scripts/report_domain_gap.py", "scripts/report_per_class.py", "scripts/report_client_shards.py"):
         code, out = run_script(rel)
         if code != 0:
@@ -120,6 +122,12 @@ def load_json(path: Path) -> dict[str, Any] | None:
         return json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return None
+
+
+def vn(number: Any) -> str:
+    """Số nguyên có dấu chấm ngăn nghìn kiểu Việt (37238 -> 37.238); chỉ áp lên con số, không lên cả câu."""
+    grouped = format(int(number), ",")
+    return grouped.replace(",", ".")
 
 
 def fmt_pct(value: Any, digits: int = 2) -> str:
@@ -372,21 +380,31 @@ def check_protocol(ctx: Ctx) -> Result:
 
 
 def check_leakage(ctx: Ctx) -> Result:
+    audit = load_json(reg.abs_path(reg.RELEASE_LEAKAGE_AUDIT_JSON))
     cur = ctx.models_of(reg.ROLE_CURRENT)
+    if audit is None:
+        return Result(
+            BLOCKED,
+            f"chưa có {reg.RELEASE_LEAKAGE_AUDIT_JSON}: máy không có dataset để audit split của release",
+            needs=f"dataset release mixed_pv_pd_v3 ở {reg.DATASET_SOURCES_DIR} (nhánh dataset-sources của GitHub: khanh51024/Federated-Learning-DoAn-TotNghiep)",
+            unlock=[".\\.venv\\Scripts\\python.exe scripts\\audit_release_leakage.py   # sau khi có dataset"],
+        )
+    if audit.get("passed") is not True:
+        failed = [k for k, v in (audit.get("manifest_hashes_match_files") or {}).items() if not v]
+        overlaps = {pair: {k: v for k, v in keys.items() if v} for pair, keys in (audit.get("pairwise_overlaps") or {}).items()}
+        return Result(TODO, f"audit release KHÔNG đạt: hash manifest lệch={failed}; giao nhau={ {k: v for k, v in overlaps.items() if v} }; "
+                            f"ràng buộc release={ (audit.get('release_binding') or {}).get('matches_pinned') }")
     unknown = [m["model_id"] for m in cur if m.get("leakage_audit") != "passed"]
-    if cur and not unknown:
-        return Result(DONE, "mọi model hiện hành có leakage_audit=passed")
+    if unknown:
+        return Result(TODO, f"audit release đạt nhưng {len(unknown)}/{len(cur)} model hiện hành chưa được gắn passed: {unknown} — chạy lại build_registry")
+    counts = audit.get("counts") or {}
+    overlap_total = sum(v for pair in audit["pairwise_overlaps"].values() for v in pair.values())
+    image_bytes = audit.get("image_bytes") or {}
     return Result(
-        BLOCKED,
-        f"{len(unknown)}/{len(cur)} model hiện hành có leakage_audit=unknown. Các nhánh train-* trên GitHub (đã kiểm 2026-10-10) chỉ có MÃ "
-        "ràng buộc group-disjoint giữa client (plant_data_contract/partitions.py) và hash release, KHÔNG có manifest ảnh train/val "
-        "nên không audit được dữ liệu thật. [mục kiểm tay: chưa có script đọc kết quả audit để tự chuyển trạng thái]",
-        needs="manifest ảnh train/val của release `dataset/mixed/pv_pd_v3` (hash 6d2c6b40…, nằm ở Kaggle/Drive của nhóm train, không nằm trong repo) "
-              "hoặc chính dataset gốc để dựng lại split",
-        unlock=[
-            "# 1) lấy dataset/mixed/pv_pd_v3 (hoặc riêng manifest train/val) từ nhóm train, đặt ở thư mục cục bộ, rồi:",
-            ".\\.venv\\Scripts\\python.exe scripts\\verify_integrity.py --all   # hiện chỉ audit split cục bộ partitions_*; cần mở rộng cho manifest bundle",
-        ],
+        DONE,
+        f"release {audit.get('release_name')}: train {vn(counts.get('train'))} / val {vn(counts.get('val'))} / calibration {vn(counts.get('calibration'))} "
+        f"rời nhau trên 5 khóa (giao nhau tổng = {overlap_total}); {len(audit.get('partitions') or {})} partition đều là tập con train; "
+        f"{vn(image_bytes.get('checked', 0))} ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train)",
     )
 
 
@@ -415,17 +433,34 @@ def check_per_class(ctx: Ctx) -> Result:
 
 
 def check_reeval(ctx: Ctx) -> Result:
-    return Result(
-        BLOCKED,
-        "số theo lớp ở trên là số CÔNG BỐ; chưa tái đánh giá cục bộ nên chưa có confusion matrix đầy đủ. [mục kiểm tay]",
-        needs="ảnh validation (269 PlantDoc + 4.344 PlantVillage) khớp validation_manifest của bundle + checkpoint đã kiểm hash",
-        unlock=[
-            "# chưa có script tái đánh giá — viết scripts/evaluate_published_per_class.py khi có ảnh validation",
-            "# (cùng điều kiện dữ liệu với mục audit leakage; checkpoint bundle đã có và đã kiểm hash)",
-            ".\\.venv\\Scripts\\python.exe scripts\\audit_realworld_inference.py --images <thư_mục_ảnh_ngoài>",
-            ".\\.venv\\Scripts\\python.exe scripts\\evaluate_inference_audit.py --audit artifacts\\inference_audit.json --labels <nhãn.csv>",
-        ],
+    report = load_json(reg.abs_path(reg.LOCAL_REEVAL_JSON))
+    if report is None:
+        return Result(
+            BLOCKED,
+            f"chưa có {reg.LOCAL_REEVAL_JSON}: chưa tái đánh giá cục bộ (số theo lớp ở trên là số CÔNG BỐ)",
+            needs=f"ảnh validation + manifest (data/dataset_sources) và checkpoint bundle đã kiểm hash; máy CPU chạy được",
+            unlock=[".\\.venv\\Scripts\\python.exe scripts\\evaluate_published_models.py   # ~15-20 phút trên CPU"],
+        )
+    pinned = {m["model_id"]: m["checkpoint_sha256"] for m in (ctx.registry.get("evidence_reports") or {}).get("published_models", [])}
+    registry_hashes = {m["model_id"]: m.get("file_sha256") for m in ctx.registry["models"] if m["family"] == reg.FAMILY_PUBLISHED_DEMO}
+    stale = [k for k, v in (report.get("checkpoint_sha256") or {}).items()
+             if v not in registry_hashes.values()]
+    if stale:
+        return Result(TODO, f"báo cáo tái đánh giá dùng checkpoint không còn khớp registry: {stale} — chạy lại evaluate_published_models.py")
+    models = report["models"]
+    if report.get("all_within_tolerance") is not True or report.get("main_models_exact") is not True:
+        bad = [f"{m['display_name']}/{src}" for m in models.values() for src, c in m["vs_published"].items() if not c.get("within_tolerance")]
+        return Result(TODO, f"không tái lập được số công bố (ngoài ngưỡng ≤1 ảnh hoặc hai model chính không khớp tuyệt đối): {bad} — kiểm lại preprocessing/checkpoint")
+    exact, total = report["comparisons_exact"], report["comparisons_total"]
+    detail = (
+        f"{vn(report['validation_count'])} ảnh validation tái đo trên CPU: Centralized v6 và FedAvg v7 khớp TUYỆT ĐỐI số công bố "
+        f"(số ảnh đúng, macro-F1, crop accuracy, recall theo lớp); tổng {exact}/{total} phép so khớp tuyệt đối"
     )
+    if exact != total:
+        off = [f"{m['display_name']}/{src} ({c['correct_diff_images']:+d} ảnh)" for m in models.values()
+               for src, c in m["vs_published"].items() if not c.get("reproduced")]
+        detail += f"; {total - exact} phép so của Local-only lệch ≤1 ảnh: {', '.join(off)} — chưa rõ nguyên nhân, phù hợp sai số số học (ảnh sát ngưỡng)"
+    return Result(DONE, detail)
 
 
 def check_confident_errors(ctx: Ctx) -> Result:
@@ -441,11 +476,22 @@ def check_confident_errors(ctx: Ctx) -> Result:
 
 
 def check_calibration(ctx: Ctx) -> Result:
+    report = load_json(reg.abs_path(reg.LOCAL_REEVAL_JSON))
+    if report is None:
+        return Result(
+            BLOCKED,
+            "chưa đo calibration và chưa liệt kê được từng ảnh sai tự tin (cần tái đánh giá cục bộ)",
+            needs="ảnh validation + calibration manifest + checkpoint đã kiểm hash",
+            unlock=[".\\.venv\\Scripts\\python.exe scripts\\evaluate_published_models.py"],
+        )
+    fed = report["models"]["fedavg"]["calibration"]
+    pd = fed.get("plantdoc") or {}
+    wrong = len((report.get("detail", {}).get("fedavg", {}) or {}).get("high_confidence_wrong", []))
     return Result(
-        BLOCKED,
-        "chưa phân tích được TỪNG ảnh sai tự tin và chưa đo calibration (softmax chưa hiệu chuẩn, UI cảnh báo is_uncertain chỉ là heuristic). [mục kiểm tay]",
-        needs="ảnh validation + checkpoint để liệt kê ảnh sai confidence cao, đo ECE/reliability và thử temperature scaling trên tập validation độc lập",
-        unlock=["# cùng điều kiện dữ liệu với mục 'tái đánh giá cục bộ'; viết scripts/calibration_report.py khi có ảnh validation"],
+        DONE,
+        f"FedAvg v7: ECE PlantDoc {pd.get('ece_raw', 0):.3f} → {pd.get('ece_temperature_scaled', 0):.3f} sau temperature scaling "
+        f"(T={report['models']['fedavg']['temperature_fitted_on_calibration']}, fit trên {vn(report['calibration_count'])} ảnh calibration tách biệt val); "
+        f"{wrong} ảnh validation sai với confidence ≥ 0,9 đã liệt kê từng ảnh. UI vẫn hiển thị softmax CHƯA hiệu chuẩn",
     )
 
 
@@ -488,7 +534,7 @@ ITEMS = [
     Item("per_class", "Đánh giá PlantDoc theo từng lớp (từ số công bố)", check_per_class),
     Item("reeval", "Tái đánh giá cục bộ trên ảnh validation (xác nhận số công bố)", check_reeval),
     Item("confident_errors", "Phân tích lỗi confidence cao (mức tổng hợp, từ số công bố)", check_confident_errors),
-    Item("calibration", "Phân tích từng ảnh sai tự tin + đo calibration", check_calibration),
+    Item("calibration", "Phân tích từng ảnh sai tự tin + đo calibration (ECE)", check_calibration),
     Item("multiseed", "Chạy multi-seed non-IID (seed 42/123/2026)", check_multiseed),
     Item("reports_synced", "Đồng bộ báo cáo & artifacts sau khi có run mới", check_reports_synced),
     Item("release", "Release sạch (mọi gate kỹ thuật XONG)", check_release),
@@ -561,6 +607,51 @@ def results_table(models: list[dict[str, Any]], family: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _reeval_lines() -> list[str]:
+    """Kết quả tái đánh giá cục bộ + calibration (artifacts/local_reeval_report.json)."""
+    report = load_json(reg.abs_path(reg.LOCAL_REEVAL_JSON))
+    if not report:
+        return []
+    out = [
+        "",
+        f"**Tái đánh giá CỤC BỘ trên CPU ({vn(report['validation_count'])} ảnh validation; calibration {vn(report['calibration_count'])} ảnh tách biệt val):**",
+        "",
+        "| Model | PlantVillage | PlantDoc | Khớp số công bố | ECE PV (thô → TS) | ECE PlantDoc (thô → TS) | T |",
+        "|---|---:|---:|---|---:|---:|---:|",
+    ]
+    for model in report["models"].values():
+        by, vs, cal = model["by_source"], model["vs_published"], model["calibration"]
+        def ok(src: str) -> str:
+            c = vs.get(src, {})
+            if c.get("reproduced"):
+                return "tuyệt đối"
+            return f"{c.get('correct_diff_images', 0):+d} ảnh" if c.get("within_tolerance") else "KHÔNG khớp"
+        pv, pd = cal.get("plantvillage", {}), cal.get("plantdoc", {})
+        out.append(
+            f"| {model['display_name']} | {by['plantvillage']['top1_accuracy']:.2%} | {by['plantdoc']['top1_accuracy']:.2%} | "
+            f"PV {ok('plantvillage')}, PD {ok('plantdoc')} | {pv.get('ece_raw', 0):.3f} → {pv.get('ece_temperature_scaled', 0):.3f} | "
+            f"{pd.get('ece_raw', 0):.3f} → {pd.get('ece_temperature_scaled', 0):.3f} | {model['temperature_fitted_on_calibration']} |"
+        )
+    wrong = report["detail"]["fedavg"]["high_confidence_wrong"]
+    out += [
+        "",
+        f"- Khớp tuyệt đối {report['comparisons_exact']}/{report['comparisons_total']} phép so; Centralized và FedAvg khớp tuyệt đối trên cả hai nguồn. "
+        f"{report['known_discrepancy_note']}",
+        "- ECE đo mức lệch giữa độ tin cậy và độ đúng thật (càng thấp càng tốt); TS = temperature scaling với T fit trên tập calibration, "
+        "KHÔNG fit trên validation. Temperature scaling không đổi nhãn dự đoán, chỉ đổi độ tin cậy hiển thị.",
+        f"- {len(wrong)} ảnh validation FedAvg v7 sai với confidence ≥ 0,9 đã liệt kê từng ảnh trong `{reg.LOCAL_REEVAL_JSON}` (mục `detail.fedavg.high_confidence_wrong`).",
+    ]
+    audit = load_json(reg.abs_path(reg.RELEASE_LEAKAGE_AUDIT_JSON))
+    if audit:
+        total = sum(v for pair in audit["pairwise_overlaps"].values() for v in pair.values())
+        out.append(
+            f"- Leakage (split của release `{audit['release_name']}`): train/val/calibration giao nhau = {total}; "
+            f"{vn(audit['image_bytes'].get('checked', 0))} ảnh khớp byte_sha256; {len(audit['partitions'])} partition là tập con của train. "
+            "Phạm vi: split của release; checkpoint ràng buộc release qua metadata."
+        )
+    return out
+
+
 def _shard_table_lines() -> list[str]:
     """Vì sao Local-only sai: số ảnh train của từng client cho các lớp Tomato (partition label_alpha_0_1)."""
     report = load_json(reg.abs_path(reg.CLIENT_SHARD_COUNTS_JSON))
@@ -571,7 +662,7 @@ def _shard_table_lines() -> list[str]:
     out = [
         "",
         f"**Vì sao Local-only sai: số ảnh train mỗi client có cho từng lớp cà chua (partition `{report['partition_scheme']}`, "
-        f"tổng {report['total_train_samples']:,} ảnh):**".replace(",", "."),
+        f"tổng {vn(report['total_train_samples'])} ảnh):**",
         "",
         "| Lớp | " + " | ".join(n.replace("client_", "c") for n in names) + " | Cả 5 |",
         "|---|" + "---:|" * (len(names) + 1),
@@ -617,6 +708,7 @@ def quality_section(registry: dict[str, Any]) -> list[str]:
                  "dữ liệu, không phải riêng frontend. Chưa đủ bằng chứng để kết luận nguyên nhân (thiếu dữ liệu, nhãn, hay chiến lược train).")
     lines.append("- Số liệu trên là kết quả công bố của bundle, **chưa tái đánh giá cục bộ** (evidence: published_artifact_hash_verified_not_locally_reevaluated).")
     lines += _shard_table_lines()
+    lines += _reeval_lines()
 
     report = _per_class_report()
     if report and _per_class_consistent(report):

@@ -35,7 +35,7 @@ dataset_truth: { protocol, total_images, split{train,val,test}, num_clients, spl
 families: { <family>: {description} }
 models: [ <model>, ... ]
 artifact_groups: [ {group_id, role, description, count, paths[], lfs_oids?} ]   # .pt ngoài danh sách model
-evidence_reports: { domain_gap, per_class, inference_audit }   # suy ra từ bundle: report_domain_gap.py, report_per_class.py
+evidence_reports: { domain_gap, per_class, client_shards, inference_audit }   # suy ra từ bundle: report_domain_gap.py, report_per_class.py
 gates: { provenance, pre_demo_check, final_acceptance, network_artifact, checkpoint_catalog }
 ```
 
@@ -49,7 +49,7 @@ Mỗi `model`:
 | `role` | `current` (hiện hành) \| `historical` \| `technical_demo` \| `reference` \| `quarantined` |
 | `dataset_id` / `protocol_id` | dữ liệu và protocol mà số liệu thuộc về |
 | `validation_manifest_sha256` / `taxonomy_sha256` | hash manifest validation công bố / hash thứ tự 38 lớp |
-| `leakage_audit` | `passed` \| `unknown` (mặc định `unknown` cho tới khi có bằng chứng) |
+| `leakage_audit` / `leakage_audit_scope` | `passed` \| `unknown` (mặc định `unknown`). `passed` chỉ cho model của bundle khi `artifacts/release_leakage_audit.json` đạt, val hash khớp và bài forward xác nhận checkpoint ràng buộc release; scope ghi rõ giới hạn |
 | `checkpoint_path` / `checkpoint_exists` / `file_sha256` / `state_sha256` | sự thật trên đĩa |
 | `expected_state_sha256` | hash khai báo trong metrics gốc |
 | `checkpoint_status` | `hash_verified` \| `matches_manifest` \| `missing_on_this_machine` \| `smoke_overwrite_detected` \| `hash_mismatch` \| `quarantined` \| `present` \| `not_applicable` |

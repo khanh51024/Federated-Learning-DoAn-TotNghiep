@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (6 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)",
+  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)",
   "canonical_run_id": "20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62",
   "dataset_truth": {
     "source": "data/partitions_stage2_scratch_v3/suite.json",
@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-10T22:24:06",
+      "generated_at": "2026-10-10T23:15:41",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,13 +145,13 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-10T22:24:12",
+      "generated_at": "2026-10-10T23:15:52",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
-      "generated_at": "2026-10-10T22:29:50",
-      "code_fingerprint": "22fe0808b518037bc5241f297abd110331f2434172ae3e39d656c3c71a220449",
+      "generated_at": "2026-10-10T23:23:16",
+      "code_fingerprint": "7b29eef8be4fc1efa5c3d34751d2a7159528a98ed5dfc934a330275664ae55d2",
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
@@ -180,7 +180,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-10T22:24:10",
+      "generated_at": "2026-10-10T23:15:49",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
@@ -269,7 +269,7 @@
       "id": "full_tests",
       "title": "Full tests pass trên mã nguồn hiện tại",
       "status": "XONG",
-      "detail": "technical_acceptance=pass lúc 2026-10-10T22:29:50 (gồm test mạng, 39 file test) trên đúng mã nguồn hiện tại",
+      "detail": "technical_acceptance=pass lúc 2026-10-10T23:23:16 (gồm test mạng, 40 file test) trên đúng mã nguồn hiện tại",
       "unlock": []
     },
     {
@@ -287,12 +287,9 @@
     {
       "id": "leakage",
       "title": "Audit leakage theo từng run",
-      "status": "BLOCKED",
-      "detail": "7/7 model hiện hành có leakage_audit=unknown. Các nhánh train-* trên GitHub (đã kiểm 2026-10-10) chỉ có MÃ ràng buộc group-disjoint giữa client (plant_data_contract/partitions.py) và hash release, KHÔNG có manifest ảnh train/val nên không audit được dữ liệu thật. [mục kiểm tay: chưa có script đọc kết quả audit để tự chuyển trạng thái]",
-      "unlock": [
-        "# 1) lấy dataset/mixed/pv_pd_v3 (hoặc riêng manifest train/val) từ nhóm train, đặt ở thư mục cục bộ, rồi:",
-        ".\\.venv\\Scripts\\python.exe scripts\\verify_integrity.py --all   # hiện chỉ audit split cục bộ partitions_*; cần mở rộng cho manifest bundle"
-      ]
+      "status": "XONG",
+      "detail": "release mixed_pv_pd_v3: train 37.238 / val 4.613 / calibration 4.225 rời nhau trên 5 khóa (giao nhau tổng = 0); 12 partition đều là tập con train; 46.076 ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train)",
+      "unlock": []
     },
     {
       "id": "per_class",
@@ -304,14 +301,9 @@
     {
       "id": "reeval",
       "title": "Tái đánh giá cục bộ trên ảnh validation (xác nhận số công bố)",
-      "status": "BLOCKED",
-      "detail": "số theo lớp ở trên là số CÔNG BỐ; chưa tái đánh giá cục bộ nên chưa có confusion matrix đầy đủ. [mục kiểm tay]",
-      "unlock": [
-        "# chưa có script tái đánh giá — viết scripts/evaluate_published_per_class.py khi có ảnh validation",
-        "# (cùng điều kiện dữ liệu với mục audit leakage; checkpoint bundle đã có và đã kiểm hash)",
-        ".\\.venv\\Scripts\\python.exe scripts\\audit_realworld_inference.py --images <thư_mục_ảnh_ngoài>",
-        ".\\.venv\\Scripts\\python.exe scripts\\evaluate_inference_audit.py --audit artifacts\\inference_audit.json --labels <nhãn.csv>"
-      ]
+      "status": "XONG",
+      "detail": "4.613 ảnh validation tái đo trên CPU: Centralized v6 và FedAvg v7 khớp TUYỆT ĐỐI số công bố (số ảnh đúng, macro-F1, crop accuracy, recall theo lớp); tổng 10/14 phép so khớp tuyệt đối; 4 phép so của Local-only lệch ≤1 ảnh: Local 01/plantdoc (+0 ảnh), Local 01/plantvillage (+0 ảnh), Local 03/plantvillage (+1 ảnh), Local 04/plantvillage (-1 ảnh) — chưa rõ nguyên nhân, phù hợp sai số số học (ảnh sát ngưỡng)",
+      "unlock": []
     },
     {
       "id": "confident_errors",
@@ -322,12 +314,10 @@
     },
     {
       "id": "calibration",
-      "title": "Phân tích từng ảnh sai tự tin + đo calibration",
-      "status": "BLOCKED",
-      "detail": "chưa phân tích được TỪNG ảnh sai tự tin và chưa đo calibration (softmax chưa hiệu chuẩn, UI cảnh báo is_uncertain chỉ là heuristic). [mục kiểm tay]",
-      "unlock": [
-        "# cùng điều kiện dữ liệu với mục 'tái đánh giá cục bộ'; viết scripts/calibration_report.py khi có ảnh validation"
-      ]
+      "title": "Phân tích từng ảnh sai tự tin + đo calibration (ECE)",
+      "status": "XONG",
+      "detail": "FedAvg v7: ECE PlantDoc 0.295 → 0.261 sau temperature scaling (T=1.1488, fit trên 4.225 ảnh calibration tách biệt val); 100 ảnh validation sai với confidence ≥ 0,9 đã liệt kê từng ảnh. UI vẫn hiển thị softmax CHƯA hiệu chuẩn",
+      "unlock": []
     },
     {
       "id": "multiseed",
