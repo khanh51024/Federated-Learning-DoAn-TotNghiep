@@ -30,22 +30,16 @@ test = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["src*", "fl_training*", "stage1_compat*", "stage2_matched*", "stage2_scratch*"]
-
-[tool.setuptools.package-data]
-stage1_compat = ["*.json", "upstream/**/*.py"]
-
-[tool.flwr.app]
-publisher = "flwr"
-
-[tool.flwr.app.components]
-serverapp = "fl_training.server_app:app"
-clientapp = "fl_training.client_app:app"
+include = ["src*", "web*", "scripts*"]
 
 [tool.pyrefly]
 search-path = ["."]
 disable-search-path-heuristics = true
 python-interpreter-path = ".venv/Scripts/python.exe"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = ["legacy", ".venv", ".git", "artifacts", "results", "data", "pytest-of-*"]
 
 [tool.pyright]
 extraPaths = ["."]

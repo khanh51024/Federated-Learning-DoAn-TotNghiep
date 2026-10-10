@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import torch
 
-from train.model import (
+from src.model.mobilenetv3 import (
     check_parameters_finite,
     compute_model_hash,
     count_parameters,

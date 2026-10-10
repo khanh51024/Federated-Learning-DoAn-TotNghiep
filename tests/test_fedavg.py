@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 import torch
 
-from train.strategy import aggregate_fedavg, fedavg_weighted_average
+from src.federated.strategy import aggregate_fedavg, fedavg_weighted_average
 
 
 def test_fedavg_scalar():
@@ -62,14 +62,36 @@ def test_fedavg_multidimensional_tensor_5_clients():
         })
 
     expected_tensor = expected_tensor / total_n
-    aggregated = aggregate_fedavg(client_updates)
+    parent = {"features.0.1.num_batches_tracked": torch.tensor(4, dtype=torch.int64)}
+    aggregated = aggregate_fedavg(client_updates, parent_weights=parent)
 
     # 1. Kiểm tra conv weights
     actual_conv = aggregated["features.0.0.weight"].numpy()
     assert np.allclose(actual_conv, expected_tensor, atol=1e-6)
 
-    # 2. Kiểm tra num_batches_tracked lấy MAX (50)
-    assert aggregated["features.0.1.num_batches_tracked"].item() == 50
+    # 2. num_batches_tracked là bộ đếm tích lũy: parent + tổng phần tăng của các client.
+    #    Client k kết thúc ở 10*(k+1) từ cùng parent=4 -> phần tăng (6+16+26+36+46)=130 -> 134.
+    assert aggregated["features.0.1.num_batches_tracked"].item() == 4 + 130
+
+
+def test_fedavg_integer_buffer_requires_parent_and_rejects_regression():
+    """Bộ đếm BatchNorm: thiếu parent hoặc client đi lùi so với parent phải bị từ chối, không đoán."""
+    def update(cid, counter):
+        return {
+            "client_id": cid,
+            "num_examples": 10,
+            "weights": {
+                "features.0.0.weight": torch.ones(2, 2),
+                "features.0.1.num_batches_tracked": torch.tensor(counter, dtype=torch.int64),
+            },
+        }
+
+    with pytest.raises(ValueError, match="Missing parent value"):
+        aggregate_fedavg([update(0, 5), update(1, 7)])
+
+    parent = {"features.0.1.num_batches_tracked": torch.tensor(6, dtype=torch.int64)}
+    with pytest.raises(ValueError, match="regressed"):
+        aggregate_fedavg([update(0, 5), update(1, 7)], parent_weights=parent)
 
 
 def test_fedavg_rejects_nan_and_inf():

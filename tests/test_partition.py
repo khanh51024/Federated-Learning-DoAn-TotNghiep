@@ -5,7 +5,7 @@ Unit test kiểm tra phân hoạch Dirichlet non-IID và đo lường chỉ số
 import numpy as np
 import pytest
 
-from train.data import calculate_data_scarcity, partition_dirichlet
+from src.data.partition import calculate_data_scarcity, partition_dirichlet
 
 
 def test_dirichlet_partition_conserves_samples():

@@ -35,9 +35,10 @@ data/*
 *upload*
 
 !kaggle_*.ipynb
-!configs/*kaggle*.yaml
-!scripts/*kaggle*.py
-!requirements-kaggle.txt
+!legacy/configs/*kaggle*.yaml
+!legacy/scripts/*kaggle*.py
+!legacy/requirements-kaggle.txt
+!legacy/fl_training/kaggle_budget.py
 
 # ZCode workspace config (không phải dự án)
 .zcode/

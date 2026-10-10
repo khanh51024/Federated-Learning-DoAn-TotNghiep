@@ -1,11 +1,9 @@
-"""src.centralized: Module huấn luyện tập trung và suy luận."""
+"""src.centralized: Module huấn luyện tập trung. Suy luận đi qua web/services/model_service.py (một cửa duy nhất)."""
 from .train import run_centralized_training, train_one_epoch
 from .evaluate import evaluate
-from .inference import predict_image
 
 __all__ = [
     "run_centralized_training",
     "train_one_epoch",
     "evaluate",
-    "predict_image",
 ]
