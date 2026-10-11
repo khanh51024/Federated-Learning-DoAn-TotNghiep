@@ -55,6 +55,17 @@ DOMAIN_GAP_REPORT_JSON = "artifacts/plantdoc_domain_gap_report.json"
 PER_CLASS_REPORT_JSON = "artifacts/plantdoc_per_class_report.json"
 CLIENT_SHARD_COUNTS_JSON = "artifacts/client_shard_class_counts.json"
 LOCAL_REEVAL_JSON = "artifacts/local_reeval_report.json"  # scripts/evaluate_published_models.py
+# Tập test giữ riêng của release (chưa từng dùng để chọn checkpoint): scripts/evaluate_published_models.py --holdout
+HOLDOUT_SPLIT = "legacy_diagnostic_test"
+# Ghim theo release_manifest.json (manifest_hashes.legacy_diagnostic_test) của release đã ghim RELEASE_SHA: máy chủ không có
+# dataset vẫn kiểm được báo cáo test giữ riêng nói về đúng tập ảnh nào.
+HOLDOUT_MANIFEST_SHA256 = "61ee9f178b93aa65dcc6e41c63365c0f6098dc6f79d3dfa7b6e3a8e735f769c2"
+HOLDOUT_COUNTS = {"plantdoc": 172, "plantvillage": 10843}
+HOLDOUT_EVAL_JSON = "artifacts/holdout_eval_report.json"
+ERROR_GALLERY_DIR = "web/static/samples/errors"
+ERROR_GALLERY_CATALOG_JSON = f"{ERROR_GALLERY_DIR}/catalog.json"  # scripts/build_error_gallery.py
+STATISTICS_JSON = "artifacts/statistics_report.json"  # scripts/report_statistics.py (khoảng tin cậy theo cụm, McNemar)
+PARTITION_SCHEMES_JSON = "artifacts/partition_schemes_class_counts.json"  # scripts/report_partition_schemes.py
 RELEASE_LEAKAGE_AUDIT_JSON = "artifacts/release_leakage_audit.json"  # scripts/audit_release_leakage.py
 # Dataset đã tải từ nhánh dataset-sources của GitHub (gitignored); chỉ máy có dataset mới sinh lại được báo cáo shard
 DATASET_SOURCES_DIR = "data/dataset_sources"

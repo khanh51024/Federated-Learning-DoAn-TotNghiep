@@ -1,15 +1,15 @@
 // Chart.js: cấu hình chung lấy từ token CSS để biểu đồ luôn khớp giao diện; chỉ tạo khi canvas đang hiện.
+// makeChart nhận một HÀM trả cấu hình: khi đổi nền sáng/tối, mọi biểu đồ còn trên trang được dựng lại với màu mới.
 import { cssVar, prefersReducedMotion } from "./dom.js";
 
-let configured = false;
+let registered = false;
+const factories = new Map(); // canvas -> () => config
 
 export function chartAvailable() {
   return typeof Chart !== "undefined";
 }
 
-function configureOnce() {
-  if (configured || !chartAvailable()) return;
-  configured = true;
+function applyDefaults() {
   Chart.defaults.font.family = cssVar("--font-main", "sans-serif");
   Chart.defaults.font.size = 12;
   Chart.defaults.color = cssVar("--text-secondary", "#46515f");
@@ -23,7 +23,12 @@ function configureOnce() {
   Chart.defaults.plugins.tooltip.backgroundColor = "#111827";
   Chart.defaults.plugins.tooltip.padding = 10;
   Chart.defaults.plugins.tooltip.cornerRadius = 8;
+}
 
+function registerOnce() {
+  if (registered || !chartAvailable()) return;
+  registered = true;
+  applyDefaults();
   // Biểu đồ chưa có dữ liệu: ghi rõ thay vì để lưới trống khó hiểu.
   Chart.register({
     id: "emptyState",
@@ -52,6 +57,16 @@ function configureOnce() {
       ctx.restore();
     },
   });
+  window.addEventListener("themechange", () => {
+    applyDefaults();
+    for (const [canvas, factory] of factories) {
+      if (!canvas.isConnected) {
+        factories.delete(canvas);
+        continue;
+      }
+      build(canvas, factory);
+    }
+  });
 }
 
 /** Màu theo trụ cột: Centralized xanh dương, FedAvg xanh lá, Local-only cam (cố định ở mọi nơi). */
@@ -62,11 +77,23 @@ export function pillarColors() {
     local: cssVar("--chart-4", "#d97706"),
     danger: cssVar("--chart-5", "#e11d48"),
     violet: cssVar("--chart-3", "#7c3aed"),
+    neutral: cssVar("--text-muted", "#6b7280"),
   };
 }
 
-/** Tạo (hoặc thay) biểu đồ trên canvas. Không có Chart.js thì ghi chú văn bản vào khung chứa. */
-export function makeChart(canvas, config) {
+function build(canvas, factory) {
+  const config = factory();
+  const existing = Chart.getChart(canvas);
+  if (existing) existing.destroy();
+  const printing = document.documentElement.dataset.printing === "1"; // đang in: vẽ đồng bộ, không chờ khung hình animation
+  return new Chart(canvas.getContext("2d"), {
+    ...config,
+    options: { responsive: true, maintainAspectRatio: false, ...(config.options || {}), ...(printing ? { animation: false } : {}) },
+  });
+}
+
+/** Tạo (hoặc thay) biểu đồ. `configOrFactory` nên là hàm để biểu đồ đổi màu theo nền; không có Chart.js thì ghi chú. */
+export function makeChart(canvas, configOrFactory) {
   if (!canvas) return null;
   if (!chartAvailable()) {
     const host = canvas.parentElement;
@@ -78,11 +105,8 @@ export function makeChart(canvas, config) {
     }
     return null;
   }
-  configureOnce();
-  const existing = Chart.getChart(canvas);
-  if (existing) existing.destroy();
-  return new Chart(canvas.getContext("2d"), {
-    ...config,
-    options: { responsive: true, maintainAspectRatio: false, ...(config.options || {}) },
-  });
+  registerOnce();
+  const factory = typeof configOrFactory === "function" ? configOrFactory : () => configOrFactory;
+  factories.set(canvas, factory);
+  return build(canvas, factory);
 }

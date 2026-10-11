@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-11T08:33:20",
+      "generated_at": "2026-10-11T23:53:40",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,13 +145,13 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-11T08:33:25",
+      "generated_at": "2026-10-11T23:53:53",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
-      "generated_at": "2026-10-11T08:38:27",
-      "code_fingerprint": "d0ef12ebb66b59a366a3a3ccd7f457ad52f377372fe3d4e17584dd20e9d92307",
+      "generated_at": "2026-10-12T00:01:53",
+      "code_fingerprint": "bf2f2c369962b002bdf0db020d9ddb53b70e59a8dd2936d2e2ed2673d38f2c9d",
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
@@ -180,7 +180,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-11T08:33:23",
+      "generated_at": "2026-10-11T23:53:49",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
@@ -269,7 +269,7 @@
       "id": "full_tests",
       "title": "Full tests pass trên mã nguồn hiện tại",
       "status": "XONG",
-      "detail": "technical_acceptance=pass lúc 2026-10-11T08:38:27 (gồm test mạng, 43 file test) trên đúng mã nguồn hiện tại",
+      "detail": "technical_acceptance=pass lúc 2026-10-12T00:01:53 (gồm test mạng, 46 file test) trên đúng mã nguồn hiện tại",
       "unlock": []
     },
     {
@@ -316,17 +316,31 @@
       "id": "calibration",
       "title": "Phân tích từng ảnh sai tự tin + đo calibration (ECE)",
       "status": "XONG",
-      "detail": "FedAvg v7: ECE PlantDoc 0.295 → 0.261 sau temperature scaling (T=1.1488, fit trên 4.225 ảnh calibration tách biệt val); 100 ảnh validation sai với confidence ≥ 0,9 đã liệt kê từng ảnh. UI vẫn hiển thị softmax CHƯA hiệu chuẩn",
+      "detail": "FedAvg v7: ECE PlantDoc 0.295 → 0.261 sau temperature scaling (T=1.1488, fit trên 4.225 ảnh calibration tách biệt val); 100 ảnh validation sai với confidence ≥ 0,9 đã liệt kê từng ảnh. UI hiển thị softmax thô kèm xác suất đã hiệu chuẩn (T)",
+      "unlock": []
+    },
+    {
+      "id": "holdout",
+      "title": "Đánh giá trên tập test giữ riêng (không dùng để chọn checkpoint)",
+      "status": "XONG",
+      "detail": "11.015 ảnh legacy_diagnostic_test (không dùng để chọn checkpoint): Centralized v6 PV 99.23% / PD 63.37%; FedAvg v7 PV 93.34% / PD 50.00%; Centralized so với số tự ghi trong summary.json: plantdoc khớp, plantvillage khớp",
+      "unlock": []
+    },
+    {
+      "id": "statistics",
+      "title": "Khoảng tin cậy theo cụm + McNemar + độ nhạy 'cùng lá'",
+      "status": "XONG",
+      "detail": "khoảng tin cậy 95% bootstrap theo cụm (cảnh/nhóm lá) — val: PlantDoc Centralized 53.9% [44.2%; 63.1%], Centralized−FedAvg +6.7% [-3.7%; +18.0%], McNemar p=0.0414 | test: PlantDoc Centralized 63.4% [52.9%; 73.7%], Centralized−FedAvg +13.4% [+1.6%; +24.8%], McNemar p=0.00762",
       "unlock": []
     },
     {
       "id": "multiseed",
       "title": "Chạy multi-seed non-IID (seed 42/123/2026)",
       "status": "BLOCKED",
-      "detail": "chưa có multi-seed THẬT (chỉ có bản smoke accuracy 0.0263 trên ảnh tổng hợp)",
+      "detail": "chưa có multi-seed THẬT cho protocol đang công bố (mixed PV+PlantDoc, pretrained); chỉ có bản smoke trên ảnh tổng hợp",
       "unlock": [
-        ".\\scripts\\run_real_multiseed_report.ps1 -DatasetRoot D:\\PlantVillage -CentralizedEpochs 10 -FederatedRounds 10 -Seeds 42,123,2026",
-        "# hoặc train ngoài rồi import bundle: python scripts/import_branch_demo.py (xem docs/MODEL_REGISTRY.md)"
+        "# train ngoài theo protocol mixed_pv_pd_v3 rồi nhập bundle: python scripts/import_branch_demo.py (docs/MODEL_REGISTRY.md)",
+        "# LƯU Ý: scripts/run_real_multiseed_report.ps1 chạy protocol scratch PlantVillage CŨ, không thay được mục này"
       ]
     },
     {

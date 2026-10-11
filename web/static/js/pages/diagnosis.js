@@ -1,6 +1,6 @@
 // Bước 4 · Chẩn đoán: một ảnh, bảy mô hình, đúng/sai và lý do (ảnh train của lớp đó trong shard).
 import { getEvidence, getGallery, getModels, getSummary } from "../core/store.js";
-import { isAbort, postForm } from "../core/api.js";
+import { ApiError, isAbort, postForm } from "../core/api.js";
 import {
   $$, MODEL_LABELS, MODEL_ORDER, byId, cropOf, esc, fmtInt, fmtNum, fmtPct, fmtPctValue, formatApiError,
   formatDiseaseName, modelPill, notify, pillarOf, prefersReducedMotion, revealItems, setBar, setDisabled, setHtml,
@@ -25,6 +25,12 @@ const state = {
   showStats: false, // chỉ hiện độ khó/recall từ catalog khi bundle khả dụng và ảnh đã đối chiếu manifest validation
   controller: null,
   rows: new Map(), // model_id -> kết quả hoặc {error}
+  explain: false, // người dùng bật Grad-CAM
+  explanations: new Map(), // model_id -> {class, image}
+  allEndpoint: null, // null: chưa biết; false: máy chủ cũ không có /api/inference/all → gọi từng cặp
+  timing: null,
+  busy: false, // đang có yêu cầu chẩn đoán
+  runExplain: false, // yêu cầu đang chạy có kèm Grad-CAM không
   classes: [],
   shards: null,
   gallery: [],
@@ -97,7 +103,11 @@ function resetResults() {
   state.controller?.abort();
   state.runId += 1;
   state.rows.clear();
+  state.explanations.clear();
+  state.timing = null;
+  state.busy = false;
   byId("diag-result").classList.add("hidden");
+  byId("btn-print").classList.add("hidden");
   byId("diag-empty").classList.remove("hidden");
   byId("diag-progress-badge").classList.add("hidden");
   setHtml(byId("btn-diagnose"), DIAGNOSE_HTML); // phiên chạy cũ bị hủy giữa chừng không còn dòng "Đang chẩn đoán…"
@@ -163,9 +173,9 @@ function shardInfo(modelId, classKey) {
   if (!row) return null;
   if (modelId.startsWith("local_")) {
     const n = row.per_client[modelId.replace("local_", "client_")];
-    return { count: n, total: row.total, scope: "shard của client" };
+    return { count: n, total: row.total, scope: "shard riêng" };
   }
-  return { count: row.total, total: row.total, scope: modelId === "fedavg" ? "gộp từ cả 5 client" : "toàn bộ ảnh train" };
+  return { count: row.total, total: row.total, scope: modelId === "fedavg" ? "5 client" : "toàn bộ" };
 }
 
 function targetClass() {
@@ -200,14 +210,16 @@ function rowHtml(modelId) {
   const classKey = trueClass || result.predicted_class;
   const info = shardInfo(modelId, classKey);
   const shardHtml = info
-    ? `<span class="shard-count ${info.count === 0 ? "is-zero" : ""} mono">${fmtInt(info.count)} ảnh</span>
-       <span class="row-sub">${esc(info.scope)} · lớp ${trueClass ? "thật" : "dự đoán"}</span>`
+    ? `<span class="shard-line" title="Số ảnh train của lớp ${trueClass ? "thật" : "dự đoán"} «${esc(formatDiseaseName(classKey))}» mà mô hình này được học">
+        <span class="shard-count ${info.count === 0 ? "is-zero" : ""} mono">${fmtInt(info.count)}</span>
+        <span class="row-sub">${esc(info.scope)}</span></span>`
     : '<span class="text-muted">—</span>';
   const uncertain = result.is_uncertain ? ' <span class="pill-flag" title="Xác suất cao nhất dưới 50% hoặc hai lớp đầu quá sát nhau">không chắc</span>' : "";
   return `<th scope="row">${modelPill(modelId)}<span class="row-sub">${phase}</span></th>
     <td class="cell-pred">
       <b>${esc(formatDiseaseName(result.predicted_class))}</b>${uncertain}
-      <div class="conf"><div class="conf-track"><span class="conf-fill ${pillarOf(modelId)}" style="transform:scaleX(0)" data-pct="${result.confidence_pct}"></span></div><span class="mono">${fmtNum(result.confidence_pct, 2)}%</span></div>
+      <div class="conf"><div class="conf-track"><span class="conf-fill ${pillarOf(modelId)}" style="transform:scaleX(0)" data-pct="${result.confidence_pct}"></span></div><span class="mono">${fmtNum(result.confidence_pct, 1)}%</span></div>
+      ${result.calibrated ? `<span class="conf-cal" title="Đã hiệu chuẩn bằng temperature scaling, T = ${fmtNum(result.calibrated.temperature, 2)} (học trên tập calibration riêng)">hiệu chuẩn <b class="mono">${fmtNum(result.calibrated.confidence_pct, 1)}%</b></span>` : ""}
     </td>
     <td>${verdictHtml}</td>
     <td>${shardHtml}</td>`;
@@ -219,8 +231,12 @@ function detailHtml(modelId) {
   const val = result.model_validation;
   return `<td colspan="4"><div class="detail-box">
       <b>Top 3 xác suất</b>
-      <ol class="top3">${(result.top3 || []).map(t => `<li><span>${esc(formatDiseaseName(t.class))}</span><b class="mono">${fmtNum(t.confidence, 2)}%</b></li>`).join("")}</ol>
-      <p class="field-hint">Độ chính xác công bố của mô hình này trên validation: PlantVillage ${fmtPct(val?.plantvillage?.top1_accuracy)} · PlantDoc ${fmtPct(val?.plantdoc?.top1_accuracy)}. Xác suất softmax chưa hiệu chuẩn.</p>
+      <ol class="top3">${(result.top3 || []).map((t, i) => {
+        const cal = result.calibrated?.top3?.[i];
+        return `<li><span>${esc(formatDiseaseName(t.class))}</span><b class="mono">${fmtNum(t.confidence, 2)}%</b>${cal ? `<span class="mono text-muted">hiệu chuẩn ${fmtNum(cal.confidence, 1)}%</span>` : ""}</li>`;
+      }).join("")}</ol>
+      <p class="field-hint">Độ chính xác công bố của mô hình này trên validation: PlantVillage ${fmtPct(val?.plantvillage?.top1_accuracy)} · PlantDoc ${fmtPct(val?.plantdoc?.top1_accuracy)}.
+        ${result.calibrated ? `Số hiệu chuẩn chia logit cho T = ${fmtNum(result.calibrated.temperature, 2)}; thứ tự lớp không đổi.` : "Xác suất softmax chưa hiệu chuẩn."}</p>
     </div></td>`;
 }
 
@@ -270,13 +286,14 @@ function summarize(modelIds) {
       </div>`;
     explain.innerHTML = explanation(results, trueClass);
     toggleHidden(explain, !explain.innerHTML);
+    box.insertAdjacentHTML("beforeend", timingHtml());
   } else {
     const tally = new Map();
     for (const [, r] of results) tally.set(r.predicted_class, (tally.get(r.predicted_class) || 0) + 1);
     const ranked = [...tally.entries()].sort((a, b) => b[1] - a[1]);
     box.innerHTML = `${pre}
       <p class="summary-big">Các mô hình dự đoán: ${ranked.map(([c, n]) => `<b>${esc(formatDiseaseName(c))}</b> (${n}/${results.length})`).join(" · ")}</p>
-      <p class="field-hint">Chưa biết nhãn thật nên chưa chấm đúng/sai. Chọn nhãn ở khung bên trái để thấy mô hình nào sai và vì sao.</p>`;
+      <p class="field-hint">Chưa biết nhãn thật nên chưa chấm đúng/sai. Chọn nhãn ở ô "Nhãn thật" phía trên để thấy mô hình nào sai và vì sao.</p>${timingHtml()}`;
     toggleHidden(explain, true);
     explain.innerHTML = "";
   }
@@ -325,21 +342,41 @@ function plannedModels() {
   return state.mode === "all" ? MODEL_ORDER : ["centralized", state.quickModel];
 }
 
-async function run() {
-  if (!state.file) return;
-  state.controller?.abort();
-  const controller = new AbortController();
-  state.controller = controller;
-  const runId = ++state.runId;
-  state.rows.clear();
+function timingHtml() {
+  const t = state.timing;
+  if (!t) return "";
+  const parts = [`${fmtNum(t.predict / 1000, 2)} s cho 7 mô hình`];
+  if (t.explain !== undefined) parts.push(`${fmtNum(t.explain / 1000, 2)} s cho Grad-CAM`);
+  return `<p class="field-hint">Máy chủ xử lý: ${parts.join(" · ")}.</p>`;
+}
 
+function renderGradcam(models) {
+  const box = byId("diag-gradcam");
+  const shown = models.filter(id => state.explanations.has(id));
+  if (!state.explain || !shown.length) {
+    toggleHidden(box, true);
+    return;
+  }
+  byId("diag-gradcam-grid").innerHTML = shown.map(id => {
+    const item = state.explanations.get(id);
+    return `<figure class="gradcam-card row-${pillarOf(id)}">
+        <img src="${esc(item.image)}" alt="Grad-CAM của ${esc(MODEL_LABELS[id])} cho lớp ${esc(formatDiseaseName(item.class))}" width="224" height="224" loading="lazy">
+        <figcaption>${modelPill(id)}<span>${esc(formatDiseaseName(item.class))}</span></figcaption>
+      </figure>`;
+  }).join("");
+  toggleHidden(box, false);
+}
+
+/** Vẽ lại toàn bộ khối kết quả từ state (đổi chế độ xem / nhãn thật không cần gọi lại mô hình). */
+function renderAll({ animate = false } = {}) {
   const models = plannedModels();
-  const sources = state.mode === "all" ? ALL_SOURCES : [state.quickModel];
-  const badge = byId("diag-progress-badge");
-  const button = byId("btn-diagnose");
-  const form = new FormData();
-  form.append("file", state.file);
+  renderTable(models, { animateIds: animate ? models : [] });
+  summarize(models);
+  renderGradcam(models);
+}
 
+function startRun(models) {
+  state.busy = true;
   byId("diag-empty").classList.add("hidden");
   byId("diag-result").classList.remove("hidden");
   // trên màn hình hẹp, kết quả nằm dưới khung chọn ảnh: cuộn tới để người dùng thấy ngay
@@ -348,11 +385,58 @@ async function run() {
   }
   byId("diag-summary").innerHTML = '<p class="summary-big"><span class="skeleton skeleton-line"></span></p>';
   toggleHidden(byId("diag-explain"), true);
+  toggleHidden(byId("diag-gradcam"), true);
+  byId("btn-print").classList.add("hidden");
   renderTable(models);
+  const button = byId("btn-diagnose");
   button.disabled = true;
   setHtml(button, '<svg class="svg-icon icon-sm spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Đang chẩn đoán…');
-  toggleHidden(badge, false);
+  toggleHidden(byId("diag-progress-badge"), false);
+}
 
+function finishRun() {
+  state.busy = false;
+  toggleHidden(byId("diag-progress-badge"), true);
+  const button = byId("btn-diagnose");
+  button.disabled = false;
+  setHtml(button, '<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Chẩn đoán lại');
+  byId("btn-print").classList.toggle("hidden", ![...state.rows.values()].some(r => r && !r.error));
+}
+
+/** Một yêu cầu cho cả 7 mô hình (mỗi mô hình chạy đúng một lần trên máy chủ). Trả false nếu máy chủ cũ không có endpoint. */
+async function runAll(runId, controller, form) {
+  setText(byId("diag-progress-badge"), state.explain ? "Đang chạy 7 mô hình + Grad-CAM" : "Đang chạy 7 mô hình");
+  try {
+    const data = await postForm(`/api/inference/all?explain=${state.explain ? "true" : "false"}`, form, { signal: controller.signal, timeoutMs: 120000 });
+    if (runId !== state.runId) return true;
+    for (const id of MODEL_ORDER) {
+      const result = data.models?.[id];
+      state.rows.set(id, result?.ready ? result : { error: result?.error || "Mô hình chưa sẵn sàng" });
+    }
+    for (const [id, item] of Object.entries(data.explain || {})) {
+      if (item?.image && item.image.startsWith("data:image/")) state.explanations.set(id, item);
+    }
+    state.timing = data.timing_ms || null;
+    renderAll({ animate: true });
+    return true;
+  } catch (error) {
+    if (isAbort(error) || runId !== state.runId) return true;
+    if (error instanceof ApiError && (error.status === 404 || error.status === 405)) {
+      state.allEndpoint = false;
+      return false;
+    }
+    for (const id of MODEL_ORDER) state.rows.set(id, { error: error.message });
+    renderAll();
+    notify("error", "Không thể chẩn đoán ảnh", "Kiểm tra ảnh đầu vào hoặc kết nối rồi thử lại.", { detail: error.message });
+    return true;
+  }
+}
+
+/** Cách cũ (máy chủ chưa cập nhật): Centralized + từng mô hình, mỗi lần một yêu cầu; không có Grad-CAM. */
+async function runPairs(runId, controller, form) {
+  const models = plannedModels();
+  const sources = state.mode === "all" ? ALL_SOURCES : [state.quickModel];
+  const badge = byId("diag-progress-badge");
   let done = 0;
   let failed = 0;
   for (const source of sources) {
@@ -379,16 +463,43 @@ async function run() {
   }
   if (runId !== state.runId) return;
   if (!state.rows.has("centralized")) state.rows.set("centralized", { error: "Không có kết quả từ máy chủ" });
-  renderTable(models);
-  summarize(models);
-  toggleHidden(badge, true);
-  button.disabled = false;
-  setHtml(button, '<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Chẩn đoán lại');
+  renderAll();
+  if (state.explain) notify("info", "Máy chủ chưa hỗ trợ Grad-CAM", "Bản máy chủ này chưa có /api/inference/all; bảng kết quả vẫn đầy đủ.");
   if (failed === sources.length) {
     notify("error", "Không thể chẩn đoán ảnh", "Kiểm tra ảnh đầu vào hoặc kết nối rồi thử lại.");
   } else if (failed > 0) {
     notify("warning", "Một số mô hình không trả kết quả", `${failed}/${sources.length} yêu cầu bị lỗi; bảng ghi rõ từng dòng.`);
   }
+}
+
+async function run() {
+  if (!state.file) return;
+  state.controller?.abort();
+  const controller = new AbortController();
+  state.controller = controller;
+  const runId = ++state.runId;
+  state.rows.clear();
+  state.explanations.clear();
+  state.timing = null;
+  state.runExplain = state.explain;
+
+  const models = plannedModels();
+  const form = new FormData();
+  form.append("file", state.file);
+  startRun(models);
+  try {
+    const handled = state.allEndpoint !== false && await runAll(runId, controller, form);
+    if (!handled && runId === state.runId) await runPairs(runId, controller, form);
+  } finally {
+    if (runId === state.runId) finishRun();
+  }
+}
+
+/** Đã có đủ kết quả cho chế độ xem hiện tại (và Grad-CAM nếu đang bật) thì chỉ cần vẽ lại. */
+function haveResultsFor(models) {
+  const complete = models.every(id => state.rows.has(id));
+  const gradcamOk = !state.explain || state.allEndpoint === false || models.every(id => state.explanations.has(id) || state.rows.get(id)?.error);
+  return complete && gradcamOk;
 }
 
 async function runPlantVillageReference() {
@@ -444,7 +555,19 @@ function setMode(mode) {
     button.setAttribute("aria-checked", String(on));
   });
   toggleHidden(byId("quick-model-group"), mode !== "quick");
-  if (state.file && state.rows.size) run();
+  rerender();
+}
+
+/** Đổi chế độ xem / mô hình so sánh / Grad-CAM: vẽ lại nếu đã có đủ kết quả, chỉ gọi máy chủ khi còn thiếu. */
+function rerender() {
+  if (!state.file || (!state.busy && !state.rows.size)) return; // chưa chẩn đoán lần nào
+  if (state.busy) {
+    // yêu cầu "cả 7 mô hình" đang chạy sẽ vẽ theo chế độ xem mới; chỉ chạy lại khi cần Grad-CAM mà yêu cầu đó không có
+    if (state.allEndpoint === false || (state.explain && !state.runExplain)) run();
+    return;
+  }
+  if (haveResultsFor(plannedModels())) renderAll();
+  else run();
 }
 
 export async function mount() {
@@ -474,11 +597,7 @@ export async function mount() {
   }
   trueSelect.addEventListener("change", () => {
     // đổi nhãn sau khi đã có kết quả: chấm lại ngay, không gọi lại mô hình
-    if (state.rows.size) {
-      const models = plannedModels();
-      renderTable(models);
-      summarize(models);
-    }
+    if (state.rows.size && !state.busy) renderAll();
   });
 
   await loadModelOptions();
@@ -512,8 +631,13 @@ export async function mount() {
   $$("[data-mode]").forEach(button => button.addEventListener("click", () => setMode(button.dataset.mode)));
   byId("inference-fed-source").addEventListener("change", event => {
     state.quickModel = event.target.value || "fedavg";
-    if (state.mode === "quick" && state.file && state.rows.size) run();
+    if (state.mode === "quick") rerender();
   });
+  byId("explain-toggle").addEventListener("change", event => {
+    state.explain = event.target.checked;
+    rerender();
+  });
+  byId("btn-print").addEventListener("click", () => window.print());
   byId("btn-diagnose").addEventListener("click", run);
   byId("btn-plantvillage").addEventListener("click", runPlantVillageReference);
 

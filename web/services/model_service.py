@@ -90,14 +90,14 @@ class ModelNotAllowed(RuntimeError):
         super().__init__(f"{model_id} chưa đạt cổng hiển thị: {'; '.join(reasons) or 'không rõ lý do'}")
 
 
-def run_backend(entry: Dict[str, Any], image: Any) -> Dict[str, Any]:
+def run_backend(entry: Dict[str, Any], image: Any, temperature: Optional[float] = None) -> Dict[str, Any]:
     """Gọi đúng backend mà entry registry khai báo. Không kiểm web_visible (dành cho bài kiểm tra của registry)."""
     inference = entry.get("inference") or {}
     backend = inference.get("backend")
     if backend == reg.BACKEND_PUBLISHED_BUNDLE:
         from web.demo_evidence import predict_published
 
-        return predict_published(image, inference["key"])
+        return predict_published(image, inference["key"], temperature=temperature)
     if backend == reg.BACKEND_TORCHSCRIPT_REFERENCE:
         from web import plantvillage_reference as reference
 
@@ -108,8 +108,7 @@ def run_backend(entry: Dict[str, Any], image: Any) -> Dict[str, Any]:
     raise ValueError(f"{entry.get('model_id')}: backend inference {backend!r} không được hỗ trợ")
 
 
-def predict(model_id: str, image: Any) -> Dict[str, Any]:
-    """Dự đoán qua registry: từ chối model không tồn tại hoặc chưa đạt cổng web_visible."""
+def _gated_entry(model_id: str) -> Dict[str, Any]:
     models = registry_models()
     if not models:
         raise RegistryUnavailable("Chưa có artifacts/registry.json — chạy scripts/update_status.py")
@@ -118,7 +117,24 @@ def predict(model_id: str, image: Any) -> Dict[str, Any]:
         raise UnknownModel(model_id)
     if entry.get("web_visible") is not True:
         raise ModelNotAllowed(model_id, list(entry.get("web_gate_failures") or []))
-    result = dict(run_backend(entry, image))
+    return entry
+
+
+def explain(model_id: str, image: Any, class_name: str) -> Dict[str, Any]:
+    """Grad-CAM qua cùng cổng registry; chỉ hỗ trợ bundle published (TorchScript tham chiếu không có)."""
+    entry = _gated_entry(model_id)
+    inference = entry.get("inference") or {}
+    if inference.get("backend") != reg.BACKEND_PUBLISHED_BUNDLE:
+        raise ValueError(f"{model_id}: không hỗ trợ Grad-CAM")
+    from web.demo_evidence import explain_published
+
+    return explain_published(image, inference["key"], class_name)
+
+
+def predict(model_id: str, image: Any, temperature: Optional[float] = None) -> Dict[str, Any]:
+    """Dự đoán qua registry: từ chối model không tồn tại hoặc chưa đạt cổng web_visible."""
+    entry = _gated_entry(model_id)
+    result = dict(run_backend(entry, image, temperature))
     result["registry"] = {
         "model_id": entry["model_id"],
         "role": entry.get("role"),

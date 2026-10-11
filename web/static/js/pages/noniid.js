@@ -1,5 +1,5 @@
 // Bước 2 · Dữ liệu non-IID: heatmap 38 lớp × 5 client và vì sao Local-only không nhận ra bệnh chưa từng thấy.
-import { getEvidence, getSummary, modelsById } from "../core/store.js";
+import { getEvidence, getPartitions, getSummary, modelsById } from "../core/store.js";
 import {
   byId, cropOf, diseaseOf, esc, fmtInt, fmtNum, fmtPct, fmtPctValue, formatDiseaseName, revealItems,
 } from "../core/dom.js";
@@ -100,6 +100,92 @@ function heatmapTable(shards, pvRecall, view) {
   return `<table class="heat-table"><thead><tr><th scope="col">Lớp bệnh</th>${head}</tr></thead><tbody>${rows.join("")}</tbody></table>`;
 }
 
+// ───────── Trình xem 12 cách chia của release (chỉ dữ liệu) ─────────
+const FAMILY_ORDER = ["iid", "label", "quantity", "feature", "mixed"];
+
+function schemeLabel(name, scheme) {
+  if (scheme.family === "iid") return "IID — chia đều";
+  if (scheme.alpha === null || scheme.alpha === undefined) return scheme.family_label;
+  return `${scheme.family_label.replace(/\s*\(.*\)$/, "")} · α = ${fmtNum(scheme.alpha, scheme.alpha < 1 ? 1 : 0)}`;
+}
+
+/** Đổi một cách chia sang đúng dạng `shards` mà heatmapTable dùng. */
+function schemeAsShards(partitions, scheme) {
+  const clients = Object.keys(scheme.clients).sort();
+  const classes = partitions.classes.map((cls, i) => {
+    const perClient = Object.fromEntries(clients.map(c => [c, scheme.clients[c].per_class[i]]));
+    const total = Object.values(perClient).reduce((a, b) => a + b, 0);
+    const top = clients.reduce((a, b) => (perClient[b] > perClient[a] ? b : a), clients[0]);
+    return { class: cls, per_client: perClient, total, top_client: top, top_share_pct: total ? (perClient[top] / total) * 100 : null };
+  });
+  return { clients: clients.map(client => ({ client })), classes };
+}
+
+function schemeSummary(scheme) {
+  const clients = Object.keys(scheme.clients).sort();
+  const total = clients.reduce((a, c) => a + scheme.clients[c].n_k, 0) || 1;
+  return clients.map(c => {
+    const d = scheme.clients[c];
+    return `<li class="scheme-client">
+        <b>Client ${clientNumber(c)}</b>
+        <span class="scheme-bar"><span style="transform:scaleX(${(d.n_k / total).toFixed(3)})"></span></span>
+        <span class="mono">${fmtInt(d.n_k)} ảnh</span>
+        <span>${fmtInt(d.classes_with_images)}/38 lớp</span>
+        <span>PlantDoc ${fmtPct(d.plantdoc_share, 1)}</span>
+      </li>`;
+  }).join("");
+}
+
+async function mountExplorer() {
+  const host = byId("scheme-explorer-body");
+  let partitions;
+  try {
+    partitions = await getPartitions();
+  } catch (error) {
+    host.innerHTML = `<p class="field-hint">Không tải được dữ liệu các cách chia: ${esc(error.message)}</p>`;
+    return;
+  }
+  if (!partitions.available) {
+    host.innerHTML = `<p class="field-hint">${esc(partitions.reason || "Chưa có báo cáo các cách chia.")}</p>`;
+    return;
+  }
+  const names = Object.keys(partitions.schemes).sort((a, b) => {
+    const sa = partitions.schemes[a];
+    const sb = partitions.schemes[b];
+    const fa = FAMILY_ORDER.indexOf(sa.family);
+    const fb = FAMILY_ORDER.indexOf(sb.family);
+    return fa !== fb ? fa - fb : (sb.alpha ?? 0) - (sa.alpha ?? 0); // trong cùng họ: α lớn (gần IID) trước
+  });
+  const groups = FAMILY_ORDER.map(family => {
+    const items = names.filter(n => partitions.schemes[n].family === family);
+    if (!items.length) return "";
+    const label = partitions.schemes[items[0]].family_label;
+    return `<optgroup label="${esc(label)}">${items.map(n => `<option value="${esc(n)}"${n === partitions.trained_scheme ? " selected" : ""}>${esc(schemeLabel(n, partitions.schemes[n]))}${partitions.schemes[n].has_trained_models ? " (đã huấn luyện)" : ""}</option>`).join("")}</optgroup>`;
+  }).join("");
+  host.innerHTML = `
+    <div class="scheme-controls">
+      <label for="scheme-select" class="form-label">Cách chia</label>
+      <select id="scheme-select" class="input-field">${groups}</select>
+      <span id="scheme-badge"></span>
+    </div>
+    <p class="field-hint mt-2" id="scheme-desc"></p>
+    <ul class="scheme-clients mt-3" id="scheme-clients"></ul>
+    <div class="table-responsive heat-wrap mt-3" id="scheme-wrap"></div>`;
+  const select = byId("scheme-select");
+  const render = () => {
+    const scheme = partitions.schemes[select.value];
+    if (!scheme) return;
+    byId("scheme-badge").innerHTML = scheme.has_trained_models
+      ? '<span class="status-badge success">Có 7 mô hình đã huấn luyện</span>'
+      : '<span class="status-badge is-neutral">Chỉ có dữ liệu, chưa huấn luyện</span>';
+    byId("scheme-desc").textContent = `Độ lệch phân bố lớp trung bình giữa client và toàn bộ (Jensen–Shannon): ${scheme.mean_js_divergence === null ? "0 (chia đều)" : fmtNum(scheme.mean_js_divergence, 3)} — càng lớn càng non-IID. Tổng ${fmtInt(partitions.total_train)} ảnh train.`;
+    byId("scheme-clients").innerHTML = schemeSummary(scheme);
+    byId("scheme-wrap").innerHTML = heatmapTable(schemeAsShards(partitions, scheme), null, "count");
+  };
+  select.addEventListener("change", render);
+  render();
+}
+
 export async function mount() {
   const root = byId("noniid-root");
   const [evidence, summary] = await Promise.all([getEvidence(), getSummary().catch(() => null)]);
@@ -174,12 +260,28 @@ export async function mount() {
       <b>Chưa có báo cáo phân bố lớp theo client.</b> ${esc(summary?.shards?.reason || "Chạy scripts/report_client_shards.py trên máy có dataset.")}
     </div>`}
 
+    <details class="panel panel-fold mt-4" id="scheme-explorer">
+      <summary>Khám phá 12 cách chia dữ liệu có trong release</summary>
+      <p class="panel-desc mt-2">Release dựng sẵn 12 cách chia cho 5 client: IID, lệch nhãn, lệch số lượng, lệch nguồn ảnh và kết hợp.
+        Đây <b>chỉ là dữ liệu</b> — mọi kết quả trên web là của cách chia lệch nhãn α = 0,1; các cách chia khác chưa được huấn luyện.</p>
+      <div class="mt-3" id="scheme-explorer-body"><div class="skeleton skeleton-block"></div></div>
+    </details>
+
     <section class="cta-row mt-4">
       <a class="btn btn-primary" href="#ket-qua">Xem kết quả chi tiết →</a>
       <a class="btn btn-secondary" href="#chan-doan">Tự thử trên một ảnh →</a>
     </section>`;
 
   revealItems(root.querySelectorAll(".client-tile"), { stagger: 50 });
+
+  const explorer = byId("scheme-explorer");
+  let explorerMounted = false;
+  explorer.addEventListener("toggle", () => {
+    if (explorer.open && !explorerMounted) {
+      explorerMounted = true;
+      mountExplorer();
+    }
+  });
 
   if (shards) {
     const wrap = byId("heat-wrap");

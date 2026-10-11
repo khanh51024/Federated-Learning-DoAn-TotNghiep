@@ -20,6 +20,12 @@ export const getEvidence = (force = false) => once("evidence", () => getJson("/a
 /** /api/evidence/summary: tái đánh giá, PlantDoc theo lớp, hiệu chuẩn, shard, audit rò rỉ, checklist. */
 export const getSummary = (force = false) => once("summary", () => getJson("/api/evidence/summary", { cache: "no-store" }), force);
 
+/** /api/evidence/details: ma trận nhầm lẫn (val + test giữ riêng) và thư viện ảnh "sai mà tự tin". */
+export const getDetails = (force = false) => once("details", () => getJson("/api/evidence/details", { cache: "no-store" }), force);
+
+/** /api/evidence/partitions: phân bố lớp theo client của 12 cách chia (chỉ dữ liệu). */
+export const getPartitions = (force = false) => once("partitions", () => getJson("/api/evidence/partitions", { cache: "no-store" }), force);
+
 /** /api/models: danh sách mô hình đã qua cổng web_visible. */
 export const getModels = (force = false) => once("models", () => getJson("/api/models", { cache: "no-store" }), force);
 

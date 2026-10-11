@@ -491,8 +491,71 @@ def check_calibration(ctx: Ctx) -> Result:
         DONE,
         f"FedAvg v7: ECE PlantDoc {pd.get('ece_raw', 0):.3f} → {pd.get('ece_temperature_scaled', 0):.3f} sau temperature scaling "
         f"(T={report['models']['fedavg']['temperature_fitted_on_calibration']}, fit trên {vn(report['calibration_count'])} ảnh calibration tách biệt val); "
-        f"{wrong} ảnh validation sai với confidence ≥ 0,9 đã liệt kê từng ảnh. UI vẫn hiển thị softmax CHƯA hiệu chuẩn",
+        f"{wrong} ảnh validation sai với confidence ≥ 0,9 đã liệt kê từng ảnh. UI hiển thị softmax thô kèm xác suất đã hiệu chuẩn (T)",
     )
+
+
+def _published_hashes(ctx: Ctx) -> dict[str, str]:
+    return {m["model_id"].replace("demo_", "").replace("_v6", "").replace("_v7", ""): m.get("file_sha256")
+            for m in ctx.registry["models"] if m["family"] == reg.FAMILY_PUBLISHED_DEMO}
+
+
+def _checkpoints_stale(report: dict[str, Any], ctx: Ctx) -> bool:
+    """Báo cáo phải dùng ĐÚNG checkpoint của từng mô hình (so theo model_id, không chỉ tập hash)."""
+    return (report.get("checkpoint_sha256") or {}) != _published_hashes(ctx)
+
+
+def check_holdout(ctx: Ctx) -> Result:
+    report = load_json(reg.abs_path(reg.HOLDOUT_EVAL_JSON))
+    if report is None:
+        return Result(
+            BLOCKED,
+            f"chưa có {reg.HOLDOUT_EVAL_JSON}: số đang báo cáo là validation dùng để chọn checkpoint",
+            needs="ảnh tập test giữ riêng (data/dataset_sources) + checkpoint bundle đã kiểm hash; máy CPU chạy được",
+            unlock=[".\\.venv\\Scripts\\python.exe scripts\\evaluate_published_models.py --holdout   # ~6 phút trên CPU"],
+        )
+    if _checkpoints_stale(report, ctx) or report.get("holdout_manifest_sha256") != reg.HOLDOUT_MANIFEST_SHA256:
+        return Result(TODO, "báo cáo test giữ riêng không khớp checkpoint/manifest hiện tại — chạy lại evaluate_published_models.py --holdout")
+    models = report["models"]
+    parts = [f"{models[k]['display_name']} PV {models[k]['by_source']['plantvillage']['top1_accuracy']:.2%} / "
+             f"PD {models[k]['by_source']['plantdoc']['top1_accuracy']:.2%}" for k in ("centralized", "fedavg")]
+    recorded = models["centralized"].get("vs_recorded") or {}
+    def diff(v: dict[str, Any]) -> str:
+        if v.get("reproduced"):
+            return "khớp"
+        n = v.get("correct_diff_images")
+        return f"{n:+d} ảnh" if isinstance(n, int) else "không suy ra được số ảnh đúng"
+
+    check = ", ".join(f"{src} {diff(v)}" for src, v in recorded.items())
+    return Result(
+        DONE,
+        f"{vn(report['holdout_count'])} ảnh {reg.HOLDOUT_SPLIT} (không dùng để chọn checkpoint): " + "; ".join(parts)
+        + (f"; Centralized so với số tự ghi trong summary.json: {check}" if check else ""),
+    )
+
+
+def check_statistics(ctx: Ctx) -> Result:
+    report = load_json(reg.abs_path(reg.STATISTICS_JSON))
+    if report is None:
+        return Result(
+            BLOCKED,
+            f"chưa có {reg.STATISTICS_JSON}: chưa có khoảng tin cậy theo cụm và kiểm định theo cặp",
+            needs="logits đã lưu của evaluate_published_models.py (val và --holdout) + manifest release",
+            unlock=[".\\.venv\\Scripts\\python.exe scripts\\report_statistics.py"],
+        )
+    if _checkpoints_stale(report, ctx):
+        return Result(TODO, "báo cáo thống kê dùng checkpoint không còn khớp registry — chạy lại report_statistics.py")
+    pieces = []
+    for split in ("val", "test"):
+        block = report["splits"].get(split) or {}
+        if not block.get("available"):
+            continue
+        pd = block["by_source"]["plantdoc"]
+        c, pair = pd["models"]["centralized"], pd["pairs"]["centralized_vs_fedavg"]
+        pieces.append(f"{split}: PlantDoc Centralized {c['estimate']:.1%} [{c['low']:.1%}; {c['high']:.1%}], "
+                      f"Centralized−FedAvg {pair['difference_ci']['estimate']:+.1%} [{pair['difference_ci']['low']:+.1%}; "
+                      f"{pair['difference_ci']['high']:+.1%}], McNemar p={pair['p_value']:.3g}")
+    return Result(DONE, "khoảng tin cậy 95% bootstrap theo cụm (cảnh/nhóm lá) — " + " | ".join(pieces))
 
 
 def check_multiseed(ctx: Ctx) -> Result:
@@ -501,11 +564,12 @@ def check_multiseed(ctx: Ctx) -> Result:
         return Result(DONE, "multiseed_real_summary.json hợp lệ (mean ± std, 3 seed)")
     return Result(
         BLOCKED,
-        "chưa có multi-seed THẬT (chỉ có bản smoke accuracy 0.0263 trên ảnh tổng hợp)",
-        needs="dataset PlantVillage gốc + máy train (máy này CPU, không train)",
+        "chưa có multi-seed THẬT cho protocol đang công bố (mixed PV+PlantDoc, pretrained); chỉ có bản smoke trên ảnh tổng hợp",
+        needs=("GPU (Kaggle/Colab): train lại 7 mô hình × 3 seed với CÙNG optimizer và ngân sách (~10 GPU-giờ mỗi seed); "
+               "máy này CPU, không train. Xem docs/EXPERIMENT_PROTOCOL.md mục 'Khi nào cần train lại'"),
         unlock=[
-            ".\\scripts\\run_real_multiseed_report.ps1 -DatasetRoot D:\\PlantVillage -CentralizedEpochs 10 -FederatedRounds 10 -Seeds 42,123,2026",
-            "# hoặc train ngoài rồi import bundle: python scripts/import_branch_demo.py (xem docs/MODEL_REGISTRY.md)",
+            "# train ngoài theo protocol mixed_pv_pd_v3 rồi nhập bundle: python scripts/import_branch_demo.py (docs/MODEL_REGISTRY.md)",
+            "# LƯU Ý: scripts/run_real_multiseed_report.ps1 chạy protocol scratch PlantVillage CŨ, không thay được mục này",
         ],
     )
 
@@ -535,6 +599,8 @@ ITEMS = [
     Item("reeval", "Tái đánh giá cục bộ trên ảnh validation (xác nhận số công bố)", check_reeval),
     Item("confident_errors", "Phân tích lỗi confidence cao (mức tổng hợp, từ số công bố)", check_confident_errors),
     Item("calibration", "Phân tích từng ảnh sai tự tin + đo calibration (ECE)", check_calibration),
+    Item("holdout", "Đánh giá trên tập test giữ riêng (không dùng để chọn checkpoint)", check_holdout),
+    Item("statistics", "Khoảng tin cậy theo cụm + McNemar + độ nhạy 'cùng lá'", check_statistics),
     Item("multiseed", "Chạy multi-seed non-IID (seed 42/123/2026)", check_multiseed),
     Item("reports_synced", "Đồng bộ báo cáo & artifacts sau khi có run mới", check_reports_synced),
     Item("release", "Release sạch (mọi gate kỹ thuật XONG)", check_release),
@@ -652,6 +718,56 @@ def _reeval_lines() -> list[str]:
     return out
 
 
+def _holdout_lines() -> list[str]:
+    """Tập test giữ riêng + khoảng tin cậy theo cụm + hiệu ứng chọn checkpoint."""
+    report = load_json(reg.abs_path(reg.HOLDOUT_EVAL_JSON))
+    if not report:
+        return []
+    stats = load_json(reg.abs_path(reg.STATISTICS_JSON)) or {}
+    test = ((stats.get("splits") or {}).get("test") or {})
+    by_stat = test.get("by_source") or {} if test.get("available") else {}
+
+    def cell(model_id: str, source: str) -> str:
+        value = report["models"][model_id]["by_source"][source]["top1_accuracy"]
+        ci = ((by_stat.get(source) or {}).get("models") or {}).get(model_id)
+        return f"{value:.2%}" + (f" [{ci['low']:.1%}; {ci['high']:.1%}]" if ci and ci.get("low") is not None else "")
+
+    out = [
+        "",
+        f"**Tập test giữ riêng `{reg.HOLDOUT_SPLIT}` ({vn(report['holdout_count'])} ảnh: PlantVillage "
+        f"{vn(report['holdout_counts_by_source']['plantvillage'])}, PlantDoc {vn(report['holdout_counts_by_source']['plantdoc'])}; "
+        "không dùng để chọn checkpoint; [khoảng tin cậy 95% bootstrap theo cụm]):**",
+        "",
+        "| Model | PlantVillage | PlantDoc |",
+        "|---|---:|---:|",
+    ]
+    for model_id, model in report["models"].items():
+        out.append(f"| {model['display_name']} | {cell(model_id, 'plantvillage')} | {cell(model_id, 'plantdoc')} |")
+    selection = stats.get("selection_effect") or {}
+    if selection.get("available"):
+        out.append(
+            f"- Hiệu ứng chọn checkpoint: Centralized được chọn ở epoch {selection['chosen_epoch']}/{selection['epochs']} theo macro-F1 "
+            f"PlantDoc trên CHÍNH validation; accuracy PlantDoc ở epoch đó {selection['chosen_plantdoc_accuracy']:.2%} "
+            + ("là cao nhất " if selection["chosen_rank_among_epochs"] == 1 else "")
+            + f"(hạng {selection['chosen_rank_among_epochs']}/{selection['epochs']}), epoch cuối {selection['last_plantdoc_accuracy']:.2%}. "
+            "Chọn trên val có thể đẩy số val lên; số test giữ riêng ở bảng trên không dùng để chọn nên không chịu thiên lệch này "
+            "(PlantDoc test chỉ 172 ảnh — khoảng tin cậy rộng)."
+        )
+    pv = (by_stat.get("plantvillage") or {}).get("same_leaf_sensitivity")
+    if pv:
+        models = pv["models"]
+        out.append(
+            f"- Độ nhạy 'cùng lá' (test, PlantVillage): {vn(pv['ungrouped_images'])} ảnh không được gom nhóm lá, "
+            f"{vn(pv['ungrouped_with_adjacent_train_number'])} có ảnh train mang số liền kề (ước lượng chụp lại). Bỏ các ảnh đó: "
+            f"Centralized {models['centralized']['all']:.2%} → {models['centralized']['without_suspected_reshoots']:.2%}, "
+            f"FedAvg {models['fedavg']['all']:.2%} → {models['fedavg']['without_suspected_reshoots']:.2%} — "
+            + ("không thấy dấu hiệu bị thổi phồng." if all(
+                models[k]["without_suspected_reshoots"] >= models[k]["all"] - 0.005 for k in ("centralized", "fedavg"))
+               else "accuracy giảm khi bỏ các ảnh này: số có thể bị thổi phồng một phần.")
+        )
+    return out
+
+
 def _shard_table_lines() -> list[str]:
     """Vì sao Local-only sai: số ảnh train của từng client cho các lớp Tomato (partition label_alpha_0_1)."""
     report = load_json(reg.abs_path(reg.CLIENT_SHARD_COUNTS_JSON))
@@ -706,9 +822,13 @@ def quality_section(registry: dict[str, Any]) -> list[str]:
             f"{c['target']} → {c['predicted']} ({c['count']} ảnh)" for c in conf[:3]))
     lines.append("- Nhận định: khoảng cách PlantVillage↔PlantDoc ~45 điểm ở cả hai phương pháp ⇒ vấn đề là tổng quát hóa giữa miền "
                  "dữ liệu, không phải riêng frontend. Chưa đủ bằng chứng để kết luận nguyên nhân (thiếu dữ liệu, nhãn, hay chiến lược train).")
-    lines.append("- Số liệu trên là kết quả công bố của bundle, **chưa tái đánh giá cục bộ** (evidence: published_artifact_hash_verified_not_locally_reevaluated).")
+    if load_json(reg.abs_path(reg.LOCAL_REEVAL_JSON)):
+        lines.append("- Số liệu trên là số công bố của bundle; đã **tái đánh giá cục bộ** (bảng dưới) và chấm thêm trên tập test giữ riêng.")
+    else:
+        lines.append("- Số liệu trên là kết quả công bố của bundle, **chưa tái đánh giá cục bộ**.")
     lines += _shard_table_lines()
     lines += _reeval_lines()
+    lines += _holdout_lines()
 
     report = _per_class_report()
     if report and _per_class_consistent(report):
@@ -868,7 +988,7 @@ def render(registry: dict[str, Any], journal: str, ctx: Ctx, results: list[tuple
         out += [f"| `{g['group_id']}` | {g['count']} | {g['role']} | {g['description']} |" for g in groups]
         out.append("")
 
-    out += ["## 5. Chất lượng nhận diện (số liệu công bố, chưa tái đánh giá)", ""]
+    out += ["## 5. Chất lượng nhận diện (số công bố, tái đánh giá cục bộ, test giữ riêng)", ""]
     out += quality_section(registry)
     out.append("")
 

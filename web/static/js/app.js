@@ -4,6 +4,7 @@ import { $$, byId } from "./core/dom.js";
 import { initPresent } from "./core/present.js";
 import { initRouter } from "./core/router.js";
 import { startStatusPolling } from "./core/status.js";
+import { initTheme } from "./core/theme.js";
 
 const MOBILE_QUERY = "(max-width: 1100px)";
 
@@ -63,6 +64,7 @@ function initGroupArrowKeys() {
   });
 }
 
+initTheme();
 initSidebarToggle();
 initSkipLink();
 initGroupArrowKeys();

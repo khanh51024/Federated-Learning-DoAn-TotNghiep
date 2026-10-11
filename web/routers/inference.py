@@ -1,8 +1,9 @@
-"""Router inference: dual inference, PlantVillage reference, demo evidence, compare."""
+"""Router inference: dual inference, 7 mô hình một lần, PlantVillage reference, demo evidence, compare."""
 from __future__ import annotations
 
 import io
-from typing import Any, Dict
+import time
+from typing import Any, Dict, Optional
 
 from fastapi import File, HTTPException, Query, UploadFile
 from fastapi.routing import APIRouter
@@ -14,10 +15,24 @@ from web.services import evidence_service, model_service
 router = APIRouter()
 
 
-def _predict(model_id: str, image: Image.Image) -> Dict[str, Any]:
+# Bảy mô hình của bundle đối chứng: (khóa hiển thị, model_id trong registry)
+ALL_MODELS = (
+    ("centralized", "demo_centralized_v6"),
+    ("fedavg", "demo_fedavg_v7"),
+    *((f"local_{i:02d}", f"demo_local_{i:02d}") for i in range(5)),
+)
+SCIENTIFIC_STATUS = {
+    "evidence_level": "published_artifact_hash_verified",
+    "overall_scientific_valid": False,
+    "reason": ("Checkpoint đã kiểm SHA-256 trước khi nạp. Một ảnh tải lên không phải phép đo độ chính xác; "
+               "xác suất thô chưa hiệu chuẩn. Tái đánh giá và test giữ riêng (nếu có báo cáo khớp) xem ở /api/evidence/summary."),
+}
+
+
+def _predict(model_id: str, image: Image.Image, temperature: Optional[float] = None) -> Dict[str, Any]:
     """Cửa duy nhất tới model: lỗi registry/cổng được đổi thành HTTP có lý do rõ ràng."""
     try:
-        return model_service.predict(model_id, image)
+        return model_service.predict(model_id, image, temperature)
     except model_service.UnknownModel as exc:
         # model_id do server tự suy ra từ lựa chọn đã kiểm; thiếu nghĩa là registry chưa được sinh đúng
         raise HTTPException(status_code=503, detail=f"Registry chưa có model: {exc} — chạy scripts/update_status.py") from exc
@@ -25,6 +40,32 @@ def _predict(model_id: str, image: Image.Image) -> Dict[str, Any]:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except model_service.RegistryUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+def _explain(model_id: str, image: Image.Image, class_name: str) -> Dict[str, Any]:
+    try:
+        return model_service.explain(model_id, image, class_name)
+    except (model_service.UnknownModel, model_service.ModelNotAllowed, model_service.RegistryUnavailable) as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+def _read_image(file: UploadFile) -> Image.Image:
+    try:
+        return Image.open(io.BytesIO(file.file.read())).convert("RGB")
+    except Exception:
+        raise HTTPException(status_code=400, detail="File tải lên không phải là ảnh hợp lệ")
+
+
+def _check_true_class(true_class: Optional[str]) -> None:
+    if true_class:
+        classes = model_service.known_classes()
+        if classes and true_class not in classes:
+            raise HTTPException(status_code=400, detail="true_class không thuộc 38 lớp của taxonomy.")
+
+
+def _temperatures() -> Dict[str, float]:
+    """T đã kiểm danh tính (báo cáo tái đánh giá khớp bundle); rỗng nếu không có — khi đó không có khối `calibrated`."""
+    return evidence_service.temperatures(_gated_evidence())
 
 
 @router.get("/api/models")
@@ -115,8 +156,65 @@ async def run_plantvillage_reference(file: UploadFile = File(...)) -> Dict[str, 
         raise HTTPException(status_code=400, detail=f"Ảnh hoặc model PlantVillage không hợp lệ: {exc}") from exc
 
 
+@router.get("/api/evidence/details")
+def get_evidence_details() -> Dict[str, Any]:
+    """Ma trận nhầm lẫn (val + test giữ riêng) và thư viện ảnh "sai mà tự tin"; fail-closed theo cùng cổng registry."""
+    return evidence_service.details(_gated_evidence())
+
+
+@router.get("/api/evidence/partitions")
+def get_partition_schemes() -> Dict[str, Any]:
+    """Phân bố lớp theo client của 12 cách chia trong release (chỉ dữ liệu; chỉ α=0,1 có mô hình đã huấn luyện)."""
+    return evidence_service.partitions(_gated_evidence())
+
+
+@router.post("/api/inference/all")
+def run_all_inference(
+    file: UploadFile = File(...),
+    true_class: str | None = Query(None, description="Nhãn thật nếu biết (chỉ để giải thích shard, không ảnh hưởng dự đoán)"),
+    explain: bool = Query(False, description="Kèm ảnh Grad-CAM cho lớp mà từng mô hình dự đoán"),
+) -> Dict[str, Any]:
+    """Một ảnh qua cả 7 mô hình (mỗi mô hình đúng một lần, qua cổng registry). Hàm đồng bộ: FastAPI chạy trong threadpool
+    nên poll /api/status không bị chặn khi đang suy luận."""
+    image = _read_image(file)
+    _check_true_class(true_class)
+    temperatures = _temperatures()
+    started = time.perf_counter()
+    try:
+        results = {key: _predict(registry_id, image, temperatures.get(key)) for key, registry_id in ALL_MODELS}
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=f"Artifact suy luận chưa sẵn sàng: {exc}") from exc
+    predict_ms = (time.perf_counter() - started) * 1000
+    explanations: Dict[str, Any] = {}
+    if explain:
+        started_explain = time.perf_counter()
+        # Grad-CAM là phần phụ: lỗi của một mô hình chỉ ghi vào mục của mô hình đó, không bỏ 7 kết quả dự đoán
+        for key, registry_id in ALL_MODELS:
+            try:
+                explanations[key] = _explain(registry_id, image, results[key]["predicted_class"])
+            except HTTPException as exc:
+                explanations[key] = {"error": str(exc.detail)}
+            except Exception as exc:  # noqa: BLE001 — lỗi tính toán bất kỳ không được làm hỏng phần dự đoán
+                explanations[key] = {"error": f"Không tạo được Grad-CAM: {type(exc).__name__}"}
+        explain_ms = (time.perf_counter() - started_explain) * 1000
+    return {
+        "filename": file.filename,
+        "protocol_id": PROTOCOL_ID,
+        "scientific_status": SCIENTIFIC_STATUS,
+        "order": [key for key, _ in ALL_MODELS],
+        "models": results,
+        "shard_context": {
+            key: model_service.shard_context(key, results[key].get("top3") or [], true_class or None)
+            for key, _ in ALL_MODELS if key != "centralized"
+        },
+        "explain": explanations,
+        "calibration_available": bool(temperatures),
+        "timing_ms": {"predict": round(predict_ms, 1), **({"explain": round(explain_ms, 1)} if explain else {})},
+    }
+
+
 @router.post("/api/inference")
-async def run_dual_inference(
+def run_dual_inference(
     file: UploadFile = File(...),
     federated_source: str = Query("fedavg"),
     true_class: str | None = Query(None, description="Nhãn thật của ảnh nếu biết (chỉ để giải thích shard, không ảnh hưởng dự đoán)"),
@@ -128,22 +226,15 @@ async def run_dual_inference(
     - Cột Federated: fedavg hoặc local_00..04 cùng protocol.
     - Tuyệt đối không tráo đổi hay dùng chung một file TorchScript.
     """
-    contents = await file.read()
-    try:
-        image = Image.open(io.BytesIO(contents)).convert("RGB")
-    except Exception:
-        raise HTTPException(status_code=400, detail="File tải lên không phải là ảnh hợp lệ")
-
+    image = _read_image(file)
     if federated_source not in {"fedavg", *(f"local_{i:02d}" for i in range(5))}:
         raise HTTPException(status_code=400, detail="Chỉ chọn FedAvg v7 hoặc một trong năm Local-only v7 cùng protocol.")
-    if true_class:
-        classes = model_service.known_classes()
-        if classes and true_class not in classes:
-            raise HTTPException(status_code=400, detail="true_class không thuộc 38 lớp của taxonomy.")
+    _check_true_class(true_class)
     selected_id = "demo_fedavg_v7" if federated_source == "fedavg" else f"demo_{federated_source}"
+    temperatures = _temperatures()
     try:
-        central = _predict("demo_centralized_v6", image)
-        selected = _predict(selected_id, image)
+        central = _predict("demo_centralized_v6", image, temperatures.get("centralized"))
+        selected = _predict(selected_id, image, temperatures.get(federated_source))
     except ValueError as exc:
         raise HTTPException(status_code=503, detail=f"Artifact suy luận chưa sẵn sàng: {exc}") from exc
     selected_name = "FedAvg v7" if federated_source == "fedavg" else f"Local {federated_source[-2:]}"
@@ -152,11 +243,7 @@ async def run_dual_inference(
         "federated_source": federated_source,
         "selected_model_name": selected_name,
         "protocol_id": PROTOCOL_ID,
-        "scientific_status": {
-            "evidence_level": "published_artifact_hash_verified_not_locally_reevaluated",
-            "overall_scientific_valid": False,
-            "reason": "Cùng validation nội bộ; chưa tái đánh giá tại máy demo hoặc trên ảnh ngoài mạng.",
-        },
+        "scientific_status": SCIENTIFIC_STATUS,
         "centralized": central,
         "federated": selected,
         # Vì sao Local-only sai: shard huấn luyện của client đó có (hay không có) ảnh của lớp được dự đoán

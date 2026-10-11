@@ -1,17 +1,54 @@
 // Bước 6 · Bằng chứng & hạn chế: những gì đã kiểm, những gì chưa làm được, nói thẳng.
 import { getEvidence, getSummary } from "../core/store.js";
-import { MODEL_LABELS, byId, esc, fmtInt, fmtNum, modelPill, notify } from "../core/dom.js";
+import { MODEL_LABELS, byId, esc, fmtInt, fmtNum, fmtPct, modelPill, notify } from "../core/dom.js";
 
-const LIMITS = [
-  ["Một kịch bản non-IID, một seed", "Chỉ có Dirichlet α=0,1 và seed 42. Chưa đủ để kết luận về độ ổn định hay đường suy giảm theo nhiều mức α."],
-  ["Validation nội bộ, không phải ảnh ngoài thực địa", "PlantVillage là ảnh chụp trong phòng; PlantDoc là ảnh ngoài đồng nhưng chỉ phủ 13/38 lớp. Cả hai đều là validation của cùng release."],
+const BASE_LIMITS = [
+  ["Một kịch bản non-IID, một seed", "Chỉ có Dirichlet α=0,1 và seed 42. Chưa đủ để kết luận về độ ổn định hay đường suy giảm theo nhiều mức α (bước 2 cho xem 12 cách chia, nhưng chỉ α=0,1 có mô hình)."],
+  ["Chưa phải ảnh ngoài thực địa", "PlantVillage là ảnh chụp trong phòng; PlantDoc là ảnh ngoài đồng nhưng chỉ phủ 13/38 lớp, không có lớp lá khỏe. Cả validation lẫn test giữ riêng đều lấy từ cùng release."],
   ["Chỉ nhận ảnh một lá đã cắt", "Bộ phân loại không tự tìm lá trên ảnh toàn cây; ảnh ngoài miền sẽ cho kết quả kém dù độ tin cậy vẫn cao."],
-  ["Xác suất chưa hiệu chuẩn", "Độ tin cậy softmax hiển thị nguyên bản. Trên PlantDoc các mô hình tự tin quá mức (xem bước 3, tab Độ tin cậy xác suất)."],
+  ["Hiệu chuẩn chỉ sửa được một phần", "Bước 4 hiện cả xác suất thô và xác suất đã hiệu chuẩn (temperature scaling). T học trên tập calibration chủ yếu là PlantVillage nên trên PlantDoc các mô hình vẫn tự tin quá mức (bước 3, tab Độ tin cậy xác suất)."],
   ["Huấn luyện thử trên web chỉ là kỹ thuật", "Phiên Flower dùng ảnh tổng hợp, hai vòng, trên localhost: chứng minh luồng FedAvg và đo RTT cùng máy, không phải kết quả khoa học hay độ trễ mạng liên vùng."],
   ["Chưa có thí nghiệm client lỗi hay tấn công", "Bộ kiểm tra update (observe/reject, ngưỡng L2 norm) có trong mã và chạy được ở bước 5, nhưng chưa có thí nghiệm độ chính xác cùng protocol nên chưa có số liệu để kết luận."],
   ["Shard là mô phỏng", "Năm client là năm phân vùng của một tập dữ liệu, không phải năm nông hộ vật lý."],
   ["Quyền riêng tư không tuyệt đối", "FL chỉ giữ ảnh thô không rời client; trọng số vẫn có thể rò thông tin. Cần differential privacy hoặc secure aggregation nếu muốn bảo đảm mạnh hơn."],
 ];
+
+/** Hạn chế về phép đánh giá: số liệu lấy từ báo cáo thống kê đã kiểm danh tính, không viết cứng. */
+function evaluationLimits(summary) {
+  const st = summary?.statistics;
+  const out = [];
+  const sel = st?.selection_effect;
+  if (sel?.available) {
+    const central = (summary?.holdout?.models || []).find(m => m.model_id === "centralized");
+    const pdTest = central?.plantdoc?.top1;
+    const pdVal = sel.chosen_plantdoc_accuracy;
+    const observed = pdTest === undefined || pdTest === null ? ""
+      : pdTest >= pdVal
+        ? ` Trên test, PlantDoc Centralized đạt ${fmtPct(pdTest)} (val ${fmtPct(pdVal)}): chưa thấy số val bị đẩy lên, nhưng test PlantDoc chỉ ${fmtInt(summary.holdout.counts_by_source?.plantdoc)} ảnh.`
+        : ` Trên test, PlantDoc Centralized chỉ đạt ${fmtPct(pdTest)} (val ${fmtPct(pdVal)}) — phù hợp với thiên lệch do chọn.`;
+    out.push(["Checkpoint được chọn trên chính tập validation",
+      `Centralized lấy epoch ${fmtInt(sel.chosen_epoch)}/${fmtInt(sel.epochs)} vì có PlantDoc ${sel.chosen_rank_among_epochs === 1 ? "tốt nhất" : `hạng ${fmtInt(sel.chosen_rank_among_epochs)}`} trên validation (${fmtPct(pdVal)}; epoch cuối ${fmtPct(sel.last_plantdoc_accuracy)}), nên số validation có thể bị đẩy lên. Tập "legacy diagnostic test" của release (bước 3) không dùng để chọn nên không chịu thiên lệch này.${observed}`]);
+  }
+  const test = st?.splits?.test?.available ? st.splits.test.by_source : null;
+  const pd = test?.plantdoc;
+  if (pd?.models?.fedavg?.low !== undefined && pd?.models?.fedavg?.low !== null) {
+    const f = pd.models.fedavg;
+    out.push(["Khoảng tin cậy PlantDoc rộng",
+      `Test PlantDoc chỉ có ${fmtInt(pd.count)} ảnh từ ${fmtInt(pd.clusters)} cảnh chụp: FedAvg ${fmtPct(f.estimate, 1)} với khoảng tin cậy 95% từ ${fmtPct(f.low, 1)} đến ${fmtPct(f.high, 1)}. Chênh lệch vài điểm giữa hai mô hình trên PlantDoc thường chưa có ý nghĩa thống kê.`]);
+  }
+  const leaf = test?.plantvillage?.same_leaf;
+  if (leaf) {
+    const c = leaf.models?.centralized || {};
+    const f = leaf.models?.fedavg || {};
+    const holds = [c, f].every(m => m.without_suspected_reshoots !== null && m.without_suspected_reshoots !== undefined
+      && m.all !== null && m.all !== undefined && m.without_suspected_reshoots >= m.all - 0.005);
+    out.push(["Một phần PlantVillage chưa gom nhóm theo lá",
+      `${fmtInt(leaf.ungrouped_images)} ảnh test PlantVillage không có nhóm lá trong release; ${fmtInt(leaf.suspected_reshoots)} ảnh có ảnh train cùng lớp mang số liền kề (nghi chụp lại cùng lá). Bỏ các ảnh đó: Centralized ${fmtPct(c.all)} → ${fmtPct(c.without_suspected_reshoots)}, FedAvg ${fmtPct(f.all)} → ${fmtPct(f.without_suspected_reshoots)} — ${holds ? "chưa thấy dấu hiệu bị thổi phồng" : "accuracy giảm, số có thể bị thổi phồng một phần"}; muốn loại hẳn rủi ro cần gom lại nhóm lá và dựng release mới.`]);
+  }
+  out.push(["So sánh Centralized – FedAvg chưa hoàn toàn công bằng",
+    "Centralized dùng AdamW 83 epoch; FedAvg dùng SGD không momentum và dừng ở khoảng 32 vòng khi F1 PlantVillage còn đang tăng. Khoảng cách giữa hai mô hình vì vậy là cận trên; muốn kết luận \"FedAvg ≈ Centralized\" cần train lại cùng optimizer, cùng ngân sách, nhiều seed (docs/EXPERIMENT_PROTOCOL.md mục 7)."]);
+  return out;
+}
 
 function shortHash(value, head = 12) {
   return value ? `${value.slice(0, head)}…${value.slice(-6)}` : "—";
@@ -31,7 +68,7 @@ function checklistHtml(cl) {
     <article class="todo-card">
       <header><span class="status-badge error">${esc(item.status === "BLOCKED" ? "Chưa làm được" : item.status)}</span><b>${esc(item.title)}</b></header>
       <p>${esc(item.detail)}</p>
-      ${(item.unlock || []).length ? `<div class="unlock"><span>Để mở khóa:</span>${item.unlock.map(cmd => `<code>${esc(cmd)}</code>`).join("")}</div>` : ""}
+      ${(item.unlock || []).length ? `<details class="fold tech-only unlock-fold"><summary>Lệnh để mở khóa</summary><div class="unlock">${item.unlock.map(cmd => `<code>${esc(cmd)}</code>`).join("")}</div></details>` : ""}
     </article>`).join("");
   return `
     <div class="panel-header-flex">
@@ -113,7 +150,33 @@ function verificationHtml(summary) {
         <p class="field-hint">${esc(lk.scope || "")}</p>
       </article>` : `
       <article class="verify-card warn"><h4>Audit rò rỉ dữ liệu</h4><p>${esc(lk?.reason || "Chưa có báo cáo.")}</p></article>`;
-  return `<section class="verify-grid mt-4">${reCard}${lkCard}</section>`;
+  const ho = summary?.holdout;
+  let hoCard = "";
+  if (ho?.available) {
+    const byId_ = Object.fromEntries((ho.models || []).map(m => [m.model_id, m]));
+    const line = id => {
+      const m = byId_[id];
+      return m ? `<li>${esc(MODEL_LABELS[id])}: PlantVillage <b>${fmtPct(m.plantvillage?.top1)}</b> · PlantDoc <b>${fmtPct(m.plantdoc?.top1)}</b></li>` : "";
+    };
+    const recorded = byId_.centralized?.vs_recorded || {};
+    const reproduced = Object.values(recorded).filter(v => v.available);
+    const pair = summary?.statistics?.splits?.test?.available ? summary.statistics.splits.test.by_source.plantdoc?.pairs?.centralized_vs_fedavg : null;
+    const d = pair?.difference;
+    hoCard = `
+      <article class="verify-card ok">
+        <h4>Test giữ riêng (legacy diagnostic test, không dùng để chọn checkpoint)</h4>
+        <p class="verify-big mono">${fmtInt(ho.count)}</p>
+        <p>ảnh (${fmtInt(ho.counts_by_source?.plantvillage)} PlantVillage, ${fmtInt(ho.counts_by_source?.plantdoc)} PlantDoc), cả 7 mô hình được chấm trên máy này.</p>
+        <ul>
+          ${line("centralized")}${line("fedavg")}
+          ${reproduced.length ? `<li>Số Centralized do nhóm huấn luyện tự ghi: ${reproduced.every(v => v.reproduced) ? "tái lập khớp" : "CÓ lệch"} trên ${reproduced.length} nguồn.</li>` : ""}
+          ${d && d.low !== null && d.low !== undefined ? `<li>PlantDoc, Centralized − FedAvg: ${fmtNum(d.estimate * 100, 1)} điểm, khoảng tin cậy 95% [${fmtNum(d.low * 100, 1)}; ${fmtNum(d.high * 100, 1)}], McNemar p = ${fmtNum(pair.p_value, 3)}.</li>` : ""}
+        </ul>
+      </article>`;
+  } else if (ho) {
+    hoCard = `<article class="verify-card warn"><h4>Test giữ riêng</h4><p>${esc(ho.reason || "Chưa có báo cáo.")}</p></article>`;
+  }
+  return `<section class="verify-grid mt-4">${reCard}${hoCard}${lkCard}</section>`;
 }
 
 export async function mount() {
@@ -127,7 +190,7 @@ export async function mount() {
     <section class="panel mt-4">
       <h3 class="panel-title">Hạn chế cần nói rõ</h3>
       <ol class="limit-list mt-3">
-        ${LIMITS.map(([title, text]) => `<li><b>${esc(title)}.</b> ${esc(text)}</li>`).join("")}
+        ${[...(summary?.available ? evaluationLimits(summary) : []), ...BASE_LIMITS].map(([title, text]) => `<li><b>${esc(title)}.</b> ${esc(text)}</li>`).join("")}
       </ol>
     </section>`;
 

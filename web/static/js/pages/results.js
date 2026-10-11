@@ -1,5 +1,5 @@
 // Bước 3 · Kết quả chi tiết: tổng hợp 7 mô hình, PlantDoc theo lớp, độ tin cậy của xác suất.
-import { getEvidence, getSummary, modelsById } from "../core/store.js";
+import { getDetails, getEvidence, getSummary, modelsById } from "../core/store.js";
 import { makeChart, pillarColors } from "../core/charts.js";
 import {
   $$, MODEL_LABELS, MODEL_ORDER, byId, diseaseOf, cropOf, esc, fmtInt, fmtNum, fmtPct, fmtPctValue,
@@ -102,9 +102,10 @@ function buildSummary() {
       <div class="chart-container mt-4"><canvas id="chart-central-history" aria-label="Val accuracy và val loss của Centralized qua các epoch"></canvas></div>
     </section>`;
 
-  const colors = pillarColors();
   const history = evidence.centralized_history || [];
-  makeChart(byId("chart-central-history"), {
+  makeChart(byId("chart-central-history"), () => {
+    const colors = pillarColors();
+    return {
     type: "line",
     data: {
       labels: history.map(h => h.epoch),
@@ -121,6 +122,7 @@ function buildSummary() {
         y1: { position: "right", grid: { drawOnChartArea: false }, title: { display: true, text: "Loss" } },
       },
     },
+    };
   });
 }
 
@@ -225,10 +227,11 @@ function buildCalibration() {
 
   root.innerHTML = `
     <section class="callout callout-warn">
-      <b>Xác suất softmax hiển thị trên web chưa được hiệu chuẩn.</b>
+      <b>Xác suất softmax thô của các mô hình chưa được hiệu chuẩn.</b> Bước 4 hiện cả số thô lẫn số đã hiệu chuẩn bằng temperature scaling (T ở bảng dưới).
       Trên PlantVillage độ tin cậy khá sát độ chính xác thực, nhưng trên PlantDoc các mô hình <b>tự tin hơn nhiều so với thực tế</b>:
       FedAvg báo trung bình ${fmtPct(re.models.find(m => m.model_id === "fedavg").calibration.plantdoc.mean_confidence, 0)} nhưng chỉ đúng
       ${fmtPct(re.models.find(m => m.model_id === "fedavg").calibration.plantdoc.accuracy, 0)}.
+      Temperature scaling học trên tập calibration chủ yếu là PlantVillage nên chỉ sửa được một phần sai lệch trên PlantDoc (ECE vẫn cao).
       Vì vậy một ảnh có độ tin cậy cao không có nghĩa là chắc đúng.
     </section>
 
@@ -257,15 +260,16 @@ function buildCalibration() {
       <div class="chart-container chart-tall mt-4"><canvas id="chart-reliability" aria-label="Biểu đồ độ tin cậy của FedAvg và Centralized"></canvas></div>
     </section>`;
 
-  const colors = pillarColors();
   const draw = source => {
     const points = id => (re.reliability?.[id]?.[source] || []).filter(b => b.n > 0)
       .map(b => ({ x: +(b.confidence * 100).toFixed(1), y: +(b.accuracy * 100).toFixed(1), n: b.n }));
-    makeChart(byId("chart-reliability"), {
+    makeChart(byId("chart-reliability"), () => {
+      const colors = pillarColors();
+      return {
       type: "scatter",
       data: {
         datasets: [
-          { label: "Hiệu chuẩn hoàn hảo", data: [{ x: 0, y: 0 }, { x: 100, y: 100 }], showLine: true, borderDash: [6, 6], borderColor: "#6b7280", pointRadius: 0, borderWidth: 1.5 },
+          { label: "Hiệu chuẩn hoàn hảo", data: [{ x: 0, y: 0 }, { x: 100, y: 100 }], showLine: true, borderDash: [6, 6], borderColor: colors.neutral, pointRadius: 0, borderWidth: 1.5 },
           { label: "FedAvg v7", data: points("fedavg"), showLine: true, borderColor: colors.fedavg, backgroundColor: colors.fedavg, tension: 0.2 },
           { label: "Centralized v6", data: points("centralized"), showLine: true, borderColor: colors.centralized, backgroundColor: colors.centralized, tension: 0.2 },
         ],
@@ -279,6 +283,7 @@ function buildCalibration() {
           tooltip: { callbacks: { label: c => `${c.dataset.label}: tin cậy ${fmtNum(c.parsed.x, 0)}% → đúng ${fmtNum(c.parsed.y, 0)}%${c.raw.n ? ` (${fmtInt(c.raw.n)} ảnh)` : ""}` } },
         },
       },
+      };
     });
   };
   draw("plantdoc");
@@ -293,25 +298,314 @@ function buildCalibration() {
   });
 }
 
-const BUILDERS = { summary: buildSummary, plantdoc: buildPlantdoc, calibration: buildCalibration };
+// ───────── Tab: Test giữ riêng & thống kê ─────────
+const pct1 = value => (value === null || value === undefined ? "—" : `${fmtNum(value * 100, 1)}`);
 
-function activate(name) {
+function withCi(estimate, interval) {
+  if (estimate === null || estimate === undefined) return "—";
+  const ci = interval && interval.low !== null && interval.low !== undefined
+    ? `<span class="ci">[${pct1(interval.low)}; ${pct1(interval.high)}]</span>` : "";
+  return `<span class="mono">${fmtPct(estimate)}</span>${ci}`;
+}
+
+function pairLine(label, pair) {
+  if (!pair) return "";
+  const d = pair.difference || {};
+  const clear = d.low !== null && d.low !== undefined && (d.low > 0 || d.high < 0);
+  const sign = v => `${v >= 0 ? "+" : "−"}${fmtNum(Math.abs(v) * 100, 1)}`;
+  return `<li>
+      <span class="pair-label">${label}</span>
+      <span class="mono">${d.estimate === null || d.estimate === undefined ? "—" : sign(d.estimate)} điểm</span>
+      <span class="ci">${d.low === null || d.low === undefined ? "" : `[${sign(d.low)}; ${sign(d.high)}]`}</span>
+      <span class="mono">McNemar ${pair.p_value === null || pair.p_value === undefined ? "p = —" : pair.p_value < 0.001 ? "p &lt; 0,001" : `p = ${fmtNum(pair.p_value, 3)}`}</span>
+      <span class="verdict ${clear ? "ok" : "mid"}">${clear ? "khác biệt rõ" : "chưa đủ chắc chắn"}</span>
+    </li>`;
+}
+
+function buildHoldout() {
+  const { evidence, summary } = ctx;
+  const root = byId("result-holdout");
+  const ho = summary?.holdout;
+  const st = summary?.statistics;
+  if (!ho?.available && !st?.available) {
+    root.innerHTML = notReady(ho?.reason || st?.reason || "Chạy scripts/evaluate_published_models.py --holdout và scripts/report_statistics.py.");
+    return;
+  }
+  const byModel = modelsById(evidence);
+  const holdoutById = Object.fromEntries((ho?.models || []).map(m => [m.model_id, m]));
+  const split = name => (st?.splits?.[name]?.available ? st.splits[name].by_source : null);
+  const val = split("val");
+  const test = split("test");
+  const sel = st?.selection_effect;
+
+  const rows = MODEL_ORDER.map(id => {
+    const pub = byModel[id].metrics;
+    const h = holdoutById[id];
+    const cell = (source, block, value) => withCi(value, block?.[source]?.models?.[id]);
+    return `<tr class="row-${pillarOf(id)}">
+      <th scope="row">${modelPill(id)}</th>
+      <td>${cell("plantvillage", val, pub.plantvillage.top1_accuracy)}</td>
+      <td>${h ? cell("plantvillage", test, h.plantvillage.top1) : "—"}</td>
+      <td>${cell("plantdoc", val, pub.plantdoc.top1_accuracy)}</td>
+      <td>${h ? cell("plantdoc", test, h.plantdoc.top1) : "—"}</td>
+    </tr>`;
+  }).join("");
+
+  const bestLocal = st?.best_local_chosen_on_val || {};
+  // so val với test của Centralized trên PlantDoc: câu nhận xét đi theo số liệu, không viết cứng
+  const pdVal = byModel.centralized?.metrics?.plantdoc?.top1_accuracy;
+  const pdTest = holdoutById.centralized?.plantdoc?.top1;
+  const valVsTest = pdVal === undefined || pdTest === undefined || pdTest === null ? ""
+    : pdTest >= pdVal
+      ? `Trên dữ liệu này số test không thấp hơn: PlantDoc Centralized test ${fmtPct(pdTest)} so với val ${fmtPct(pdVal)} (test chỉ ${fmtInt(ho?.counts_by_source?.plantdoc)} ảnh nên khoảng tin cậy rộng).`
+      : `Số test thấp hơn val (PlantDoc Centralized ${fmtPct(pdTest)} so với ${fmtPct(pdVal)}) — phù hợp với thiên lệch do chọn trên val.`;
+  const pairs = (block, source) => block?.[source]?.pairs || {};
+  const pairBlock = (title, block) => (block ? `
+      <div class="pair-block">
+        <h4 class="subhead">${title}</h4>
+        <ul class="pair-list">
+          ${pairLine("PlantDoc · Centralized − FedAvg", pairs(block, "plantdoc").centralized_vs_fedavg)}
+          ${pairLine(`PlantDoc · FedAvg − ${esc(MODEL_LABELS[bestLocal.plantdoc] || "Local tốt nhất")}`, pairs(block, "plantdoc").fedavg_vs_best_local)}
+          ${pairLine("PlantVillage · Centralized − FedAvg", pairs(block, "plantvillage").centralized_vs_fedavg)}
+          ${pairLine(`PlantVillage · FedAvg − ${esc(MODEL_LABELS[bestLocal.plantvillage] || "Local tốt nhất")}`, pairs(block, "plantvillage").fedavg_vs_best_local)}
+        </ul>
+      </div>` : "");
+
+  const leaf = test?.plantvillage?.same_leaf;
+  const leafRows = leaf ? ["centralized", "fedavg", bestLocal.plantvillage].filter(Boolean).map(id => {
+    const m = leaf.models[id] || {};
+    return `<tr><th scope="row">${modelPill(id)}</th><td class="mono">${fmtPct(m.all)}</td><td class="mono">${fmtPct(m.grouped_only)}</td><td class="mono">${fmtPct(m.without_suspected_reshoots)}</td></tr>`;
+  }).join("") : "";
+
+  const recorded = holdoutById.centralized?.vs_recorded || {};
+  const recordedText = Object.entries(recorded).filter(([, v]) => v.available)
+    .map(([src, v]) => `${src === "plantdoc" ? "PlantDoc" : "PlantVillage"} ${v.reproduced ? "khớp" : `lệch ${fmtInt(v.correct_diff_images)} ảnh`}`).join(", ");
+
+  root.innerHTML = `
+    ${sel?.available ? `
+    <section class="callout callout-warn">
+      <b>Vì sao cần tập test giữ riêng?</b> Checkpoint được chọn theo ${esc(sel.selection_metric)} trên <b>chính tập validation</b>.
+      Với Centralized, epoch được chọn (${fmtInt(sel.chosen_epoch)}/${fmtInt(sel.epochs)}) có accuracy PlantDoc ${fmtPct(sel.chosen_plantdoc_accuracy)}
+      — ${sel.chosen_rank_among_epochs === 1 ? "cao nhất trong mọi epoch" : `hạng ${fmtInt(sel.chosen_rank_among_epochs)}/${fmtInt(sel.epochs)}`} (epoch cuối: ${fmtPct(sel.last_plantdoc_accuracy)}).
+      Chọn như vậy có thể đẩy số validation lên. Tập test dưới đây (${fmtInt(ho?.count)} ảnh — tập "legacy diagnostic test" của release) không dùng
+      để chọn nên không chịu thiên lệch này. ${valVsTest} ${esc(sel.fedavg_note)}
+    </section>` : ""}
+
+    <section class="panel mt-4">
+      <h3 class="panel-title">Validation và test giữ riêng, kèm khoảng tin cậy 95%</h3>
+      <p class="panel-desc">Khoảng tin cậy tính bằng bootstrap theo <b>cụm</b> (PlantDoc: theo cảnh chụp; PlantVillage: theo nhóm lá) vì nhiều ảnh cùng một cảnh/lá không độc lập. Test: PlantVillage ${fmtInt(ho?.counts_by_source?.plantvillage)} ảnh, PlantDoc ${fmtInt(ho?.counts_by_source?.plantdoc)} ảnh.</p>
+      <div class="table-responsive mt-3">
+        <table class="data-table result-table">
+          <thead><tr><th scope="col">Mô hình</th><th scope="col">PlantVillage · val</th><th scope="col">PlantVillage · test</th><th scope="col">PlantDoc · val</th><th scope="col">PlantDoc · test</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      ${recordedText ? `<p class="field-hint mt-2">Đối chiếu: số Centralized trên tập test do nhóm huấn luyện tự ghi (summary.json) — ${recordedText} (số gốc làm tròn 4 chữ số).</p>` : ""}
+      ${ho?.caveat ? `<p class="field-hint mt-2">${esc(ho.caveat)}</p>` : ""}
+    </section>
+
+    ${val || test ? `
+    <section class="panel mt-4">
+      <h3 class="panel-title">So sánh theo cặp trên cùng ảnh</h3>
+      <p class="panel-desc">Hiệu số accuracy (điểm phần trăm) giữa hai mô hình trên đúng cùng tập ảnh, khoảng tin cậy bootstrap theo cụm, và kiểm định McNemar chính xác (giả định ảnh độc lập — vì vậy ưu tiên đọc khoảng tin cậy). "Khác biệt rõ" nghĩa là khoảng tin cậy không chứa 0; chưa hiệu chỉnh cho 8 phép so sánh (theo Bonferroni ngưỡng p là 0,05/8 ≈ 0,006). "Local tốt nhất" được chọn theo validation, không theo test.</p>
+      <div class="pair-grid mt-3">${pairBlock("Validation", val)}${pairBlock("Test giữ riêng", test)}</div>
+    </section>` : ""}
+
+    ${leaf ? `
+    <section class="panel mt-4">
+      <h3 class="panel-title">Độ nhạy với ảnh chụp lại cùng một lá (PlantVillage, test)</h3>
+      <p class="panel-desc">${fmtInt(leaf.ungrouped_images)} ảnh test PlantVillage không được release gom nhóm theo lá; ${fmtInt(leaf.suspected_reshoots)} ảnh trong đó có ảnh train cùng lớp mang số thứ tự liền kề (ước lượng ảnh chụp lại cùng lá — có thể làm số đẹp hơn thật). Nếu bỏ chúng mà accuracy không giảm thì chưa thấy bằng chứng bị thổi phồng.</p>
+      <div class="table-responsive mt-3">
+        <table class="data-table">
+          <thead><tr><th scope="col">Mô hình</th><th scope="col">Tất cả</th><th scope="col">Chỉ ảnh đã gom nhóm lá</th><th scope="col">Bỏ ảnh nghi chụp lại</th></tr></thead>
+          <tbody>${leafRows}</tbody>
+        </table>
+      </div>
+    </section>` : ""}`;
+}
+
+// ───────── Tab: Ma trận nhầm lẫn ─────────
+function confusionHtml(matrix, classes) {
+  const rowTotals = matrix.map(row => row.reduce((a, b) => a + b, 0));
+  const keep = new Set();
+  matrix.forEach((row, i) => {
+    if (!rowTotals[i]) return;
+    keep.add(i);
+    row.forEach((n, j) => { if (n > 0) keep.add(j); });
+  });
+  const idx = [...keep].sort((a, b) => a - b);
+  const head = idx.map(j => `<th scope="col" title="${esc(formatDiseaseName(classes[j]))}">${j + 1}</th>`).join("");
+  const rows = idx.filter(i => rowTotals[i] > 0).map(i => {
+    const cells = idx.map(j => {
+      const n = matrix[i][j];
+      const share = rowTotals[i] ? n / rowTotals[i] : 0;
+      const cls = i === j ? "cm-diag" : n > 0 ? "cm-off" : "cm-zero";
+      const title = `Thật: ${formatDiseaseName(classes[i])} → Đoán: ${formatDiseaseName(classes[j])}: ${fmtInt(n)} ảnh (${fmtNum(share * 100, 1)}%)`;
+      return `<td class="cm-cell ${cls}" style="--p:${Math.sqrt(share).toFixed(3)}" title="${esc(title)}">${n > 0 ? fmtInt(n) : ""}</td>`;
+    }).join("");
+    return `<tr><th scope="row" class="cm-row"><span class="cm-n">${i + 1}</span> ${esc(formatDiseaseName(classes[i]))}</th>${cells}</tr>`;
+  }).join("");
+  return `<table class="cm-table"><thead><tr><th scope="col" class="cm-corner">Thật ↓ · Đoán →</th>${head}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function topConfusions(matrix, classes, limit = 8) {
+  const out = [];
+  matrix.forEach((row, i) => row.forEach((n, j) => { if (i !== j && n > 0) out.push({ i, j, n }); }));
+  return out.sort((a, b) => b.n - a.n).slice(0, limit)
+    .map(c => `<li><span>${esc(formatDiseaseName(classes[c.i]))}</span><span class="arrow">→</span><span>${esc(formatDiseaseName(classes[c.j]))}</span><b class="mono">${fmtInt(c.n)} ảnh</b></li>`).join("");
+}
+
+async function buildConfusion() {
+  const root = byId("result-confusion");
+  root.innerHTML = '<div class="skeleton skeleton-block"></div>';
+  const details = await getDetails();
+  if (!details.available || !details.confusion?.val) {
+    root.innerHTML = notReady(details.reason || "Chưa có ma trận nhầm lẫn (cần báo cáo tái đánh giá cục bộ).");
+    return;
+  }
+  const state = { model: "fedavg", source: "plantdoc", split: "val" };
+  const splits = Object.keys(details.confusion);
+  root.innerHTML = `
+    <section class="panel">
+      <div class="panel-header-flex">
+        <div>
+          <h3 class="panel-title">Ma trận nhầm lẫn</h3>
+          <p class="panel-desc">Mỗi hàng là lớp thật, mỗi cột là lớp mô hình đoán. Ô xanh trên đường chéo là đoán đúng; ô đỏ là nhầm, càng đậm thì tỉ lệ (trong hàng) càng lớn. Chỉ hiện các lớp có ảnh trong nguồn đã chọn; rê chuột lên ô để xem tên lớp và số ảnh.</p>
+        </div>
+      </div>
+      <div class="cm-controls mt-3">
+        <div class="segmented" role="radiogroup" aria-label="Mô hình">
+          <button type="button" class="segmented-option" role="radio" aria-checked="false" data-cm-model="centralized">Centralized</button>
+          <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-cm-model="fedavg">FedAvg</button>
+        </div>
+        <div class="segmented" role="radiogroup" aria-label="Nguồn">
+          <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-cm-source="plantdoc">PlantDoc</button>
+          <button type="button" class="segmented-option" role="radio" aria-checked="false" data-cm-source="plantvillage">PlantVillage</button>
+        </div>
+        ${splits.length > 1 ? `<div class="segmented" role="radiogroup" aria-label="Tập đánh giá">
+          <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-cm-split="val">Validation</button>
+          <button type="button" class="segmented-option" role="radio" aria-checked="false" data-cm-split="test">Test giữ riêng</button>
+        </div>` : ""}
+      </div>
+      <p class="field-hint mt-3" id="cm-summary"></p>
+      <div class="table-responsive cm-wrap mt-2" id="cm-wrap"></div>
+    </section>
+    <section class="panel mt-4">
+      <h3 class="panel-title">Nhầm lẫn nhiều nhất</h3>
+      <ol class="confusion-list mt-3" id="cm-top"></ol>
+    </section>`;
+  const render = () => {
+    const matrix = details.confusion[state.split]?.[state.model]?.[state.source];
+    if (!matrix) {
+      byId("cm-summary").textContent = "";
+      byId("cm-wrap").innerHTML = '<p class="field-hint">Không có ma trận cho lựa chọn này.</p>';
+      byId("cm-top").innerHTML = "";
+      return;
+    }
+    const total = matrix.reduce((a, row) => a + row.reduce((x, y) => x + y, 0), 0);
+    const correct = matrix.reduce((a, row, i) => a + row[i], 0);
+    byId("cm-summary").textContent = `${MODEL_LABELS[state.model]} · ${state.source === "plantdoc" ? "PlantDoc" : "PlantVillage"} · ${state.split === "val" ? "validation" : "test giữ riêng"}: ${fmtInt(correct)}/${fmtInt(total)} ảnh đúng (${fmtPct(total ? correct / total : 0)}).`;
+    byId("cm-wrap").innerHTML = confusionHtml(matrix, details.classes);
+    byId("cm-top").innerHTML = topConfusions(matrix, details.classes) || "<li>Không có nhầm lẫn.</li>";
+  };
+  const bind = (attr, key) => root.querySelectorAll(`[${attr}]`).forEach(button => button.addEventListener("click", () => {
+    root.querySelectorAll(`[${attr}]`).forEach(b => {
+      b.classList.toggle("is-active", b === button);
+      b.setAttribute("aria-checked", String(b === button));
+    });
+    state[key] = button.getAttribute(attr);
+    render();
+  }));
+  bind("data-cm-model", "model");
+  bind("data-cm-source", "source");
+  bind("data-cm-split", "split");
+  render();
+}
+
+// ───────── Tab: Sai mà rất tự tin ─────────
+async function buildErrors() {
+  const root = byId("result-errors");
+  root.innerHTML = '<div class="skeleton skeleton-block"></div>';
+  const details = await getDetails();
+  const errors = details.errors;
+  if (!details.available || !errors?.available) {
+    root.innerHTML = notReady(errors?.reason || details.reason || "Chưa có thư viện ảnh lỗi.");
+    return;
+  }
+  const state = { model: "all", source: "all" };
+  root.innerHTML = `
+    <section class="panel">
+      <h3 class="panel-title">Ảnh validation bị đoán sai với độ tin cậy ≥ ${fmtNum((errors.threshold || 0.9) * 100, 0)}%</h3>
+      <p class="panel-desc">Đây là những lỗi đáng lo nhất: mô hình sai nhưng rất chắc chắn. Phần lớn là ảnh PlantDoc chụp ngoài đồng — đúng chỗ mà độ tin cậy kém đáng tin nhất.</p>
+      <div class="cm-controls mt-3">
+        <div class="segmented" role="radiogroup" aria-label="Mô hình">
+          <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-err-model="all">Tất cả</button>
+          <button type="button" class="segmented-option" role="radio" aria-checked="false" data-err-model="fedavg">FedAvg sai</button>
+          <button type="button" class="segmented-option" role="radio" aria-checked="false" data-err-model="centralized">Centralized sai</button>
+        </div>
+        <div class="segmented" role="radiogroup" aria-label="Nguồn">
+          <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-err-source="all">Mọi nguồn</button>
+          <button type="button" class="segmented-option" role="radio" aria-checked="false" data-err-source="plantdoc">PlantDoc</button>
+          <button type="button" class="segmented-option" role="radio" aria-checked="false" data-err-source="plantvillage">PlantVillage</button>
+        </div>
+      </div>
+      <p class="field-hint mt-3" id="err-count"></p>
+      <div class="error-grid mt-2" id="err-grid"></div>
+      <p class="field-hint mt-3">${esc(errors.attribution)}</p>
+    </section>`;
+  const render = () => {
+    const items = errors.items.filter(item => (state.source === "all" || item.source === state.source)
+      && (state.model === "all" || item.wrong_by[state.model]));
+    byId("err-count").textContent = `${fmtInt(items.length)} ảnh`;
+    byId("err-grid").innerHTML = items.map(item => `
+      <figure class="error-card">
+        <img src="/static/samples/errors/${encodeURIComponent(item.thumb)}" alt="" loading="lazy" width="160" height="160">
+        <figcaption>
+          <span class="error-src">${item.source === "plantdoc" ? "PlantDoc" : "PlantVillage"}</span>
+          <b>${esc(formatDiseaseName(item.target))}</b>
+          ${Object.entries(item.wrong_by).map(([model, v]) => `<span class="error-pred">${modelPill(model)} đoán <b>${esc(formatDiseaseName(v.predicted))}</b> · ${fmtPct(v.confidence, 0)}</span>`).join("")}
+        </figcaption>
+      </figure>`).join("") || '<p class="field-hint">Không có ảnh khớp bộ lọc.</p>';
+  };
+  const bind = (attr, key) => root.querySelectorAll(`[${attr}]`).forEach(button => button.addEventListener("click", () => {
+    root.querySelectorAll(`[${attr}]`).forEach(b => {
+      b.classList.toggle("is-active", b === button);
+      b.setAttribute("aria-checked", String(b === button));
+    });
+    state[key] = button.getAttribute(attr);
+    render();
+  }));
+  bind("data-err-model", "model");
+  bind("data-err-source", "source");
+  render();
+}
+
+const BUILDERS = {
+  summary: buildSummary, holdout: buildHoldout, plantdoc: buildPlantdoc,
+  confusion: buildConfusion, errors: buildErrors, calibration: buildCalibration,
+};
+const building = new Map();
+
+async function activate(name) {
   $$(".subtab").forEach(tab => {
     const on = tab.dataset.subtab === name;
     tab.classList.toggle("is-active", on);
     tab.setAttribute("aria-selected", String(on));
   });
   $$(".subpanel").forEach(panel => panel.classList.toggle("is-active", panel.id === `result-${name}`));
-  if (!built.has(name)) {
-    try {
-      BUILDERS[name]();
-      built.add(name); // chỉ đánh dấu đã dựng khi thành công; lỗi thì lần bấm sau thử lại
-    } catch (error) {
-      console.error(`[Kết quả] Không dựng được tab ${name}:`, error);
-      const panel = byId(`result-${name}`);
-      if (panel) panel.innerHTML = `<div class="callout callout-error" role="alert"><b>Không dựng được tab này.</b> ${esc(error.message)}</div>`;
-      notify("error", "Không dựng được tab", name, { detail: error.message });
-    }
+  if (built.has(name) || building.has(name)) return;
+  const task = Promise.resolve().then(() => BUILDERS[name]());
+  building.set(name, task);
+  try {
+    await task;
+    built.add(name); // chỉ đánh dấu đã dựng khi thành công; lỗi thì lần bấm sau thử lại
+  } catch (error) {
+    console.error(`[Kết quả] Không dựng được tab ${name}:`, error);
+    const panel = byId(`result-${name}`);
+    if (panel) panel.innerHTML = `<div class="callout callout-error" role="alert"><b>Không dựng được tab này.</b> ${esc(error.message)}</div>`;
+    notify("error", "Không dựng được tab", name, { detail: error.message });
+  } finally {
+    building.delete(name);
   }
 }
 

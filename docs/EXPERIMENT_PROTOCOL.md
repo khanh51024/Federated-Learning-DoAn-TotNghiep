@@ -9,7 +9,7 @@ Tài liệu này đóng băng toàn bộ thông số kỹ thuật, cấu hình m
 
 | Protocol ID | Vai trò | Dữ liệu | Nơi train | Trạng thái |
 |---|---|---|---|---|
-| `mixed_pv_pd_v3_pretrained_seed42_validation` | **Kết quả hiện hành** (Centralized v6, FedAvg v7, 5 Local-only v7) | Mixed PlantVillage + PlantDoc; validation 4.344 PV + 269 PlantDoc; seed 42; pretrained; non-IID label alpha=0.1 | Ngoài repo (branch `train-*`), import bundle bằng `scripts/import_branch_demo.py` | Đã kiểm hash; **chưa tái đánh giá cục bộ**; chưa multi-seed |
+| `mixed_pv_pd_v3_pretrained_seed42_validation` | **Kết quả hiện hành** (Centralized v6, FedAvg v7, 5 Local-only v7) | Mixed PlantVillage + PlantDoc; validation 4.344 PV + 269 PlantDoc; seed 42; pretrained; non-IID label alpha=0.1 | Ngoài repo (branch `train-*`), import bundle bằng `scripts/import_branch_demo.py` | Đã kiểm hash; **đã tái đánh giá cục bộ** (10/14 phép so khớp tuyệt đối, hai mô hình chính khớp hết); **có kết quả trên test giữ riêng** `legacy_diagnostic_test` (11.015 ảnh); chưa multi-seed |
 | `stage2_scratch_clean_v3` | Tái lập khoa học cục bộ GĐ2 (scratch, 5 client) | PlantVillage 54.305 ảnh, split 38.984/4.400/10.921 (`data/partitions_stage2_scratch_v3/`) | Cần dataset gốc + máy train | **BLOCKED**: chưa có run cục bộ |
 | `kaggle_pv_v1_label_skew_a0.1` | Lịch sử (run Kaggle 99,09% / 98,25% / 81,40%) | PlantVillage, partition v1, 10 client, test 10.917 ảnh | Kaggle (pipeline cũ ở `legacy/`) | Chỉ còn metrics; checkpoint mất; chỉ trích dẫn kèm nhãn "historical" |
 
@@ -109,5 +109,38 @@ Các mức độ thực nghiệm:
 | :--- | :--- |
 | **"Trọng số gửi về server có bị tính sai hay không?"** | Trả lời bằng Unit Test toán học độc lập (`tests/test_fedavg.py`) kiểm tra scalar $100(1) + 300(3) / 400 = 2.500000$ và tensor conv 4D. Toàn bộ quá trình kiểm soát bằng SHA-256. |
 | **"Loss khác Latency như thế nào?"** | Tách bạch rõ ràng: Loss là hàm mục tiêu toán học (CrossEntropy), Latency là thời gian vật lý (giây / ms). |
-| **"Confidence của 1 ảnh có phải Accuracy mô hình không?"** | Giao diện web hiển thị tách biệt: Confidence là xác suất Softmax của ảnh đó, Accuracy là tỷ lệ đúng trên 10.921 ảnh test độc lập. |
+| **"Confidence của 1 ảnh có phải Accuracy mô hình không?"** | Không. Web hiện xác suất softmax thô của ảnh đó kèm xác suất đã hiệu chuẩn (temperature scaling, T fit trên tập calibration riêng); accuracy là tỷ lệ đúng trên tập test giữ riêng 11.015 ảnh (protocol hiện hành) hoặc 10.921 ảnh (protocol scratch cũ). |
 | **"Federated Learning có bảo mật tuyệt đối không?"** | Không có bảo mật tuyệt đối; FL chỉ bảo vệ ảnh thô không rời biên, vẫn cần DP/SecAgg để chống lại tấn công tái tạo đặc trưng (Reconstruction Attack). |
+| **"Số validation có bị chọn cho đẹp không?"** | Có hiệu ứng chọn: checkpoint được chọn theo macro-F1 PlantDoc trên chính validation (Centralized: epoch 22 là epoch có accuracy PlantDoc cao nhất trong 83 epoch). Vì vậy nhóm chấm thêm trên tập test giữ riêng chưa từng dùng để chọn và báo cáo khoảng tin cậy theo cụm (mục 7). |
+
+## 7. Hạn chế của phép đánh giá hiện hành (protocol `mixed_pv_pd_v3_pretrained_seed42_validation`)
+
+Số liệu kiểm bằng `scripts/evaluate_published_models.py` (`--holdout`) và `scripts/report_statistics.py`; mọi con số dưới đây truy được
+về `artifacts/holdout_eval_report.json` và `artifacts/statistics_report.json`.
+
+1. **Chọn checkpoint trên chính validation.** "Best" là epoch/vòng có macro-F1 PlantDoc cao nhất trên val (trong các epoch đạt ngưỡng
+   F1 PlantVillage); với Centralized, epoch được chọn có PlantDoc val cao nhất trong 83 epoch. Cách chọn này có thể đẩy số val lên.
+   Bù lại: tập `legacy_diagnostic_test` của release (PlantVillage 10.843 + PlantDoc 172) không giao train/val/calibration và không dùng
+   để chọn, nên không chịu thiên lệch này. Thực tế đo được: số test KHÔNG thấp hơn val (Centralized PlantDoc test 63,37% so với val 53,90%;
+   PlantVillage gần như bằng nhau) — chưa thấy val bị thổi phồng, nhưng PlantDoc test chỉ 172 ảnh nên khoảng tin cậy rộng. Release
+   gọi đây là tập chẩn đoán "legacy" (summary.json ghi `FINAL_HOLDOUT_PENDING`), chưa phải test cuối cùng được khóa trước.
+2. **PlantDoc nhỏ và tập trung theo cảnh.** Val 269 ảnh từ 115 cảnh, test 172 ảnh từ 96 cảnh; khoảng tin cậy 95% bootstrap theo cảnh
+   rộng khoảng ±9–10 điểm. Chênh Centralized−FedAvg trên PlantDoc val có McNemar p≈0,04 nhưng khoảng tin cậy theo cụm vẫn chứa 0;
+   trên test thì chênh có ý nghĩa. Chỉ 13/38 lớp có ảnh PlantDoc, không có lớp healthy.
+3. **Nhóm lá PlantVillage chưa đủ.** Khoảng 24% ảnh PlantVillage là nhóm một ảnh (8 lớp không có nhóm lá nào), nên ảnh chụp lại cùng
+   một lá có thể nằm ở cả train và val/test (dHash không phát hiện được kiểu này). Phân tích độ nhạy: bỏ các ảnh có ảnh train mang số
+   thứ tự liền kề (ước lượng chụp lại) thì accuracy Centralized/FedAvg không giảm — chưa thấy bằng chứng bị thổi phồng.
+4. **So sánh chưa hoàn toàn công bằng.** Centralized: AdamW lr 1e-3, tối đa 100 epoch (chạy 83). FedAvg: SGD không momentum lr 0,01,
+   E=1, dừng sớm ở vòng 32 trong khi F1 PlantVillage còn tăng; ngưỡng chọn khác nhau. Khoảng cách Centralized−FedAvg vì vậy gồm cả
+   phần do cấu hình, không chỉ do FL.
+5. **Một seed, một mức α.** Chưa có độ lệch giữa các lần chạy.
+
+### Khi nào cần train lại
+
+- **Không cần** để demo và trình bày kết quả hiện có, nếu nêu đủ năm hạn chế trên và trích số test giữ riêng kèm khoảng tin cậy.
+- **Cần** nếu muốn khẳng định "FedAvg gần Centralized" như một kết quả khoa học: train lại 7 mô hình với CÙNG optimizer và ngân sách
+  (ví dụ cùng số epoch-tương-đương, cùng quy tắc chọn), 3 seed; ước tính ~10 GPU-giờ mỗi seed (Centralized ~5,2 h, FedAvg ~1,7 h,
+  Local ~3,3 h theo thời gian đã ghi), tức ~30 GPU-giờ trên Kaggle/Colab. Máy demo chỉ có CPU, không train được.
+- **Sạch nhất**: gom lại nhóm lá cho ảnh PlantVillage một-ảnh (theo tên/số thứ tự), dựng release mới, chia lại split rồi train lại
+  — mọi số liệu sẽ đổi. Kết quả nhập lại qua `scripts/import_branch_demo.py` (bundle có kiểm hash).
+- `scripts/run_real_multiseed_report.ps1` thuộc protocol scratch PlantVillage cũ (`stage2_scratch_clean_v3`), không thay được việc trên.

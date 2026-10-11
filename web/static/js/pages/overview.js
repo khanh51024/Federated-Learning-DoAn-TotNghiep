@@ -34,11 +34,26 @@ function trustChips(summary) {
   } else {
     chips.push(`<a class="trust-chip warn" href="#bang-chung"><b>Chưa audit rò rỉ</b><span>${esc(lk?.reason || "thiếu báo cáo")}</span></a>`);
   }
+  const ho = summary?.holdout;
+  if (ho?.available) {
+    const fed = ho.models.find(x => x.model_id === "fedavg");
+    chips.push(`<a class="trust-chip ok" href="#ket-qua"><b>Test giữ riêng ${fmtInt(ho.count)} ảnh</b><span>chưa từng dùng để chọn checkpoint · FedAvg ${fmtPct(fed?.plantvillage?.top1)} PV / ${fmtPct(fed?.plantdoc?.top1)} PD (bước 3)</span></a>`);
+  }
   const cl = summary?.checklist;
   if (cl?.available) {
     chips.push(`<a class="trust-chip ${cl.blocked ? "warn" : "ok"}" href="#bang-chung"><b>${cl.done}/${cl.total} mục nghiệm thu xong</b><span>${cl.blocked} mục còn thiếu dữ liệu/máy huấn luyện (xem bước 6)</span></a>`);
   }
   return chips.join("");
+}
+
+function testLine(holdout, ids) {
+  if (!holdout?.available) return "";
+  const rows = holdout.models.filter(x => ids.includes(x.model_id));
+  if (!rows.length) return "";
+  const pv = rows.map(x => x.plantvillage.top1);
+  const pd = rows.map(x => x.plantdoc.top1);
+  const show = values => (values.length === 1 ? fmtPct(values[0]) : range(values));
+  return `<p class="pillar-test" title="Tập ${fmtInt(holdout.count)} ảnh chưa từng dùng để chọn checkpoint">Test giữ riêng: PV <b>${show(pv)}</b> · PD <b>${show(pd)}</b></p>`;
 }
 
 export async function mount() {
@@ -68,7 +83,7 @@ export async function mount() {
     <section class="hero">
       <p class="eyebrow">Câu hỏi nghiên cứu</p>
       <h2 class="hero-question">Có thể huấn luyện chung một mô hình chẩn đoán bệnh lá từ năm nơi mà không gửi ảnh về máy chủ không — và nó chính xác tới đâu so với gom hết ảnh về một chỗ?</h2>
-      <p class="hero-note">Kết quả dưới đây là validation nội bộ của một kịch bản non-IID (α=0,1) và một seed (42); chưa phải độ chính xác ngoài thực địa.</p>
+      <p class="hero-note">Số lớn là validation (cũng là tập dùng để chọn checkpoint); dòng "Test giữ riêng" là tập legacy diagnostic test của release, không dùng để chọn checkpoint. Một kịch bản non-IID (α=0,1), một seed (42); chưa phải độ chính xác ngoài thực địa.</p>
     </section>
 
     <section class="pillar-grid" aria-label="Ba cách huấn luyện">
@@ -79,6 +94,7 @@ export async function mount() {
           <div><dt>PlantVillage</dt><dd class="metric-big" id="m-central-pv">—</dd></div>
           <div><dt>PlantDoc</dt><dd class="metric-big" id="m-central-pd">—</dd></div>
         </dl>
+        ${testLine(summary?.holdout, ["centralized"])}
         <p class="pillar-foot">Không bảo vệ riêng tư dữ liệu</p>
       </article>
       <article class="pillar pillar-fedavg">
@@ -88,6 +104,7 @@ export async function mount() {
           <div><dt>PlantVillage</dt><dd class="metric-big" id="m-fed-pv">—</dd></div>
           <div><dt>PlantDoc</dt><dd class="metric-big" id="m-fed-pd">—</dd></div>
         </dl>
+        ${testLine(summary?.holdout, ["fedavg"])}
         <p class="pillar-foot">Ảnh thô không rời khỏi client</p>
       </article>
       <article class="pillar pillar-local">
@@ -97,7 +114,23 @@ export async function mount() {
           <div><dt>PlantVillage</dt><dd class="metric-big">${range(pvLocals)}</dd></div>
           <div><dt>PlantDoc</dt><dd class="metric-big">${range(pdLocals)}</dd></div>
         </dl>
+        ${testLine(summary?.holdout, LOCALS)}
         <p class="pillar-foot">Khoảng của 5 mô hình Local 00–04</p>
+      </article>
+    </section>
+
+    <section class="conclusion-grid mt-4" aria-label="Kết luận chính">
+      <article class="conclusion fedavg">
+        <b>FedAvg gần Centralized</b>
+        <p>Đạt <b>${fmtPct(fed.plantvillage.top1_accuracy)}</b> trên PlantVillage, chỉ kém Centralized <b>${fmtNum(gapFedCentral, 1)} điểm</b> — trong khi không ảnh nào rời khỏi client.</p>
+      </article>
+      <article class="conclusion local">
+        <b>Học riêng thì thất bại</b>
+        <p>Local-only chỉ đạt <b>${range(pvLocals)}</b> trên PlantVillage; FedAvg hơn mô hình riêng tốt nhất <b>${fmtNum(fedOverLocal, 1)} điểm</b>. Nguyên nhân nằm ở dữ liệu lệch nhãn (bước 2).</p>
+      </article>
+      <article class="conclusion warn">
+        <b>Ra ngoài miền thì giảm mạnh</b>
+        <p>Từ PlantVillage sang PlantDoc, Centralized giảm <b>${fmtNum(domainCentral, 1)} điểm</b> và FedAvg giảm <b>${fmtNum(domainFed, 1)} điểm</b>: đây là khoảng cách miền dữ liệu, không phải lỗi riêng của FL.</p>
       </article>
     </section>
 
@@ -109,21 +142,6 @@ export async function mount() {
         </div>
       </div>
       <div class="chart-container chart-tall mt-4"><canvas id="chart-overview" aria-label="So sánh Top-1 của bảy mô hình"></canvas></div>
-    </section>
-
-    <section class="conclusion-grid mt-4" aria-label="Kết luận chính">
-      <article class="conclusion fedavg">
-        <b>FedAvg gần Centralized</b>
-        <p>Đạt <b>${fmtPct(fed.plantvillage.top1_accuracy)}</b> trên PlantVillage, chỉ kém Centralized <b>${fmtNum(gapFedCentral, 1)} điểm</b> — trong khi không ảnh nào rời khỏi client.</p>
-      </article>
-      <article class="conclusion local">
-        <b>Học riêng thì thất bại</b>
-        <p>Local-only chỉ đạt <b>${range(pvLocals)}</b>. FedAvg hơn mô hình riêng tốt nhất <b>${fmtNum(fedOverLocal, 1)} điểm</b>. Nguyên nhân nằm ở dữ liệu lệch nhãn (bước 2).</p>
-      </article>
-      <article class="conclusion warn">
-        <b>Ra ngoài miền thì giảm mạnh</b>
-        <p>Từ PlantVillage sang PlantDoc, Centralized giảm <b>${fmtNum(domainCentral, 1)} điểm</b> và FedAvg giảm <b>${fmtNum(domainFed, 1)} điểm</b>: đây là khoảng cách miền dữ liệu, không phải lỗi riêng của FL.</p>
-      </article>
     </section>
 
     <section class="panel mt-4">
@@ -154,9 +172,10 @@ export async function mount() {
   setMetric(byId("m-fed-pd"), fmtPct(fed.plantdoc.top1_accuracy));
   revealItems(root.querySelectorAll(".pillar, .conclusion"), { stagger: 60 });
 
-  const colors = pillarColors();
-  const colorOf = id => (id === "centralized" ? colors.centralized : id === "fedavg" ? colors.fedavg : colors.local);
-  makeChart(byId("chart-overview"), {
+  makeChart(byId("chart-overview"), () => {
+    const colors = pillarColors();
+    const colorOf = id => (id === "centralized" ? colors.centralized : id === "fedavg" ? colors.fedavg : colors.local);
+    return {
     type: "bar",
     data: {
       labels: MODEL_ORDER.map(id => MODEL_LABELS[id]),
@@ -187,5 +206,6 @@ export async function mount() {
         tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmtNum(ctx.parsed.y, 2)}%` } },
       },
     },
+    };
   });
 }

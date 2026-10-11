@@ -404,10 +404,188 @@ def _verify_inputs(evidence: dict[str, Any], release: Path, dataset_root: Path) 
     return val_rows, cal_rows
 
 
+# --------------------------------------------------------------------------- test giữ riêng (legacy_diagnostic_test)
+def _verify_holdout(evidence: dict[str, Any], release: Path) -> list[dict[str, Any]]:
+    """Tập test của release: hash khớp release_manifest, nhãn khớp taxonomy, không giao train/val/calibration theo nhóm."""
+    path = release / "manifests" / f"{reg.HOLDOUT_SPLIT}.jsonl"
+    manifest = json.loads((release / "release_manifest.json").read_text(encoding="utf-8"))
+    expected = manifest["manifest_hashes"].get(reg.HOLDOUT_SPLIT)
+    if not expected or _sha256(path) != expected:
+        raise ValueError(f"{path.name}: hash khác release_manifest.json")
+    rows = _jsonl(path)
+    if len(rows) != int(manifest["counts"]["legacy_diagnostic_test_samples"]):
+        raise ValueError("số ảnh test khác release_manifest.json")
+    for row in rows:
+        if row["class_id"] < 0 or evidence["classes"][row["class_id"]] != row["target_class"]:
+            raise ValueError(f"test: class_id không khớp taxonomy ({row['sample_id']})")
+    groups = {r["group_id"] for r in rows}
+    for name in ("train", "val", "calibration"):
+        if groups & {r["group_id"] for r in _jsonl(release / "manifests" / f"{name}.jsonl")}:
+            raise ValueError(f"test giao với {name} theo group_id — không còn là tập giữ riêng")
+    return rows
+
+
+def _recorded_holdout(source: str) -> dict[str, Any] | None:
+    """Số Centralized v6 tự ghi trên tập test (centralized/summary.json); các mô hình khác không có."""
+    path = reg.abs_path(f"{reg.DEMO_BUNDLE_DIR}/centralized/summary.json")
+    block = (json.loads(path.read_text(encoding="utf-8")).get(reg.HOLDOUT_SPLIT) or {}).get("per_source", {}).get(source)
+    if not block:
+        return None
+    return {"count": int(block["count"]), "accuracy": float(block["accuracy"])}
+
+
+def compare_with_recorded(own: dict[str, Any], recorded: dict[str, Any] | None) -> dict[str, Any]:
+    """Số ghi trong summary làm tròn 4 chữ số, nên ứng với một KHOẢNG số ảnh đúng (vd 0,9923 × 10.843 ảnh: 10.759–10.760).
+    Khớp khi cùng số ảnh và số ảnh đúng của ta làm tròn ra đúng con số đã ghi; lệch thì đo tới đầu gần nhất của khoảng."""
+    if not recorded:
+        return {"available": False}
+    count = recorded["count"]
+    consistent = [c for c in range(count + 1) if round(c / count, 4) == round(recorded["accuracy"], 4)] if count else []
+    own_correct = int(own["correct"])
+    count_equal = int(own["count"]) == count
+    if not consistent:
+        diff = None
+    elif consistent[0] <= own_correct <= consistent[-1]:
+        diff = 0
+    else:
+        diff = own_correct - (consistent[0] if own_correct < consistent[0] else consistent[-1])
+    return {
+        "available": True,
+        "count_equal": count_equal,
+        "accuracy_recorded": recorded["accuracy"],
+        "correct_own": own_correct,
+        "correct_recorded_range": [consistent[0], consistent[-1]] if consistent else None,
+        "correct_diff_images": diff,
+        "reproduced": count_equal and diff == 0,
+    }
+
+
+def build_holdout_report(
+    evidence: dict[str, Any], rows, logits: dict[str, np.ndarray], cal_rows, cal_logits: dict[str, np.ndarray],
+    manifest_sha256: str,
+) -> dict[str, Any]:
+    classes = evidence["classes"]
+    targets = np.array([r["class_id"] for r in rows], dtype=np.int64)
+    cal_targets = np.array([r["class_id"] for r in cal_rows], dtype=np.int64)
+    sources = np.array([r["source_dataset"].lower() for r in rows])
+    names = {m["model_id"]: m["name"] for m in evidence["models"]}
+    models: dict[str, Any] = {}
+    for key in logits:
+        result = analyze_model(logits[key], targets, sources, cal_logits[key], cal_targets, classes)
+        result["display_name"] = names[key]
+        if key == "centralized":
+            result["vs_recorded"] = {s: compare_with_recorded(result["by_source"][s], _recorded_holdout(s))
+                                     for s in SOURCES if s in result["by_source"]}
+        models[key] = result
+    detail: dict[str, Any] = {}
+    for key in ("fedavg", "centralized"):
+        preds = softmax(logits[key]).argmax(axis=1)
+        detail[key] = {
+            "confusion_matrix": {s: confusion(targets[sources == s], preds[sources == s], len(classes)).tolist() for s in SOURCES},
+            "top_confusions": {
+                s: [{"target": classes[t], "predicted": classes[p], "count": int(c)}
+                    for (t, p), c in Counter(
+                        (int(t), int(p)) for t, p in zip(targets[sources == s], preds[sources == s]) if t != p
+                    ).most_common(10)]
+                for s in SOURCES
+            },
+        }
+    counts = Counter(sources.tolist())
+    return {
+        "evidence": ("chấm cục bộ trên CPU 7 checkpoint đã kiểm hash, trên tập test giữ riêng của release "
+                     "(không dùng để chọn checkpoint theo dataset_card); ảnh đã kiểm byte_sha256 qua audit release"),
+        "protocol_id": evidence["protocol_id"],
+        "release_manifest_sha256": evidence["release_manifest_sha256"],
+        "validation_manifest_sha256": evidence["validation_manifest_sha256"],
+        "split": reg.HOLDOUT_SPLIT,
+        "holdout_manifest_sha256": manifest_sha256,
+        "holdout_count": len(rows),
+        "holdout_counts_by_source": {s: int(counts.get(s, 0)) for s in SOURCES},
+        "checkpoint_sha256": {m["model_id"]: m["checkpoint_sha256"] for m in evidence["models"]},
+        "classes": classes,
+        "bins": BINS,
+        "high_confidence_threshold": HIGH_CONFIDENCE,
+        "caveat": ("PlantVillage trong tập này có cùng vấn đề nhóm lá như val (một phần ảnh không được gom nhóm theo lá); "
+                   "PlantDoc chỉ có 172 ảnh — khoảng tin cậy rộng, xem artifacts/statistics_report.json."),
+        "models": models,
+        "detail": detail,
+    }
+
+
+def main_holdout(args, evidence: dict[str, Any], release: Path, dataset_root: Path) -> int:
+    rows = _verify_holdout(evidence, release)
+    val_rows, cal_rows = _verify_inputs(evidence, release, dataset_root)
+    manifest_sha = _sha256(release / "manifests" / f"{reg.HOLDOUT_SPLIT}.jsonl")
+    if args.limit:
+        rows = rows[: args.limit]
+    store = reg.abs_path(NPZ_DIR)
+    store.mkdir(parents=True, exist_ok=True)
+    keys = [m["model_id"] for m in evidence["models"]]
+    checkpoints = {m["model_id"]: m["checkpoint_sha256"] for m in evidence["models"]}
+
+    # logits calibration: dùng lại cache của lần tái đánh giá val nếu còn khớp (T phải fit trên CÙNG tập calibration)
+    cal_logits = None
+    val_cache = store / "logits.npz"
+    val_fingerprint = hashlib.sha256(
+        json.dumps([evidence["validation_manifest_sha256"], len(val_rows), len(cal_rows), checkpoints], sort_keys=True).encode()
+    ).hexdigest()  # cùng công thức với cache của lần tái đánh giá val
+    if val_cache.is_file():
+        with np.load(val_cache, allow_pickle=False) as data:
+            if str(data["fingerprint"]) == val_fingerprint and all(f"cal_{k}" in data for k in keys):
+                cal_logits = {k: data[f"cal_{k}"] for k in keys}
+                print("[holdout] dùng lại logits calibration của lần tái đánh giá val")
+    holdout_cache = store / "holdout_logits.npz"
+    fingerprint = hashlib.sha256(json.dumps([manifest_sha, len(rows), checkpoints], sort_keys=True).encode()).hexdigest()
+    logits = None
+    if args.reuse and holdout_cache.is_file():
+        with np.load(holdout_cache, allow_pickle=False) as data:
+            if str(data["fingerprint"]) == fingerprint:
+                logits = {k: data[f"test_{k}"] for k in keys}
+                print("[holdout] dùng lại logits đã lưu")
+    if logits is None or cal_logits is None:
+        import torch
+
+        torch.set_num_threads(max(1, min(10, torch.get_num_threads())))
+        transform = _load_contract_transforms(reg.abs_path(reg.DEMO_BUNDLE_DIR))
+        models = {}
+        for item in evidence["models"]:
+            path = reg.abs_path(f"{reg.DEMO_BUNDLE_DIR}/{item['checkpoint_relative_path']}")
+            if _sha256(path) != item["checkpoint_sha256"]:
+                raise ValueError(f"{item['model_id']}: checkpoint đổi sau khi kiểm hash")
+            models[item["model_id"]] = _load_model(path)
+        if cal_logits is None:
+            print(f"[holdout] calibration ({len(cal_rows)} ảnh):")
+            cal_logits = collect_logits(cal_rows, dataset_root, transform, models, args.batch_size, args.workers)
+        if logits is None:
+            print(f"[holdout] {reg.HOLDOUT_SPLIT} ({len(rows)} ảnh):")
+            logits = collect_logits(rows, dataset_root, transform, models, args.batch_size, args.workers)
+            if not args.limit:
+                np.savez_compressed(holdout_cache, fingerprint=fingerprint, **{f"test_{k}": v for k, v in logits.items()})
+
+    report = build_holdout_report(evidence, rows, logits, cal_rows, cal_logits, manifest_sha)
+    for key, model in report["models"].items():
+        by = model["by_source"]
+        line = (f"[holdout] {model['display_name']:15} PV {by.get('plantvillage', {}).get('top1_accuracy', float('nan')):.4f} "
+                f"PD {by.get('plantdoc', {}).get('top1_accuracy', float('nan')):.4f}")
+        if "vs_recorded" in model:
+            line += " | so với summary.json: " + ", ".join(
+                f"{s}={v.get('reproduced')} ({v.get('correct_diff_images')} ảnh)" for s, v in model["vs_recorded"].items())
+        print(line)
+    if args.limit:
+        print("[holdout] --limit: không ghi artifacts/")
+        return 0
+    out = reg.abs_path(reg.HOLDOUT_EVAL_JSON)
+    out.write_text(json.dumps(report, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"[holdout] wrote {reg.HOLDOUT_EVAL_JSON}")
+    return 0
+
+
 def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--holdout", action="store_true",
+                        help=f"Chấm trên tập test giữ riêng {reg.HOLDOUT_SPLIT} thay vì validation")
     parser.add_argument("--reuse", action="store_true", help="Dùng logits đã lưu ở data/reeval/ nếu manifest không đổi")
     parser.add_argument("--limit", type=int, default=0, help="Chỉ N ảnh đầu mỗi tập (thử nhanh; không ghi artifacts/)")
     parser.add_argument("--batch-size", type=int, default=64)
@@ -425,6 +603,8 @@ def main() -> int:
     if not (release / "manifests" / "val.jsonl").is_file():
         print(f"[reeval] thiếu dataset ở {reg.DATASET_SOURCES_DIR} (nhánh dataset-sources của GitHub)", file=sys.stderr)
         return 1
+    if args.holdout:
+        return main_holdout(args, evidence, release, dataset_root)
     val_rows, cal_rows = _verify_inputs(evidence, release, dataset_root)
     if args.limit:
         val_rows, cal_rows = val_rows[: args.limit], cal_rows[: args.limit]

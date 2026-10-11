@@ -1,6 +1,6 @@
 /* CropFed FL — giao diện chuẩn đồ án (nền sáng, một màu nhấn xanh lá).
    Quy ước hiệu năng: chỉ animate transform/opacity; không backdrop-filter; không `transition: all`.
-   Màu/khoảng cách/chữ nằm ở token trong :root; khối [data-theme="dark"] giữ sẵn để đổi nền nếu cần. */
+   Màu/khoảng cách/chữ nằm ở token trong :root; khối [data-theme="dark"] là nền tối (nút ở sidebar, js/core/theme.js). */
 
 /* ───────────── 1. TOKEN ───────────── */
 :root {
@@ -46,6 +46,10 @@
   --chart-4: #d97706;
   --chart-5: #e11d48;
   --chart-grid: rgba(17, 24, 39, 0.08);
+  /* nền ô heatmap / ma trận nhầm lẫn (trộn với --bg-surface, chữ thường đè lên) */
+  --heat-count: #0284c7;
+  --heat-good: #059669;
+  --heat-bad: #e11d48;
 
   --font-main: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
@@ -123,6 +127,10 @@
   --chart-4: #fbbf24;
   --chart-5: #fb7185;
   --chart-grid: rgba(255, 255, 255, 0.08);
+  /* nền tối: màu đậm hơn để chữ sáng trên ô đạt ≥ 4,5:1 */
+  --heat-count: #0369a1;
+  --heat-good: #047857;
+  --heat-bad: #be123c;
 
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.45);
@@ -271,6 +279,13 @@ button {
 .brand-subtitle {
   font-size: var(--fs-xs);
   color: var(--text-muted);
+}
+
+.brand-title,
+.brand-subtitle {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .nav-menu {
@@ -476,6 +491,12 @@ button {
   background: var(--tint-rose);
   color: var(--accent-rose);
   border-color: var(--line-rose);
+}
+
+.status-badge.is-neutral {
+  background: var(--bg-sunken);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
 }
 
 .header-actions .status-badge {

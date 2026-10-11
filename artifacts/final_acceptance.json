@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-10-11T08:38:27",
-  "started_at": "2026-10-11T08:33:24",
+  "generated_at": "2026-10-12T00:01:53",
+  "started_at": "2026-10-11T23:53:50",
   "git": {
-    "commit": "5ac17a2248bb4db2562f8e6626ce03f65d87abf3",
+    "commit": "cda247831c81cb06e3a702b78e1497eeba5b1fd7",
     "dirty": true
   },
-  "code_fingerprint": "d0ef12ebb66b59a366a3a3ccd7f457ad52f377372fe3d4e17584dd20e9d92307",
+  "code_fingerprint": "bf2f2c369962b002bdf0db020d9ddb53b70e59a8dd2936d2e2ed2673d38f2c9d",
   "skip_network": false,
   "test_files": [
     "tests/test_artifact_scientific_status.py",
@@ -19,6 +19,7 @@
     "tests/test_demo_aggregation.py",
     "tests/test_demo_gallery.py",
     "tests/test_demo_server_contract.py",
+    "tests/test_evidence_sections.py",
     "tests/test_evidence_summary.py",
     "tests/test_faulty_client_network_detection.py",
     "tests/test_fedavg.py",
@@ -26,6 +27,7 @@
     "tests/test_five_client_network.py",
     "tests/test_flower_live_socket.py",
     "tests/test_flower_multi_round_network.py",
+    "tests/test_inference_all.py",
     "tests/test_integration.py",
     "tests/test_model.py",
     "tests/test_network_artifact_validation.py",
@@ -45,6 +47,7 @@
     "tests/test_registry.py",
     "tests/test_round_trip_feedback_loop.py",
     "tests/test_smoke_history_recovery.py",
+    "tests/test_statistics.py",
     "tests/test_status_sync.py",
     "tests/test_update_validator.py",
     "tests/test_web_federated_engine.py",
@@ -61,40 +64,40 @@
       "name": "pre_demo_check",
       "status": "pass",
       "returncode": 0,
-      "elapsed_s": 1.438,
-      "stdout_tail": "{\n  \"generated_at\": \"2026-10-11T08:33:25\",\n  \"overall\": \"technical_demo_ready\",\n  \"fail_count\": 0,\n  \"warn_count\": 4,\n  \"checks\": [\n    {\n      \"name\": \"flower_installed\",\n      \"status\": \"pass\",\n      \"detail\": \"flwr=1.36.0\"\n    },\n    {\n      \"name\": \"pytorch\",\n      \"status\": \"pass\",\n      \"detail\": \"torch=2.14.0+cpu, device=CPU\"\n    },\n    {\n      \"name\": \"deployment_scripts\",\n      \"status\": \"pass\",\n      \"detail\": \"all required scripts exist\"\n    },\n    {\n      \"name\": \"plantvillage_real_data\",\n      \"status\": \"warn\",\n      \"detail\": \"No --dataset-root supplied; scientific training cannot be validated.\"\n    },\n    {\n      \"name\": \"canonical_provenance\",\n      \"status\": \"warn\",\n      \"detail\": \"UNVERIFIED: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing', 'scientific_stage2_incomplete']\"\n    },\n    {\n      \"name\": \"network_global_artifact\",\n      \"status\": \"warn\",\n      \"detail\": \"ch\\u01b0a c\\u00f3 run m\\u1ea1ng KHOA H\\u1eccC: checkpoint hi\\u1ec7n c\\u00f3 ch\\u1ec9 l\\u00e0 smoke k\\u1ef9 thu\\u1eadt (require_real=False, all_real=False, real_test=False)\"\n    },\n    {\n      \"name\": \"multiseed_real_summary\",\n      \"status\": \"warn\",\n      \"detail\": \"no complete verified multi-seed real summary yet\"\n    }\n  ],\n  \"meaning\": {\n    \"ready\": \"Ready for scientific/demo reporting.\",\n    \"technical_demo_ready\": \"Code/demo can run, but one or more scientific evidence gates are incomplete.\",\n    \"not_ready\": \"At least one required technical gate failed.\"\n  }\n}\n",
+      "elapsed_s": 3.149,
+      "stdout_tail": "{\n  \"generated_at\": \"2026-10-11T23:53:53\",\n  \"overall\": \"technical_demo_ready\",\n  \"fail_count\": 0,\n  \"warn_count\": 4,\n  \"checks\": [\n    {\n      \"name\": \"flower_installed\",\n      \"status\": \"pass\",\n      \"detail\": \"flwr=1.36.0\"\n    },\n    {\n      \"name\": \"pytorch\",\n      \"status\": \"pass\",\n      \"detail\": \"torch=2.14.0+cpu, device=CPU\"\n    },\n    {\n      \"name\": \"deployment_scripts\",\n      \"status\": \"pass\",\n      \"detail\": \"all required scripts exist\"\n    },\n    {\n      \"name\": \"plantvillage_real_data\",\n      \"status\": \"warn\",\n      \"detail\": \"No --dataset-root supplied; scientific training cannot be validated.\"\n    },\n    {\n      \"name\": \"canonical_provenance\",\n      \"status\": \"warn\",\n      \"detail\": \"UNVERIFIED: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing', 'scientific_stage2_incomplete']\"\n    },\n    {\n      \"name\": \"network_global_artifact\",\n      \"status\": \"warn\",\n      \"detail\": \"ch\\u01b0a c\\u00f3 run m\\u1ea1ng KHOA H\\u1eccC: checkpoint hi\\u1ec7n c\\u00f3 ch\\u1ec9 l\\u00e0 smoke k\\u1ef9 thu\\u1eadt (require_real=False, all_real=False, real_test=False)\"\n    },\n    {\n      \"name\": \"multiseed_real_summary\",\n      \"status\": \"warn\",\n      \"detail\": \"no complete verified multi-seed real summary yet\"\n    }\n  ],\n  \"meaning\": {\n    \"ready\": \"Ready for scientific/demo reporting.\",\n    \"technical_demo_ready\": \"Code/demo can run, but one or more scientific evidence gates are incomplete.\",\n    \"not_ready\": \"At least one required technical gate failed.\"\n  }\n}\n",
       "stderr_tail": ""
     },
     {
       "name": "core_tests",
       "status": "pass",
       "returncode": 0,
-      "elapsed_s": 11.913,
-      "stdout_tail": ".............................                                            [100%]\n============================== warnings summary ===============================\n.venv\\Lib\\site-packages\\typer\\__init__.py:24\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\typer\\__init__.py:24: DeprecationWarning: 'click.utils.get_binary_stream' is deprecated and will be removed in Click 9.0.\n    from click.utils import get_binary_stream as get_binary_stream\n\n.venv\\Lib\\site-packages\\typer\\__init__.py:25\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\typer\\__init__.py:25: DeprecationWarning: 'click.utils.get_text_stream' is deprecated and will be removed in Click 9.0.\n    from click.utils import get_text_stream as get_text_stream\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n29 passed, 2 warnings in 10.87s\n",
+      "elapsed_s": 29.117,
+      "stdout_tail": ".............................                                            [100%]\n============================== warnings summary ===============================\n.venv\\Lib\\site-packages\\typer\\__init__.py:24\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\typer\\__init__.py:24: DeprecationWarning: 'click.utils.get_binary_stream' is deprecated and will be removed in Click 9.0.\n    from click.utils import get_binary_stream as get_binary_stream\n\n.venv\\Lib\\site-packages\\typer\\__init__.py:25\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\typer\\__init__.py:25: DeprecationWarning: 'click.utils.get_text_stream' is deprecated and will be removed in Click 9.0.\n    from click.utils import get_text_stream as get_text_stream\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n29 passed, 2 warnings in 26.98s\n",
       "stderr_tail": ""
     },
     {
       "name": "scientific_guard_tests",
       "status": "pass",
       "returncode": 0,
-      "elapsed_s": 17.107,
-      "stdout_tail": "................                                                         [100%]\n============================== warnings summary ===============================\n.venv\\Lib\\site-packages\\typer\\__init__.py:24\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\typer\\__init__.py:24: DeprecationWarning: 'click.utils.get_binary_stream' is deprecated and will be removed in Click 9.0.\n    from click.utils import get_binary_stream as get_binary_stream\n\n.venv\\Lib\\site-packages\\typer\\__init__.py:25\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\typer\\__init__.py:25: DeprecationWarning: 'click.utils.get_text_stream' is deprecated and will be removed in Click 9.0.\n    from click.utils import get_text_stream as get_text_stream\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n16 passed, 2 warnings in 16.01s\n",
+      "elapsed_s": 33.77,
+      "stdout_tail": "................                                                         [100%]\n============================== warnings summary ===============================\n.venv\\Lib\\site-packages\\typer\\__init__.py:24\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\typer\\__init__.py:24: DeprecationWarning: 'click.utils.get_binary_stream' is deprecated and will be removed in Click 9.0.\n    from click.utils import get_binary_stream as get_binary_stream\n\n.venv\\Lib\\site-packages\\typer\\__init__.py:25\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\typer\\__init__.py:25: DeprecationWarning: 'click.utils.get_text_stream' is deprecated and will be removed in Click 9.0.\n    from click.utils import get_text_stream as get_text_stream\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n16 passed, 2 warnings in 31.81s\n",
       "stderr_tail": ""
     },
     {
       "name": "network_tests",
       "status": "pass",
       "returncode": 0,
-      "elapsed_s": 245.142,
-      "stdout_tail": ".............                                                            [100%]\n============================== warnings summary ===============================\n.venv\\Lib\\site-packages\\typer\\__init__.py:24\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\typer\\__init__.py:24: DeprecationWarning: 'click.utils.get_binary_stream' is deprecated and will be removed in Click 9.0.\n    from click.utils import get_binary_stream as get_binary_stream\n\n.venv\\Lib\\site-packages\\typer\\__init__.py:25\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\typer\\__init__.py:25: DeprecationWarning: 'click.utils.get_text_stream' is deprecated and will be removed in Click 9.0.\n    from click.utils import get_text_stream as get_text_stream\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n13 passed, 2 warnings in 244.01s (0:04:04)\n",
+      "elapsed_s": 321.962,
+      "stdout_tail": ".............                                                            [100%]\n============================== warnings summary ===============================\n.venv\\Lib\\site-packages\\typer\\__init__.py:24\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\typer\\__init__.py:24: DeprecationWarning: 'click.utils.get_binary_stream' is deprecated and will be removed in Click 9.0.\n    from click.utils import get_binary_stream as get_binary_stream\n\n.venv\\Lib\\site-packages\\typer\\__init__.py:25\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\typer\\__init__.py:25: DeprecationWarning: 'click.utils.get_text_stream' is deprecated and will be removed in Click 9.0.\n    from click.utils import get_text_stream as get_text_stream\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n13 passed, 2 warnings in 320.09s (0:05:20)\n",
       "stderr_tail": ""
     },
     {
       "name": "other_tests",
       "status": "pass",
       "returncode": 0,
-      "elapsed_s": 27.65,
-      "stdout_tail": "........................................................................ [ 58%]\n...................................................                      [100%]\n============================== warnings summary ===============================\n.venv\\Lib\\site-packages\\fastapi\\testclient.py:1\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n.venv\\Lib\\site-packages\\starlette\\testclient.py:53\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\starlette\\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.\n    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]\n\n.venv\\Lib\\site-packages\\typer\\__init__.py:24\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\typer\\__init__.py:24: DeprecationWarning: 'click.utils.get_binary_stream' is deprecated and will be removed in Click 9.0.\n    from click.utils import get_binary_stream as get_binary_stream\n\n.venv\\Lib\\site-packages\\typer\\__init__.py:25\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\typer\\__init__.py:25: DeprecationWarning: 'click.utils.get_text_stream' is deprecated and will be removed in Click 9.0.\n    from click.utils import get_text_stream as get_text_stream\n\ntests/test_plantvillage_reference.py::test_reference_output_contract\ntests/test_registry.py::test_registry_reflects_current_disk_state\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\torch\\jit\\_serialization.py:176: FutureWarning: `torch.jit.load` is deprecated. Please switch to `torch.export`.\n    warnings.warn(\n\ntests/test_registry.py::test_registry_reflects_current_disk_state\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\scripts\\build_registry.py:96: UserWarning: 'torch.load' received a zip file that looks like a TorchScript archive dispatching to 'torch.jit.load' (call 'torch.jit.load' directly to silence this warning)\n    payload = torch.load(path, map_location=\"cpu\", weights_only=False)\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n123 passed, 7 warnings in 26.36s\n",
+      "elapsed_s": 94.723,
+      "stdout_tail": "........................................................................ [ 45%]\n........................................................................ [ 91%]\n.............                                                            [100%]\n============================== warnings summary ===============================\n.venv\\Lib\\site-packages\\fastapi\\testclient.py:1\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n.venv\\Lib\\site-packages\\starlette\\testclient.py:53\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\starlette\\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.\n    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]\n\n.venv\\Lib\\site-packages\\typer\\__init__.py:24\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\typer\\__init__.py:24: DeprecationWarning: 'click.utils.get_binary_stream' is deprecated and will be removed in Click 9.0.\n    from click.utils import get_binary_stream as get_binary_stream\n\n.venv\\Lib\\site-packages\\typer\\__init__.py:25\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\typer\\__init__.py:25: DeprecationWarning: 'click.utils.get_text_stream' is deprecated and will be removed in Click 9.0.\n    from click.utils import get_text_stream as get_text_stream\n\ntests/test_plantvillage_reference.py::test_reference_output_contract\ntests/test_registry.py::test_registry_reflects_current_disk_state\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\.venv\\Lib\\site-packages\\torch\\jit\\_serialization.py:176: FutureWarning: `torch.jit.load` is deprecated. Please switch to `torch.export`.\n    warnings.warn(\n\ntests/test_registry.py::test_registry_reflects_current_disk_state\n  D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\scripts\\build_registry.py:96: UserWarning: 'torch.load' received a zip file that looks like a TorchScript archive dispatching to 'torch.jit.load' (call 'torch.jit.load' directly to silence this warning)\n    payload = torch.load(path, map_location=\"cpu\", weights_only=False)\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n157 passed, 7 warnings in 92.23s (0:01:32)\n",
       "stderr_tail": ""
     }
   ],
