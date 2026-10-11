@@ -60,6 +60,11 @@ RELEASE_LEAKAGE_AUDIT_JSON = "artifacts/release_leakage_audit.json"  # scripts/a
 DATASET_SOURCES_DIR = "data/dataset_sources"
 RELEASE_V3_DIR = f"{DATASET_SOURCES_DIR}/mixed/pv_pd_v3"
 PARTITION_SCHEME = "label_alpha_0_1"  # scheme mà FedAvg v7 và 5 Local-only v7 dùng (bundle local/combined_summary.json)
+# Ảnh mẫu có nhãn thật cho trang Chẩn đoán: nguồn (gitignored) và bản đã chép vào web (đi theo git, lên server)
+DEMO_IMAGES_DIR = "data/demo_images"
+DEMO_IMAGES_LABELS_CSV = f"{DEMO_IMAGES_DIR}/labels.csv"
+DEMO_GALLERY_DIR = "web/static/samples/demo"
+DEMO_GALLERY_CATALOG_JSON = f"{DEMO_GALLERY_DIR}/catalog.json"  # scripts/build_demo_gallery.py
 TELEMETRY_HISTORY_JSON = "artifacts/metrics/telemetry_history.json"
 NETWORK_FLOWER_HISTORY_JSON = "artifacts/metrics/network_flower_history.json"
 

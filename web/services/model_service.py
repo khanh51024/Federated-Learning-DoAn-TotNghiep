@@ -151,6 +151,11 @@ def _shard_report() -> Optional[Dict[str, Any]]:
     return _SHARD_CACHE.get("data")
 
 
+def shard_report() -> Optional[Dict[str, Any]]:
+    """Báo cáo shard đã kiểm nhất quán (cho evidence_service); None nếu thiếu/hỏng/không nhất quán."""
+    return _shard_report()
+
+
 def known_classes() -> List[str]:
     """38 lớp theo báo cáo shard (nguồn kiểm hash); rỗng nếu chưa có báo cáo."""
     report = _shard_report()

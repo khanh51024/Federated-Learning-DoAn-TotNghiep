@@ -6,7 +6,7 @@
 
 Hệ thống được tổ chức theo cấu trúc **Monorepo hoàn chỉnh**:
 - **`src/`**: Toàn bộ lõi AI / Machine Learning / Federated Learning chuẩn hóa (`model`, `data`, `centralized`, `federated`, `common`).
-- **`web/`**: Giao diện điều khiển, giám sát thời gian thực và suy luận song song (FastAPI Backend + Modern Dark-mode Frontend).
+- **`web/`**: Giao diện điều khiển, giám sát thời gian thực và suy luận song song (FastAPI Backend + giao diện sáng 6 bước theo trình tự bảo vệ đồ án).
 - **`tests/`**: Bộ kiểm thử toán học độc lập (`test_fedavg.py`, `test_model.py`, `test_parameters.py`, `test_partition.py`, `test_integration.py`).
 - **`configs/`**: Cấu hình YAML chuẩn hóa cho các kịch bản thực nghiệm (`centralized.yaml`, `federated.yaml`, `non_iid.yaml`).
 - **`legacy/`**: Pipeline Kaggle/stage* cũ, notebook, config và test của chúng — chỉ để tra cứu/tái lập lịch sử, chạy riêng ([legacy/README.md](legacy/README.md)).
@@ -141,10 +141,13 @@ Federated-Learning-DoAn-TotNghiep/
 │   ├── routers/             # monitoring.py, inference.py, training.py
 │   ├── services/model_service.py  # MỘT CỬA inference — chỉ mở cho model đã qua cổng web_visible của registry
 │   ├── state.py             # trạng thái background task + Flower demo
-│   └── static/              # Giao diện Dark-mode Glassmorphism (HTML/CSS/JS)
-│       ├── index.html       # 6 tab trực quan (Dashboard, Centralized, FedAvg, Clients, Benchmarks, Inference)
-│       ├── css/style.css
-│       └── js/main.js
+│   └── static/              # Giao diện 6 bước (HTML/CSS/ES module, không bước build)
+│       ├── index.html       # 1 Tổng quan · 2 Dữ liệu non-IID · 3 Kết quả · 4 Chẩn đoán · 5 Huấn luyện thử · 6 Bằng chứng
+│       ├── css/{style,pages}.css
+│       ├── js/app.js        # khởi động; js/core/ (router, store, api, charts, status, present), js/pages/ (mỗi bước một file)
+│       ├── samples/demo/    # 19 ảnh mẫu có nhãn thật + catalog.json (scripts/build_demo_gallery.py)
+│       ├── fonts/           # Be Vietnam Pro + JetBrains Mono tự host
+│       └── vendor/          # Chart.js 4.4.1 ghim phiên bản
 │
 ├── legacy/                  # PIPELINE CŨ (Kaggle/stage*) — chỉ tra cứu, chạy riêng
 │   ├── fl_training/ stage1_compat/ stage2_matched/ stage2_scratch/ experiments/

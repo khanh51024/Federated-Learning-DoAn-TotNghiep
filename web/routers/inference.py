@@ -9,7 +9,7 @@ from fastapi.routing import APIRouter
 from PIL import Image
 
 from web.demo_evidence import PROTOCOL_ID, load_evidence
-from web.services import model_service
+from web.services import evidence_service, model_service
 
 router = APIRouter()
 
@@ -52,6 +52,14 @@ def _gated_evidence() -> Dict[str, Any]:
 @router.get("/api/demo/evidence")
 def get_demo_evidence() -> Dict[str, Any]:
     return _gated_evidence()
+
+
+@router.get("/api/evidence/summary")
+def get_evidence_summary() -> Dict[str, Any]:
+    """Bằng chứng cho trang trình bày: tái đánh giá, PlantDoc theo lớp, hiệu chuẩn, shard, audit rò rỉ, checklist.
+
+    Mỗi phần fail-closed riêng; toàn bộ phần có số liệu mô hình chỉ ra khi cổng registry cho phép CẢ bộ."""
+    return evidence_service.summary(_gated_evidence())
 
 
 @router.get("/api/compare")

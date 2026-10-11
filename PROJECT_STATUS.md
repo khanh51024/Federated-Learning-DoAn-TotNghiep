@@ -1,6 +1,6 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-11 02:04 · sinh tự bởi `scripts/update_status.py`
+> **Cập nhật lúc:** 2026-10-11 08:38 · sinh tự bởi `scripts/update_status.py`
 > **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
@@ -34,7 +34,7 @@
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
 | 9 | Test không ghi đè artifact đang track | ✅ XONG | test không tham chiếu artifacts/checkpoints/metrics (dùng tmp_path) |
 | 10 | Dependency khai báo một nơi (pyproject = requirements) | ✅ XONG | 15 dependency trùng giữa pyproject.toml và requirements.txt; ghim cũ nằm ở legacy/pyproject.toml |
-| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-11T02:04:31 (gồm test mạng, 41 file test) trên đúng mã nguồn hiện tại |
+| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-11T08:38:27 (gồm test mạng, 43 file test) trên đúng mã nguồn hiện tại |
 | 12 | Kiểm chứng provenance & checkpoint canonical | ⛔ BLOCKED | provenance=unverified; lỗi: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing'] |
 | 13 | Audit leakage theo từng run | ✅ XONG | release mixed_pv_pd_v3: train 37.238 / val 4.613 / calibration 4.225 rời nhau trên 5 khóa (giao nhau tổng = 0); 12 partition đều là tập con train; 46.076 ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train) |
 | 14 | Đánh giá PlantDoc theo từng lớp (từ số công bố) | ✅ XONG | PlantDoc phủ 13/38 lớp; 6 lớp recall<50% (136/269 ảnh); FedAvg tệ hơn Centralized ở 5/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5) |
@@ -278,6 +278,20 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
   (đồng bộ badge khi chữ ký bảng không đổi, focus bàn phím cho vùng tải ảnh và sidebar mobile, tách lỗi mạng khỏi lỗi dựng giao diện…).
   Sửa kèm: bảng Weight Inspector ở tab Clients trước đây không bao giờ được nạp (hàm `loadLayerList` không ai gọi) — nay nạp khi mở tab.
   Test mới `tests/test_web_static_frontend.py` (9 test hợp đồng giao diện). Chưa đưa lên server public.
+- 2026-10-11 (tái cấu trúc giao diện theo nghiệp vụ, 6 bước): sắp lại web theo trình tự bảo vệ — 1 Tổng quan, 2 Dữ liệu non-IID,
+  3 Kết quả chi tiết, 4 Chẩn đoán bệnh lá, 5 Huấn luyện thử, 6 Bằng chứng & hạn chế (hash route `#tong-quan`…, chế độ trình chiếu phím `P`,
+  `←` `→`). Backend thêm đọc-chỉ `GET /api/evidence/summary` (`web/services/evidence_service.py`): gộp báo cáo tái đánh giá, PlantDoc theo
+  lớp, khoảng cách miền, audit rò rỉ, shard, checklist; mỗi phần fail-closed riêng và đối chiếu danh tính với bundle đã kiểm hash.
+  Chẩn đoán chạy một ảnh qua cả 7 mô hình (6 lần gọi `/api/inference` hiện có), chấm đúng/sai theo nhãn thật và giải thích bằng số ảnh train
+  của lớp đó trong shard; có thư viện 19 ảnh mẫu validation xếp dễ → khó (`scripts/build_demo_gallery.py`, `web/static/samples/demo/`).
+  Gỡ `main.js`/`published_demo.js`; frontend là ES module (`js/app.js`, `js/core/`, `js/pages/`). Kiểm bằng Chrome headless: 6 bước, tải
+  ảnh lên, chấm lại khi đổi nhãn, trình chiếu, không tràn ngang ở 390 px, không lỗi console. Bỏ hai biểu đồ luôn trống (hội tụ FedAvg v7,
+  client lỗi) thay bằng ghi chú; thêm "chưa có thí nghiệm client lỗi" vào danh sách hạn chế. Chưa đưa lên server public.
+  Review độc lập (harness-reviewer): 17 phát hiện, 2 mức cao — đã sửa hết. (1) checklist của `/api/evidence/summary` lộ số của mô hình
+  (chuỗi `detail`) khi cổng registry chặn bộ đối chứng: nay chỉ trả id/tiêu đề/trạng thái. (2) sidebar `inert` không gỡ khi mở rộng
+  cửa sổ. Kèm theo: service tính lại tổng "khớp tuyệt đối" từ từng phép so sánh thay vì tin báo cáo, bắt `passed` của audit phải khớp số
+  bên trong, kiểm số ảnh/top-1 của báo cáo PlantDoc, NaN thành null thay vì 500; thư viện ảnh mẫu buộc `byte_sha256` + nhãn với
+  `val.jsonl`; frontend chống đua khi chọn ảnh liên tiếp, bỏ qua poll cũ sau khi bấm Bắt đầu, phím mũi tên chỉ chuyển bước khi trình chiếu.
 <!-- ROADMAP-END -->
 
 ## 8. Cách đồng bộ
