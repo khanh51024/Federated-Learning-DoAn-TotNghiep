@@ -111,7 +111,7 @@ def test_css_performance_and_accessibility_conventions():
 def test_text_font_has_vietnamese_subset_and_all_files_exist():
     fonts_css = (STATIC / "fonts" / "fonts.css").read_text(encoding="utf-8")
     assert "Be Vietnam Pro" in fonts_css
-    for family in ("Be Vietnam Pro", "JetBrains Mono"):
+    for family in ("Be Vietnam Pro", "JetBrains Mono", "Source Serif 4"):
         faces = re.findall(rf"font-family: '{family}';.*?\}}", fonts_css, flags=re.S)
         assert any("U+1EA0-1EF9" in face for face in faces), f"{family} thiếu subset vietnamese"
     for url in re.findall(r"url\('(/static/fonts/[^']+)'\)", fonts_css):
@@ -176,3 +176,231 @@ def test_nav_labels_match_route_labels():
     labels = re.findall(r'label:\s*"([^"]+)"', router)
     nav = re.findall(r'<span class="nav-label">([^<]+)</span>', HTML)
     assert [label.replace("&", "&amp;") for label in labels] == nav, (labels, nav)
+
+
+
+# ───────── Đợt làm lại giao diện: thanh trên cùng, token, chuyển động ─────────
+def test_top_navigation_replaces_sidebar():
+    header = re.search(r'<header class="app-topbar" id="app-topbar">.*?</header>', HTML, flags=re.S)
+    assert header, "thiếu header.app-topbar#app-topbar"
+    assert 'class="nav-menu"' in header.group(0) and header.group(0).count('class="nav-item"') == 6
+    for gone in ('class="sidebar"', "mobile-nav-toggle", "present-steps", "app-sidebar", "mobile-topbar"):
+        assert gone not in HTML, f"UI cũ còn sót: {gone}"
+    app = JS_BY_REL["app.js"]
+    assert "initSidebarToggle" not in app and "mobile-nav-toggle" not in app
+
+
+def _tokens(block_selector: str) -> dict[str, str]:
+    css = (STATIC / "css" / "style.css").read_text(encoding="utf-8")
+    match = re.search(re.escape(block_selector) + r"\s*\{(.*?)\n\}", css, flags=re.S)
+    assert match, block_selector
+    return dict(re.findall(r"(--[\w-]+):\s*([^;]+);", match.group(1)))
+
+
+def _rgba(value: str, under: tuple[float, float, float] | None = None) -> tuple[float, float, float]:
+    value = value.strip()
+    if value.startswith("#"):
+        h = value[1:]
+        if len(h) == 3:
+            h = "".join(c * 2 for c in h)
+        return tuple(float(int(h[i:i + 2], 16)) for i in (0, 2, 4))
+    parts = [float(x) for x in re.match(r"rgba?\(([^)]+)\)", value).group(1).split(",")]
+    r, g, b = parts[:3]
+    alpha = parts[3] if len(parts) > 3 else 1.0
+    if alpha < 1 and under is not None:
+        return tuple(alpha * c + (1 - alpha) * u for c, u in zip((r, g, b), under))
+    return (r, g, b)
+
+
+def _luminance(rgb: tuple[float, float, float]) -> float:
+    def channel(c: float) -> float:
+        c /= 255
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+
+    r, g, b = (channel(c) for c in rgb)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def _contrast(a, b) -> float:
+    la, lb = _luminance(a), _luminance(b)
+    return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
+
+
+def _mix(color, base, share: float):
+    return tuple(share * c + (1 - share) * b for c, b in zip(color, base))
+
+
+@pytest.mark.parametrize("theme", ["light", "dark"])
+def test_ui_tokens_meet_contrast(theme: str):
+    tokens = _tokens(":root") if theme == "light" else {**_tokens(":root"), **_tokens(':root[data-theme="dark"]')}
+    get = lambda name, under=None: _rgba(tokens[name], under)  # noqa: E731
+    base, surface = get("--bg-base"), get("--bg-surface")
+    grounds = {n: get(n) for n in ("--bg-base", "--bg-surface", "--bg-subtle", "--bg-sunken")}
+    problems: list[str] = []
+
+    def need(label: str, fg, bg, minimum: float, maximum: float | None = None) -> None:
+        ratio = _contrast(fg, bg)
+        if ratio < minimum or (maximum is not None and ratio > maximum):
+            problems.append(f"{theme}: {label} = {ratio:.2f}")
+
+    for text in ("--text-primary", "--text-secondary", "--text-muted"):
+        for name, ground in grounds.items():
+            need(f"{text} trên {name}", get(text), ground, 4.5)
+    for accent in ("--accent-emerald", "--accent-emerald-strong", "--accent-sky", "--accent-amber", "--accent-rose"):
+        for name in ("--bg-base", "--bg-surface"):
+            need(f"{accent} trên {name}", get(accent), grounds[name], 4.5)
+    for fg, tint in (("--accent-emerald-strong", "--tint-emerald"), ("--accent-sky", "--tint-sky"),
+                     ("--accent-amber", "--tint-amber"), ("--accent-rose", "--tint-rose")):
+        need(f"{fg} trên {tint}", get(fg), get(tint, surface), 4.5)
+    for bg in ("--accent-emerald", "--accent-rose", "--accent-amber"):
+        need(f"chữ trên nền {bg}", get("--text-on-accent"), get(bg), 4.5)
+    for chart in ("--chart-1", "--chart-2", "--chart-4", "--chart-5"):
+        need(f"{chart} (đồ họa) trên --bg-surface", get(chart), surface, 3.0)
+    need("--border-input trên --bg-surface", get("--border-input"), surface, 3.0)
+    need("--border-focus trên --bg-base", get("--border-focus"), base, 3.0)
+    # ô heatmap / ma trận: chữ chính trên nền trộn đậm nhất
+    for token, cap in (("--heat-count", 0.62), ("--heat-good", 0.70), ("--heat-bad", 0.70)):
+        need(f"chữ trên ô {token}", get("--text-primary"), _mix(get(token), surface, cap), 4.5)
+    # lưới chấm phải rất mờ (trang trí, không cạnh tranh với nội dung)
+    need("--dot trên --bg-base", get("--dot", base), base, 1.0, 1.3)
+    assert not problems, "; ".join(problems)
+
+
+def _class_words() -> set[str]:
+    """Từ có thể là tên lớp: bỏ chú thích HTML/JS, thuộc tính id, byId("…")/getElementById("…") và selector #id,
+    để một id hay câu chú thích trùng tên không làm một lớp CSS chết trông như còn dùng."""
+    html = re.sub(r"<!--.*?-->", "", HTML, flags=re.S)
+    html = re.sub(r'\bid="[^"]*"', "", html)
+    js = re.sub(r"/\*.*?\*/", "", ALL_JS, flags=re.S)
+    js = re.sub(r"(?m)(^|[^:\"'`\\])//.*$", r"\1", js)
+    js = re.sub(r"(?:byId|getElementById)\(\s*[\"'][^\"']*[\"']\s*\)", "", js)
+    js = re.sub(r"#[A-Za-z_][\w-]*", "", js)
+    return set(re.findall(r"[A-Za-z_][\w-]*", html + "\n" + js))
+
+
+def _css_classes_used_somewhere() -> tuple[set[str], set[str]]:
+    words = _class_words()
+    prefixes = {w for w in words if w.endswith("-")} | {"level-", "row-", "toast-", "seg-", "repro-", "pillar-", "summary-", "conf-"}
+    css = re.sub(r"/\*.*?\*/", "", CSS, flags=re.S)
+    classes = set(re.findall(r"\.([A-Za-z_][\w-]*)", css))
+    # bỏ phần chữ số thập phân/đuôi tệp lọt vào regex (vd. `0.5s`, `.woff2`)
+    classes = {c for c in classes if re.match(r"[A-Za-z_]", c) and not re.fullmatch(r"\d.*", c)}
+    unused = {c for c in classes if c not in words and not any(c.startswith(p) for p in prefixes)}
+    return classes, unused
+
+
+def test_every_css_class_is_referenced():
+    """Chiều ngược của test lớp-chưa-định-nghĩa: CSS chết (của giao diện cũ) không được quay lại."""
+    _classes, unused = _css_classes_used_somewhere()
+    # lớp chỉ do JS ghép tên từ nhiều mảnh (không có nguyên từ trong nguồn) — liệt kê tường minh
+    allowed = {"is-cam"}
+    leftover = sorted(unused - allowed)
+    assert not leftover, f"CSS chết (không lớp nào dùng): {leftover}"
+
+
+def _rule_bodies(selector: str) -> list[str]:
+    rules = re.sub(r"/\*.*?\*/", "", CSS, flags=re.S)
+    return [m.group(1) for m in re.finditer(re.escape(selector) + r"\s*\{([^}]*)\}", rules)]
+
+
+_STATE_SELECTOR = re.compile(r"\.is-active|\.active\b|:hover|:focus|\.is-done|\.is-on|\.is-selected|\[aria-(?:selected|pressed|checked|current)")
+_LAYOUT_DECL = re.compile(r"(?<![\w-])(?:font-weight|font-size|letter-spacing|padding(?:-[a-z]+)?|margin(?:-[a-z]+)?|width|height|border-width|line-height)\s*:")
+
+
+def test_state_rules_do_not_change_box_or_text_metrics():
+    """Mọi luật cho trạng thái (hover/active/selected/done/on) chỉ đổi màu, bóng, độ trong, transform — không đổi
+    font-weight, cỡ chữ, đệm, lề, kích thước: những thứ đó làm layout lại và nhảy chữ khi chuyển trạng thái."""
+    rules = re.sub(r"/\*.*?\*/", "", CSS, flags=re.S)
+    offenders = []
+    for match in re.finditer(r"([^{}]+)\{([^{}]*)\}", rules):
+        selector, body = match.group(1).strip(), match.group(2)
+        if selector.startswith("@") or not _STATE_SELECTOR.search(selector):
+            continue
+        # `.hidden`/`display` và vị trí được phép; chỉ cấm số đo hộp/chữ
+        for decl in _LAYOUT_DECL.findall(body):
+            offenders.append(f"{selector} {{ {decl.strip()} … }}")
+    assert not offenders, "trạng thái đổi số đo: " + "; ".join(sorted(set(offenders))[:12])
+
+
+def test_hover_and_active_states_do_not_trigger_layout():
+    """Trạng thái rê chuột/đang chọn chỉ được đổi màu hoặc transform: font-weight/border làm bảng, thanh điều hướng layout lại."""
+    # Dải sáng hàng/cột là phần tử 1×1 bị scale(): box-shadow/border/outline sẽ bị phóng theo thành quầng lớn.
+    bands = _rule_bodies(".xh-band")
+    assert bands, "thiếu .xh-band"
+    for body in bands:
+        assert not re.search(r"box-shadow|border|outline", body), f".xh-band không được có viền/bóng: {body.strip()}"
+    for selector in (".xh-head", ".nav-item.active", ".nav-item:hover"):
+        bodies = _rule_bodies(selector)
+        assert bodies, f"thiếu luật {selector}"
+        for body in bodies:
+            assert "font-weight" not in body and "padding" not in body, f"{selector} đổi bề rộng chữ → layout: {body.strip()}"
+
+
+def test_motion_conventions():
+    rules = re.sub(r"/\*.*?\*/", "", CSS, flags=re.S)
+    layout_props = r"\b(?:width|height|top|left|right|bottom|margin(?:-\w+)?|padding(?:-\w+)?|inset|max-height|min-height)\b"
+    bad = []
+    for decl in re.findall(r"transition(?:-property)?\s*:\s*([^;}]+)[;}]", rules):
+        # chỉ xét danh sách thuộc tính được animate (bỏ phần thời lượng/easing dạng var()/số)
+        names = re.sub(r"var\([^)]*\)|[\d.]+m?s|cubic-bezier\([^)]*\)|ease(?:-in-out|-in|-out)?|linear", " ", decl)
+        if re.search(layout_props, names):
+            bad.append(decl.strip())
+    assert not bad, f"transition đụng thuộc tính bố cục (gây layout): {bad}"
+
+    keyframes = re.findall(r"@keyframes\s+([\w-]+)\s*\{((?:[^{}]|\{[^{}]*\})*)\}", rules)
+    assert len(keyframes) >= 5, "regex @keyframes không còn khớp: test sẽ pass rỗng"
+    for name, body in keyframes:
+        props = set(re.findall(r"([a-z-]+)\s*:", re.sub(r"\{|\}", ";", body)))
+        extra = props - {"transform", "opacity"}
+        assert not extra, f"@keyframes {name} animate thuộc tính ngoài transform/opacity: {sorted(extra)}"
+
+    # keyframe viết literal trong JS: chỉ opacity/transform (+ offset/easing)
+    for rel, source in JS_BY_REL.items():
+        for call in re.findall(r"(?:\bplay|\.animate)\((?:[^()]|\([^()]*\))*\)", source):
+            for prop in re.findall(r"\{\s*([a-zA-Z]+)\s*:", call) + re.findall(r",\s*([a-zA-Z]+)\s*:", call):
+                assert prop in {"opacity", "transform", "offset", "easing", "delay", "duration", "fill", "pseudoElement",
+                                "scale", "x", "y"}, f"{rel}: keyframe/tuỳ chọn lạ trong {call[:80]!r}: {prop}"
+
+    motion = JS_BY_REL["core/motion.js"]
+    assert "(pointer: fine)" in motion and "prefersReducedMotion" in motion
+    assert re.search(r"export function onShow", JS_BY_REL["pages/overview.js"]), "bước 1 phải chạy lại minh họa mỗi lần vào"
+
+
+def _outside_details(source: str) -> str:
+    """Nguồn template JS với mọi khối <details>…</details> bị cắt bỏ (nội dung gập mặc định không thấy được)."""
+    return re.sub(r"<details\b.*?</details>", "", source, flags=re.S)
+
+
+def test_honest_caveats_are_visible_outside_collapsed_sections():
+    overview = _outside_details(JS_BY_REL["pages/overview.js"])
+    results = _outside_details(JS_BY_REL["pages/results.js"])
+    for label, text in (("bước 1", overview), ("bước 3", results)):
+        flat = " ".join(text.split())
+        for phrase in ("chọn mô hình", "một lần chạy", "chưa phải độ chính xác ngoài thực địa"):
+            assert phrase in flat, f"{label}: thiếu lời cảnh báo hiển thị ngoài phần gập: “{phrase}”"
+    full = " ".join(JS_BY_REL["pages/overview.js"].split())
+    assert "bộ chẩn đoán legacy" in full and "chưa nằm trong kiểm tra trùng ảnh" in full, "tập giữ riêng phải được gọi đúng là bộ chẩn đoán legacy"
+    assert 'class="trust-chip ok" href="#ket-qua"' not in full, "chip tập giữ riêng không được xanh 'đạt' khi chưa qua kiểm tra trùng ảnh"
+
+
+def test_hero_replay_survives_pane_switches_and_live_diagram_is_state_driven():
+    overview = JS_BY_REL["pages/overview.js"]
+    # ResizeObserver: pane ẩn (bề rộng 0) và thanh cuộn xuất hiện không được hủy hoạt ảnh vừa chạy khi vào lại bước 1
+    observer = overview[overview.index("new ResizeObserver"):]
+    observer = observer[: observer.index(".observe(diagram)")]
+    assert "width <= 0" in observer and "> 24" in observer, "ResizeObserver của hero phải bỏ qua 0↔W và dung sai thanh cuộn"
+    training = JS_BY_REL["pages/training.js"]
+    assert "completed > topo.lastRound && visible && view.federated" in training, "chỉ nhịp khi một vòng học liên kết thật vừa xong"
+    assert "live_progress.length" not in training.replace("live?.length", ""), "không đếm epoch Centralized như vòng liên kết"
+    assert 'kind === "centralized" && task?.status === "running"' in training, "đang chạy Centralized thì không hiện client đang kết nối"
+
+
+def test_segmented_and_cam_markup_are_accessible():
+    assert re.search(r'<img id="preview-cam"[^>]*alt=""[^>]*aria-hidden="true"', HTML), "ảnh Grad-CAM chưa có src phải ẩn khỏi AT"
+    input_rules = _rule_bodies(".input-field")
+    assert input_rules and "var(--border-input)" in input_rules[0], "viền ô nhập phải dùng --border-input (≥ 3:1)"
+    overview = JS_BY_REL["pages/overview.js"]
+    hero = overview[overview.index("function heroHtml"):overview.index("function playHero")]
+    assert 'class="fl-figure" role="img"' in hero, "role=img phải đặt ở khung sơ đồ"
+    assert '<figure class="fl-diagram" id="fl-diagram" role="img"' not in hero, "role=img không được bọc nút Xem lại"
+

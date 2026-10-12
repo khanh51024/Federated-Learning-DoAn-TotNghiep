@@ -1,6 +1,7 @@
 // Bước 5 · Huấn luyện thử: chạy FedAvg qua Flower (5 client localhost) hoặc Centralized, theo dõi trực tiếp.
 import { getJson, postJson } from "../core/api.js";
-import { currentTask, markTaskStarted, onStatus, pollStatus } from "../core/status.js";
+import { currentTask, markTaskStarted, onStatus, pollStatus, setPollInterval } from "../core/status.js";
+import { beat, diagramHtml, pulse } from "../core/flnet.js";
 import {
   $$, byId, esc, fmtNum, formatApiError, notify, setBar, setClass, setDisabled, setDisplay, setHtml, setText, toggleHidden,
 } from "../core/dom.js";
@@ -10,6 +11,7 @@ const PLAY = '<svg class="svg-icon icon-sm" viewBox="0 0 24 24" fill="none" stro
 const STOP = '<svg class="svg-icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>';
 
 const state = { mode: "federated", layerLoaded: false };
+const topo = { lastRound: null }; // số vòng đã hoàn tất ở lần poll trước (null: chưa biết, không chạy nhịp khi mới mở trang)
 
 const HEAD = {
   federated: "<tr><th>Vòng</th><th>Độ chính xác (mô hình chung)</th><th>Sai số (loss)</th><th>Macro-F1</th><th>Thời gian gộp</th><th>Thời gian cả vòng</th><th>Trạng thái</th></tr>",
@@ -111,24 +113,65 @@ function renderProgress(kind, history, isLive, task) {
   body.replaceChildren(frag);
 }
 
-// ───────── Sơ đồ server + client ─────────
+/** Client "đang kết nối" theo trạng thái máy chủ: chỉ tính khi tác vụ hiện tại là học liên kết (tránh số cũ của phiên Flower trước). */
+function clientView(task, network) {
+  const kind = kindOfTask(task);
+  const isNetwork = task?.type === "federated-network";
+  const finished = isNetwork && task?.status === "completed";
+  const otherRunning = kind === "centralized" && task?.status === "running";
+  const connected = otherRunning ? 0 : finished ? Number(network.accepted_clients_last_round || 0) : Number(network.connected_clients || 0);
+  return { kind, isNetwork, finished, connected, federated: kind === "federated" };
+}
+
+// ───────── Sơ đồ máy chủ + client (theo trạng thái THẬT) ─────────
+// Mọi trạng thái lấy từ /api/status: vòng sáng khi đang chạy, dây sáng theo số client đã kết nối, chấm chạy về máy chủ
+// đúng lúc một vòng vừa hoàn tất (round_completed tăng). Không có hoạt ảnh hẹn giờ hay bịa ra.
 function renderTopology(task, network) {
-  const running = task?.status === "running" && kindOfTask(task) === "federated";
-  const finished = task?.type === "federated-network" && task?.status === "completed";
-  const connected = finished ? Number(network.accepted_clients_last_round || 0) : Number(network.connected_clients || 0);
-  const server = byId("topo-server");
-  server.classList.toggle("is-on", running || !!network.server_running);
-  const live = task?.live_progress;
+  const stage = byId("topology")?.querySelector(".fl-stage");
+  if (!stage) return;
+  const view = clientView(task, network);
+  const running = task?.status === "running" && view.federated;
+  const { finished, connected } = view;
+  const serverUp = !!network.server_running && !(view.kind === "centralized" && task?.status === "running");
+  const server = stage.querySelector(".fl-server");
+  server.classList.toggle("is-on", running || serverUp);
+  server.classList.toggle("is-running", running);
+
+  // Số vòng đã xong: Flower thật → round_completed; engine trong tiến trình → độ dài live_progress; Centralized (epoch) KHÔNG phải vòng.
+  const live = view.federated ? task?.live_progress : null;
   const total = live?.[0]?.total_rounds;
+  const completed = view.isNetwork ? Number(network.round_completed || 0) : (live?.length || 0);
+  const inProgress = view.isNetwork ? Number(network.round_in_progress || 0) : 0;
   let sub = "chưa chạy";
-  if (running) sub = live?.length ? `vòng ${live.length}${total ? `/${total}` : ""}` : "đang khởi động";
+  if (view.kind === "centralized" && task?.status === "running") sub = "không dùng ở chế độ này";
+  else if (running) sub = live?.length ? `vòng ${live.length}${total ? `/${total}` : ""}` : (inProgress ? `đang ở vòng ${inProgress}` : "đang khởi động");
   else if (finished) sub = "đã hoàn tất";
-  else if (network.server_running) sub = "đang chờ client";
+  else if (serverUp) sub = "đang chờ client";
   setText(byId("topo-server-sub"), sub);
-  $$("#topo-clients .topo-client").forEach((el, index) => {
-    el.classList.toggle("is-on", index < connected && !finished);
-    el.classList.toggle("is-done", index < connected && finished);
+
+  stage.querySelectorAll(".fl-client").forEach((el, index) => {
+    const on = index < connected;
+    el.classList.toggle("is-on", on && !finished);
+    el.classList.toggle("is-done", on && finished);
+    el.classList.toggle("is-training", running && on && inProgress > completed);
   });
+  stage.querySelectorAll(".fl-wire-lit[data-i]").forEach((el, index) => el.classList.toggle("is-on", index < connected));
+
+  // nhịp: chỉ khi một vòng thật vừa xong và bước 5 đang hiện (poll chậm có thể gộp hai vòng thành một nhịp)
+  const visible = byId("page-huan-luyen")?.classList.contains("active");
+  if (topo.lastRound !== null && completed > topo.lastRound && visible && view.federated) {
+    // Flower thật: đúng số client được chấp nhận ở vòng vừa xong (0 → không có gì để chạy về máy chủ, không nháy).
+    // Engine trong tiến trình mô phỏng đủ năm shard mỗi vòng.
+    const nodes = stage.querySelectorAll(".fl-client").length;
+    const delivered = view.isNetwork ? Math.min(nodes, Number(network.accepted_clients_last_round || 0)) : nodes;
+    if (delivered > 0) {
+      const end = pulse(stage, Array.from({ length: delivered }, (_unused, i) => i), { perClientGap: 90, duration: 800 });
+      beat(server.querySelector(".fl-node-card"), { delay: Math.max(0, end - 120) });
+    }
+  }
+  topo.lastRound = completed;
+  // poll nhanh khi đang chạy và đang xem bước 5: sơ đồ bám sát trạng thái thật
+  setPollInterval(running && visible ? 1500 : 4000);
 }
 
 // ───────── Cập nhật từ poll trạng thái ─────────
@@ -139,10 +182,7 @@ function applyStatus(_data, { task, network, finished, stale }) {
   const start = byId("btn-train-start");
   const stop = byId("btn-train-stop");
 
-  const shownClients = task.type === "federated-network" && task.status === "completed"
-    ? network.accepted_clients_last_round || 0
-    : network.connected_clients || 0;
-  setText(byId("dash-clients"), `${shownClients} / 5`);
+  setText(byId("dash-clients"), `${clientView(task, network).connected} / 5`);
   setText(byId("dash-rtt"), Number.isFinite(network.mean_probe_rtt_ms) ? `${fmtNum(network.mean_probe_rtt_ms, 2)} ms (localhost)` : "—");
   renderTopology(task, network);
 
@@ -420,6 +460,7 @@ async function stopTraining() {
 }
 
 export async function mount() {
+  byId("topology").innerHTML = diagramHtml({ variant: "live", serverLabel: "Máy chủ", serverSub: "chưa chạy" });
   $$("[data-train-mode]").forEach(button => button.addEventListener("click", () => setTrainMode(button.dataset.trainMode)));
   byId("fl-engine").addEventListener("change", syncEngine);
   byId("btn-train-start").addEventListener("click", start);

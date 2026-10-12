@@ -1,6 +1,6 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-12 08:55 · sinh tự bởi `scripts/update_status.py`
+> **Cập nhật lúc:** 2026-10-12 14:41 · sinh tự bởi `scripts/update_status.py`
 > **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
@@ -34,7 +34,7 @@
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
 | 9 | Test không ghi đè artifact đang track | ✅ XONG | test không tham chiếu artifacts/checkpoints/metrics (dùng tmp_path) |
 | 10 | Dependency khai báo một nơi (pyproject = requirements) | ✅ XONG | 15 dependency trùng giữa pyproject.toml và requirements.txt; ghim cũ nằm ở legacy/pyproject.toml |
-| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-12T08:55:36 (gồm test mạng, 46 file test) trên đúng mã nguồn hiện tại |
+| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-12T14:41:16 (gồm test mạng, 46 file test) trên đúng mã nguồn hiện tại |
 | 12 | Kiểm chứng provenance & checkpoint canonical | ⛔ BLOCKED | provenance=unverified; lỗi: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing'] |
 | 13 | Audit leakage theo từng run | ✅ XONG | release mixed_pv_pd_v3: train 37.238 / val 4.613 / calibration 4.225 rời nhau trên 5 khóa (giao nhau tổng = 0); 12 partition đều là tập con train; 46.076 ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train) |
 | 14 | Đánh giá PlantDoc theo từng lớp (từ số công bố) | ✅ XONG | PlantDoc phủ 13/38 lớp; 6 lớp recall<50% (136/269 ảnh); FedAvg tệ hơn Centralized ở 5/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5) |
@@ -344,6 +344,27 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
   dữ liệu (mỗi client có 20–27/38 nhóm); "bệnh này" sai với nhóm lá khỏe → "nhóm này"; việc còn lại gắn điều kiện theo trạng thái.
   (4) Số liệu dùng phông chính (tabular-nums), phông code chỉ cho mã băm; test mới chặn thuật ngữ cũ/lời nói quá quay lại. Kiểm bằng Chrome
   headless cả hai nền và 390 px (không tràn ngang, không lỗi console), tương phản chữ đạt ở cả hai nền.
+- 2026-10-12 (làm lại giao diện: thanh bước ngang, phong cách "phòng nghiên cứu cây trồng", chuyển động có mục đích): chỉ đổi `web/static/`,
+  test, tài liệu và `scripts/fetch_webfonts.py`; không đổi backend/API, không đổi tên bệnh. (1) Khung: thanh sáu bước nằm ngang thay sidebar
+  (bước đã qua tô xanh, vạch chỉ báo chạy bằng transform, màn hẹp cuộn ngang và mờ mép), nền ngà + lưới chấm rất mờ, tiêu đề Source Serif 4,
+  giữ cả nền sáng và nền tối; bỏ khoảng 100 lớp CSS chết. (2) Bước 1: sơ đồ FedAvg chuyển động một lượt mỗi lần vào (client hiện lần lượt, chấm
+  trọng số chạy theo dây về máy chủ, mô hình chung hiện ra), nút "Xem lại", tắt khi giảm chuyển động; ánh sáng bám chuột chỉ trong hero và
+  chỉ với chuột thật. (3) Tương tác: heatmap/ma trận nhầm lẫn sáng hàng + cột kèm tooltip (cảm ứng: chạm ô để xem), biểu đồ có cột mọc và
+  tooltip theo token, bước 4 chuyển cảnh ảnh gốc → Grad-CAM của FedAvg (chỉ khi bật Grad-CAM), bước 5 sơ đồ bám `/api/status` thật (vòng sáng,
+  dây sáng theo client đã kết nối, chấm chạy về máy chủ đúng lúc `round_completed` tăng; Centralized không bao giờ làm sơ đồ nhịp).
+  (4) Review độc lập (harness-reviewer) tìm 3 lỗi phải sửa và 9 mục nên sửa — đã xử lý hết: hoạt ảnh hero bị ResizeObserver hủy khi quay lại
+  bước 1; lời cảnh báo "một lần chạy / chưa phải ngoài thực địa" bị đẩy vào phần gập và chip tập giữ riêng còn xanh "đạt" (nay ngoài fold,
+  chip vàng, gọi đúng bộ chẩn đoán legacy); sơ đồ bước 5 từng nhịp theo epoch Centralized với số client cũ của phiên Flower trước. Sửa thêm:
+  `.hidden` bị luật component đè (nút chuyển ảnh Grad-CAM hiện sớm và làm bước 4 tràn 21 px trên 390 px), quầng bóng bị `scale()` phóng
+  to trên dải sáng hàng/cột, đổi `font-weight` khi active làm layout lại, viền ô nhập 1,76:1 (nay dùng token ≥ 3:1), chữ trắng trên nền
+  amber 3,9:1, mất tiêu điểm khi vào chế độ trình chiếu. Test: 22 test giao diện (token tương phản hai nền, lớp CSS chết thật sự, trạng thái
+  không đổi số đo hộp/chữ, chuyển động chỉ transform/opacity, cảnh báo nằm ngoài fold…), đã thử đột biến 9 vi phạm cố ý đều bị bắt.
+  Đo bằng Chrome headless (vẽ phần mềm, vsync 60 Hz — cho thấy không có khung bị chặn, chưa phải số liệu GPU): sơ đồ hero, chuyển bước ×6,
+  rê chuột 60 ô heatmap và ma trận, tạo biểu đồ, cuộn 2.000 px, chạy chẩn đoán 7 mô hình + Grad-CAM đều p95 16,7–16,8 ms, khung dài
+  nhất 16,8 ms, 0 khung > 25 ms, 0 long task; layout cộng dồn 6–8 ms cho 60 lần rê chuột; hero/rê chuột 0 hoạt ảnh không-composite
+  (chuyển bước còn các transition màu của thanh bước — chỉ vẽ lại, không layout). CHƯA kiểm: phiên huấn luyện Flower thật (máy 16 GB còn
+  ~2 GB trống, trước đó server bị hệ điều hành tắt 4 lần) — sơ đồ bước 5 được kiểm bằng `/api/status` giả lập (idle → chạy → vòng xong
+  với 5 và 4 client → hoàn tất → Centralized với số cũ); trình duyệt có giao diện và thiết bị cảm ứng thật; không deploy server.
 <!-- ROADMAP-END -->
 
 ## 8. Cách đồng bộ

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#f3f5f8">
+  <meta name="theme-color" content="#f6f4ec">
   <script>
     (function () {
       var theme = null;
@@ -19,11 +19,15 @@
   <!-- Font tự host (Be Vietnam Pro có bộ glyph tiếng Việt đầy đủ); tải trước các subset dùng ở lần vẽ đầu -->
   <link rel="preload" as="font" type="font/woff2" crossorigin href="/static/fonts/be-vietnam-pro-400-latin.woff2">
   <link rel="preload" as="font" type="font/woff2" crossorigin href="/static/fonts/be-vietnam-pro-400-vietnamese.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="/static/fonts/be-vietnam-pro-500-latin.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="/static/fonts/be-vietnam-pro-500-vietnamese.woff2">
   <link rel="preload" as="font" type="font/woff2" crossorigin href="/static/fonts/be-vietnam-pro-600-latin.woff2">
   <link rel="preload" as="font" type="font/woff2" crossorigin href="/static/fonts/be-vietnam-pro-600-vietnamese.woff2">
-  <link rel="stylesheet" href="/static/fonts/fonts.css?v=4.0.0">
-  <link rel="stylesheet" href="/static/css/style.css?v=6.0.0">
-  <link rel="stylesheet" href="/static/css/pages.css?v=6.0.0">
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="/static/fonts/source-serif-4-600-700-latin.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="/static/fonts/source-serif-4-600-700-vietnamese.woff2">
+  <link rel="stylesheet" href="/static/fonts/fonts.css?v=5.0.0">
+  <link rel="stylesheet" href="/static/css/style.css?v=7.0.0">
+  <link rel="stylesheet" href="/static/css/pages.css?v=7.0.0">
   <!-- Chart.js ghim phiên bản và tự host: demo không phụ thuộc CDN -->
   <script src="/static/vendor/chart.umd.js?v=4.4.1" defer></script>
 </head>
@@ -31,47 +35,23 @@
   <a class="skip-link" href="#main">Bỏ qua điều hướng</a>
   <div id="route-announcer" class="sr-only" role="status" aria-live="polite"></div>
 
-  <!-- MOBILE TOP BAR -->
-  <header class="mobile-topbar">
-    <div class="brand-inline">
-      <span class="brand-logo">
-        <svg class="brand-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M11 20A7 7 0 0 1 4 13a7 7 0 0 1 7-7c4 0 9 2 9 7v1a6 6 0 0 1-6 6h-3z"/>
-          <path d="M11 20v-8"/>
-        </svg>
-      </span>
-      <span class="brand-title">CropFed FL</span>
-    </div>
-    <div class="mobile-actions">
-      <span class="status-indicator"><span class="pulse-dot"></span></span>
-      <button class="mobile-nav-toggle" id="mobile-nav-toggle" aria-label="Mở thanh điều hướng" aria-controls="app-sidebar" aria-expanded="false">
-        <svg class="svg-icon" viewBox="0 0 24 24">
-          <line x1="3" y1="12" x2="21" y2="12"></line>
-          <line x1="3" y1="6" x2="21" y2="6"></line>
-          <line x1="3" y1="18" x2="21" y2="18"></line>
-        </svg>
-      </button>
-    </div>
-  </header>
-
-  <div class="app-layout">
-    <!-- SIDEBAR: sáu bước theo đúng trình tự bảo vệ đồ án -->
-    <aside class="sidebar" id="app-sidebar">
-      <div class="brand">
-        <div class="brand-logo">
-          <svg class="brand-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <!-- THANH TRÊN CÙNG: thương hiệu, sáu bước theo đúng trình tự bảo vệ đồ án, nền và trình chiếu -->
+  <header class="app-topbar" id="app-topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#tong-quan" aria-label="CropFed FL — về Tổng quan">
+        <span class="brand-logo">
+          <svg class="brand-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M11 20A7 7 0 0 1 4 13a7 7 0 0 1 7-7c4 0 9 2 9 7v1a6 6 0 0 1-6 6h-3z"/>
             <path d="M11 20v-8"/>
           </svg>
-        </div>
-        <div>
-          <h2 class="brand-title">CropFed FL</h2>
+        </span>
+        <span class="brand-text">
+          <span class="brand-title">CropFed FL</span>
           <span class="brand-subtitle">Học liên kết · bệnh lá cây</span>
-        </div>
-      </div>
+        </span>
+      </a>
 
       <nav class="nav-menu" aria-label="Các bước trình bày">
-        <p class="nav-group">Trình bày</p>
         <a class="nav-item" href="#tong-quan" data-route="tong-quan">
           <span class="nav-step">1</span><span class="nav-label">Tổng quan</span>
         </a>
@@ -81,43 +61,41 @@
         <a class="nav-item" href="#ket-qua" data-route="ket-qua">
           <span class="nav-step">3</span><span class="nav-label">Kết quả &amp; so sánh</span>
         </a>
-        <p class="nav-group">Demo trực tiếp</p>
+        <span class="nav-sep" aria-hidden="true"></span>
         <a class="nav-item" href="#chan-doan" data-route="chan-doan">
           <span class="nav-step">4</span><span class="nav-label">Chẩn đoán bệnh lá</span>
         </a>
         <a class="nav-item" href="#huan-luyen" data-route="huan-luyen">
           <span class="nav-step">5</span><span class="nav-label">Huấn luyện thử</span>
         </a>
-        <p class="nav-group">Minh bạch</p>
+        <span class="nav-sep" aria-hidden="true"></span>
         <a class="nav-item" href="#bang-chung" data-route="bang-chung">
           <span class="nav-step">6</span><span class="nav-label">Bằng chứng &amp; hạn chế</span>
         </a>
       </nav>
 
-      <div class="sidebar-footer">
-        <button type="button" class="btn btn-secondary btn-sm btn-block" id="btn-theme">
+      <div class="topbar-actions">
+        <span class="status-indicator" id="server-status">
+          <span class="pulse-dot" aria-hidden="true"></span>
+          <span class="status-text" id="server-status-text">Máy chủ: đang kết nối…</span>
+        </span>
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-theme" title="Đổi nền sáng / tối">
           <svg class="svg-icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-          <span id="btn-theme-label">Nền tối</span>
+          <span class="btn-text" id="btn-theme-label">Nền tối</span>
         </button>
-        <button type="button" class="btn btn-secondary btn-sm btn-block" id="btn-present" aria-pressed="false">
-          Chế độ trình chiếu <kbd>P</kbd>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-present" aria-pressed="false" title="Chế độ trình chiếu (phím P)">
+          <span class="btn-text">Trình chiếu</span> <kbd>P</kbd>
         </button>
-        <div class="status-indicator">
-          <span class="pulse-dot"></span>
-          <span id="server-status-text">Máy chủ: đang kết nối…</span>
-        </div>
-        <div class="system-chip" id="system-device">Thiết bị: —</div>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-present-exit" hidden>
+          Thoát <kbd>Esc</kbd>
+        </button>
       </div>
-    </aside>
+    </div>
+  </header>
 
+  <div class="app-layout">
     <!-- MAIN CONTENT -->
     <main class="main-content" id="main" tabindex="-1">
-      <!-- Dải bước chỉ hiện ở chế độ trình chiếu -->
-      <div class="present-bar" id="present-bar" hidden>
-        <ol class="present-steps" id="present-steps" aria-label="Các bước"></ol>
-        <button type="button" class="btn btn-secondary btn-sm" id="btn-present-exit">Thoát trình chiếu <kbd>Esc</kbd></button>
-      </div>
-
       <header class="top-header">
         <div>
           <p class="eyebrow" id="step-eyebrow">Bước 1/6 · Trình bày</p>
@@ -222,7 +200,16 @@
               <div class="diag-controls mt-3">
                 <div class="selected-card" id="selected-image">
                   <div class="selected-empty" id="selected-empty">Chưa chọn ảnh — bấm một ảnh mẫu bên trái hoặc tải ảnh lên.</div>
-                  <img id="preview-image" class="selected-thumb hidden" alt="Ảnh lá đã chọn">
+                  <div class="selected-stage hidden" id="selected-stage">
+                    <img id="preview-image" class="selected-thumb" alt="Ảnh lá đã chọn">
+                    <img id="preview-cam" class="selected-cam" alt="" aria-hidden="true">
+                    <span class="scan-beam" aria-hidden="true"></span>
+                    <span class="stage-tag" id="stage-tag" aria-live="polite"></span>
+                  </div>
+                  <div class="segmented stage-views hidden" id="stage-views" role="radiogroup" aria-label="Chế độ xem ảnh">
+                    <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-stage-view="original">Ảnh gốc</button>
+                    <button type="button" class="segmented-option" role="radio" aria-checked="false" data-stage-view="cam">Vùng mô hình nhìn</button>
+                  </div>
                   <div class="selected-meta hidden" id="selected-meta"></div>
                 </div>
                 <div class="diag-control-grid">
@@ -437,16 +424,7 @@
                 <span class="status-badge" id="train-live-badge">Sẵn sàng</span>
               </div>
 
-              <div class="topology" id="topology" aria-label="Sơ đồ máy chủ và client">
-                <div class="topo-server" id="topo-server"><span class="topo-dot"></span><b>Máy chủ</b><span class="topo-sub" id="topo-server-sub">chưa chạy</span></div>
-                <div class="topo-clients" id="topo-clients">
-                  <div class="topo-client" data-client="0"><span class="topo-dot"></span>Client 0</div>
-                  <div class="topo-client" data-client="1"><span class="topo-dot"></span>Client 1</div>
-                  <div class="topo-client" data-client="2"><span class="topo-dot"></span>Client 2</div>
-                  <div class="topo-client" data-client="3"><span class="topo-dot"></span>Client 3</div>
-                  <div class="topo-client" data-client="4"><span class="topo-dot"></span>Client 4</div>
-                </div>
-              </div>
+              <figure class="fl-diagram fl-live mt-3" id="topology" aria-label="Sơ đồ máy chủ và năm client, cập nhật theo trạng thái thật của phiên huấn luyện"></figure>
 
               <div class="kpi-mini-grid mt-4">
                 <div class="kpi-mini"><span class="kpi-mini-label">Client đã kết nối</span><span class="kpi-mini-value mono" id="dash-clients">0 / 5</span></div>
@@ -536,7 +514,12 @@
     </main>
   </div>
 
+  <footer class="app-footer">
+    <span>CropFed FL · đồ án học liên kết chẩn đoán bệnh lá cây</span>
+    <span class="system-chip" id="system-device">Thiết bị: —</span>
+  </footer>
+
   <script src="/static/js/toast.js?v=4.0.0"></script>
-  <script type="module" src="/static/js/app.js?v=6.0.0"></script>
+  <script type="module" src="/static/js/app.js?v=7.0.0"></script>
 </body>
 </html>

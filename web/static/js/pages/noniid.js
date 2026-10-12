@@ -1,5 +1,6 @@
 // Bước 2 · Dữ liệu phân tán (non-IID): heatmap 38 lớp × 5 client và vì sao Local-only không nhận ra bệnh chưa từng thấy.
 import { getEvidence, getPartitions, getSummary, modelsById } from "../core/store.js";
+import { attachCrosshair } from "../core/crosshair.js";
 import {
   byId, cropOf, diseaseOf, esc, fmtInt, fmtNum, fmtPct, fmtPctValue, formatDiseaseName, revealItems,
 } from "../core/dom.js";
@@ -172,6 +173,7 @@ async function mountExplorer() {
     <ul class="scheme-clients mt-3" id="scheme-clients"></ul>
     <div class="table-responsive heat-wrap mt-3" id="scheme-wrap"></div>`;
   const select = byId("scheme-select");
+  attachCrosshair(byId("scheme-wrap"));
   const render = () => {
     const scheme = partitions.schemes[select.value];
     if (!scheme) return;
@@ -214,22 +216,25 @@ export async function mount() {
         }).join(" · ")
       : "";
     exampleHtml = `
-      <div class="callout callout-info">
+      <details class="fold mt-3">
+        <summary>Ví dụ: ${esc(formatDiseaseName(example.class))}</summary>
+        <div class="callout callout-info mt-3">
         <b>${fmtInt(shards.single_client_classes)}/${fmtInt(shards.classes_total)} nhóm</b> có từ 90% ảnh nằm ở đúng một client.
         Ví dụ <b>${esc(formatDiseaseName(example.class))}</b>: client ${holder} có <b>${fmtInt(holderCount)} ảnh</b>
         (${fmtNum(example.top_share_pct, 0)}% của nhóm); bốn client còn lại cộng lại chỉ có ${fmtInt(othersTotal)} ảnh${zeroText}.
         ${recalls ? `Tỉ lệ nhận đúng nhóm này của bốn mô hình học riêng đó: ${recalls}.` : "Local-only của các client đó có rất ít hoặc không có ảnh để học nhóm này."}
-      </div>`;
+        </div>
+      </details>`;
   }
 
   root.innerHTML = `
-    <section class="panel">
-      <h3 class="panel-title">Mỗi client chỉ thấy một góc của bức tranh</h3>
-      <p class="panel-desc">
-        Ngoài thực tế, mỗi nông hộ hay mỗi vùng thường chỉ gặp một số nhóm nhất định. Đồ án mô phỏng điều đó bằng cách chia ảnh cho năm client
-        theo kiểu lệch nặng (non-IID, tham số Dirichlet α = 0,1): mỗi client có ảnh ở khá nhiều nhóm nhưng số lượng chênh nhau rất lớn, và nhiều nhóm có phần lớn ảnh nằm ở đúng một client.
-        Mô hình học riêng chỉ biết những gì client của mình có; FedAvg gộp mô hình của cả năm nơi nên "thừa hưởng" kiến thức của tất cả.
-      </p>
+    <section class="panel noniid-intro">
+      <div>
+        <p class="eyebrow">Dữ liệu non-IID</p>
+        <h3 class="panel-title">Mỗi client chỉ thấy một phần dữ liệu</h3>
+        <p class="panel-desc">Ảnh được chia lệch cho năm client. Mô hình học riêng dễ bỏ sót nhóm ít ảnh; FedAvg kết hợp kiến thức của cả năm nơi.</p>
+      </div>
+      ${shards ? `<div class="noniid-intro-stat"><strong>${fmtInt(shards.single_client_classes)}/${fmtInt(shards.classes_total)}</strong><span>nhóm có ≥ 90% ảnh ở một client</span></div>` : ""}
       ${exampleHtml}
     </section>
 
@@ -285,6 +290,7 @@ export async function mount() {
 
   if (shards) {
     const wrap = byId("heat-wrap");
+    attachCrosshair(wrap);
     const desc = byId("heat-desc");
     root.querySelectorAll("[data-heat]").forEach(button => {
       button.addEventListener("click", () => {

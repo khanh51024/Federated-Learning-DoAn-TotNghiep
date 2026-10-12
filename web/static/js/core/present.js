@@ -1,5 +1,5 @@
 // Chế độ trình chiếu cho buổi bảo vệ: chữ/số to hơn, ẩn chi tiết kỹ thuật, phím ← → chuyển bước, nhớ lựa chọn.
-import { $, byId } from "./dom.js";
+import { byId } from "./dom.js";
 import { ROUTES, activeRouteId, goto, routeIndex } from "./router.js";
 
 const STORAGE_KEY = "cropfed.present";
@@ -26,11 +26,19 @@ export function isPresenting() {
 
 export function setPresenting(on, { persist = true } = {}) {
   document.body.classList.toggle("present", on);
-  const bar = byId("present-bar");
-  if (bar) bar.hidden = !on;
+  const exit = byId("btn-present-exit");
+  if (exit) exit.hidden = !on;
   const button = byId("btn-present");
-  if (button) button.setAttribute("aria-pressed", String(on));
+  if (button) {
+    button.setAttribute("aria-pressed", String(on));
+    button.hidden = on; // đang trình chiếu thì chỉ còn nút Thoát
+  }
   if (persist) save(on);
+  // nút đang giữ tiêu điểm bị ẩn: chuyển tiêu điểm sang nút còn lại để người dùng bàn phím không rơi về <body>
+  const focusTarget = on ? exit : button;
+  if (persist && focusTarget && document.activeElement && (document.activeElement === button || document.activeElement === exit || document.activeElement === document.body)) {
+    focusTarget.focus({ preventScroll: true });
+  }
   // Biểu đồ responsive cần biết kích thước mới sau khi đổi cỡ chữ
   window.dispatchEvent(new Event("resize"));
 }
@@ -53,13 +61,6 @@ function ownsArrowKeys(target) {
 }
 
 export function initPresent() {
-  const steps = byId("present-steps");
-  if (steps) {
-    steps.innerHTML = ROUTES.map(
-      r => `<li><a class="present-step" href="#${r.id}" data-route="${r.id}"><span class="present-step-n">${r.step}</span>${r.label.replace("&", "&amp;")}</a></li>`
-    ).join("");
-  }
-
   byId("btn-present")?.addEventListener("click", () => setPresenting(!isPresenting()));
   byId("btn-present-exit")?.addEventListener("click", () => setPresenting(false));
 
@@ -85,5 +86,4 @@ export function initPresent() {
   });
 
   if (readSaved()) setPresenting(true, { persist: false });
-  else if ($("#present-bar")) $("#present-bar").hidden = true;
 }

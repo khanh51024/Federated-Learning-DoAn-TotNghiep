@@ -144,9 +144,9 @@ Federated-Learning-DoAn-TotNghiep/
 │   └── static/              # Giao diện 6 bước (HTML/CSS/ES module, không bước build)
 │       ├── index.html       # 1 Tổng quan · 2 Dữ liệu phân tán · 3 Kết quả & so sánh · 4 Chẩn đoán · 5 Huấn luyện thử · 6 Bằng chứng
 │       ├── css/{style,pages}.css
-│       ├── js/app.js        # khởi động; js/core/ (router, store, api, charts, status, present), js/pages/ (mỗi bước một file)
+│       ├── js/app.js        # khởi động; js/core/ (router, store, api, charts, status, present, theme, motion, flnet, crosshair), js/pages/ (mỗi bước một file)
 │       ├── samples/demo/    # 19 ảnh mẫu có nhãn thật + catalog.json (scripts/build_demo_gallery.py)
-│       ├── fonts/           # Be Vietnam Pro + JetBrains Mono tự host
+│       ├── fonts/           # Be Vietnam Pro + Source Serif 4 (tiêu đề) + JetBrains Mono, tự host
 │       └── vendor/          # Chart.js 4.4.1 ghim phiên bản
 │
 ├── legacy/                  # PIPELINE CŨ (Kaggle/stage*) — chỉ tra cứu, chạy riêng

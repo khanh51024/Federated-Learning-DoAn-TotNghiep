@@ -28,9 +28,14 @@ export function currentTheme() {
 export function applyTheme(theme, { persist = false } = {}) {
   const next = theme === "dark" ? "dark" : "light";
   const changed = currentTheme() !== next;
-  document.documentElement.setAttribute("data-theme", next);
+  const root = document.documentElement;
+  if (changed) {
+    root.classList.add("theme-switching"); // 2 khung: mọi màu đổi cùng lúc, không trượt từng phần
+    requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("theme-switching")));
+  }
+  root.setAttribute("data-theme", next);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", cssVar("--bg-base", next === "dark" ? "#0b1018" : "#f3f5f8"));
+  if (meta) meta.setAttribute("content", cssVar("--bg-base", next === "dark" ? "#0e1611" : "#f6f4ec"));
   // nhãn nút nói việc sẽ làm ("Nền tối"/"Nền sáng"), nên không dùng thêm aria-pressed (đọc ra sẽ thành trạng thái sai)
   const label = byId("btn-theme-label");
   if (label) label.textContent = next === "dark" ? "Nền sáng" : "Nền tối";

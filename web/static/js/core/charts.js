@@ -2,6 +2,26 @@
 // makeChart nhận một HÀM trả cấu hình: khi đổi nền sáng/tối, mọi biểu đồ còn trên trang được dựng lại với màu mới.
 import { cssVar, prefersReducedMotion } from "./dom.js";
 
+/** Cột mọc từ đáy: 400 ms, easeOutQuart, mỗi cột trễ 30 ms (báo hiệu "dữ liệu vừa được nạp"). Tắt khi giảm chuyển động. */
+export function barRise() {
+  if (prefersReducedMotion()) return false;
+  return {
+    duration: 400,
+    easing: "easeOutQuart",
+    delay: ctx => (ctx.type === "data" && ctx.mode === "default" ? ctx.dataIndex * 30 + ctx.datasetIndex * 15 : 0),
+  };
+}
+
+/** Đường kẻ vẽ dần theo từng điểm. */
+export function lineDraw() {
+  if (prefersReducedMotion()) return false;
+  return {
+    duration: 400,
+    easing: "easeOutQuart",
+    delay: ctx => (ctx.type === "data" && ctx.mode === "default" ? Math.min(ctx.dataIndex * 10, 500) : 0),
+  };
+}
+
 let registered = false;
 const factories = new Map(); // canvas -> () => config
 
@@ -20,9 +40,16 @@ function applyDefaults() {
   Chart.defaults.elements.point.hoverRadius = 5;
   Chart.defaults.plugins.legend.labels.usePointStyle = true;
   Chart.defaults.plugins.legend.labels.boxWidth = 8;
-  Chart.defaults.plugins.tooltip.backgroundColor = "#111827";
-  Chart.defaults.plugins.tooltip.padding = 10;
-  Chart.defaults.plugins.tooltip.cornerRadius = 8;
+  const tip = Chart.defaults.plugins.tooltip;
+  tip.backgroundColor = cssVar("--tooltip-bg", "#1c261d");
+  tip.titleColor = cssVar("--tooltip-fg", "#f6f4ec");
+  tip.bodyColor = cssVar("--tooltip-fg", "#f6f4ec");
+  tip.footerColor = cssVar("--tooltip-fg", "#f6f4ec");
+  tip.padding = 12;
+  tip.cornerRadius = 8;
+  tip.boxPadding = 4;
+  Chart.defaults.interaction.mode = "index";
+  Chart.defaults.interaction.intersect = false;
 }
 
 function registerOnce() {
@@ -64,7 +91,7 @@ function registerOnce() {
         factories.delete(canvas);
         continue;
       }
-      build(canvas, factory);
+      build(canvas, factory, { animate: false }); // đổi nền: dựng lại ngay, không chạy lại hiệu ứng mọc
     }
   });
 }
@@ -81,14 +108,19 @@ export function pillarColors() {
   };
 }
 
-function build(canvas, factory) {
+function build(canvas, factory, { animate = true } = {}) {
   const config = factory();
   const existing = Chart.getChart(canvas);
   if (existing) existing.destroy();
   const printing = document.documentElement.dataset.printing === "1"; // đang in: vẽ đồng bộ, không chờ khung hình animation
   return new Chart(canvas.getContext("2d"), {
     ...config,
-    options: { responsive: true, maintainAspectRatio: false, ...(config.options || {}), ...(printing ? { animation: false } : {}) },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      ...(config.options || {}),
+      ...(printing || !animate ? { animation: false } : {}),
+    },
   });
 }
 

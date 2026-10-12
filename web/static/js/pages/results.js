@@ -1,6 +1,8 @@
 // Bước 3 · Kết quả chi tiết: tổng hợp 7 mô hình, PlantDoc theo lớp, độ tin cậy của xác suất.
 import { getDetails, getEvidence, getSummary, modelsById } from "../core/store.js";
-import { makeChart, pillarColors } from "../core/charts.js";
+import { attachCrosshair } from "../core/crosshair.js";
+import { lineDraw, makeChart, pillarColors } from "../core/charts.js";
+import { play } from "../core/motion.js";
 import {
   $$, MODEL_LABELS, MODEL_ORDER, byId, diseaseOf, cropOf, esc, fmtInt, fmtNum, fmtPct, fmtPctValue,
   formatDiseaseName, modelPill, notify, pillarOf, withAlpha,
@@ -72,13 +74,16 @@ function buildSummary() {
   }
 
   root.innerHTML = `
-    <section class="panel">
-      <div class="panel-header-flex">
-        <div>
-          <h3 class="panel-title">Bảy mô hình trên cùng bộ ảnh kiểm tra</h3>
-          <p class="panel-desc">PlantVillage ${fmtInt(evidence.validation_counts.plantvillage)} ảnh (cùng kiểu với ảnh học) và PlantDoc ${fmtInt(evidence.validation_counts.plantdoc)} ảnh (ảnh ngoài đồng). Số đậm là cao nhất mỗi cột.</p>
-        </div>
-      </div>
+    <section class="stat-tiles result-overview-tiles" aria-label="Kết quả nổi bật">
+      <article class="stat-tile"><b class="text-sky">${fmtPct(byModel.centralized.metrics.plantvillage.top1_accuracy)}</b><span>Centralized · PlantVillage</span></article>
+      <article class="stat-tile"><b class="text-emerald">${fmtPct(byModel.fedavg.metrics.plantvillage.top1_accuracy)}</b><span>FedAvg · PlantVillage</span></article>
+      <article class="stat-tile warn"><b>${fmtPct(byModel.fedavg.metrics.plantdoc.top1_accuracy)}</b><span>FedAvg · PlantDoc ngoài đồng</span></article>
+    </section>
+
+    <details class="overview-detail mt-4">
+      <summary><span><strong>Bảng đầy đủ của 7 mô hình</strong><small>Độ chính xác, Macro-F1 và kết quả chấm lại</small></span></summary>
+      <div class="overview-detail-body">
+      <p class="panel-desc">PlantVillage ${fmtInt(evidence.validation_counts.plantvillage)} ảnh (cùng kiểu với ảnh học) và PlantDoc ${fmtInt(evidence.validation_counts.plantdoc)} ảnh (ảnh ngoài đồng). Số đậm là cao nhất mỗi cột.</p>
       <div class="table-responsive mt-3">
         <table class="data-table result-table">
           <thead>
@@ -94,7 +99,10 @@ function buildSummary() {
       </div>
       <p class="field-hint mt-3">${reNote}</p>
       <p class="field-hint mt-2"><b>Cách đọc:</b> "đúng" là tỉ lệ ảnh mà mô hình đoán đúng bệnh (Top-1). Macro-F1 là điểm trung bình công bằng giữa các nhóm (không bị nhóm nhiều ảnh lấn át), tính trên các nhóm có ảnh kiểm tra — PlantDoc chỉ phủ 13/38 loại. Mới có một kịch bản non-IID (α=0,1) và một lần chạy, nên chưa nói được độ ổn định.</p>
-    </section>
+      </div>
+    </details>
+
+    <p class="field-hint mt-3">Số trên tập kiểm tra cũng được dùng để chọn mô hình, và mới có một kịch bản (α = 0,1), một lần chạy: đây chưa phải độ chính xác ngoài thực địa. Xem tab “Tập giữ riêng &amp; thống kê” để kiểm tra thêm.</p>
 
     <section class="panel mt-4">
       <h3 class="panel-title">Quá trình huấn luyện Centralized v6</h3>
@@ -115,6 +123,7 @@ function buildSummary() {
       ],
     },
     options: {
+      animation: lineDraw(),
       interaction: { mode: "index", intersect: false },
       scales: {
         x: { title: { display: true, text: "Epoch" } },
@@ -129,7 +138,7 @@ function buildSummary() {
 // ───────── Tab 2: PlantDoc theo lớp ─────────
 function recallBar(value, pillar) {
   const pct = Math.max(0, Math.min(100, (value || 0) * 100));
-  return `<div class="recall-bar" title="${fmtPct(value, 1)}"><span class="recall-track"><span class="recall-fill ${pillar}" style="--w:${pct.toFixed(1)}%"></span></span><span class="recall-num mono">${fmtNum(pct, 0)}</span></div>`;
+  return `<div class="recall-bar" title="${fmtPct(value, 1)}"><span class="recall-track"><span class="recall-fill ${pillar}" style="--s:${(pct / 100).toFixed(3)}"></span></span><span class="recall-num mono">${fmtNum(pct, 0)}</span></div>`;
 }
 
 function breakdownBar(label, pillar, block) {
@@ -201,6 +210,18 @@ function buildPlantdoc() {
         ${confusions.map(c => `<li><span>${esc(formatDiseaseName(c.target))}</span><span class="arrow">→</span><span>${esc(formatDiseaseName(c.predicted))}</span><b class="mono">${fmtInt(c.count)} ảnh</b></li>`).join("")}
       </ol>
     </section>` : ""}`;
+  riseBars(root);
+}
+
+/** Thanh tỉ lệ mọc lần lượt, thanh xếp chồng hiện bằng một "rèm" kéo ra: chỉ transform, chạy trên compositor. */
+function riseBars(root) {
+  root.querySelectorAll(".recall-fill").forEach((bar, i) => {
+    const scale = bar.style.getPropertyValue("--s").trim() || "1";
+    play(bar, [{ transform: "scaleX(0)" }, { transform: `scaleX(${scale})` }], { delay: Math.min(i * 15, 300), duration: 360 });
+  });
+  root.querySelectorAll(".stacked").forEach((stack, i) => {
+    play(stack, [{ transform: "scaleX(1)" }, { transform: "scaleX(0)" }], { pseudoElement: "::after", delay: i * 100, duration: 400 });
+  });
 }
 
 // ───────── Tab 3: Độ tin cậy xác suất ─────────
@@ -275,6 +296,7 @@ function buildCalibration() {
         ],
       },
       options: {
+        interaction: { mode: "nearest", intersect: true },
         scales: {
           x: { min: 0, max: 100, title: { display: true, text: "Độ tin cậy trung bình (%)" } },
           y: { min: 0, max: 100, title: { display: true, text: "Tỉ lệ đúng thực tế (%)" } },
@@ -507,6 +529,7 @@ async function buildConfusion() {
     const correct = matrix.reduce((a, row, i) => a + row[i], 0);
     byId("cm-summary").textContent = `${MODEL_LABELS[state.model]} · ${state.source === "plantdoc" ? "PlantDoc" : "PlantVillage"} · ${state.split === "val" ? "tập kiểm tra" : "tập giữ riêng"}: ${fmtInt(correct)}/${fmtInt(total)} ảnh đúng (${fmtPct(total ? correct / total : 0)}).`;
     byId("cm-wrap").innerHTML = confusionHtml(matrix, details.classes);
+    attachCrosshair(byId("cm-wrap"));
     byId("cm-top").innerHTML = topConfusions(matrix, details.classes) || "<li>Không có nhầm lẫn.</li>";
   };
   const bind = (attr, key) => root.querySelectorAll(`[${attr}]`).forEach(button => button.addEventListener("click", () => {

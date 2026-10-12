@@ -12,20 +12,20 @@ Mở `http://127.0.0.1:8088`. Web chỉ nghe trên localhost. Một lệnh này 
 
 ## Cấu trúc giao diện: sáu bước
 
-Menu bên trái đi theo đúng trình tự trình bày; mỗi bước có địa chỉ `#<bước>` nên mở thẳng được một bước và tải lại vẫn đúng bước.
+Thanh sáu bước ở đầu trang đi theo đúng trình tự trình bày (bước đã qua được tô xanh, vạch gạch chân chạy theo bước hiện tại; trên màn hẹp thanh này cuộn ngang); mỗi bước có địa chỉ `#<bước>` nên mở thẳng được một bước và tải lại vẫn đúng bước.
 
 | Bước | Địa chỉ | Việc của người trình bày | Dữ liệu |
 |---|---|---|---|
-| 1 Tổng quan — *Học chung mà không gửi ảnh, có làm được không?* | `#tong-quan` | Nêu đề tài bằng lời thường, giải thích ba bước của FedAvg, so ba cách huấn luyện (Centralized / FedAvg / Local-only) và độ tin cậy của số liệu | `/api/demo/evidence`, `/api/evidence/summary` |
+| 1 Tổng quan — *Tổng quan đồ án* (câu mở: “Cùng huấn luyện. Ảnh vẫn ở từng nơi.”) | `#tong-quan` | Sơ đồ FedAvg chuyển động một lượt mỗi lần vào bước (client hiện lần lượt, trọng số chạy về máy chủ, mô hình chung hiện ra; nút “Xem lại” chạy lại; tắt khi giảm chuyển động), nêu kết quả chính, giải thích ba bước của FedAvg, so ba cách huấn luyện (Centralized / FedAvg / Local-only) và độ tin cậy của số liệu | `/api/demo/evidence`, `/api/evidence/summary` |
 | 2 Dữ liệu phân tán — *Vì sao mỗi nơi tự học là không đủ?* | `#non-iid` | Cho thấy mỗi client giữ phần nào của 38 loại bệnh: heatmap số ảnh và tỉ lệ nhận đúng của mô hình học riêng; mục gập "12 cách chia dữ liệu" (chỉ α=0,1 có mô hình) | `/api/evidence/summary`, `/api/evidence/partitions` |
 | 3 Kết quả & so sánh — *Kết quả có đáng tin không?* | `#ket-qua` | Sáu tab: Tổng hợp · Tập giữ riêng & thống kê (khoảng tin cậy, McNemar) · Ảnh ngoài đồng theo bệnh · Ma trận nhầm lẫn · Sai mà rất tự tin · Độ tin cậy xác suất | `/api/evidence/summary`, `/api/evidence/details` |
 | 4 Chẩn đoán bệnh lá — *Thử chẩn đoán một chiếc lá* | `#chan-doan` | Chọn ảnh mẫu (dễ → khó) hoặc tải ảnh; một lần gọi chạy cả 7 mô hình, hiện đúng/sai, xác suất gốc + đã hiệu chuẩn, số ảnh bệnh đó mô hình đã học, tùy chọn Grad-CAM; có nút in | `/api/inference/all` (máy chủ cũ: `/api/inference` 6 lần), `samples/demo/catalog.json` |
 | 5 Huấn luyện thử — *Xem FedAvg chạy từng vòng* | `#huan-luyen` | Chạy Flower 5 client, theo dõi vòng, RTT, nhật ký từng client | `/api/federated/train`, `/api/status`, `/api/federated/network-metrics` |
 | 6 Bằng chứng, hạn chế và hướng phát triển | `#bang-chung` | Thứ tự: đã kiểm chứng gì → hạn chế → việc còn lại; mã băm và lệnh mở khóa nằm trong mục gập "chi tiết kỹ thuật" | `/api/evidence/summary` |
 
-Nút **Nền tối/Nền sáng** ở menu đổi giao diện (nhớ lựa chọn; khi in luôn dùng nền sáng).
+Nút **Nền tối/Nền sáng** ở góc phải thanh trên cùng đổi giao diện (nhớ lựa chọn; khi in luôn dùng nền sáng). Phong cách: nền ngà có lưới chấm mờ, tiêu đề chữ có chân (Source Serif 4), màu theo trụ cột — Centralized xanh dương, FedAvg xanh lá, Local-only cam.
 
-**Chế độ trình chiếu** (nút ở menu hoặc phím `P`): chữ và số to hơn, ẩn mục kỹ thuật (`.tech-only`), dải bước ở đầu trang; phím `←` `→` chuyển bước, `Esc` thoát. Lựa chọn được nhớ trong trình duyệt.
+**Chế độ trình chiếu** (nút ở thanh trên cùng hoặc phím `P`): chữ và số to hơn, ẩn mục kỹ thuật (`.tech-only`), thanh sáu bước vẫn ở đầu trang; phím `←` `→` chuyển bước, `Esc` thoát. Lựa chọn được nhớ trong trình duyệt.
 
 `GET /api/evidence/summary` chỉ **đọc** các báo cáo đã sinh (`local_reeval_report.json`, `plantdoc_per_class_report.json`, `plantdoc_domain_gap_report.json`, `release_leakage_audit.json`, `client_shard_class_counts.json`, `status_report.json`). Mỗi phần fail-closed riêng: báo cáo thiếu, hỏng hoặc lệch danh tính bundle (protocol, hash release/validation, SHA-256 checkpoint, số công bố) thì phần đó trả `available:false` kèm lý do và giao diện nói rõ chưa có, không hiện số nửa vời. Toàn bộ phần có số liệu mô hình bị khóa khi cổng registry chặn bộ đối chứng.
 

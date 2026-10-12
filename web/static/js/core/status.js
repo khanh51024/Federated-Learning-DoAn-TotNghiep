@@ -4,7 +4,8 @@
 import { getJson } from "./api.js";
 import { byId, notify, setClass, setText } from "./dom.js";
 
-const POLL_MS = 4000;
+let pollMs = 4000;
+const POLL_DEFAULT_MS = 4000;
 
 let timer = null;
 let serverOnline = null;
@@ -22,6 +23,11 @@ const listeners = new Set();
 export function onStatus(fn) {
   listeners.add(fn);
   return () => listeners.delete(fn);
+}
+
+/** Nhịp poll (ms). Bước 5 hạ xuống ~1,5 s khi có phiên chạy để sơ đồ bám sát trạng thái thật; trả về 4 s khi xong. */
+export function setPollInterval(ms) {
+  pollMs = Number.isFinite(ms) && ms >= 1000 ? ms : POLL_DEFAULT_MS;
 }
 
 export function currentTask() {
@@ -55,6 +61,8 @@ function notifyFinished(task) {
 function markOffline(error) {
   const indicator = byId("server-status-text");
   setText(indicator, "Máy chủ: mất kết nối");
+  const holderOff = byId("server-status");
+  if (holderOff) holderOff.title = "Máy chủ: mất kết nối";
   indicator?.parentElement?.classList.add("offline");
   const badge = byId("task-badge");
   setText(badge, "Mất kết nối API");
@@ -68,6 +76,8 @@ function markOffline(error) {
 function renderHeader(data) {
   const indicator = byId("server-status-text");
   setText(indicator, `Máy chủ: ${data.server_status === "online" ? "đang hoạt động" : "không phản hồi"}`);
+  const holder = byId("server-status");
+  if (holder) holder.title = indicator.textContent;
   indicator?.parentElement?.classList.remove("offline");
   const flower = data.flower_server_active ? "Flower đang chạy" : "Flower chờ";
   setText(byId("system-device"), `Thiết bị: ${data.device} · ${flower}`);
@@ -133,7 +143,7 @@ function schedule() {
   timer = setTimeout(async () => {
     await pollStatus();
     schedule();
-  }, POLL_MS);
+  }, pollMs);
 }
 
 export function startStatusPolling() {

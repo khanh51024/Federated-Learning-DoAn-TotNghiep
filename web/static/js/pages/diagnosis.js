@@ -89,7 +89,8 @@ function setPreview(file, metaHtml) {
   state.previewUrl = URL.createObjectURL(file);
   const img = byId("preview-image");
   img.src = state.previewUrl;
-  img.classList.remove("hidden");
+  byId("selected-stage").classList.remove("hidden");
+  resetStage();
   byId("selected-empty").classList.add("hidden");
   const meta = byId("selected-meta");
   meta.innerHTML = metaHtml;
@@ -106,6 +107,7 @@ function resetResults() {
   state.explanations.clear();
   state.timing = null;
   state.busy = false;
+  resetStage();
   byId("diag-result").classList.add("hidden");
   byId("btn-print").classList.add("hidden");
   byId("diag-empty").classList.remove("hidden");
@@ -368,15 +370,85 @@ function renderGradcam(models) {
 }
 
 /** Vẽ lại toàn bộ khối kết quả từ state (đổi chế độ xem / nhãn thật không cần gọi lại mô hình). */
+// ───────── Khung ảnh: ảnh gốc → vùng FedAvg dựa vào ─────────
+// Vạch quét = đang xử lý; crossfade 320 ms sang Grad-CAM chỉ khi có kết quả thật (cần bật Grad-CAM).
+const STAGE_MODEL = "fedavg";
+
+function setStageView(view) {
+  const stage = byId("selected-stage");
+  if (!stage) return;
+  const cam = view === "cam";
+  stage.classList.toggle("is-cam", cam);
+  byId("stage-tag").textContent = cam ? "Grad-CAM của FedAvg v7: vùng ảnh ảnh hưởng tới nhóm nó đoán" : "";
+  $$("[data-stage-view]").forEach(button => {
+    const on = button.dataset.stageView === view;
+    button.classList.toggle("is-active", on);
+    button.setAttribute("aria-checked", String(on));
+  });
+}
+
+let stageStamp = 0; // tăng mỗi lần đổi ảnh/xóa kết quả: giải mã ảnh Grad-CAM đến muộn của ảnh cũ bị bỏ qua
+
+function resetStage() {
+  stageStamp += 1;
+  const stage = byId("selected-stage");
+  if (!stage) return;
+  stage.classList.remove("is-cam", "is-scanning");
+  const cam = byId("preview-cam");
+  cam.removeAttribute("src");
+  cam.alt = "";
+  cam.setAttribute("aria-hidden", "true"); // chưa có ảnh vùng: không để trình đọc màn hình đọc một ảnh không tồn tại
+  byId("stage-views").classList.add("hidden");
+  byId("stage-tag").textContent = "";
+  setStageView("original");
+}
+
+function setScanning(on) {
+  const stage = byId("selected-stage");
+  if (!stage) return;
+  stage.classList.toggle("is-scanning", on);
+  if (on) byId("stage-tag").textContent = prefersReducedMotion() ? "Đang chẩn đoán…" : "";
+  else if (!stage.classList.contains("is-cam")) byId("stage-tag").textContent = "";
+}
+
+async function renderStage() {
+  const item = state.explanations.get(STAGE_MODEL);
+  const views = byId("stage-views");
+  if (!state.explain || !item?.image) {
+    // Grad-CAM đang tắt hoặc chưa có ảnh: quay về ảnh gốc, không để lại ảnh vùng cũ
+    views.classList.add("hidden");
+    setStageView("original");
+    return;
+  }
+  const cam = byId("preview-cam");
+  const stamp = stageStamp;
+  const wasHidden = views.classList.contains("hidden");
+  let fresh = wasHidden;
+  if (cam.getAttribute("src") !== item.image) {
+    fresh = true;
+    cam.src = item.image;
+    try { await cam.decode(); } catch (_error) { /* ảnh vẫn hiển thị được */ }
+    // ảnh khác đã được chọn / kết quả bị xóa / Grad-CAM bị tắt trong lúc giải mã: bỏ qua
+    if (stamp !== stageStamp || !state.explain || state.explanations.get(STAGE_MODEL)?.image !== item.image) return;
+  }
+  cam.alt = "Vùng ảnh FedAvg dựa vào để chẩn đoán (Grad-CAM)";
+  cam.removeAttribute("aria-hidden");
+  views.classList.remove("hidden");
+  // Chỉ tự chuyển sang "vùng mô hình nhìn" khi có ảnh mới/vừa bật lại; vẽ lại do đổi nhãn thật/chế độ xem thì giữ lựa chọn của người dùng.
+  if (fresh) setStageView("cam");
+}
+
 function renderAll({ animate = false } = {}) {
   const models = plannedModels();
   renderTable(models, { animateIds: animate ? models : [] });
   summarize(models);
   renderGradcam(models);
+  renderStage();
 }
 
 function startRun(models) {
   state.busy = true;
+  setScanning(true);
   byId("diag-empty").classList.add("hidden");
   byId("diag-result").classList.remove("hidden");
   // trên màn hình hẹp, kết quả nằm dưới khung chọn ảnh: cuộn tới để người dùng thấy ngay
@@ -396,6 +468,7 @@ function startRun(models) {
 
 function finishRun() {
   state.busy = false;
+  setScanning(false);
   toggleHidden(byId("diag-progress-badge"), true);
   const button = byId("btn-diagnose");
   button.disabled = false;
@@ -638,6 +711,7 @@ export async function mount() {
     rerender();
   });
   byId("btn-print").addEventListener("click", () => window.print());
+  $$("[data-stage-view]").forEach(button => button.addEventListener("click", () => setStageView(button.dataset.stageView)));
   byId("btn-diagnose").addEventListener("click", run);
   byId("btn-plantvillage").addEventListener("click", runPlantVillageReference);
 

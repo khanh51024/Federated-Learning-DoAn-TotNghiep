@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-12T08:47:51",
+      "generated_at": "2026-10-12T14:35:33",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,13 +145,13 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-12T08:47:57",
+      "generated_at": "2026-10-12T14:35:39",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
-      "generated_at": "2026-10-12T08:55:36",
-      "code_fingerprint": "b05552af8e1dad83c7a9bcfed6006339df48686bc85e59c31e2c3f2e763d28eb",
+      "generated_at": "2026-10-12T14:41:16",
+      "code_fingerprint": "d6920be9fe9d8412269529ebe0b39fef58c9b6f3375c6e89884482b9f23b006b",
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
@@ -180,7 +180,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-12T08:47:55",
+      "generated_at": "2026-10-12T14:35:37",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
@@ -269,7 +269,7 @@
       "id": "full_tests",
       "title": "Full tests pass trên mã nguồn hiện tại",
       "status": "XONG",
-      "detail": "technical_acceptance=pass lúc 2026-10-12T08:55:36 (gồm test mạng, 46 file test) trên đúng mã nguồn hiện tại",
+      "detail": "technical_acceptance=pass lúc 2026-10-12T14:41:16 (gồm test mạng, 46 file test) trên đúng mã nguồn hiện tại",
       "unlock": []
     },
     {

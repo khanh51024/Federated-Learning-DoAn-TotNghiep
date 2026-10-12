@@ -1,33 +1,11 @@
-// Điểm khởi động: điều hướng 6 bước, chế độ trình chiếu, poll trạng thái server.
+// Điểm khởi động: thanh 6 bước ở đầu trang, chế độ trình chiếu, poll trạng thái server.
 // Mọi trang nằm trong js/pages/*.js và được tải lười khi mở lần đầu.
-import { $$, byId } from "./core/dom.js";
+import { byId } from "./core/dom.js";
+import "./core/motion.js";
 import { initPresent } from "./core/present.js";
 import { initRouter } from "./core/router.js";
 import { startStatusPolling } from "./core/status.js";
 import { initTheme } from "./core/theme.js";
-
-const MOBILE_QUERY = "(max-width: 1100px)";
-
-function initSidebarToggle() {
-  const toggle = byId("mobile-nav-toggle");
-  const sidebar = byId("app-sidebar");
-  if (!toggle || !sidebar) return;
-  const mq = window.matchMedia(MOBILE_QUERY);
-  const setOpen = open => {
-    sidebar.classList.toggle("open", open);
-    toggle.setAttribute("aria-expanded", String(open));
-    // trên mobile sidebar đóng không được nhận focus; trên màn hình rộng nó luôn hiện nên phải bỏ inert
-    if (open || !mq.matches) sidebar.removeAttribute("inert");
-    else sidebar.setAttribute("inert", "");
-  };
-  toggle.addEventListener("click", () => setOpen(!sidebar.classList.contains("open")));
-  $$(".nav-item").forEach(item => item.addEventListener("click", () => setOpen(false)));
-  document.addEventListener("keydown", event => {
-    if (event.key === "Escape") setOpen(false);
-  });
-  mq.addEventListener("change", () => setOpen(sidebar.classList.contains("open")));
-  setOpen(false);
-}
 
 // Skip link: nhảy tới nội dung mà KHÔNG đổi hash (hash là địa chỉ của bước đang xem).
 function initSkipLink() {
@@ -65,7 +43,6 @@ function initGroupArrowKeys() {
 }
 
 initTheme();
-initSidebarToggle();
 initSkipLink();
 initGroupArrowKeys();
 initPresent();

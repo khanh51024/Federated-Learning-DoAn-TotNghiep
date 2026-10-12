@@ -1,11 +1,12 @@
 // Điều hướng theo hash (#tong-quan …): tải lười từng trang, giữ thanh chỉ báo ở menu, cập nhật tiêu đề và nút Trước/Sau.
 import { $, $$, byId, notify, prefersReducedMotion, setText } from "./dom.js";
+import { enter } from "./motion.js";
 
 export const ROUTES = [
   {
     id: "tong-quan", step: 1, group: "Trình bày", label: "Tổng quan",
-    title: "Học chung mà không gửi ảnh — có làm được không?",
-    desc: "Bài toán của đồ án, cách học liên kết FedAvg hoạt động và kết quả chính",
+    title: "Tổng quan đồ án",
+    desc: "",
     load: () => import("../pages/overview.js"),
   },
   {
@@ -46,6 +47,7 @@ const listeners = new Set();
 let activeId = null;
 let token = 0;
 let indicator = null;
+let firstShow = true; // lần hiển thị đầu: đặt vạch ngay, không trượt từ x = 0
 
 export const routeIndex = id => ROUTES.findIndex(r => r.id === id);
 
@@ -68,14 +70,23 @@ export function onRouteChange(fn) {
   return () => listeners.delete(fn);
 }
 
+// Vạch gạch chân 3 px dưới bước hiện tại: chỉ đổi transform (translateX + scaleX) nên chạy trên compositor.
+const INDICATOR_FALLBACK = 100;
+
 function placeIndicator(item, animate) {
   if (!indicator || !item) return;
   if (!animate) indicator.style.transition = "none";
-  indicator.style.height = `${item.offsetHeight}px`;
-  indicator.style.transform = `translateY(${item.offsetTop}px)`;
+  const base = indicator.offsetWidth || INDICATOR_FALLBACK; // độ rộng cơ sở lấy từ CSS (.nav-indicator), không ghim số trong JS
+  indicator.style.transform = `translateX(${item.offsetLeft}px) scaleX(${(item.offsetWidth / base).toFixed(4)})`;
   if (!animate) {
     void indicator.offsetWidth;
     indicator.style.transition = "";
+  }
+  // màn hẹp: dải bước cuộn ngang; đưa bước hiện tại vào giữa (không dùng scrollIntoView để không cuộn cả trang)
+  const nav = item.parentElement;
+  if (nav && nav.scrollWidth > nav.clientWidth + 1) {
+    const left = item.offsetLeft - (nav.clientWidth - item.offsetWidth) / 2;
+    nav.scrollTo({ left: Math.max(0, left), behavior: animate && !prefersReducedMotion() ? "smooth" : "auto" });
   }
 }
 
@@ -105,23 +116,20 @@ async function show(id) {
   const mine = ++token;
   activeId = route.id;
 
+  const activeIndex = routeIndex(route.id);
   $$(".nav-item").forEach(item => {
     const isActive = item.dataset.route === route.id;
     item.classList.toggle("active", isActive);
+    item.classList.toggle("is-done", routeIndex(item.dataset.route) < activeIndex);
     if (isActive) {
       item.setAttribute("aria-current", "page");
-      placeIndicator(item, true);
+      placeIndicator(item, firstShow ? false : true);
     } else {
       item.removeAttribute("aria-current");
     }
   });
+  firstShow = false;
   $$(".tab-pane").forEach(pane => pane.classList.toggle("active", pane.dataset.route === route.id));
-  $$(".present-step").forEach(link => {
-    const on = link.dataset.route === route.id;
-    link.classList.toggle("is-active", on);
-    if (on) link.setAttribute("aria-current", "step");
-    else link.removeAttribute("aria-current");
-  });
 
   setText(byId("page-title"), route.title);
   setText(byId("route-announcer"), `Bước ${route.step} trên ${ROUTES.length}: ${route.label}`);
@@ -129,7 +137,9 @@ async function show(id) {
   setText(byId("step-eyebrow"), `Bước ${route.step}/${ROUTES.length} · ${route.group}`);
   document.title = `${route.label} — CropFed FL`;
   renderStepNav(route);
-  window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+  window.scrollTo({ top: 0, behavior: "auto" }); // đổi bước: về đầu trang ngay, không cuộn dài làm giật khung hình
+  const header = $(".top-header");
+  if (header) enter(header, { distance: 6, duration: 280 });
 
   const pane = byId(`page-${route.id}`);
   pane?.querySelector(":scope > .pane-error")?.remove();
@@ -158,6 +168,16 @@ async function show(id) {
   for (const fn of listeners) fn(route);
 }
 
+/** Dải bước cuộn ngang: mép nào còn bước bị che thì mờ dần (data-fade), tránh nhãn bị cắt cụt giữa chữ. */
+function updateFade() {
+  const nav = $(".nav-menu");
+  if (!nav) return;
+  const start = nav.scrollLeft > 2;
+  const end = nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 2;
+  const fade = start && end ? "both" : start ? "start" : end ? "end" : "none";
+  if (nav.dataset.fade !== fade) nav.dataset.fade = fade;
+}
+
 export function initRouter() {
   const menu = $(".nav-menu");
   if (menu) {
@@ -165,10 +185,13 @@ export function initRouter() {
     indicator.className = "nav-indicator";
     indicator.setAttribute("aria-hidden", "true");
     menu.prepend(indicator);
-    menu.classList.add("has-indicator");
   }
-  const reposition = () => placeIndicator($(".nav-item.active"), false);
+  const reposition = () => {
+    placeIndicator($(".nav-item.active"), false);
+    updateFade();
+  };
   window.addEventListener("resize", reposition);
+  if (menu) menu.addEventListener("scroll", updateFade, { passive: true });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(reposition);
   window.addEventListener("hashchange", () => {
     const hash = (location.hash || "").replace(/^#/, "");
