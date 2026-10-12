@@ -485,6 +485,55 @@ def _holdout(evidence: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+_FULLFRAME_MODES = ("annotator_crop", "full_frame", "center_square")
+
+
+def _ratio(correct: Any, total: Optional[int]) -> Optional[float]:
+    c = _int(correct)
+    if c is None or not total or c < 0 or c > total:
+        return None
+    return c / total
+
+
+def _fullframe(evidence: Dict[str, Any]) -> Dict[str, Any]:
+    """Độ chính xác PlantDoc khi đưa NGUYÊN KHUNG so với ảnh cắt lá (scripts/eval_fullframe_plantdoc.py).
+
+    Chỉ đọc báo cáo; mọi số đã ép kiểu. Giới hạn của phép đo nằm trong `caveat` (do báo cáo ghi, giao diện hiển thị)."""
+    report = _load_json(reg.FULLFRAME_EVAL_JSON)
+    if report is None:
+        return _withheld(f"chưa có {reg.FULLFRAME_EVAL_JSON} — chạy scripts/eval_fullframe_plantdoc.py --download (cần dataset)")
+    problems = _identity_problems(report, evidence) + _checkpoint_problems(report, evidence)
+    if report.get("crop_policy") != reg.FULLFRAME_CROP_POLICY:
+        problems.append("chính sách cắt ảnh khác release")
+    splits_in = report.get("splits") or {}
+    splits = {}
+    for split in ("val", "test"):
+        block = ((splits_in.get(split) or {}).get("single_class_scenes_only")) or {}
+        n = None
+        entry: Dict[str, Any] = {"scenes": _int((splits_in.get(split) or {}).get("single_class_scenes"))}
+        for mode in _FULLFRAME_MODES + ("published_crop",):
+            m = block.get(mode)
+            if not isinstance(m, dict):
+                problems.append(f"{split}/{mode}: thiếu")
+                continue
+            n = _int(m.get("n"))
+            entry[mode] = {"n": n, **{mid: _ratio((m.get(mid) or {}).get("correct"), n) for mid in MODEL_ORDER}}  # correct/n: không làm tròn hai lần ở giao diện
+        counts = {_int((block.get(mode) or {}).get("n")) for mode in _FULLFRAME_MODES + ("published_crop",)}
+        if len(counts) != 1 or None in counts:
+            problems.append(f"{split}: số ảnh giữa các cách đưa ảnh vào không khớp")
+        splits[split] = entry
+    if problems:
+        return _withheld("báo cáo ảnh nguyên khung không khớp: " + "; ".join(sorted(set(problems))))
+    return {
+        "available": True,
+        "crop_policy": str(report.get("crop_policy")),
+        "scenes_verified": _int(report.get("scenes_verified_sha256")),
+        "excluded_scenes": _int((report.get("excluded_unavailable") or {}).get("scenes")),
+        "caveat": str(report.get("caveat") or ""),
+        "splits": splits,
+    }
+
+
 def _stat_interval(block: Dict[str, Any]) -> Dict[str, Any]:
     return {"estimate": _round(block.get("estimate")), "low": _round(block.get("low")), "high": _round(block.get("high")),
             "clusters": _int(block.get("clusters"))}
@@ -739,7 +788,7 @@ def summary(evidence: Dict[str, Any]) -> Dict[str, Any]:
             "reason": reason,
             "identity": None,
             "checklist": _guard("checklist", lambda: _checklist(redact=True)),
-            **{name: _withheld(reason) for name in ("reeval", "plantdoc", "domain_gap", "leakage", "shards", "holdout", "statistics")},
+            **{name: _withheld(reason) for name in ("reeval", "plantdoc", "domain_gap", "leakage", "shards", "holdout", "statistics", "fullframe")},
         }
     return {
         "available": True,
@@ -751,5 +800,6 @@ def summary(evidence: Dict[str, Any]) -> Dict[str, Any]:
         "shards": _guard("shard", lambda: _shards(evidence)),
         "holdout": _guard("test giữ riêng", lambda: _holdout(evidence)),
         "statistics": _guard("thống kê", lambda: _statistics(evidence)),
+        "fullframe": _guard("ảnh nguyên khung", lambda: _fullframe(evidence)),
         "checklist": _guard("checklist", _checklist),
     }

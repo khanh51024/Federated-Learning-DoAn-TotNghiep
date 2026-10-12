@@ -106,7 +106,7 @@ function buildSummary() {
 
     <section class="panel mt-4">
       <h3 class="panel-title">Quá trình huấn luyện Centralized v6</h3>
-      <p class="panel-desc">${fmtInt(evidence.centralized_history.length)} epoch. FedAvg v7 không công bố log từng vòng nên không vẽ đường hội tụ tương ứng — web không tự dựng đường từ một điểm cuối.</p>
+      <p class="panel-desc">${fmtInt(evidence.centralized_history.length)} epoch. Bản công bố của FedAvg v7 chỉ kèm log 27 vòng đầu (đến vòng được chọn; lần chạy gốc kết thúc ở vòng 32, log vòng 28–32 không có trong bộ công bố) nên web chưa vẽ đường hội tụ tương ứng — web không tự dựng đường từ một điểm cuối.</p>
       <div class="chart-container mt-4"><canvas id="chart-central-history" aria-label="Độ chính xác và sai số trên tập kiểm tra của Centralized qua các epoch"></canvas></div>
     </section>`;
 
@@ -410,7 +410,7 @@ function buildHoldout() {
       Với Centralized, epoch được chọn (${fmtInt(sel.chosen_epoch)}/${fmtInt(sel.epochs)}) có độ chính xác PlantDoc ${fmtPct(sel.chosen_plantdoc_accuracy)}
       — ${sel.chosen_rank_among_epochs === 1 ? "cao nhất trong mọi epoch" : `hạng ${fmtInt(sel.chosen_rank_among_epochs)}/${fmtInt(sel.epochs)}`} (epoch cuối: ${fmtPct(sel.last_plantdoc_accuracy)}).
       Vì vậy đồ án chấm lại thêm trên một tập ${fmtInt(ho?.count)} ảnh <b>giữ riêng</b> — tập chẩn đoán "legacy" có sẵn của bộ dữ liệu, không dùng để chọn mô hình
-      nên không bị thiên lệch này. ${valVsTest} ${esc(sel.fedavg_note)}
+      nên không bị thiên lệch này. ${valVsTest} Với FedAvg v7: lịch sử từng vòng chỉ nằm trong checkpoint (27 vòng đầu, không có tệp log riêng) nên web chưa đo hiệu ứng chọn của nó.
       <br><b>Lưu ý:</b> đây chưa phải bài kiểm tra cuối được khóa trước, và chưa nằm trong phép kiểm tra trùng ảnh ở bước 6;
       một phần ảnh PlantVillage trong tập này có thể là ảnh chụp lại cùng lá với ảnh học (xem bảng cuối trang).
     </section>` : ""}

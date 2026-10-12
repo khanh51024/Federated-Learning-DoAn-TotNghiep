@@ -47,8 +47,23 @@ function evaluationLimits(summary) {
     out.push(["Một phần ảnh PlantVillage có thể là ảnh chụp lại cùng một lá",
       `${fmtInt(leaf.ungrouped_images)} ảnh PlantVillage trong tập giữ riêng không được gắn nhóm theo lá; ${fmtInt(leaf.suspected_reshoots)} ảnh trong đó có ảnh học cùng loại với số thứ tự liền kề (nghi là chụp lại cùng lá). Bỏ các ảnh đó: Centralized ${fmtPct(c.all)} → ${fmtPct(c.without_suspected_reshoots)}, FedAvg ${fmtPct(f.all)} → ${fmtPct(f.without_suspected_reshoots)} — ${holds ? "chưa thấy dấu hiệu con số bị thổi phồng" : "độ chính xác giảm, con số có thể bị thổi phồng một phần"}; muốn loại hẳn rủi ro cần gom lại nhóm lá và dựng lại bộ dữ liệu.`]);
   }
+  const ff = summary?.fullframe;
+  if (ff?.available) {
+    const pick = (split, mode, id) => ff.splits?.[split]?.[mode]?.[id];
+    const pair = (id, mode) => ["val", "test"].map(split => pick(split, mode, id));
+    const ok = ["fedavg", "centralized"].every(id => [...pair(id, "annotator_crop"), ...pair(id, "full_frame")].every(v => v !== null && v !== undefined));
+    if (ok) {
+      const [fCropV, fCropT] = pair("fedavg", "annotator_crop");
+      const [fFullV, fFullT] = pair("fedavg", "full_frame");
+      const [cCropV, cCropT] = pair("centralized", "annotator_crop");
+      const [cFullV, cFullT] = pair("centralized", "full_frame");
+      // đặt đầu danh sách: đây là hạn chế quan trọng nhất của việc dùng ngoài đời, không được rơi vào phần gập
+      out.unshift(["Ảnh cả cây hoặc nhiều lá làm mô hình kém đi rõ rệt",
+        `Với cùng các ảnh PlantDoc, đưa cả khung ảnh vào thay vì ảnh đã cắt theo khung lá: FedAvg giảm từ ${fmtPct(fCropV, 1)} xuống ${fmtPct(fFullV, 1)} trên tập kiểm tra và từ ${fmtPct(fCropT, 1)} xuống ${fmtPct(fFullT, 1)} trên tập giữ riêng; Centralized từ ${fmtPct(cCropV, 1)} xuống ${fmtPct(cFullV, 1)} và từ ${fmtPct(cCropT, 1)} xuống ${fmtPct(cFullT, 1)}. Phép đo dùng ${fmtInt(ff.splits.val.scenes)} + ${fmtInt(ff.splits.test.scenes)} cảnh (loại ${fmtInt(ff.excluded_scenes)} cảnh không còn ở kho công khai) nên khoảng dao động còn rộng. Web chưa có bước tự tìm và cắt lá: hãy tải ảnh chụp một chiếc lá.`]);
+    }
+  }
   out.push(["So sánh Centralized và FedAvg chưa hoàn toàn công bằng",
-    "Centralized huấn luyện 83 epoch với bộ tối ưu AdamW; FedAvg dùng SGD và dừng ở khoảng 32 vòng khi vẫn đang cải thiện. Khoảng cách giữa hai mô hình vì vậy có thể bị đánh giá cao hơn thực tế (FedAvg dừng sớm); muốn kết luận \"FedAvg ngang Centralized\" cần huấn luyện lại cùng điều kiện, nhiều lần (docs/EXPERIMENT_PROTOCOL.md, mục 7)."]);
+    "Centralized huấn luyện 83 epoch với bộ tối ưu AdamW; FedAvg dùng SGD (không momentum), chạy 32 vòng rồi dừng sớm theo ngưỡng hội tụ, mô hình được chọn là vòng 27 — F1 PlantVillage vẫn đang tăng ở vòng 27 (log trong checkpoint). Khoảng cách giữa hai mô hình vì vậy có thể bị đánh giá cao hơn thực tế (FedAvg dừng sớm); muốn kết luận \"FedAvg ngang Centralized\" cần huấn luyện lại cùng điều kiện, nhiều lần (docs/EXPERIMENT_PROTOCOL.md, mục 7)."]);
   return out;
 }
 

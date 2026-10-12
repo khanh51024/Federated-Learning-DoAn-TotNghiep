@@ -404,3 +404,13 @@ def test_segmented_and_cam_markup_are_accessible():
     assert 'class="fl-figure" role="img"' in hero, "role=img phải đặt ở khung sơ đồ"
     assert '<figure class="fl-diagram" id="fl-diagram" role="img"' not in hero, "role=img không được bọc nút Xem lại"
 
+
+def test_fullframe_limitation_numbers_come_from_the_api_not_the_source():
+    """Con số "ảnh cả khung làm mô hình kém đi" lấy từ summary.fullframe; không được gõ cứng trong JS."""
+    source = JS_BY_REL["pages/evidence.js"]
+    assert "summary?.fullframe" in source and "ff.splits" in source
+    block = source[source.index("const ff = summary?.fullframe"):]
+    block = block[: block.index('out.push(["So sánh Centralized')]
+    literal_percent = re.findall(r"(?<![\w$.{])\d{1,3}[,.]\d\s*%", block)
+    assert not literal_percent, f"số phần trăm gõ cứng trong giới hạn ảnh nguyên khung: {literal_percent}"
+

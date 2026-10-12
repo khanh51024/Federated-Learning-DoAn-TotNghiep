@@ -87,6 +87,35 @@ def test_statistics_is_withheld_on_checkpoint_mismatch(evidence, monkeypatch):
     assert es.summary(evidence)["statistics"]["available"] is False
 
 
+def test_fullframe_section_reports_real_numbers_and_matches_the_artifact(evidence):
+    section = es.summary(evidence)["fullframe"]
+    assert section["available"] is True and section["crop_policy"] == reg.FULLFRAME_CROP_POLICY
+    raw = es._load_json(reg.FULLFRAME_EVAL_JSON)
+    for split in ("val", "test"):
+        for mode in ("annotator_crop", "full_frame", "center_square", "published_crop"):
+            raw_block = raw["splits"][split]["single_class_scenes_only"][mode]
+            for model_id in es.MODEL_ORDER:
+                assert section["splits"][split][mode][model_id] == raw_block[model_id]["correct"] / raw_block["n"]
+    # phát hiện chính: cả ảnh làm FedAvg kém đi so với ảnh cắt, ở cả hai tập
+    for split in ("val", "test"):
+        assert section["splits"][split]["full_frame"]["fedavg"] < section["splits"][split]["annotator_crop"]["fedavg"]
+
+
+@pytest.mark.parametrize("mutate", [
+    lambda r: r.__setitem__("validation_manifest_sha256", "0" * 64),
+    lambda r: r["checkpoint_sha256"].__setitem__("fedavg", "0" * 64),
+    lambda r: r.__setitem__("crop_policy", "whole_leaf_canonical"),
+    lambda r: r["splits"]["test"]["single_class_scenes_only"].pop("full_frame"),
+    lambda r: r["splits"]["val"]["single_class_scenes_only"]["full_frame"].__setitem__("n", 1),
+], ids=["validation", "checkpoint", "crop-policy", "missing-mode", "count-mismatch"])
+def test_fullframe_is_withheld_on_any_mismatch(evidence, monkeypatch, mutate):
+    _tamper(monkeypatch, reg.FULLFRAME_EVAL_JSON, mutate)
+    result = es.summary(evidence)["fullframe"]
+    assert result["available"] is False and result["reason"]
+    # các phần khác không bị kéo theo
+    assert es.summary(evidence)["holdout"]["available"] is True
+
+
 def test_error_gallery_is_withheld_on_identity_mismatch(evidence, monkeypatch):
     _tamper(monkeypatch, reg.ERROR_GALLERY_CATALOG_JSON, lambda c: c.__setitem__("validation_manifest_sha256", "f" * 64))
     assert es.details(evidence)["errors"]["available"] is False

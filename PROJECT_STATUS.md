@@ -1,7 +1,7 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-12 14:41 · sinh tự bởi `scripts/update_status.py`
-> **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)
+> **Cập nhật lúc:** 2026-10-12 21:24 · sinh tự bởi `scripts/update_status.py`
+> **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 3 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
 > con số nào trong repo phải truy được về `artifacts/registry.json`. Không sửa tay — chỉ khối Nhật ký cuối file.
@@ -20,21 +20,21 @@
 - Dataset cục bộ để tái lập: `data/partitions_stage2_scratch_v3` — split **38984/4400/10921** (5 clients, seed 42, protocol `stage2_scratch_clean_v3`)
 - Run Kaggle lịch sử: `20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62` — metrics CÓ, **checkpoint KHÔNG còn trên máy**
 
-## 3. Checklist nghiệm thu — XONG 19/22 · CHƯA 0 · BLOCKED 3
+## 3. Checklist nghiệm thu — XONG 16/22 · CHƯA 3 · BLOCKED 3
 
 | # | Hạng mục | Trạng thái | Bằng chứng (máy kiểm) |
 |---|---|---|---|
-| 1 | Registry v2 + danh mục mọi checkpoint trên đĩa | ✅ XONG | schema v2; 18 model; 58 file .pt đều có tên (15 trong model, 43 trong nhóm) |
+| 1 | Registry v2 + danh mục mọi checkpoint trên đĩa | ✅ XONG | schema v2; 18 model; 59 file .pt đều có tên (15 trong model, 44 trong nhóm) |
 | 2 | Smoke cách ly khỏi slot canonical | ✅ XONG | slot canonical không chứa smoke; 3 checkpoint smoke nằm ở artifacts/checkpoints/smoke/ |
 | 3 | Một engine train (pipeline cũ gom vào legacy/) | ✅ XONG | engine duy nhất là src/; pipeline Kaggle/stage* nằm trong legacy/ (chạy riêng: pytest legacy/tests) |
 | 4 | Web tách router/service, inference đi một cửa | ✅ XONG | app.py chỉ mount router; inference chỉ đi qua web/services/model_service.py (cổng web_visible) |
-| 5 | Không hardcode đường dẫn artifact | ✅ XONG | mọi đường dẫn artifacts/ trong src/web/scripts lấy từ src/registry.py (quét AST) |
-| 6 | Dọn tài liệu mâu thuẫn | ✅ XONG | gốc repo chỉ còn README.md + PROJECT_STATUS.md; docs/ chỉ gồm tài liệu hiện hành |
+| 5 | Không hardcode đường dẫn artifact | ⬜ CHƯA | 1 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/eval_fullframe_plantdoc.py:44'] |
+| 6 | Dọn tài liệu mâu thuẫn | ⬜ CHƯA | tài liệu ngoài danh mục: gốc=[] docs=['NEXT_TRAINING_PLAN.md'] |
 | 7 | Số liệu trong docs không mâu thuẫn artifact | ✅ XONG | không còn số liệu mâu thuẫn đã biết (97,12, 97.12...) và không ghi tĩnh kết quả test trong README/docs |
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
 | 9 | Test không ghi đè artifact đang track | ✅ XONG | test không tham chiếu artifacts/checkpoints/metrics (dùng tmp_path) |
 | 10 | Dependency khai báo một nơi (pyproject = requirements) | ✅ XONG | 15 dependency trùng giữa pyproject.toml và requirements.txt; ghim cũ nằm ở legacy/pyproject.toml |
-| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-12T14:41:16 (gồm test mạng, 46 file test) trên đúng mã nguồn hiện tại |
+| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-12T21:24:54 (gồm test mạng, 48 file test) trên đúng mã nguồn hiện tại |
 | 12 | Kiểm chứng provenance & checkpoint canonical | ⛔ BLOCKED | provenance=unverified; lỗi: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing'] |
 | 13 | Audit leakage theo từng run | ✅ XONG | release mixed_pv_pd_v3: train 37.238 / val 4.613 / calibration 4.225 rời nhau trên 5 khóa (giao nhau tổng = 0); 12 partition đều là tập con train; 46.076 ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train) |
 | 14 | Đánh giá PlantDoc theo từng lớp (từ số công bố) | ✅ XONG | PlantDoc phủ 13/38 lớp; 6 lớp recall<50% (136/269 ảnh); FedAvg tệ hơn Centralized ở 5/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5) |
@@ -45,7 +45,7 @@
 | 19 | Khoảng tin cậy theo cụm + McNemar + độ nhạy 'cùng lá' | ✅ XONG | khoảng tin cậy 95% bootstrap theo cụm (cảnh/nhóm lá) — val: PlantDoc Centralized 53.9% [44.2%; 63.1%], Centralized−FedAvg +6.7% [-3.7%; +18.0%], McNemar p=0.0414 / test: PlantDoc Centralized 63.4% [52.9%; 73.7%], Centralized−FedAvg +13.4% [+1.6%; +24.8%], McNemar p=0.00762 |
 | 20 | Chạy multi-seed non-IID (seed 42/123/2026) | ⛔ BLOCKED | chưa có multi-seed THẬT cho protocol đang công bố (mixed PV+PlantDoc, pretrained); chỉ có bản smoke trên ảnh tổng hợp |
 | 21 | Đồng bộ báo cáo & artifacts sau khi có run mới | ⛔ BLOCKED | phụ thuộc multi-seed thật |
-| 22 | Release sạch (mọi gate kỹ thuật XONG) | ✅ XONG | mọi mục kỹ thuật XONG; trước khi nộp vẫn phải `git status` sạch và gắn tag |
+| 22 | Release sạch (mọi gate kỹ thuật XONG) | ⬜ CHƯA | còn mục kỹ thuật chưa XONG: ['no_hardcode', 'docs_clean'] |
 
 ### Việc đang BLOCKED — cần gì và mở khóa bằng lệnh nào
 
@@ -79,7 +79,9 @@ Copy-Item <centralized_best.pt tải về> artifacts/checkpoints/centralized_bes
 
 ### Việc làm được ngay (chưa BLOCKED)
 
-_(không còn mục kỹ thuật nào mở)_
+1. Không hardcode đường dẫn artifact — 1 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/eval_fullframe_plantdoc.py:44']
+2. Dọn tài liệu mâu thuẫn — tài liệu ngoài danh mục: gốc=[] docs=['NEXT_TRAINING_PLAN.md']
+3. Release sạch (mọi gate kỹ thuật XONG) — còn mục kỹ thuật chưa XONG: ['no_hardcode', 'docs_clean']
 
 ## 4. Kết quả chuẩn theo họ (không trộn lẫn)
 
@@ -142,7 +144,7 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
 |---|---|---|---|
 | `kaggle_run_lfs_pointer` | 6 | historical | Checkpoint run Kaggle canonical: chỉ còn con trỏ Git-LFS, bytes thật KHÔNG có trên máy (repo không có remote) — cần tải lại từ Kaggle |
 | `report_experiments_smoke` | 36 | quarantined | Run report_experiments mode=smoke (dữ liệu tổng hợp, accuracy 0.0263) — cấm dùng trong luận văn |
-| `web_runs` | 1 | technical_demo | Checkpoint từ run do web khởi động (smoke Flower hoặc demo huấn luyện); chưa có bằng chứng khoa học |
+| `web_runs` | 2 | technical_demo | Checkpoint từ run do web khởi động (smoke Flower hoặc demo huấn luyện); chưa có bằng chứng khoa học |
 
 ## 5. Chất lượng nhận diện (số công bố, tái đánh giá cục bộ, test giữ riêng)
 
@@ -235,7 +237,7 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
 | Pre-demo check | **technical_demo_ready** | artifacts/pre_demo_check.json |
 | Final acceptance | technical **pass** / scientific **blocked** | 4 blocker khoa học |
 | Network artifact | **CHƯA CÓ run mạng khoa học (artifact hiện tại là smoke kỹ thuật)** | artifacts/network_artifact_validation.json |
-| Danh mục checkpoint | **complete** | 58 file .pt, vô danh: 0 |
+| Danh mục checkpoint | **complete** | 59 file .pt, vô danh: 0 |
 
 ## 7. Nhật ký (khối dưới đây TỰ TAY SỬA)
 
@@ -365,6 +367,18 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
   (chuyển bước còn các transition màu của thanh bước — chỉ vẽ lại, không layout). CHƯA kiểm: phiên huấn luyện Flower thật (máy 16 GB còn
   ~2 GB trống, trước đó server bị hệ điều hành tắt 4 lần) — sơ đồ bước 5 được kiểm bằng `/api/status` giả lập (idle → chạy → vòng xong
   với 5 và 4 client → hoàn tất → Centralized với số cũ); trình duyệt có giao diện và thiết bị cảm ứng thật; không deploy server.
+- 2026-10-12 (ảnh ngoài đời, bước cắt lá): trả lời "99% có thật không / có cần train lại / ảnh trên mạng có nhận được không" bằng số đo, không
+  bằng suy đoán. (1) Chấm lại độc lập bằng mã viết mới (không dùng `web/` hay `evaluate_published_models.py`): 7 mô hình × 4.613 ảnh kiểm tra và
+  × 11.015 ảnh giữ riêng khớp số web hiển thị (12/14 ô khớp số công bố tuyệt đối, 2 ô lệch đúng 1 ảnh — đã được web ghi); ma trận nhầm lẫn, recall
+  từng lớp, 7/7 nhiệt độ T, ECE, 175 ảnh sai-mà-tự-tin, 19 ảnh mẫu đều khớp; 99,22% PlantVillage là thật và không rò rỉ (giao nhau train/val/giữ
+  riêng theo mã băm, ảnh, nhóm lá, cảnh = 0). (2) Điểm yếu thật là ảnh ngoài đồng: PlantDoc 47–63%. `scripts/eval_fullframe_plantdoc.py` (ảnh gốc
+  tải về, kiểm byte_sha256; 208/211 cảnh, 3 cảnh 404 bị loại và ghi rõ): đưa cả khung ảnh thay vì ảnh cắt lá làm FedAvg tụt từ ~49–50% xuống
+  ~30% và Centralized từ 55–62% xuống 45–56%. Số này đọc từ `artifacts/fullframe_eval.json` qua `/api/evidence/summary` (phần `fullframe`,
+  fail-closed theo danh tính release và SHA-256 checkpoint) và hiện ở bước 6 trong 5 hạn chế đầu. (3) `scripts/train_leaf_detector.py`:
+  Faster R-CNN MobileNetV3 một lớp, chỉ học trên cảnh `split == "train"`; mới thử đường ống trên CPU (12 ảnh, 1 epoch), CHƯA có detector đã
+  huấn luyện thật nên chưa tích hợp vào web; tiêu chí chấp nhận đặt trước trong `docs/NEXT_TRAINING_PLAN.md`. (4) Sửa 3 câu chữ web nói quá
+  hoặc chưa kiểm chứng (nguồn số vòng FedAvg: 32 vòng chạy, chọn vòng 27, log chỉ có 27 vòng; bỏ "15–25 giây" chưa từng đo). Train lại ba cách
+  CHƯA làm (cần GPU): chỉ đáng nếu muốn kết luận FedAvg/Centralized công bằng hơn hoặc tăng ảnh ngoài đồng.
 <!-- ROADMAP-END -->
 
 ## 8. Cách đồng bộ
