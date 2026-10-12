@@ -47,20 +47,91 @@ Tiêu chí chấp nhận (đặt trước khi chạy, để không "chọn số 
 Chỉ khi đạt mới tích hợp vào web: `/api/inference/all` thêm tham số bật detector, bước 4 vẽ khung lá và cho chọn lá.
 Chưa tích hợp vì chưa có checkpoint đã kiểm chứng; không đưa mã chưa kiểm chứng vào đường chẩn đoán.
 
-## 3. Train lại ba cách (chỉ khi muốn kết luận chắc hơn hoặc tăng ảnh ngoài đồng)
+## 3. Dữ liệu ngoài đồng đang bị cách ly: thiếu dữ liệu, không phải thiếu cách train
 
-Giữ nguyên để kết quả còn so sánh được: release `mixed_pv_pd_v3`, khởi tạo W0 (`w0_fingerprint`), phân vùng
-`label_alpha_0_1`, 5 client, MobileNetV3-Small, `canonical_v1` khi suy luận, chọn checkpoint trên tập kiểm tra và báo cáo
-trên tập giữ riêng.
+Release `mixed_pv_pd_v3` chỉ đưa 2.115 lá PlantDoc (14 nhóm) vào tập học. Trong `quarantine.jsonl` còn **5.569 lá PlantDoc có
+nhãn trong taxonomy** (quarantine_status = clean; không tính 11 lá có `class_id = -1`, 473 lá xung đột nhãn và 6 lá nghi
+trùng cảnh). Chúng bị cách ly vì nhãn chỉ "ngầm định", không phải vì ảnh hỏng:
 
-Thay đổi theo mục tiêu:
-- **So sánh công bằng (luận văn):** cùng bộ tối ưu và cùng ngân sách cho Centralized và FedAvg; FedAvg chạy đến khi hội tụ
-  thật (bản hiện tại dừng ở vòng 32, chọn vòng 27 khi F1 PlantVillage còn tăng); ≥ 3 seed; báo cáo trung bình ± độ lệch.
-- **Ảnh ngoài đồng:** tăng `plantdoc_sampling_ratio` (hiện 0,25) và dùng augment mạnh hơn có sẵn trong contract
-  (`light_augment_v2`, `moderate_augment_v1` trong `contract/transforms.py`; transform lúc suy luận vẫn là resize thẳng
-  224×224 nên web không phải đổi).
+| Lý do | Số lá | Nghĩa |
+|---|---|---|
+| `assumed_healthy` | 4.019 | nhãn PlantDoc kiểu "Apple leaf" được hiểu là lá khỏe |
+| `ambiguous_alias` | 1.550 | tên nhãn PlantDoc khớp gần đúng với nhãn PlantVillage |
 
-Việc cần làm: mã huấn luyện nằm ở các nhánh `train-centralized-v6`, `train-fedavg-non-iid-v7`,
-`train-local-only-a01-v7` (cấu hình mẫu: `configs/central_spec_v3.json`, `configs/quality_spec_v4_FEDAVG_FULL.json`);
-chạy trên Kaggle/Colab, rồi đưa bundle mới về bằng `scripts/import_branch_demo.py` (cập nhật nhánh/commit ghim và hash,
-web kiểm hash từng checkpoint trước khi hiện số). Không hứa trước con số: chạy xong mới biết tăng được bao nhiêu.
+Chúng thuộc **14 nhóm khác hoàn toàn** với 14 nhóm đang có ảnh ngoài đồng (giao nhau = 0). Nếu nhận được: 14 → **28/38 nhóm**
+có ảnh ngoài đồng; còn **10 nhóm** vẫn không có (Apple Black rot, Cherry Powdery mildew, Corn healthy, Grape Esca, Grape Leaf
+blight, Orange Haunglongbing, Peach Bacterial spot, Potato healthy, Strawberry Leaf scorch, Tomato Target Spot).
+
+**Đã đo** (`scripts/eval_quarantined_plantdoc.py` → `artifacts/quarantined_plantdoc_eval.json`; ảnh khớp `byte_sha256`):
+7 checkpoint hiện có chỉ đạt **Centralized 3.4%, FedAvg 2.1%** trên 5.569 lá này, và hầu hết nhóm gần 0%:
+
+| Nhóm | Số lá | Centralized | FedAvg |
+|---|---|---|---|
+| `Blueberry___healthy` | 830 | 4% | 2% |
+| `Tomato___Tomato_Yellow_Leaf_Curl_Virus` | 788 | 1% | 1% |
+| `Peach___healthy` | 568 | 2% | 0% |
+| `Raspberry___healthy` | 550 | 4% | 1% |
+| `Strawberry___healthy` | 485 | 5% | 0% |
+| `Corn_(maize)___Northern_Leaf_Blight` | 333 | 8% | 4% |
+| `Pepper,_bell___healthy` | 320 | 2% | 2% |
+| `Tomato___healthy` | 305 | 0% | 0% |
+| `Soybean___healthy` | 258 | 10% | 5% |
+| `Pepper,_bell___Bacterial_spot` | 255 | 0% | 1% |
+| `Apple___healthy` | 247 | 4% | 13% |
+| `Cherry_(including_sour)___healthy` | 240 | 0% | 0% |
+| `Grape___healthy` | 216 | 9% | 11% |
+| `Apple___Cedar_apple_rust` | 174 | 0% | 1% |
+
+Đọc kết quả cho đúng:
+- Đây là "khớp với nhãn ngầm định", **không phải độ chính xác thật**: nhãn chưa được người kiểm, nên một phần "sai" có thể do
+  nhãn. Xem ngẫu nhiên 24 ảnh (Tomato healthy, Peach healthy, Tomato Yellow Leaf Curl Virus) thì phần lớn trông đúng nhãn;
+  ảnh khỏe ngoài đồng thường là ảnh stock nền trắng/nền đất, rất khác ảnh PlantVillage.
+- Dù vậy mô hình hiện tại gần như **không nhận được** loại ảnh này, và thường đoán thành một bệnh (ví dụ lá cà chua khỏe bị
+  đoán Leaf Mold). Đây là chỗ train lại có thể giúp thật, vì hiện không có ảnh nào của các nhóm này trong tập học.
+- Chưa dùng làm bằng chứng và chưa đưa lên web cho tới khi nhãn được kiểm.
+
+### Kiểm nhãn bằng mắt (bước cần người)
+```bash
+python scripts/build_label_review.py        # ghi data/label_review/index.html (14 nhóm, 30 lá mỗi nhóm = 420 lá)
+```
+Mở `data/label_review/index.html` bằng trình duyệt, bấm Đúng / Sai / Không rõ cho từng ảnh, rồi "Tải kết quả" →
+`decisions.json` đặt cạnh `index.html`. Lấy mẫu có seed cố định (tái lập). Quy tắc nhận nhóm đặt trước khi xem kết quả:
+**≥ 90% "đúng" và ≤ 20% "không rõ"**; nhóm không đạt vẫn ở lại cách ly. Trang tự lưu trong trình duyệt nên dừng giữa chừng
+được.
+
+## 4. Train lại ba cách: chia hai giai đoạn
+
+Giữ nguyên để còn so được với số hiện tại: W0 đã ghim, MobileNetV3-Small, 38 nhóm, 5 client, phân vùng
+`label_alpha_0_1`, `canonical_v1` khi suy luận, tập kiểm tra và tập giữ riêng của v3.
+
+Kiểm tra mã train hiện có (`train_production.py`, `fedavg_mixed_runner.py` ở các nhánh `train-*`) cho thấy các runner bị
+**ràng buộc rất chặt bởi "spec đã duyệt"** (hash release, hash pilot, ngưỡng chất lượng, resume guard):
+
+| Thiết lập | Runner hiện tại | Đổi được bằng cấu hình? |
+|---|---|---|
+| Dữ liệu / release | `--release-dir`, `--release-name`, `--expected-release-sha` | Có (cần release v4 + hash) |
+| Seed | `--seed` (khớp spec) | Có |
+| Tỉ lệ ảnh PlantDoc khi lấy mẫu | chỉ 0 hoặc 0,25 theo `selected_variant` của spec | Không (sửa kiểm tra trong runner) |
+| Transform lúc học | chọn được `light_augment_v2`, nhưng phải trùng `preprocessing` trong spec | Một phần (sửa spec đã duyệt) |
+| Bộ tối ưu Centralized | chỉ AdamW (từ chối cái khác) | **Không** (sửa mã) |
+| Bộ tối ưu FedAvg | chỉ SGD (momentum đọc từ spec) | Có (momentum), không đổi họ |
+| Lịch lr / dừng sớm | plateau theo PlantDoc, patience khác nhau (3 so với 4), dừng sớm | **Không** (sửa mã) |
+
+Vì vậy đề xuất hai giai đoạn, quyết định riêng:
+
+- **Giai đoạn A (ít rủi ro): chỉ đổi dữ liệu.** Dùng nguyên runner và thiết lập đã duyệt, thay release v3 bằng v4 (v3 + lá
+  đã kiểm nhãn), 3 seed. Câu trả lời cho "thiếu dữ liệu ngoài đồng thì bổ sung có cải thiện không" sạch nhất ở đây vì chỉ đổi
+  một yếu tố. Hạn chế so sánh Centralized/FedAvg (AdamW so với SGD, 83 epoch so với 27 vòng) vẫn còn và vẫn phải ghi.
+- **Giai đoạn B (nhiều việc): so sánh công bằng.** Cùng họ bộ tối ưu, cùng ngân sách, cùng chỉ số chọn checkpoint, không dừng
+  sớm. Cần sửa runner Centralized (và kiểm lại cổng chất lượng/resume của cả hai runner), rồi chạy thử trên GPU trước khi
+  chạy 21 lượt. Không nên gộp với A: gộp thì không tách được phần cải thiện do dữ liệu và do cách train.
+
+Khối lượng giai đoạn A: 21 lượt (3 seed × (1 Centralized + 1 FedAvg + 5 Local)), cỡ 10 GPU-giờ mỗi seed theo ước lượng
+trong `docs/EXPERIMENT_PROTOCOL.md`.
+
+Chốt trước khi train (để đây là lần cuối): ghi cấu hình vào một tệp, lấy mã băm, commit trước khi chạy; chọn checkpoint chỉ
+trên tập kiểm tra; báo cáo tập giữ riêng đúng một lần. Lưu ý trung thực: tập giữ riêng của v3 đã được dùng để chẩn đoán nên
+không còn "chưa ai nhìn"; nếu thêm nhóm mới thì cần một tập kiểm tra ngoài đồng mới khóa trước khi train.
+
+Việc cần làm sau khi có kết quả: đưa bundle về bằng `scripts/import_branch_demo.py` (cập nhật nhánh/commit ghim và hash; web
+kiểm hash từng checkpoint trước khi hiện số), chấm lại độc lập, so từng nhóm cũ/mới. Không hứa trước con số.

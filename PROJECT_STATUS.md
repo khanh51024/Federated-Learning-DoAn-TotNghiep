@@ -1,6 +1,6 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-12 21:39 · sinh tự bởi `scripts/update_status.py`
+> **Cập nhật lúc:** 2026-10-12 22:16 · sinh tự bởi `scripts/update_status.py`
 > **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
@@ -34,7 +34,7 @@
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
 | 9 | Test không ghi đè artifact đang track | ✅ XONG | test không tham chiếu artifacts/checkpoints/metrics (dùng tmp_path) |
 | 10 | Dependency khai báo một nơi (pyproject = requirements) | ✅ XONG | 15 dependency trùng giữa pyproject.toml và requirements.txt; ghim cũ nằm ở legacy/pyproject.toml |
-| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-12T21:39:14 (gồm test mạng, 48 file test) trên đúng mã nguồn hiện tại |
+| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-12T22:16:09 (gồm test mạng, 50 file test) trên đúng mã nguồn hiện tại |
 | 12 | Kiểm chứng provenance & checkpoint canonical | ⛔ BLOCKED | provenance=unverified; lỗi: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing'] |
 | 13 | Audit leakage theo từng run | ✅ XONG | release mixed_pv_pd_v3: train 37.238 / val 4.613 / calibration 4.225 rời nhau trên 5 khóa (giao nhau tổng = 0); 12 partition đều là tập con train; 46.076 ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train) |
 | 14 | Đánh giá PlantDoc theo từng lớp (từ số công bố) | ✅ XONG | PlantDoc phủ 13/38 lớp; 6 lớp recall<50% (136/269 ảnh); FedAvg tệ hơn Centralized ở 5/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5) |
@@ -377,6 +377,16 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
   huấn luyện thật nên chưa tích hợp vào web; tiêu chí chấp nhận đặt trước trong `docs/NEXT_TRAINING_PLAN.md`. (4) Sửa 3 câu chữ web nói quá
   hoặc chưa kiểm chứng (nguồn số vòng FedAvg: 32 vòng chạy, chọn vòng 27, log chỉ có 27 vòng; bỏ "15–25 giây" chưa từng đo). Train lại ba cách
   CHƯA làm (cần GPU): chỉ đáng nếu muốn kết luận FedAvg/Centralized công bằng hơn hoặc tăng ảnh ngoài đồng.
+- 2026-10-12 (dữ liệu ngoài đồng bị cách ly): `quarantine.jsonl` của release v3 giữ 5.569 lá PlantDoc có nhãn taxonomy (clean; nhãn
+  ngầm định assumed_healthy 4.019 / ambiguous_alias 1.550) thuộc 14 nhóm KHÁC HẲN 14 nhóm đang có ảnh ngoài đồng trong tập học (giao
+  nhau = 0): nếu được nhận thì 14 → 28/38 nhóm, còn 10 nhóm không có. `scripts/eval_quarantined_plantdoc.py` (ảnh khớp byte_sha256):
+  7 checkpoint hiện có chỉ khớp nhãn ngầm định ở 3.4% (Centralized) và 2.1% (FedAvg), hầu hết nhóm gần 0% —
+  KHÔNG phải độ chính xác thật vì nhãn chưa được người kiểm (xem ngẫu nhiên 24 ảnh thì phần lớn trông đúng nhãn). `scripts/
+  build_label_review.py` dựng trang kiểm nhãn (14 nhóm × 30 lá, seed cố định, quy tắc nhận ≥ 90% đúng và ≤ 20% không rõ đặt trước);
+  chưa có kết quả kiểm nên CHƯA dựng release v4 và CHƯA train lại. Rà mã runner `train-*`: Centralized chỉ chấp nhận AdamW, tỉ lệ
+  PlantDoc chỉ 0/0,25 theo spec đã duyệt, lịch lr/dừng sớm khác nhau giữa hai runner → so sánh công bằng cần sửa mã, nên đề xuất
+  tách hai giai đoạn (A: chỉ đổi dữ liệu; B: cùng bộ tối ưu và ngân sách) trong `docs/NEXT_TRAINING_PLAN.md`. Sửa số trong kế
+  hoạch trước: "29/38, thiếu 9" là sai do tính nhầm lá không nhãn thành một nhóm; đúng là 28/38, thiếu 10.
 <!-- ROADMAP-END -->
 
 ## 8. Cách đồng bộ

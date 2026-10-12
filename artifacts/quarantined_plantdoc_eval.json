@@ -1,0 +1,663 @@
+{
+ "protocol_id": "mixed_pv_pd_v3_pretrained_seed42_validation",
+ "release_manifest_sha256": "6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252",
+ "validation_manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
+ "checkpoint_sha256": {
+  "centralized": "7fa1a91f20fac2f37526366d7d11256d409f23e45f0ced5dd89e837ade7bb603",
+  "fedavg": "eb5b4e70c17c5e1be70fc7c493e6e8ddb32149150f81496176332e6fe62d0c5c",
+  "local_00": "55f2b0d476cd18bda957293fd00869a95cb9ab67050d4bab83c5edff54ce86ae",
+  "local_01": "0391db294a87c634a5e6ca9d81a90252f35cc3c17d92c1bae4607d56fc091cd1",
+  "local_02": "ba2d936eb74e3de33500c8106fbb1edfef7a59fdbe2627211c479c01639be7c4",
+  "local_03": "9d94ab2f7452c8940c1b74118a81e934efb96c09920bba5244bb5f91e2764f76",
+  "local_04": "7ff7a833777dd195b9cdf922ccba088aa706edea8dc4e9d56a9a744dea8eccb0"
+ },
+ "source": "quarantine.jsonl của release mixed_pv_pd_v3, chỉ các lá có quarantine_status == clean",
+ "images": 5569,
+ "images_verified_sha256": 5569,
+ "excluded_without_taxonomy_label": 11,
+ "caveat": "Nhãn các lá này CHƯA được kiểm bằng mắt (assumed_healthy / ambiguous_alias): độ chính xác là 'khớp nhãn ngầm định', không phải độ chính xác thật; mô hình 'sai' có thể do nhãn sai. Ảnh không thuộc tập học của bất kỳ checkpoint nào đã công bố (đang bị cách ly). Chưa dùng làm bằng chứng.",
+ "overall": {
+  "n": 5569,
+  "centralized": {
+   "correct": 191,
+   "top1": 0.0343
+  },
+  "fedavg": {
+   "correct": 117,
+   "top1": 0.021
+  },
+  "local_00": {
+   "correct": 118,
+   "top1": 0.0212
+  },
+  "local_01": {
+   "correct": 182,
+   "top1": 0.0327
+  },
+  "local_02": {
+   "correct": 173,
+   "top1": 0.0311
+  },
+  "local_03": {
+   "correct": 98,
+   "top1": 0.0176
+  },
+  "local_04": {
+   "correct": 68,
+   "top1": 0.0122
+  }
+ },
+ "by_class": {
+  "Apple___Cedar_apple_rust": {
+   "n": 174,
+   "centralized": {
+    "correct": 0,
+    "top1": 0.0,
+    "most_common_prediction": {
+     "class": "Apple___Apple_scab",
+     "share": 0.3966
+    }
+   },
+   "fedavg": {
+    "correct": 1,
+    "top1": 0.0057,
+    "most_common_prediction": {
+     "class": "Grape___Black_rot",
+     "share": 0.2241
+    }
+   },
+   "local_00": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_01": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_02": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_03": {
+    "correct": 1,
+    "top1": 0.0057
+   },
+   "local_04": {
+    "correct": 0,
+    "top1": 0.0
+   }
+  },
+  "Apple___healthy": {
+   "n": 247,
+   "centralized": {
+    "correct": 10,
+    "top1": 0.0405,
+    "most_common_prediction": {
+     "class": "Apple___Apple_scab",
+     "share": 0.4251
+    }
+   },
+   "fedavg": {
+    "correct": 32,
+    "top1": 0.1296,
+    "most_common_prediction": {
+     "class": "Apple___Apple_scab",
+     "share": 0.3806
+    }
+   },
+   "local_00": {
+    "correct": 74,
+    "top1": 0.2996
+   },
+   "local_01": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_02": {
+    "correct": 39,
+    "top1": 0.1579
+   },
+   "local_03": {
+    "correct": 2,
+    "top1": 0.0081
+   },
+   "local_04": {
+    "correct": 34,
+    "top1": 0.1377
+   }
+  },
+  "Blueberry___healthy": {
+   "n": 830,
+   "centralized": {
+    "correct": 33,
+    "top1": 0.0398,
+    "most_common_prediction": {
+     "class": "Apple___Apple_scab",
+     "share": 0.3217
+    }
+   },
+   "fedavg": {
+    "correct": 13,
+    "top1": 0.0157,
+    "most_common_prediction": {
+     "class": "Potato___Early_blight",
+     "share": 0.206
+    }
+   },
+   "local_00": {
+    "correct": 1,
+    "top1": 0.0012
+   },
+   "local_01": {
+    "correct": 37,
+    "top1": 0.0446
+   },
+   "local_02": {
+    "correct": 62,
+    "top1": 0.0747
+   },
+   "local_03": {
+    "correct": 2,
+    "top1": 0.0024
+   },
+   "local_04": {
+    "correct": 0,
+    "top1": 0.0
+   }
+  },
+  "Cherry_(including_sour)___healthy": {
+   "n": 240,
+   "centralized": {
+    "correct": 1,
+    "top1": 0.0042,
+    "most_common_prediction": {
+     "class": "Apple___Apple_scab",
+     "share": 0.3667
+    }
+   },
+   "fedavg": {
+    "correct": 1,
+    "top1": 0.0042,
+    "most_common_prediction": {
+     "class": "Apple___Apple_scab",
+     "share": 0.3583
+    }
+   },
+   "local_00": {
+    "correct": 1,
+    "top1": 0.0042
+   },
+   "local_01": {
+    "correct": 1,
+    "top1": 0.0042
+   },
+   "local_02": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_03": {
+    "correct": 1,
+    "top1": 0.0042
+   },
+   "local_04": {
+    "correct": 0,
+    "top1": 0.0
+   }
+  },
+  "Corn_(maize)___Northern_Leaf_Blight": {
+   "n": 333,
+   "centralized": {
+    "correct": 26,
+    "top1": 0.0781,
+    "most_common_prediction": {
+     "class": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+     "share": 0.3664
+    }
+   },
+   "fedavg": {
+    "correct": 13,
+    "top1": 0.039,
+    "most_common_prediction": {
+     "class": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+     "share": 0.4114
+    }
+   },
+   "local_00": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_01": {
+    "correct": 75,
+    "top1": 0.2252
+   },
+   "local_02": {
+    "correct": 58,
+    "top1": 0.1742
+   },
+   "local_03": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_04": {
+    "correct": 0,
+    "top1": 0.0
+   }
+  },
+  "Grape___healthy": {
+   "n": 216,
+   "centralized": {
+    "correct": 20,
+    "top1": 0.0926,
+    "most_common_prediction": {
+     "class": "Grape___Black_rot",
+     "share": 0.2546
+    }
+   },
+   "fedavg": {
+    "correct": 23,
+    "top1": 0.1065,
+    "most_common_prediction": {
+     "class": "Squash___Powdery_mildew",
+     "share": 0.1759
+    }
+   },
+   "local_00": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_01": {
+    "correct": 27,
+    "top1": 0.125
+   },
+   "local_02": {
+    "correct": 5,
+    "top1": 0.0231
+   },
+   "local_03": {
+    "correct": 28,
+    "top1": 0.1296
+   },
+   "local_04": {
+    "correct": 28,
+    "top1": 0.1296
+   }
+  },
+  "Peach___healthy": {
+   "n": 568,
+   "centralized": {
+    "correct": 11,
+    "top1": 0.0194,
+    "most_common_prediction": {
+     "class": "Apple___Apple_scab",
+     "share": 0.2905
+    }
+   },
+   "fedavg": {
+    "correct": 0,
+    "top1": 0.0,
+    "most_common_prediction": {
+     "class": "Apple___Apple_scab",
+     "share": 0.2447
+    }
+   },
+   "local_00": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_01": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_02": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_03": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_04": {
+    "correct": 0,
+    "top1": 0.0
+   }
+  },
+  "Pepper,_bell___Bacterial_spot": {
+   "n": 255,
+   "centralized": {
+    "correct": 1,
+    "top1": 0.0039,
+    "most_common_prediction": {
+     "class": "Tomato___Bacterial_spot",
+     "share": 0.2863
+    }
+   },
+   "fedavg": {
+    "correct": 3,
+    "top1": 0.0118,
+    "most_common_prediction": {
+     "class": "Tomato___Leaf_Mold",
+     "share": 0.2196
+    }
+   },
+   "local_00": {
+    "correct": 4,
+    "top1": 0.0157
+   },
+   "local_01": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_02": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_03": {
+    "correct": 7,
+    "top1": 0.0275
+   },
+   "local_04": {
+    "correct": 0,
+    "top1": 0.0
+   }
+  },
+  "Pepper,_bell___healthy": {
+   "n": 320,
+   "centralized": {
+    "correct": 8,
+    "top1": 0.025,
+    "most_common_prediction": {
+     "class": "Tomato___Tomato_mosaic_virus",
+     "share": 0.4594
+    }
+   },
+   "fedavg": {
+    "correct": 5,
+    "top1": 0.0156,
+    "most_common_prediction": {
+     "class": "Tomato___Leaf_Mold",
+     "share": 0.4625
+    }
+   },
+   "local_00": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_01": {
+    "correct": 18,
+    "top1": 0.0563
+   },
+   "local_02": {
+    "correct": 8,
+    "top1": 0.025
+   },
+   "local_03": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_04": {
+    "correct": 2,
+    "top1": 0.0063
+   }
+  },
+  "Raspberry___healthy": {
+   "n": 550,
+   "centralized": {
+    "correct": 21,
+    "top1": 0.0382,
+    "most_common_prediction": {
+     "class": "Tomato___Tomato_mosaic_virus",
+     "share": 0.3364
+    }
+   },
+   "fedavg": {
+    "correct": 4,
+    "top1": 0.0073,
+    "most_common_prediction": {
+     "class": "Tomato___Leaf_Mold",
+     "share": 0.2291
+    }
+   },
+   "local_00": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_01": {
+    "correct": 10,
+    "top1": 0.0182
+   },
+   "local_02": {
+    "correct": 1,
+    "top1": 0.0018
+   },
+   "local_03": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_04": {
+    "correct": 0,
+    "top1": 0.0
+   }
+  },
+  "Soybean___healthy": {
+   "n": 258,
+   "centralized": {
+    "correct": 26,
+    "top1": 0.1008,
+    "most_common_prediction": {
+     "class": "Tomato___Tomato_mosaic_virus",
+     "share": 0.2326
+    }
+   },
+   "fedavg": {
+    "correct": 12,
+    "top1": 0.0465,
+    "most_common_prediction": {
+     "class": "Tomato___Leaf_Mold",
+     "share": 0.2326
+    }
+   },
+   "local_00": {
+    "correct": 38,
+    "top1": 0.1473
+   },
+   "local_01": {
+    "correct": 9,
+    "top1": 0.0349
+   },
+   "local_02": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_03": {
+    "correct": 3,
+    "top1": 0.0116
+   },
+   "local_04": {
+    "correct": 4,
+    "top1": 0.0155
+   }
+  },
+  "Strawberry___healthy": {
+   "n": 485,
+   "centralized": {
+    "correct": 24,
+    "top1": 0.0495,
+    "most_common_prediction": {
+     "class": "Corn_(maize)___healthy",
+     "share": 0.266
+    }
+   },
+   "fedavg": {
+    "correct": 1,
+    "top1": 0.0021,
+    "most_common_prediction": {
+     "class": "Squash___Powdery_mildew",
+     "share": 0.2784
+    }
+   },
+   "local_00": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_01": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_02": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_03": {
+    "correct": 27,
+    "top1": 0.0557
+   },
+   "local_04": {
+    "correct": 0,
+    "top1": 0.0
+   }
+  },
+  "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+   "n": 788,
+   "centralized": {
+    "correct": 10,
+    "top1": 0.0127,
+    "most_common_prediction": {
+     "class": "Tomato___Tomato_mosaic_virus",
+     "share": 0.8122
+    }
+   },
+   "fedavg": {
+    "correct": 9,
+    "top1": 0.0114,
+    "most_common_prediction": {
+     "class": "Tomato___Tomato_mosaic_virus",
+     "share": 0.4162
+    }
+   },
+   "local_00": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_01": {
+    "correct": 5,
+    "top1": 0.0063
+   },
+   "local_02": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_03": {
+    "correct": 26,
+    "top1": 0.033
+   },
+   "local_04": {
+    "correct": 0,
+    "top1": 0.0
+   }
+  },
+  "Tomato___healthy": {
+   "n": 305,
+   "centralized": {
+    "correct": 0,
+    "top1": 0.0,
+    "most_common_prediction": {
+     "class": "Tomato___Tomato_mosaic_virus",
+     "share": 0.5049
+    }
+   },
+   "fedavg": {
+    "correct": 0,
+    "top1": 0.0,
+    "most_common_prediction": {
+     "class": "Tomato___Leaf_Mold",
+     "share": 0.3246
+    }
+   },
+   "local_00": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_01": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_02": {
+    "correct": 0,
+    "top1": 0.0
+   },
+   "local_03": {
+    "correct": 1,
+    "top1": 0.0033
+   },
+   "local_04": {
+    "correct": 0,
+    "top1": 0.0
+   }
+  }
+ },
+ "by_mapping_status": {
+  "ambiguous_alias": {
+   "n": 1550,
+   "centralized": {
+    "correct": 37,
+    "top1": 0.0239
+   },
+   "fedavg": {
+    "correct": 26,
+    "top1": 0.0168
+   },
+   "local_00": {
+    "correct": 4,
+    "top1": 0.0026
+   },
+   "local_01": {
+    "correct": 80,
+    "top1": 0.0516
+   },
+   "local_02": {
+    "correct": 58,
+    "top1": 0.0374
+   },
+   "local_03": {
+    "correct": 34,
+    "top1": 0.0219
+   },
+   "local_04": {
+    "correct": 0,
+    "top1": 0.0
+   }
+  },
+  "assumed_healthy": {
+   "n": 4019,
+   "centralized": {
+    "correct": 154,
+    "top1": 0.0383
+   },
+   "fedavg": {
+    "correct": 91,
+    "top1": 0.0226
+   },
+   "local_00": {
+    "correct": 114,
+    "top1": 0.0284
+   },
+   "local_01": {
+    "correct": 102,
+    "top1": 0.0254
+   },
+   "local_02": {
+    "correct": 115,
+    "top1": 0.0286
+   },
+   "local_03": {
+    "correct": 64,
+    "top1": 0.0159
+   },
+   "local_04": {
+    "correct": 68,
+    "top1": 0.0169
+   }
+  }
+ },
+ "seconds": 345.8
+}

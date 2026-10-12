@@ -64,6 +64,7 @@ HOLDOUT_COUNTS = {"plantdoc": 172, "plantvillage": 10843}
 HOLDOUT_EVAL_JSON = "artifacts/holdout_eval_report.json"
 FULLFRAME_EVAL_JSON = "artifacts/fullframe_eval.json"  # scripts/eval_fullframe_plantdoc.py (ảnh nguyên khung vs ảnh cắt lá)
 FULLFRAME_CROP_POLICY = "bbox_margin_8pct_v1"
+QUARANTINED_EVAL_JSON = "artifacts/quarantined_plantdoc_eval.json"  # scripts/eval_quarantined_plantdoc.py (lá PlantDoc bị cách ly, nhãn CHƯA kiểm)
 ERROR_GALLERY_DIR = "web/static/samples/errors"
 ERROR_GALLERY_CATALOG_JSON = f"{ERROR_GALLERY_DIR}/catalog.json"  # scripts/build_error_gallery.py
 STATISTICS_JSON = "artifacts/statistics_report.json"  # scripts/report_statistics.py (khoảng tin cậy theo cụm, McNemar)
