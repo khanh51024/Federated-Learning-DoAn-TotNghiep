@@ -41,7 +41,7 @@ from src import registry as reg  # noqa: E402
 
 SOURCE_URL = "https://raw.githubusercontent.com/pratikkayal/PlantDoc-Object-Detection-Dataset/master"
 CACHE_DIR = "data/fullframe_plantdoc"  # gitignored (data/*)
-OUT_JSON = "artifacts/fullframe_eval.json"
+OUT_JSON = reg.FULLFRAME_EVAL_JSON  # đường dẫn artifacts/ chỉ khai báo ở src/registry.py
 MARGIN = 0.08  # crop_policy bbox_margin_8pct_v1
 MODES = ("published_crop", "annotator_crop", "full_frame", "center_square")
 MODEL_ORDER = ("centralized", "fedavg", "local_00", "local_01", "local_02", "local_03", "local_04")

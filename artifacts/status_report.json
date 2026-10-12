@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 3 mục kỹ thuật chưa XONG)",
+  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)",
   "canonical_run_id": "20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62",
   "dataset_truth": {
     "source": "data/partitions_stage2_scratch_v3/suite.json",
@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-12T21:18:35",
+      "generated_at": "2026-10-12T21:32:18",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,13 +145,13 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-12T21:18:42",
+      "generated_at": "2026-10-12T21:32:25",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
-      "generated_at": "2026-10-12T21:24:54",
-      "code_fingerprint": "818645b11f230384f7d03b65976782a19fac8e707db2fcfeaa9c6171fdde8a01",
+      "generated_at": "2026-10-12T21:39:14",
+      "code_fingerprint": "d59012aa3509573fc240df3c7a02c10036e5e17373b51bb70e2ad65ec38de8e4",
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
@@ -180,7 +180,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-12T21:18:40",
+      "generated_at": "2026-10-12T21:32:23",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
@@ -226,15 +226,15 @@
     {
       "id": "no_hardcode",
       "title": "Không hardcode đường dẫn artifact",
-      "status": "CHƯA",
-      "detail": "1 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/eval_fullframe_plantdoc.py:44']",
+      "status": "XONG",
+      "detail": "mọi đường dẫn artifacts/ trong src/web/scripts lấy từ src/registry.py (quét AST)",
       "unlock": []
     },
     {
       "id": "docs_clean",
       "title": "Dọn tài liệu mâu thuẫn",
-      "status": "CHƯA",
-      "detail": "tài liệu ngoài danh mục: gốc=[] docs=['NEXT_TRAINING_PLAN.md']",
+      "status": "XONG",
+      "detail": "gốc repo chỉ còn README.md + PROJECT_STATUS.md; docs/ chỉ gồm tài liệu hiện hành",
       "unlock": []
     },
     {
@@ -269,7 +269,7 @@
       "id": "full_tests",
       "title": "Full tests pass trên mã nguồn hiện tại",
       "status": "XONG",
-      "detail": "technical_acceptance=pass lúc 2026-10-12T21:24:54 (gồm test mạng, 48 file test) trên đúng mã nguồn hiện tại",
+      "detail": "technical_acceptance=pass lúc 2026-10-12T21:39:14 (gồm test mạng, 48 file test) trên đúng mã nguồn hiện tại",
       "unlock": []
     },
     {
@@ -355,8 +355,8 @@
     {
       "id": "release",
       "title": "Release sạch (mọi gate kỹ thuật XONG)",
-      "status": "CHƯA",
-      "detail": "còn mục kỹ thuật chưa XONG: ['no_hardcode', 'docs_clean']",
+      "status": "XONG",
+      "detail": "mọi mục kỹ thuật XONG; trước khi nộp vẫn phải `git status` sạch và gắn tag",
       "unlock": []
     }
   ],
