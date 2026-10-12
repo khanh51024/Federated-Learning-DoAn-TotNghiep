@@ -334,7 +334,7 @@ body.present .step-nav { position: sticky; bottom: 0; background: var(--bg-base)
   background: var(--bg-surface);
   box-shadow: var(--shadow-1);
 }
-.stat-tile b { display: block; font-size: var(--fs-xl); font-family: var(--font-mono); font-variant-numeric: tabular-nums; line-height: 1.2; }
+.stat-tile b { display: block; font-size: var(--fs-xl); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
 .stat-tile span { font-size: var(--fs-sm); color: var(--text-secondary); }
 .stat-tile.warn b { color: var(--accent-amber); }
 
@@ -347,6 +347,37 @@ body.present .step-nav { position: sticky; bottom: 0; background: var(--bg-base)
 }
 .hero-question { font-size: var(--fs-lg); font-weight: 600; line-height: 1.4; max-width: 62ch; }
 .hero-note { margin-top: var(--space-3); font-size: var(--fs-sm); color: var(--text-secondary); }
+
+/* ba bước FedAvg bằng lời thường */
+.flow { margin-top: var(--space-4); }
+.flow-title { font-size: var(--fs-md); font-weight: 600; }
+.flow-steps { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); margin-top: var(--space-3); }
+.flow-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+}
+.flow-steps li:not(:last-child) { position: relative; }
+.flow-n {
+  display: inline-flex;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--tint-emerald);
+  color: var(--accent-emerald-strong);
+  border: 1px solid var(--line-emerald);
+  font-weight: 700;
+}
+.flow-steps b { display: block; }
+.flow-steps p { margin-top: 2px; font-size: var(--fs-sm); color: var(--text-secondary); }
+.pillar-metrics dt small { color: var(--text-muted); font-size: var(--fs-xs); }
 
 .pillar-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); margin-top: var(--space-4); }
 .pillar {
@@ -371,13 +402,13 @@ body.present .step-nav { position: sticky; bottom: 0; background: var(--bg-base)
 .pillar-desc { margin: var(--space-2) 0 var(--space-3); font-size: var(--fs-sm); color: var(--text-secondary); line-height: 1.6; flex: 1; }
 .pillar-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
 .pillar-metrics dt { font-size: var(--fs-xs); color: var(--text-muted); }
-.metric-big { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: var(--fs-xl); font-weight: 600; line-height: 1.2; }
+.metric-big { font-variant-numeric: tabular-nums; font-size: var(--fs-2xl); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
 .pillar-centralized .metric-big { color: var(--accent-sky); }
 .pillar-fedavg .metric-big { color: var(--accent-emerald); }
 .pillar-local .metric-big { color: var(--accent-amber); font-size: var(--fs-lg); }
 .pillar-foot { margin-top: var(--space-3); font-size: var(--fs-xs); color: var(--text-muted); }
 .pillar-test { margin-top: var(--space-2); font-size: var(--fs-sm); color: var(--text-secondary); }
-.pillar-test b { font-family: var(--font-mono); color: var(--text-primary); }
+.pillar-test b { font-variant-numeric: tabular-nums; color: var(--text-primary); }
 
 .conclusion-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
 .conclusion {
@@ -455,7 +486,7 @@ body.present .step-nav { position: sticky; bottom: 0; background: var(--bg-base)
   color: var(--text-secondary);
   padding: 4px 10px;
 }
-.heat-cell { text-align: right; font-family: var(--font-mono); min-width: 64px; color: var(--text-primary); }
+.heat-cell { text-align: right; font-variant-numeric: tabular-nums; min-width: 64px; color: var(--text-primary); }
 .heat-count {
   background: color-mix(in srgb, var(--heat-count) calc(var(--p, 0) * 62%), var(--bg-surface));
 }
@@ -536,7 +567,7 @@ body.present .step-nav { position: sticky; bottom: 0; background: var(--bg-base)
 .confusion-list .arrow { color: var(--text-muted); }
 
 /* test giữ riêng & thống kê */
-.ci { display: block; font-size: var(--fs-xs); color: var(--text-muted); font-family: var(--font-mono); white-space: nowrap; }
+.ci { display: block; font-size: var(--fs-xs); color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .pair-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: var(--space-4); }
 .pair-block { min-width: 0; }
 .pair-list { list-style: none; display: grid; gap: var(--space-2); margin-top: var(--space-2); }
@@ -585,8 +616,8 @@ body.present .step-nav { position: sticky; bottom: 0; background: var(--bg-base)
   font-weight: 500;
   text-align: left;
 }
-.cm-n { display: inline-block; min-width: 18px; color: var(--text-muted); font-family: var(--font-mono); }
-.cm-cell { width: 26px; height: 24px; padding: 0 2px; text-align: center; font-family: var(--font-mono); color: var(--text-primary); border-bottom: 1px solid var(--border-color); }
+.cm-n { display: inline-block; min-width: 18px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.cm-cell { width: 26px; height: 24px; padding: 0 2px; text-align: center; font-variant-numeric: tabular-nums; color: var(--text-primary); border-bottom: 1px solid var(--border-color); }
 .cm-diag { background: color-mix(in srgb, var(--heat-good) calc(var(--p, 0) * 70%), var(--bg-surface)); font-weight: 700; }
 .cm-off { background: color-mix(in srgb, var(--heat-bad) calc(var(--p, 0) * 70%), var(--bg-surface)); }
 
@@ -798,7 +829,7 @@ body.present .step-nav { position: sticky; bottom: 0; background: var(--bg-base)
 
 /* ───────── Bước 6: bằng chứng ───────── */
 .todo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-3); }
-.todo-card { padding: var(--space-4); border-radius: var(--radius-md); border: 1px solid var(--line-rose); background: var(--tint-rose); }
+.todo-card { padding: var(--space-4); border-radius: var(--radius-md); border: 1px solid var(--line-amber); background: var(--tint-amber); }
 .todo-card header { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .todo-card p { margin-top: var(--space-2); font-size: var(--fs-sm); color: var(--text-secondary); }
 .unlock { margin-top: var(--space-2); font-size: var(--fs-xs); color: var(--text-secondary); }
@@ -844,6 +875,10 @@ body.present .step-nav { position: sticky; bottom: 0; background: var(--bg-base)
   .client-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .topology { grid-template-columns: minmax(0, 1fr); }
   .step-nav { flex-wrap: wrap; }
+}
+
+@media (max-width: 760px) {
+  .flow-steps { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 560px) {

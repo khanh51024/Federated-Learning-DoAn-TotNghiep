@@ -1,6 +1,6 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-12 00:01 · sinh tự bởi `scripts/update_status.py`
+> **Cập nhật lúc:** 2026-10-12 08:55 · sinh tự bởi `scripts/update_status.py`
 > **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
@@ -34,7 +34,7 @@
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
 | 9 | Test không ghi đè artifact đang track | ✅ XONG | test không tham chiếu artifacts/checkpoints/metrics (dùng tmp_path) |
 | 10 | Dependency khai báo một nơi (pyproject = requirements) | ✅ XONG | 15 dependency trùng giữa pyproject.toml và requirements.txt; ghim cũ nằm ở legacy/pyproject.toml |
-| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-12T00:01:53 (gồm test mạng, 46 file test) trên đúng mã nguồn hiện tại |
+| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-12T08:55:36 (gồm test mạng, 46 file test) trên đúng mã nguồn hiện tại |
 | 12 | Kiểm chứng provenance & checkpoint canonical | ⛔ BLOCKED | provenance=unverified; lỗi: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing'] |
 | 13 | Audit leakage theo từng run | ✅ XONG | release mixed_pv_pd_v3: train 37.238 / val 4.613 / calibration 4.225 rời nhau trên 5 khóa (giao nhau tổng = 0); 12 partition đều là tập con train; 46.076 ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train) |
 | 14 | Đánh giá PlantDoc theo từng lớp (từ số công bố) | ✅ XONG | PlantDoc phủ 13/38 lớp; 6 lớp recall<50% (136/269 ảnh); FedAvg tệ hơn Centralized ở 5/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5) |
@@ -335,6 +335,15 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
   byte được giải nén, `report_statistics.py` tự băm manifest đối chiếu release, `details`/`partitions` hỏng trả `available: false` thay vì 500,
   checklist so checkpoint theo từng model_id, biểu đồ vẽ không animation khi in, bỏ `aria-pressed` sai nghĩa ở nút nền.
   Chưa đưa lên server public.
+- 2026-10-12 (rà soát giao diện toàn diện, viết lại cho dễ hiểu): chỉ đổi `web/static/` + tài liệu. (1) Tiêu đề từng bước thành câu hỏi dẫn dắt,
+  bước 1 mở bằng đề tài + ba bước FedAvg bằng lời thường; bước 6 sắp lại: đã kiểm chứng → hạn chế → việc còn lại → chi tiết kỹ thuật (gập).
+  (2) Thuật ngữ thống nhất: tập kiểm tra (validation), tập giữ riêng (legacy diagnostic test), nhóm (38 lớp = 26 bệnh + 12 lá khỏe), chấm lại
+  (tái đánh giá); bỏ shard/recall/canonical_v1/Telemetry; tên bệnh giữ nguyên. (3) Review độc lập (harness-reviewer) chỉ ra lời nói quá nên đã sửa:
+  "tập độc lập" → "tập giữ riêng" kèm câu nói rõ đây là tập chẩn đoán "legacy", chưa phải test cuối khóa trước và chưa nằm trong phép kiểm tra
+  trùng ảnh; khôi phục lời cảnh báo ở bước 1; câu "FedAvg gần bằng Centralized" thành câu theo số liệu; "mỗi nơi chỉ có vài loại bệnh" sửa theo
+  dữ liệu (mỗi client có 20–27/38 nhóm); "bệnh này" sai với nhóm lá khỏe → "nhóm này"; việc còn lại gắn điều kiện theo trạng thái.
+  (4) Số liệu dùng phông chính (tabular-nums), phông code chỉ cho mã băm; test mới chặn thuật ngữ cũ/lời nói quá quay lại. Kiểm bằng Chrome
+  headless cả hai nền và 390 px (không tràn ngang, không lỗi console), tương phản chữ đạt ở cả hai nền.
 <!-- ROADMAP-END -->
 
 ## 8. Cách đồng bộ

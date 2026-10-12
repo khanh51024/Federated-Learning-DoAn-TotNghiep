@@ -117,14 +117,14 @@ function itemMeta(item) {
   const verified = state.showStats;
   const level = verified ? `<span class="level level-${esc(item.difficulty_key)}">${esc(item.difficulty)}</span>` : "";
   const stats = verified
-    ? `<p class="field-hint">Recall của lớp này trên validation ${item.source === "plantdoc" ? "PlantDoc" : "PlantVillage"} (${fmtInt(item.class_val_count)} ảnh):
-      FedAvg ${fmtPctValue(item.recall_fedavg_pct, 0)} · Centralized ${fmtPctValue(item.recall_centralized_pct, 0)}.</p>`
+    ? `<p class="field-hint">Trên ${fmtInt(item.class_val_count)} ảnh kiểm tra ${item.source === "plantdoc" ? "PlantDoc" : "PlantVillage"} của nhóm này,
+      FedAvg nhận đúng ${fmtPctValue(item.recall_fedavg_pct, 0)}, Centralized ${fmtPctValue(item.recall_centralized_pct, 0)}.</p>`
     : '<p class="field-hint">Chưa có số liệu đã kiểm hash để xếp độ khó cho ảnh này.</p>';
   return `
     <div class="meta-chips">
       ${level}
       <span class="chip chip-static">${item.source === "plantdoc" ? "PlantDoc · ảnh ngoài đồng" : "PlantVillage"}</span>
-      <span class="chip chip-static">ảnh #${Number(item.id)}${verified ? " · thuộc validation" : " · chưa đối chiếu manifest"}</span>
+      <span class="chip chip-static">ảnh mẫu #${Number(item.id)}${verified ? " · thuộc tập kiểm tra" : " · chưa đối chiếu được"}</span>
     </div>
     <p class="meta-label">${esc(formatDiseaseName(item.label))}</p>
     ${stats}`;
@@ -173,9 +173,9 @@ function shardInfo(modelId, classKey) {
   if (!row) return null;
   if (modelId.startsWith("local_")) {
     const n = row.per_client[modelId.replace("local_", "client_")];
-    return { count: n, total: row.total, scope: "shard riêng" };
+    return { count: n, total: row.total, scope: "ảnh của nơi này" };
   }
-  return { count: row.total, total: row.total, scope: modelId === "fedavg" ? "5 client" : "toàn bộ" };
+  return { count: row.total, total: row.total, scope: modelId === "fedavg" ? "gộp từ 5 nơi" : "toàn bộ ảnh" };
 }
 
 function targetClass() {
@@ -191,7 +191,7 @@ function verdict(result, trueClass) {
 function rowHtml(modelId) {
   const result = state.rows.get(modelId);
   const label = MODEL_LABELS[modelId];
-  const phase = modelId === "centralized" ? "Gom ảnh" : modelId === "fedavg" ? "Học liên hiệp" : "Học riêng";
+  const phase = modelId === "centralized" ? "Gom ảnh" : modelId === "fedavg" ? "Học liên kết" : "Học riêng";
   if (!result) {
     return `<th scope="row">${modelPill(modelId)}<span class="row-sub">${phase}</span></th>
       <td colspan="3"><span class="skeleton skeleton-line"></span></td>`;
@@ -210,11 +210,11 @@ function rowHtml(modelId) {
   const classKey = trueClass || result.predicted_class;
   const info = shardInfo(modelId, classKey);
   const shardHtml = info
-    ? `<span class="shard-line" title="Số ảnh train của lớp ${trueClass ? "thật" : "dự đoán"} «${esc(formatDiseaseName(classKey))}» mà mô hình này được học">
+    ? `<span class="shard-line" title="Số ảnh của nhóm ${trueClass ? "thật" : "được dự đoán"} «${esc(formatDiseaseName(classKey))}» mà mô hình này đã được học">
         <span class="shard-count ${info.count === 0 ? "is-zero" : ""} mono">${fmtInt(info.count)}</span>
         <span class="row-sub">${esc(info.scope)}</span></span>`
     : '<span class="text-muted">—</span>';
-  const uncertain = result.is_uncertain ? ' <span class="pill-flag" title="Xác suất cao nhất dưới 50% hoặc hai lớp đầu quá sát nhau">không chắc</span>' : "";
+  const uncertain = result.is_uncertain ? ' <span class="pill-flag" title="Xác suất cao nhất dưới 50% hoặc hai nhóm đầu quá sát nhau">không chắc</span>' : "";
   return `<th scope="row">${modelPill(modelId)}<span class="row-sub">${phase}</span></th>
     <td class="cell-pred">
       <b>${esc(formatDiseaseName(result.predicted_class))}</b>${uncertain}
@@ -235,8 +235,8 @@ function detailHtml(modelId) {
         const cal = result.calibrated?.top3?.[i];
         return `<li><span>${esc(formatDiseaseName(t.class))}</span><b class="mono">${fmtNum(t.confidence, 2)}%</b>${cal ? `<span class="mono text-muted">hiệu chuẩn ${fmtNum(cal.confidence, 1)}%</span>` : ""}</li>`;
       }).join("")}</ol>
-      <p class="field-hint">Độ chính xác công bố của mô hình này trên validation: PlantVillage ${fmtPct(val?.plantvillage?.top1_accuracy)} · PlantDoc ${fmtPct(val?.plantdoc?.top1_accuracy)}.
-        ${result.calibrated ? `Số hiệu chuẩn chia logit cho T = ${fmtNum(result.calibrated.temperature, 2)}; thứ tự lớp không đổi.` : "Xác suất softmax chưa hiệu chuẩn."}</p>
+      <p class="field-hint">Độ chính xác công bố của mô hình này trên tập kiểm tra: PlantVillage ${fmtPct(val?.plantvillage?.top1_accuracy)} · PlantDoc ${fmtPct(val?.plantdoc?.top1_accuracy)}.
+        ${result.calibrated ? `Số hiệu chuẩn chia logit cho T = ${fmtNum(result.calibrated.temperature, 2)}; thứ tự các nhóm không đổi.` : "Xác suất softmax chưa hiệu chuẩn."}</p>
     </div></td>`;
 }
 
@@ -317,22 +317,22 @@ function explanation(results, trueClass) {
   if (wrongZero.length) {
     const many = wrongZero.length > 1;
     const they = many ? "chúng" : "nó";
-    lines.push(`<b>${names(wrongZero)}</b> sai: shard của ${they} có <b>0 ảnh</b> lớp «${name}», ${they} chưa từng thấy bệnh này.`);
+    lines.push(`<b>${names(wrongZero)}</b> sai: dữ liệu của ${they} có <b>0 ảnh</b> thuộc nhóm «${name}», ${they} chưa từng thấy nhóm này.`);
   }
   for (const { id, info } of rightLocals) {
-    const share = info && info.total ? ` (${fmtNum((info.count / info.total) * 100, 0)}% tổng ảnh lớp này)` : "";
-    lines.push(`<b>${MODEL_LABELS[id]}</b> đúng: shard của nó có <b>${fmtInt(info?.count)} ảnh</b> lớp này${share}.`);
+    const share = info && info.total ? ` (${fmtNum((info.count / info.total) * 100, 0)}% tổng ảnh của nhóm này)` : "";
+    lines.push(`<b>${MODEL_LABELS[id]}</b> đúng: dữ liệu của nó có <b>${fmtInt(info?.count)} ảnh</b> của nhóm này${share}.`);
   }
   for (const { id, info } of wrongSome) {
-    const share = info && info.total ? ` (${fmtNum((info.count / info.total) * 100, 1)}% số ảnh của lớp)` : "";
-    lines.push(`<b>${MODEL_LABELS[id]}</b> chỉ có ${fmtInt(info?.count)} ảnh lớp này${share} và vẫn sai.`);
+    const share = info && info.total ? ` (${fmtNum((info.count / info.total) * 100, 1)}% tổng ảnh của nhóm này)` : "";
+    lines.push(`<b>${MODEL_LABELS[id]}</b> chỉ có ${fmtInt(info?.count)} ảnh của nhóm này${share} và vẫn sai.`);
   }
   const fed = state.rows.get("fedavg");
   if (fed && !fed.error) {
     const info = shardInfo("fedavg", trueClass);
     lines.push(verdict(fed, trueClass) === "correct"
-      ? `<b>FedAvg</b> đúng: học từ cả năm client, tổng cộng ${fmtInt(info?.count)} ảnh lớp này mà không ảnh nào rời khỏi client.`
-      : `<b>FedAvg</b> sai dù đã tổng hợp ${fmtInt(info?.count)} ảnh lớp này từ các client — ảnh này khó với cả mô hình liên hiệp.`);
+      ? `<b>FedAvg</b> đúng: học từ cả năm client, tổng cộng ${fmtInt(info?.count)} ảnh của nhóm này mà không ảnh nào rời khỏi client.`
+      : `<b>FedAvg</b> sai dù đã tổng hợp ${fmtInt(info?.count)} ảnh của nhóm này từ các client — ảnh này khó với cả mô hình học liên kết.`);
   }
   return lines.length ? `<b>Vì sao?</b><ul>${lines.map(l => `<li>${l}</li>`).join("")}</ul>` : "";
 }
@@ -360,7 +360,7 @@ function renderGradcam(models) {
   byId("diag-gradcam-grid").innerHTML = shown.map(id => {
     const item = state.explanations.get(id);
     return `<figure class="gradcam-card row-${pillarOf(id)}">
-        <img src="${esc(item.image)}" alt="Grad-CAM của ${esc(MODEL_LABELS[id])} cho lớp ${esc(formatDiseaseName(item.class))}" width="224" height="224" loading="lazy">
+        <img src="${esc(item.image)}" alt="Grad-CAM của ${esc(MODEL_LABELS[id])} cho nhóm ${esc(formatDiseaseName(item.class))}" width="224" height="224" loading="lazy">
         <figcaption>${modelPill(id)}<span>${esc(formatDiseaseName(item.class))}</span></figcaption>
       </figure>`;
   }).join("");
@@ -585,7 +585,7 @@ export async function mount() {
     $$("#gallery-filters [data-filter='easy'], #gallery-filters [data-filter='medium'], #gallery-filters [data-filter='hard']")
       .forEach(chip => chip.classList.add("hidden"));
     const note = byId("gallery-note");
-    if (note) note.textContent = "Ảnh mẫu có nhãn thật; chưa đối chiếu được với manifest validation nên không xếp độ khó.";
+    if (note) note.textContent = "Ảnh mẫu có nhãn thật; chưa đối chiếu được với tập kiểm tra nên không xếp độ khó.";
   }
 
   const trueSelect = byId("inference-true-class");

@@ -54,7 +54,7 @@ function notifyFinished(task) {
 
 function markOffline(error) {
   const indicator = byId("server-status-text");
-  setText(indicator, "Server: Mất kết nối (Offline)");
+  setText(indicator, "Máy chủ: mất kết nối");
   indicator?.parentElement?.classList.add("offline");
   const badge = byId("task-badge");
   setText(badge, "Mất kết nối API");
@@ -67,10 +67,10 @@ function markOffline(error) {
 
 function renderHeader(data) {
   const indicator = byId("server-status-text");
-  setText(indicator, `Server: ${data.server_status === "online" ? "Online" : "Offline"}`);
+  setText(indicator, `Máy chủ: ${data.server_status === "online" ? "đang hoạt động" : "không phản hồi"}`);
   indicator?.parentElement?.classList.remove("offline");
-  const flower = data.flower_server_active ? "Flower: Live" : "Flower: Idle";
-  setText(byId("system-device"), `Device: ${data.device} | ${flower}`);
+  const flower = data.flower_server_active ? "Flower đang chạy" : "Flower chờ";
+  setText(byId("system-device"), `Thiết bị: ${data.device} · ${flower}`);
 
   const task = data.task || { status: "idle", message: "Hệ thống sẵn sàng" };
   const badge = byId("task-badge");

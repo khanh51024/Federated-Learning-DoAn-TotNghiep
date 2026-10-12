@@ -1,4 +1,4 @@
-// Bước 2 · Dữ liệu non-IID: heatmap 38 lớp × 5 client và vì sao Local-only không nhận ra bệnh chưa từng thấy.
+// Bước 2 · Dữ liệu phân tán (non-IID): heatmap 38 lớp × 5 client và vì sao Local-only không nhận ra bệnh chưa từng thấy.
 import { getEvidence, getPartitions, getSummary, modelsById } from "../core/store.js";
 import {
   byId, cropOf, diseaseOf, esc, fmtInt, fmtNum, fmtPct, fmtPctValue, formatDiseaseName, revealItems,
@@ -42,11 +42,11 @@ function clientCards(evidence, shards, byModel) {
     return `
       <article class="client-tile">
         <header><b>Client ${clientNumber(client)}</b><span class="model-pill local">Local ${clientNumber(client)}</span></header>
-        <p class="client-tile-n mono">${fmtInt(counts[client])} <span>ảnh train · ${fmtNum((counts[client] / total) * 100, 1)}%</span></p>
-        <p class="client-tile-sub">${shard ? `${shard.classes_with_images}/38 lớp có ảnh` : "Số lớp có ảnh: chưa có báo cáo shard"}</p>
+        <p class="client-tile-n mono">${fmtInt(counts[client])} <span>ảnh để học · ${fmtNum((counts[client] / total) * 100, 1)}%</span></p>
+        <p class="client-tile-sub">${shard ? `${shard.classes_with_images}/38 nhóm có ảnh` : "Số nhóm có ảnh: chưa có báo cáo"}</p>
         <dl class="client-tile-metrics">
-          <div><dt>Local PV</dt><dd class="mono">${fmtPct(model.metrics.plantvillage.top1_accuracy, 1)}</dd></div>
-          <div><dt>Local PD</dt><dd class="mono">${fmtPct(model.metrics.plantdoc.top1_accuracy, 1)}</dd></div>
+          <div><dt>Học riêng · ảnh trong phòng</dt><dd class="mono">${fmtPct(model.metrics.plantvillage.top1_accuracy, 1)}</dd></div>
+          <div><dt>Học riêng · ngoài đồng</dt><dd class="mono">${fmtPct(model.metrics.plantdoc.top1_accuracy, 1)}</dd></div>
         </dl>
       </article>`;
   }).join("");
@@ -74,14 +74,14 @@ function heatmapTable(shards, pvRecall, view) {
         const r = pvRecall?.[`local_${clientNumber(c)}`]?.[row.class];
         const count = row.per_client[c];
         return r === undefined || r === null
-          ? `<td class="heat-cell is-empty" title="Không có ảnh validation của lớp này">—</td>`
-          : `<td class="heat-cell heat-recall${r < 0.5 ? " is-low" : ""}" style="--p:${r}" title="Local ${clientNumber(c)}: recall ${fmtPct(r, 1)} · shard có ${fmtInt(count)} ảnh lớp này">${fmtNum(r * 100, 0)}</td>`;
+          ? `<td class="heat-cell is-empty" title="Không có ảnh kiểm tra của nhóm này">—</td>`
+          : `<td class="heat-cell heat-recall${r < 0.5 ? " is-low" : ""}" style="--p:${r}" title="Local ${clientNumber(c)}: nhận đúng ${fmtPct(r, 1)} · client này có ${fmtInt(count)} ảnh của nhóm này">${fmtNum(r * 100, 0)}</td>`;
       }).join("");
       const globals = ["fedavg", "centralized"].map(id => {
         const r = pvRecall?.[id]?.[row.class];
         return r === undefined || r === null
           ? `<td class="heat-cell is-empty">—</td>`
-          : `<td class="heat-cell heat-recall${r < 0.5 ? " is-low" : ""} col-global" style="--p:${r}" title="${id === "fedavg" ? "FedAvg" : "Centralized"}: recall ${fmtPct(r, 1)}">${fmtNum(r * 100, 0)}</td>`;
+          : `<td class="heat-cell heat-recall${r < 0.5 ? " is-low" : ""} col-global" style="--p:${r}" title="${id === "fedavg" ? "FedAvg" : "Centralized"}: nhận đúng ${fmtPct(r, 1)}">${fmtNum(r * 100, 0)}</td>`;
       }).join("");
       cells = recallCells + globals;
     } else {
@@ -89,15 +89,15 @@ function heatmapTable(shards, pvRecall, view) {
         const n = row.per_client[c];
         const share = row.total ? n / row.total : 0;
         const cls = n === 0 ? "is-zero" : share >= 0.9 ? "is-dominant" : "";
-        return `<td class="heat-cell heat-count ${cls}" style="--p:${share.toFixed(3)}" title="Client ${clientNumber(c)} có ${fmtInt(n)}/${fmtInt(row.total)} ảnh lớp ${esc(formatDiseaseName(row.class))} (${fmtNum(share * 100, 1)}%)">${fmtInt(n)}</td>`;
+        return `<td class="heat-cell heat-count ${cls}" style="--p:${share.toFixed(3)}" title="Client ${clientNumber(c)} có ${fmtInt(n)}/${fmtInt(row.total)} ảnh nhóm ${esc(formatDiseaseName(row.class))} (${fmtNum(share * 100, 1)}%)">${fmtInt(n)}</td>`;
       }).join("");
       const concentration = row.top_share_pct !== null && row.top_share_pct >= 90
-        ? `<span class="pill-flag" title="Hơn 90% ảnh của lớp này nằm ở một client">${fmtNum(row.top_share_pct, 0)}% ở client ${clientNumber(row.top_client)}</span>` : "";
+        ? `<span class="pill-flag" title="Hơn 90% ảnh của nhóm này nằm ở một client">${fmtNum(row.top_share_pct, 0)}% ở client ${clientNumber(row.top_client)}</span>` : "";
       cells = `${countCells}<td class="heat-total mono">${fmtInt(row.total)}</td><td class="heat-note">${concentration}</td>`;
     }
     rows.push(`<tr><th scope="row" class="heat-class">${esc(diseaseOf(row.class))}</th>${cells}</tr>`);
   }
-  return `<table class="heat-table"><thead><tr><th scope="col">Lớp bệnh</th>${head}</tr></thead><tbody>${rows.join("")}</tbody></table>`;
+  return `<table class="heat-table"><thead><tr><th scope="col">Nhóm</th>${head}</tr></thead><tbody>${rows.join("")}</tbody></table>`;
 }
 
 // ───────── Trình xem 12 cách chia của release (chỉ dữ liệu) ─────────
@@ -130,7 +130,7 @@ function schemeSummary(scheme) {
         <b>Client ${clientNumber(c)}</b>
         <span class="scheme-bar"><span style="transform:scaleX(${(d.n_k / total).toFixed(3)})"></span></span>
         <span class="mono">${fmtInt(d.n_k)} ảnh</span>
-        <span>${fmtInt(d.classes_with_images)}/38 lớp</span>
+        <span>${fmtInt(d.classes_with_images)}/38 nhóm</span>
         <span>PlantDoc ${fmtPct(d.plantdoc_share, 1)}</span>
       </li>`;
   }).join("");
@@ -178,7 +178,7 @@ async function mountExplorer() {
     byId("scheme-badge").innerHTML = scheme.has_trained_models
       ? '<span class="status-badge success">Có 7 mô hình đã huấn luyện</span>'
       : '<span class="status-badge is-neutral">Chỉ có dữ liệu, chưa huấn luyện</span>';
-    byId("scheme-desc").textContent = `Độ lệch phân bố lớp trung bình giữa client và toàn bộ (Jensen–Shannon): ${scheme.mean_js_divergence === null ? "0 (chia đều)" : fmtNum(scheme.mean_js_divergence, 3)} — càng lớn càng non-IID. Tổng ${fmtInt(partitions.total_train)} ảnh train.`;
+    byId("scheme-desc").textContent = `Độ lệch phân bố nhóm trung bình giữa client và toàn bộ (Jensen–Shannon): ${scheme.mean_js_divergence === null ? "0 (chia đều)" : fmtNum(scheme.mean_js_divergence, 3)} — càng lớn càng non-IID. Tổng ${fmtInt(partitions.total_train)} ảnh train.`;
     byId("scheme-clients").innerHTML = schemeSummary(scheme);
     byId("scheme-wrap").innerHTML = heatmapTable(schemeAsShards(partitions, scheme), null, "count");
   };
@@ -215,10 +215,10 @@ export async function mount() {
       : "";
     exampleHtml = `
       <div class="callout callout-info">
-        <b>${fmtInt(shards.single_client_classes)}/${fmtInt(shards.classes_total)} lớp</b> có từ 90% ảnh train trở lên nằm ở đúng một client.
+        <b>${fmtInt(shards.single_client_classes)}/${fmtInt(shards.classes_total)} nhóm</b> có từ 90% ảnh nằm ở đúng một client.
         Ví dụ <b>${esc(formatDiseaseName(example.class))}</b>: client ${holder} có <b>${fmtInt(holderCount)} ảnh</b>
-        (${fmtNum(example.top_share_pct, 0)}% của lớp); bốn client còn lại cộng lại chỉ có ${fmtInt(othersTotal)} ảnh${zeroText}.
-        ${recalls ? `Recall PlantVillage của bốn Local-only đó trên lớp này: ${recalls}.` : "Local-only của các client đó có rất ít hoặc không có ảnh để học bệnh này."}
+        (${fmtNum(example.top_share_pct, 0)}% của nhóm); bốn client còn lại cộng lại chỉ có ${fmtInt(othersTotal)} ảnh${zeroText}.
+        ${recalls ? `Tỉ lệ nhận đúng nhóm này của bốn mô hình học riêng đó: ${recalls}.` : "Local-only của các client đó có rất ít hoặc không có ảnh để học nhóm này."}
       </div>`;
   }
 
@@ -226,9 +226,9 @@ export async function mount() {
     <section class="panel">
       <h3 class="panel-title">Mỗi client chỉ thấy một góc của bức tranh</h3>
       <p class="panel-desc">
-        Dữ liệu được chia cho năm client theo phân phối Dirichlet với α = 0,1 — mức lệch nhãn nặng: ảnh của từng loại bệnh bị dồn
-        gần như hết vào một client. Đây là điều thường gặp ngoài thực tế (mỗi nông hộ, mỗi vùng chỉ có vài loại bệnh).
-        Local-only chỉ học từ shard của mình; FedAvg trung bình các mô hình nên "thừa hưởng" kiến thức của cả năm nơi.
+        Ngoài thực tế, mỗi nông hộ hay mỗi vùng thường chỉ gặp một số nhóm nhất định. Đồ án mô phỏng điều đó bằng cách chia ảnh cho năm client
+        theo kiểu lệch nặng (non-IID, tham số Dirichlet α = 0,1): mỗi client có ảnh ở khá nhiều nhóm nhưng số lượng chênh nhau rất lớn, và nhiều nhóm có phần lớn ảnh nằm ở đúng một client.
+        Mô hình học riêng chỉ biết những gì client của mình có; FedAvg gộp mô hình của cả năm nơi nên "thừa hưởng" kiến thức của tất cả.
       </p>
       ${exampleHtml}
     </section>
@@ -239,30 +239,30 @@ export async function mount() {
     <section class="panel mt-4">
       <div class="panel-header-flex">
         <div>
-          <h3 class="panel-title">38 lớp × 5 client</h3>
-          <p class="panel-desc" id="heat-desc">Số ảnh train của mỗi lớp trong shard từng client. Ô càng đậm thì client đó giữ phần càng lớn của lớp.</p>
+          <h3 class="panel-title">38 nhóm × 5 client</h3>
+          <p class="panel-desc" id="heat-desc">Số ảnh của mỗi nhóm ở từng client. Ô càng đậm thì client đó giữ phần càng lớn của nhóm ấy.</p>
         </div>
         <div class="segmented" role="radiogroup" aria-label="Chọn bảng hiển thị">
-          <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-heat="count">Số ảnh train</button>
-          <button type="button" class="segmented-option" role="radio" aria-checked="false" data-heat="recall">Recall PlantVillage</button>
+          <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-heat="count">Số ảnh để học</button>
+          <button type="button" class="segmented-option" role="radio" aria-checked="false" data-heat="recall">Tỉ lệ nhận đúng</button>
         </div>
       </div>
       <div class="table-responsive heat-wrap mt-3" id="heat-wrap">${heatmapTable(shards, re?.pv_recall, "count")}</div>
-      <p class="field-hint mt-2">Recall lấy từ lần tái đánh giá cục bộ trên validation PlantVillage; chỉ có ở lớp có ảnh validation.</p>
+      <p class="field-hint mt-2">Tỉ lệ nhận đúng (recall) lấy từ lần chấm lại trên ảnh kiểm tra PlantVillage; chỉ có ở nhóm có ảnh kiểm tra.</p>
       ${presence && presence.absentMean !== null ? `
       <div class="callout mt-3">
-        <b>Khớp với bảng số ảnh:</b> ở ${fmtInt(presence.absentN)} ô (client × lớp) <b>không có ảnh</b>, recall của Local-only
+        <b>Khớp với bảng số ảnh:</b> ở ${fmtInt(presence.absentN)} ô (client × nhóm) <b>không có ảnh</b>, tỉ lệ nhận đúng của mô hình học riêng
         ${presence.absentMean === 0 ? "luôn bằng <b>0%</b>" : `trung bình chỉ <b>${fmtPct(presence.absentMean, 1)}</b>`};
-        ở ${fmtInt(presence.presentN)} ô có ảnh, recall trung bình là <b>${fmtPct(presence.presentMean, 1)}</b>.
+        ở ${fmtInt(presence.presentN)} ô có ảnh, tỉ lệ nhận đúng trung bình là <b>${fmtPct(presence.presentMean, 1)}</b>.
       </div>` : ""}
     </section>` : `
     <div class="callout callout-warn mt-4" role="note">
-      <b>Chưa có báo cáo phân bố lớp theo client.</b> ${esc(summary?.shards?.reason || "Chạy scripts/report_client_shards.py trên máy có dataset.")}
+      <b>Chưa có báo cáo phân bố nhóm theo client.</b> ${esc(summary?.shards?.reason || "Chạy scripts/report_client_shards.py trên máy có dataset.")}
     </div>`}
 
     <details class="panel panel-fold mt-4" id="scheme-explorer">
-      <summary>Khám phá 12 cách chia dữ liệu có trong release</summary>
-      <p class="panel-desc mt-2">Release dựng sẵn 12 cách chia cho 5 client: IID, lệch nhãn, lệch số lượng, lệch nguồn ảnh và kết hợp.
+      <summary>Khám phá 12 cách chia dữ liệu có sẵn trong bộ dữ liệu</summary>
+      <p class="panel-desc mt-2">Bộ dữ liệu dựng sẵn 12 cách chia cho 5 client: IID, lệch nhãn, lệch số lượng, lệch nguồn ảnh và kết hợp.
         Đây <b>chỉ là dữ liệu</b> — mọi kết quả trên web là của cách chia lệch nhãn α = 0,1; các cách chia khác chưa được huấn luyện.</p>
       <div class="mt-3" id="scheme-explorer-body"><div class="skeleton skeleton-block"></div></div>
     </details>
@@ -296,8 +296,8 @@ export async function mount() {
         });
         wrap.innerHTML = heatmapTable(shards, re?.pv_recall, view);
         desc.textContent = view === "recall"
-          ? "Recall (%) của từng mô hình trên ảnh validation PlantVillage của lớp đó. Hai cột cuối là mô hình toàn cục."
-          : "Số ảnh train của mỗi lớp trong shard từng client. Ô càng đậm thì client đó giữ phần càng lớn của lớp.";
+          ? "Tỉ lệ ảnh của nhóm đó được mô hình nhận đúng (%, trên ảnh kiểm tra chụp trong phòng). Hai cột cuối là mô hình chung."
+          : "Số ảnh của mỗi nhóm ở từng client. Ô càng đậm thì client đó giữ phần càng lớn của nhóm ấy.";
       });
     });
   }

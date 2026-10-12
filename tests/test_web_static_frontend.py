@@ -143,3 +143,36 @@ def test_fonts_are_cacheable_but_app_assets_stay_no_store(client: TestClient):
     missing = client.get("/static/fonts/does-not-exist.woff2")
     assert missing.status_code == 404
     assert "max-age" not in missing.headers.get("cache-control", ""), "404 không được bị cache một ngày"
+
+
+BANNED_VISIBLE_TERMS = {
+    r"Val accuracy": "dùng 'độ chính xác trên tập kiểm tra'",
+    r"Học liên hiệp": "thuật ngữ thống nhất là 'học liên kết'",
+    r"Test giữ riêng": "dùng 'tập giữ riêng'",
+    r"tập (?:ảnh )?độc lập": "'độc lập' nói quá: tập này chỉ là tập giữ riêng, không dùng để chọn mô hình",
+    r"(?<!giả định )ảnh độc lập": "xem 'tập giữ riêng' (chỉ 'giả định ảnh độc lập' của thống kê là hợp lệ)",
+    r"Kiểm tra độc lập": "xem 'tập giữ riêng'",
+    r"\bbệnh này\b": "nhóm có thể là lá khỏe: dùng 'nhóm này'",
+    r"Lớp bệnh": "dùng 'Nhóm'",
+}
+
+
+def _visible_source() -> str:
+    """HTML + JS đã bỏ comment (chỉ kiểm chuỗi người xem nhìn thấy)."""
+    text = HTML + "\n" + "\n".join(JS_BY_REL.values())
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    text = re.sub(r"(?m)^\s*//.*$", "", text)
+    return re.sub(r"<!--.*?-->", "", text, flags=re.S)
+
+
+def test_visible_copy_has_no_banned_terms():
+    source = _visible_source()
+    hits = [f"{pattern}: {why}" for pattern, why in BANNED_VISIBLE_TERMS.items() if re.search(pattern, source)]
+    assert not hits, "Chuỗi hiển thị còn thuật ngữ đã bỏ: " + "; ".join(hits)
+
+
+def test_nav_labels_match_route_labels():
+    router = JS_BY_REL["core/router.js"]
+    labels = re.findall(r'label:\s*"([^"]+)"', router)
+    nav = re.findall(r'<span class="nav-label">([^<]+)</span>', HTML)
+    assert [label.replace("&", "&amp;") for label in labels] == nav, (labels, nav)

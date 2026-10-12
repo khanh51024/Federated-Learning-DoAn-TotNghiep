@@ -55,13 +55,13 @@ python -m src.federated.server_app --smoke --rounds 2 --num-clients 5
 ```powershell
 python -m uvicorn web.app:app --host 0.0.0.0 --port 8088
 ```
-Truy cập trình duyệt tại: **`http://localhost:8088`** để trải nghiệm đầy đủ 6 màn hình:
-1. **Dashboard**: Giám sát KPIs toàn cục, đường cong hội tụ, phân phối dữ liệu.
-2. **Centralized Baseline**: Điều khiển và quan sát baseline tập trung.
-3. **Huấn Luyện FedAvg**: Cấu hình và kích hoạt các vòng huấn luyện liên hợp.
-4. **Clients & Telemetry**: Thẻ chi tiết 5 clients (số mẫu $n_k$, chỉ số đói dữ liệu, RTT, Weight Inspector).
-5. **So Sánh & Benchmark**: Bảng đối sánh 3 trụ cột (Centralized vs FedAvg vs Local-only) và biểu đồ Dirichlet $\alpha$.
-6. **Nhận Diện (Inference)**: Tải ảnh lá cây lên và nhận kết quả đối chiếu song song giữa mô hình Centralized và mô hình Federated Global.
+Truy cập trình duyệt tại: **`http://localhost:8088`** để xem 6 bước trình bày (chi tiết trong [docs/WEB_DEMO_GD1_GD2.md](docs/WEB_DEMO_GD1_GD2.md)):
+1. **Tổng quan**: đề tài, cách FedAvg hoạt động, ba cách huấn luyện và kết quả chính.
+2. **Dữ liệu phân tán**: mỗi client giữ phần nào của 38 nhóm; 12 cách chia dữ liệu.
+3. **Kết quả & so sánh**: bảng 7 mô hình, tập giữ riêng và khoảng tin cậy, ma trận nhầm lẫn, độ tin cậy xác suất.
+4. **Chẩn đoán bệnh lá**: một ảnh qua cả 7 mô hình, đúng/sai và lý do, Grad-CAM.
+5. **Huấn luyện thử**: chạy Flower 5 client trên máy này để xem quy trình FedAvg từng vòng.
+6. **Bằng chứng & hạn chế**: những gì đã kiểm chứng, hạn chế và việc còn lại.
 
 ---
 
@@ -142,7 +142,7 @@ Federated-Learning-DoAn-TotNghiep/
 │   ├── services/model_service.py  # MỘT CỬA inference — chỉ mở cho model đã qua cổng web_visible của registry
 │   ├── state.py             # trạng thái background task + Flower demo
 │   └── static/              # Giao diện 6 bước (HTML/CSS/ES module, không bước build)
-│       ├── index.html       # 1 Tổng quan · 2 Dữ liệu non-IID · 3 Kết quả · 4 Chẩn đoán · 5 Huấn luyện thử · 6 Bằng chứng
+│       ├── index.html       # 1 Tổng quan · 2 Dữ liệu phân tán · 3 Kết quả & so sánh · 4 Chẩn đoán · 5 Huấn luyện thử · 6 Bằng chứng
 │       ├── css/{style,pages}.css
 │       ├── js/app.js        # khởi động; js/core/ (router, store, api, charts, status, present), js/pages/ (mỗi bước một file)
 │       ├── samples/demo/    # 19 ảnh mẫu có nhãn thật + catalog.json (scripts/build_demo_gallery.py)

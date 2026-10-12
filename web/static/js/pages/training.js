@@ -12,12 +12,12 @@ const STOP = '<svg class="svg-icon icon-sm" viewBox="0 0 24 24" fill="none" stro
 const state = { mode: "federated", layerLoaded: false };
 
 const HEAD = {
-  federated: "<tr><th>Vòng</th><th>Global accuracy</th><th>Global loss</th><th>Macro-F1</th><th>Thời gian tổng hợp</th><th>Thời gian vòng</th><th>Trạng thái</th></tr>",
-  centralized: "<tr><th>Epoch</th><th>Train acc</th><th>Train loss</th><th>Val acc</th><th>Val loss</th><th>Macro-F1</th><th>Thời gian</th><th>Trạng thái</th></tr>",
+  federated: "<tr><th>Vòng</th><th>Độ chính xác (mô hình chung)</th><th>Sai số (loss)</th><th>Macro-F1</th><th>Thời gian gộp</th><th>Thời gian cả vòng</th><th>Trạng thái</th></tr>",
+  centralized: "<tr><th>Epoch</th><th>Chính xác (học)</th><th>Loss (học)</th><th>Chính xác (kiểm tra)</th><th>Loss (kiểm tra)</th><th>Macro-F1</th><th>Thời gian</th><th>Trạng thái</th></tr>",
 };
 
 const EMPTY_ROW = {
-  federated: '<tr><td colspan="7" class="text-center text-muted">Chưa có phiên đang theo dõi. Bấm "Bắt đầu" để chạy; audit của phiên hoàn tất nằm ở mục Telemetry bên dưới.</td></tr>',
+  federated: '<tr><td colspan="7" class="text-center text-muted">Chưa có phiên đang theo dõi. Bấm "Bắt đầu" để chạy; nhật ký chi tiết từng client nằm ở mục bên dưới.</td></tr>',
   centralized: '<tr><td colspan="8" class="text-center text-muted">Chưa có tiến trình huấn luyện. Bấm "Bắt đầu" để theo dõi.</td></tr>',
 };
 
@@ -157,7 +157,7 @@ function applyStatus(_data, { task, network, finished, stale }) {
     setBar(byId("train-progress-fill"), pct);
     setText(byId("train-progress-label"), `Tiến trình: ${pct}%`);
     setText(byId("train-progress-detail"), task.message || "Đang tính toán…");
-    setText(byId("train-monitor-desc"), kind === "centralized" ? "Huấn luyện Centralized đang chạy." : "Server và năm client đang chạy trên localhost.");
+    setText(byId("train-monitor-desc"), kind === "centralized" ? "Huấn luyện Centralized đang chạy." : "Máy chủ và năm client đang chạy trên localhost.");
     if (kind && task.live_progress) renderProgress(kind, task.live_progress, true, task);
     byId("train-progress-fill").classList.toggle("fed-fill", kind !== "centralized");
     return;
@@ -196,14 +196,14 @@ export async function loadNetworkMetrics() {
   try {
     const data = await getJson("/api/federated/network-metrics");
     if (!data.available || !Array.isArray(data.rounds) || data.rounds.length === 0) {
-      setText(runContext, "Chưa có phiên Flower smoke hoàn tất.");
-      tbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted">Chưa có dữ liệu Flower network thật.</td></tr>';
-      clientBody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">Chưa có audit per-client.</td></tr>';
-      setText(summary, "Final held-out test: chưa có evaluator.");
+      setText(runContext, "Chưa có phiên chạy thử nào hoàn tất.");
+      tbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted">Chưa có dữ liệu từ phiên Flower thật.</td></tr>';
+      clientBody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">Chưa có nhật ký từng client.</td></tr>';
+      setText(summary, "Kiểm tra cuối trên tập ảnh giữ riêng: chưa thực hiện trong phiên này.");
       return;
     }
     setText(runContext, data.historical_run
-      ? `Lịch sử smoke đã kiểm: ${String(data.run_dir || "").split(/[\\/]/).pop()} · 2 vòng, 5 client; không phải phiên đang chạy.`
+      ? `Phiên chạy thử gần nhất đã kiểm: ${String(data.run_dir || "").split(/[\\/]/).pop()} · 2 vòng, 5 client; không phải phiên đang chạy.`
       : "Phiên Flower hiện tại · dữ liệu tổng hợp, không dùng làm kết quả khoa học.");
     const ms = (v, d = 2) => (v !== undefined && Number(v) >= 0 ? `${fmtNum(v, d)} ms` : "—");
     tbody.innerHTML = data.rounds.map(r => `
@@ -217,8 +217,8 @@ export async function loadNetworkMetrics() {
       </tr>`).join("");
     const tm = data.final_test_metrics;
     setText(summary, tm
-      ? `Final held-out test — accuracy ${fmtNum(Number(tm.accuracy) * 100, 2)}% · loss ${formatDec(tm.loss)} · macro-F1 ${formatDec(tm.macro_f1)}`
-      : "Final held-out test: chưa có evaluator hoặc chưa cấu hình evaluation dataset root.");
+      ? `Kiểm tra cuối trên tập ảnh giữ riêng — độ chính xác ${fmtNum(Number(tm.accuracy) * 100, 2)}% · loss ${formatDec(tm.loss)} · macro-F1 ${formatDec(tm.macro_f1)}`
+      : "Kiểm tra cuối trên tập ảnh giữ riêng: chưa thực hiện (cần cấu hình thư mục ảnh đánh giá).");
     const clientRows = (data.audit_rounds || []).flatMap(round => (round.clients || []).map(client => ({ round: round.round, ...client })));
     clientBody.innerHTML = clientRows.length ? clientRows.map(row => `
       <tr>
@@ -229,11 +229,11 @@ export async function loadNetworkMetrics() {
         <td title="${esc(row.partition_config_sha256 || "")}">${esc(row.partition_id || "—")}</td>
         <td>${formatDec(row.received_update_norm)}</td>
         <td>${esc(row.status || "—")}</td><td>${esc(row.validation_reason || "—")}</td>
-      </tr>`).join("") : '<tr><td colspan="10" class="text-center text-muted">Chưa có audit per-client.</td></tr>';
+      </tr>`).join("") : '<tr><td colspan="10" class="text-center text-muted">Chưa có nhật ký từng client.</td></tr>';
   } catch (error) {
-    tbody.innerHTML = `<tr><td colspan="12" class="text-center text-muted">Lỗi đọc network metrics: ${esc(error.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" class="text-center text-muted">Không đọc được số liệu phiên chạy: ${esc(error.message)}</td></tr>`;
     clientBody.innerHTML = `<tr><td colspan="10" class="text-center text-muted">${esc(error.message)}</td></tr>`;
-    setText(summary, `Final held-out test: lỗi đọc metrics (${error.message})`);
+    setText(summary, `Kiểm tra cuối trên tập ảnh giữ riêng: không đọc được số liệu (${error.message})`);
   }
 }
 
@@ -255,7 +255,7 @@ function renderLayerStats(stats) {
       <td class="text-sky">${esc(stats.l2_norm)}</td>
       <td class="text-emerald">${update}</td>
       <td>${esc(stats.mean)} ± ${esc(stats.std)}</td>
-      <td class="text-muted mono">[${stats.sample_values ? esc(stats.sample_values.join(", ")) : ""}]</td>
+      <td class="text-muted code">[${stats.sample_values ? esc(stats.sample_values.join(", ")) : ""}]</td>
     </tr>`;
 }
 

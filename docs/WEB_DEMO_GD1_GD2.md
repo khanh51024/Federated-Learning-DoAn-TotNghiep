@@ -16,12 +16,14 @@ Menu bên trái đi theo đúng trình tự trình bày; mỗi bước có đị
 
 | Bước | Địa chỉ | Việc của người trình bày | Dữ liệu |
 |---|---|---|---|
-| 1 Tổng quan | `#tong-quan` | Nêu câu hỏi, ba trụ cột (Centralized / FedAvg / Local-only), kết quả chính và độ tin cậy | `/api/demo/evidence`, `/api/evidence/summary` |
-| 2 Dữ liệu non-IID | `#non-iid` | Cho thấy mỗi client giữ phần nào của 38 lớp: heatmap số ảnh train và recall Local-only | `/api/evidence/summary` (shard, tái đánh giá) |
-| 3 Kết quả chi tiết | `#ket-qua` | Bảng 7 mô hình; PlantDoc theo lớp; hiệu chuẩn xác suất (ECE) | `/api/evidence/summary` |
-| 4 Chẩn đoán bệnh lá | `#chan-doan` | Chọn ảnh mẫu (dễ → khó) hoặc tải ảnh; một ảnh chạy cả 7 mô hình, hiện đúng/sai và số ảnh train của lớp đó | `/api/inference` (6 lần), `samples/demo/catalog.json` |
-| 5 Huấn luyện thử | `#huan-luyen` | Chạy Flower 5 client, theo dõi vòng, RTT, audit | `/api/federated/train`, `/api/status`, `/api/federated/network-metrics` |
-| 6 Bằng chứng và hạn chế | `#bang-chung` | Checklist nghiệm thu, danh tính artifact, tái đánh giá, audit rò rỉ, hạn chế | `/api/evidence/summary` |
+| 1 Tổng quan — *Học chung mà không gửi ảnh, có làm được không?* | `#tong-quan` | Nêu đề tài bằng lời thường, giải thích ba bước của FedAvg, so ba cách huấn luyện (Centralized / FedAvg / Local-only) và độ tin cậy của số liệu | `/api/demo/evidence`, `/api/evidence/summary` |
+| 2 Dữ liệu phân tán — *Vì sao mỗi nơi tự học là không đủ?* | `#non-iid` | Cho thấy mỗi client giữ phần nào của 38 loại bệnh: heatmap số ảnh và tỉ lệ nhận đúng của mô hình học riêng; mục gập "12 cách chia dữ liệu" (chỉ α=0,1 có mô hình) | `/api/evidence/summary`, `/api/evidence/partitions` |
+| 3 Kết quả & so sánh — *Kết quả có đáng tin không?* | `#ket-qua` | Sáu tab: Tổng hợp · Tập giữ riêng & thống kê (khoảng tin cậy, McNemar) · Ảnh ngoài đồng theo bệnh · Ma trận nhầm lẫn · Sai mà rất tự tin · Độ tin cậy xác suất | `/api/evidence/summary`, `/api/evidence/details` |
+| 4 Chẩn đoán bệnh lá — *Thử chẩn đoán một chiếc lá* | `#chan-doan` | Chọn ảnh mẫu (dễ → khó) hoặc tải ảnh; một lần gọi chạy cả 7 mô hình, hiện đúng/sai, xác suất gốc + đã hiệu chuẩn, số ảnh bệnh đó mô hình đã học, tùy chọn Grad-CAM; có nút in | `/api/inference/all` (máy chủ cũ: `/api/inference` 6 lần), `samples/demo/catalog.json` |
+| 5 Huấn luyện thử — *Xem FedAvg chạy từng vòng* | `#huan-luyen` | Chạy Flower 5 client, theo dõi vòng, RTT, nhật ký từng client | `/api/federated/train`, `/api/status`, `/api/federated/network-metrics` |
+| 6 Bằng chứng, hạn chế và hướng phát triển | `#bang-chung` | Thứ tự: đã kiểm chứng gì → hạn chế → việc còn lại; mã băm và lệnh mở khóa nằm trong mục gập "chi tiết kỹ thuật" | `/api/evidence/summary` |
+
+Nút **Nền tối/Nền sáng** ở menu đổi giao diện (nhớ lựa chọn; khi in luôn dùng nền sáng).
 
 **Chế độ trình chiếu** (nút ở menu hoặc phím `P`): chữ và số to hơn, ẩn mục kỹ thuật (`.tech-only`), dải bước ở đầu trang; phím `←` `→` chuyển bước, `Esc` thoát. Lựa chọn được nhớ trong trình duyệt.
 
@@ -31,12 +33,14 @@ Menu bên trái đi theo đúng trình tự trình bày; mỗi bước có đị
 
 ## Trình tự demo trước hội đồng
 
-1. **Tổng quan (bước 1):** nêu câu hỏi nghiên cứu; chỉ ba thẻ trụ cột và biểu đồ bảy mô hình. Các chip độ tin cậy ở cuối trang dẫn tới bước 6.
-2. **Dữ liệu non-IID (bước 2):** giải thích α=0,1 rồi chỉ heatmap 38 lớp × 5 client. Chuyển sang "Recall PlantVillage" để thấy ô không có ảnh luôn có recall 0%. Không diễn giải trung bình Local-only thành một checkpoint.
-3. **Kết quả chi tiết (bước 3):** bảng bảy mô hình (GĐ1: Centralized v6 và năm Local-only v7; GĐ2: FedAvg v7 với Dirichlet α=0,1, seed 42; đây là **một** kịch bản non-IID đã công bố, chưa đủ để tuyên bố hoàn tất nhiều α/nhiều seed). Tab "PlantDoc theo lớp" cho thấy khoảng cách miền; tab "Độ tin cậy xác suất" nói rõ softmax chưa hiệu chuẩn.
-4. **Chẩn đoán bệnh lá (bước 4):** bấm một ảnh mẫu (chọn "Vừa" hoặc "Khó" để có cả mô hình đúng lẫn sai); bảng bảy mô hình hiện dần, kèm câu "Vì sao?". Các mô hình dùng checkpoint SHA-256 đã kiểm và resize trực tiếp 224×224 `canonical_v1`. Bộ phân loại nhận ảnh **vùng lá đã cắt**; softmax của một ảnh không phải độ chính xác ngoài thực địa.
+Khoảng 3 phút cho phần chính (bước 1, 2, 4); các tab của bước 3 và bước 6 mở khi hội đồng hỏi sâu.
+
+1. **Tổng quan (bước 1):** đọc đề tài ở khung đầu, chỉ ba bước FedAvg, rồi ba thẻ Centralized / FedAvg / Local-only (99% — 93% — 45–55% trên ảnh chụp trong phòng). Các chip "Các con số này đáng tin tới đâu?" dẫn tới bước 6.
+2. **Dữ liệu phân tán (bước 2):** nói mỗi nơi có số ảnh rất chênh giữa các nhóm (nhiều nhóm gần như chỉ nằm ở một nơi), rồi chỉ heatmap 38 nhóm × 5 client. Chuyển sang "Tỉ lệ nhận đúng" để thấy ô không có ảnh thì mô hình học riêng nhận đúng 0%. Không diễn giải trung bình Local-only thành một checkpoint.
+3. **Kết quả & so sánh (bước 3):** bảng bảy mô hình (GĐ1: Centralized v6 và năm Local-only v7; GĐ2: FedAvg v7, α=0,1, seed 42; đây là **một** kịch bản đã công bố). Tab "Tập giữ riêng & thống kê" trả lời "số này có bị đẹp hơn thật không"; tab "Độ tin cậy xác suất" nói rõ softmax gốc tự tin quá mức trên ảnh ngoài đồng.
+4. **Chẩn đoán bệnh lá (bước 4):** bấm một ảnh mẫu (chọn "Vừa" hoặc "Khó" để có cả mô hình đúng lẫn sai, ví dụ ảnh #12 Tomato — Bacterial spot); bảy mô hình trả lời cùng lúc, kèm câu "Vì sao?". Bật Grad-CAM để thấy vùng mô hình nhìn (gợi ý trực quan, không phải bằng chứng nhân quả). Các mô hình dùng checkpoint đã kiểm SHA-256 và resize 224×224 (`canonical_v1`). Bộ phân loại nhận ảnh **vùng lá đã cắt**; kết quả một ảnh không phải độ chính xác ngoài thực địa.
 5. **Huấn luyện thử (bước 5):** để loại FedAvg qua Flower; web cố định 5 client, 2 vòng, 1 local epoch, smoke. Mỗi client dùng tối đa một ảnh tổng hợp cho mỗi lớp có trong shard để chạy được trên EC2 ít RAM. Bấm Bắt đầu và theo dõi sơ đồ client, vòng hiện tại, RTT localhost, log audit. Phiên này dùng model scratch và partition PlantVillage cũ; không tái tạo checkpoint pretrained/mixed-data từ các nhánh công bố, và không phải kết quả khoa học.
-6. **Bằng chứng và hạn chế (bước 6):** dùng khi hội đồng hỏi "làm sao biết số này đúng": checklist 17/20, danh tính artifact, tái đánh giá, audit rò rỉ, danh sách hạn chế.
+6. **Bằng chứng, hạn chế và hướng phát triển (bước 6):** dùng khi hội đồng hỏi "làm sao biết số này đúng" hoặc "đồ án còn thiếu gì": những gì đã kiểm chứng (chấm lại, tập giữ riêng, kiểm tra trùng ảnh), danh sách hạn chế nêu thẳng, việc còn lại cần GPU. Mã băm SHA-256 và lệnh mở khóa nằm trong mục gập "chi tiết kỹ thuật" (ẩn khi trình chiếu).
 
 Nếu artifact thiếu, sai hash, khác class map hoặc khác protocol/split, web ẩn toàn bộ số liệu và khóa chọn checkpoint. Không có fallback sang số liệu scratch cũ.
 

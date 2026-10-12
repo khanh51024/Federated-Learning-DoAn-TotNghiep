@@ -15,7 +15,7 @@
     })();
   </script>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23047857' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 20A7 7 0 0 1 4 13a7 7 0 0 1 7-7c4 0 9 2 9 7v1a6 6 0 0 1-6 6h-3z'/%3E%3Cpath d='M11 20v-8'/%3E%3C/svg%3E">
-  <title>CropFed FL — Nền Tảng Học Máy Liên Hiệp Chẩn Đoán Bệnh Lá Cây</title>
+  <title>CropFed FL — Học Liên Kết Chẩn Đoán Bệnh Lá Cây</title>
   <!-- Font tự host (Be Vietnam Pro có bộ glyph tiếng Việt đầy đủ); tải trước các subset dùng ở lần vẽ đầu -->
   <link rel="preload" as="font" type="font/woff2" crossorigin href="/static/fonts/be-vietnam-pro-400-latin.woff2">
   <link rel="preload" as="font" type="font/woff2" crossorigin href="/static/fonts/be-vietnam-pro-400-vietnamese.woff2">
@@ -66,7 +66,7 @@
         </div>
         <div>
           <h2 class="brand-title">CropFed FL</h2>
-          <span class="brand-subtitle">Federated Learning</span>
+          <span class="brand-subtitle">Học liên kết · bệnh lá cây</span>
         </div>
       </div>
 
@@ -76,10 +76,10 @@
           <span class="nav-step">1</span><span class="nav-label">Tổng quan</span>
         </a>
         <a class="nav-item" href="#non-iid" data-route="non-iid">
-          <span class="nav-step">2</span><span class="nav-label">Dữ liệu non-IID</span>
+          <span class="nav-step">2</span><span class="nav-label">Dữ liệu phân tán</span>
         </a>
         <a class="nav-item" href="#ket-qua" data-route="ket-qua">
-          <span class="nav-step">3</span><span class="nav-label">Kết quả chi tiết</span>
+          <span class="nav-step">3</span><span class="nav-label">Kết quả &amp; so sánh</span>
         </a>
         <p class="nav-group">Demo trực tiếp</p>
         <a class="nav-item" href="#chan-doan" data-route="chan-doan">
@@ -104,9 +104,9 @@
         </button>
         <div class="status-indicator">
           <span class="pulse-dot"></span>
-          <span id="server-status-text">Server: Online</span>
+          <span id="server-status-text">Máy chủ: đang kết nối…</span>
         </div>
-        <div class="system-chip" id="system-device">Device: Đang kết nối...</div>
+        <div class="system-chip" id="system-device">Thiết bị: —</div>
       </div>
     </aside>
 
@@ -153,8 +153,8 @@
       <section id="page-ket-qua" class="tab-pane" data-route="ket-qua">
         <div class="subtabs" role="tablist" aria-label="Nhóm kết quả">
           <button type="button" class="subtab is-active" role="tab" id="subtab-summary" aria-selected="true" aria-controls="result-summary" data-subtab="summary">Tổng hợp</button>
-          <button type="button" class="subtab" role="tab" id="subtab-holdout" aria-selected="false" aria-controls="result-holdout" data-subtab="holdout">Test giữ riêng &amp; thống kê</button>
-          <button type="button" class="subtab" role="tab" id="subtab-plantdoc" aria-selected="false" aria-controls="result-plantdoc" data-subtab="plantdoc">PlantDoc theo lớp</button>
+          <button type="button" class="subtab" role="tab" id="subtab-holdout" aria-selected="false" aria-controls="result-holdout" data-subtab="holdout">Tập giữ riêng &amp; thống kê</button>
+          <button type="button" class="subtab" role="tab" id="subtab-plantdoc" aria-selected="false" aria-controls="result-plantdoc" data-subtab="plantdoc">Ảnh ngoài đồng theo bệnh</button>
           <button type="button" class="subtab" role="tab" id="subtab-confusion" aria-selected="false" aria-controls="result-confusion" data-subtab="confusion">Ma trận nhầm lẫn</button>
           <button type="button" class="subtab" role="tab" id="subtab-errors" aria-selected="false" aria-controls="result-errors" data-subtab="errors">Sai mà rất tự tin</button>
           <button type="button" class="subtab" role="tab" id="subtab-calibration" aria-selected="false" aria-controls="result-calibration" data-subtab="calibration">Độ tin cậy xác suất</button>
@@ -187,7 +187,7 @@
                 <span class="skeleton gallery-skeleton"></span><span class="skeleton gallery-skeleton"></span>
                 <span class="skeleton gallery-skeleton"></span><span class="skeleton gallery-skeleton"></span>
               </div>
-              <p class="field-hint mt-2" id="gallery-note">Ảnh mẫu thuộc tập validation, xếp từ dễ đến khó.</p>
+              <p class="field-hint mt-2" id="gallery-note">Ảnh mẫu thuộc tập kiểm tra, xếp từ dễ đến khó.</p>
 
               <div class="upload-zone mt-4" id="upload-dropzone">
                 <input type="file" id="leaf-image-input" accept="image/*" class="file-input" aria-label="Tải ảnh lá cây từ máy">
@@ -211,7 +211,7 @@
               <div class="panel-header-flex">
                 <div>
                   <h3 class="panel-title panel-title-sm">2 · Chẩn đoán</h3>
-                  <p class="panel-desc">Cùng phép tiền xử lý <span class="mono">canonical_v1</span>. Mỗi mô hình dự đoán độc lập.</p>
+                  <p class="panel-desc">Bảy mô hình nhận cùng một ảnh (đã xử lý giống nhau) và dự đoán độc lập với nhau.</p>
                 </div>
                 <div class="diag-header-actions">
                   <span class="status-badge hidden" id="diag-progress-badge">Đang chạy</span>
@@ -271,7 +271,7 @@
                         <th scope="col">Mô hình</th>
                         <th scope="col">Dự đoán và độ tin cậy</th>
                         <th scope="col">Kết quả</th>
-                        <th scope="col">Ảnh train của lớp này</th>
+                        <th scope="col">Ảnh của nhóm này đã học</th>
                       </tr>
                     </thead>
                     <tbody id="diag-body"></tbody>
@@ -280,20 +280,20 @@
                 <div class="callout mt-3 hidden" id="diag-explain" role="note"></div>
                 <div class="gradcam hidden mt-3" id="diag-gradcam">
                   <h4 class="subhead">Vùng mỗi mô hình dựa vào (Grad-CAM)</h4>
-                  <p class="field-hint">Màu đỏ/vàng là vùng ảnh ảnh hưởng mạnh tới lớp mà mô hình chọn. Đây là gợi ý trực quan (độ phân giải gốc 7×7), không phải bằng chứng nhân quả.</p>
+                  <p class="field-hint">Màu đỏ/vàng là vùng ảnh ảnh hưởng mạnh tới nhóm mà mô hình chọn. Đây là gợi ý trực quan (độ phân giải gốc 7×7), không phải bằng chứng nhân quả.</p>
                   <div class="gradcam-grid mt-2" id="diag-gradcam-grid"></div>
                 </div>
                 <p class="field-hint mt-3">
-                  Số đầu là xác suất softmax <b>thô</b>; số "hiệu chuẩn" đã chia logit cho nhiệt độ T học trên tập calibration riêng
-                  (không đổi dự đoán). Độ tin cậy cao vẫn không có nghĩa là chắc chắn đúng, nhất là với ảnh ngoài miền PlantVillage.
-                  Số "ảnh train của lớp này" lấy từ shard huấn luyện đã công bố (α=0,1).
+                  Số đầu là xác suất <b>gốc</b> do mô hình tính; số "hiệu chuẩn" là xác suất sau khi điều chỉnh bằng một hệ số học trên tập ảnh riêng
+                  (không đổi dự đoán). Độ tự tin cao vẫn không có nghĩa là chắc chắn đúng, nhất là với ảnh khác kiểu ảnh chụp trong phòng.
+                  Cột "ảnh của nhóm này đã học" cho biết mô hình có từng thấy nhóm đó hay không — đó thường là lý do mô hình học riêng đoán sai.
                 </p>
               </div>
             </div>
 
             <details class="panel panel-fold" id="pv-reference">
               <summary>Mô hình tham chiếu PlantVillage (TorchScript, độc lập với so sánh FedAvg)</summary>
-              <p class="panel-desc mt-2">Model 38 lớp chạy riêng; độ tin cậy không phải accuracy.</p>
+              <p class="panel-desc mt-2">Mô hình 38 nhóm chạy riêng; độ tự tin không phải độ chính xác.</p>
               <button type="button" class="btn btn-secondary mt-3" id="btn-plantvillage" disabled>Nhận diện bằng PlantVillage</button>
               <div id="plantvillage-result" class="pv-result" role="status" aria-live="polite"></div>
             </details>
@@ -327,7 +327,7 @@
                 <span class="chip chip-static">1 epoch cục bộ</span>
                 <span class="chip chip-static">5 client</span>
                 <span class="chip chip-static">α = 0,1</span>
-                <span class="chip chip-static mono">127.0.0.1:8089</span>
+                <span class="chip chip-static code">127.0.0.1:8089</span>
               </div>
               <p class="panel-desc mt-2" id="fl-engine-help">Web tự khởi động một Flower server và năm tiến trình client riêng trên localhost.</p>
             </div>
@@ -344,7 +344,7 @@
                   <input type="number" id="cent-seed" value="42" min="0" class="input-field">
                 </div>
               </div>
-              <p class="panel-desc mt-2">Lấy mẫu cân bằng 38 lớp, ~15–25 giây, phù hợp kiểm tra thuật toán. Chế độ toàn bộ ảnh cần release ảnh trên máy huấn luyện.</p>
+              <p class="panel-desc mt-2">Lấy mẫu cân bằng 38 nhóm, ~15–25 giây, phù hợp kiểm tra thuật toán. Chế độ dùng toàn bộ ảnh cần bộ ảnh đầy đủ trên máy huấn luyện.</p>
             </div>
 
             <details class="fold mt-3">
@@ -372,7 +372,7 @@
                   </div>
                 </div>
                 <div class="form-group mt-3">
-                  <label for="fl-alpha">Mức non-IID (Dirichlet α)</label>
+                  <label for="fl-alpha">Mức lệch dữ liệu giữa các client (Dirichlet α, càng nhỏ càng lệch)</label>
                   <select id="fl-alpha" class="input-field">
                     <option value="100.0">IID (α = 100)</option>
                     <option value="1.0">Vừa (α = 1,0)</option>
@@ -381,7 +381,7 @@
                 </div>
                 <div id="fl-network-fields">
                   <div class="form-group mt-3">
-                    <label for="fl-server-address">Flower server</label>
+                    <label for="fl-server-address">Địa chỉ máy chủ Flower</label>
                     <input type="text" id="fl-server-address" value="127.0.0.1:8089" class="input-field" placeholder="127.0.0.1:8089">
                   </div>
                   <div class="form-row mt-3">
@@ -403,7 +403,7 @@
                   </div>
                   <div class="form-group mt-3">
                     <label for="fl-eval-dataset-root">Held-out evaluation root</label>
-                    <input type="text" id="fl-eval-dataset-root" class="input-field" disabled placeholder="Cần release ảnh mixed pv_pd_v3">
+                    <input type="text" id="fl-eval-dataset-root" class="input-field" disabled placeholder="Cần bộ ảnh đầy đủ mixed pv_pd_v3">
                   </div>
                   <div class="form-group mt-3">
                     <label class="check-label"><input type="checkbox" id="fl-require-real-clients" disabled> Bắt buộc client dùng ảnh thật</label>
@@ -437,8 +437,8 @@
                 <span class="status-badge" id="train-live-badge">Sẵn sàng</span>
               </div>
 
-              <div class="topology" id="topology" aria-label="Sơ đồ server và client">
-                <div class="topo-server" id="topo-server"><span class="topo-dot"></span><b>Server</b><span class="topo-sub" id="topo-server-sub">chưa chạy</span></div>
+              <div class="topology" id="topology" aria-label="Sơ đồ máy chủ và client">
+                <div class="topo-server" id="topo-server"><span class="topo-dot"></span><b>Máy chủ</b><span class="topo-sub" id="topo-server-sub">chưa chạy</span></div>
                 <div class="topo-clients" id="topo-clients">
                   <div class="topo-client" data-client="0"><span class="topo-dot"></span>Client 0</div>
                   <div class="topo-client" data-client="1"><span class="topo-dot"></span>Client 1</div>
@@ -449,8 +449,8 @@
               </div>
 
               <div class="kpi-mini-grid mt-4">
-                <div class="kpi-mini"><span class="kpi-mini-label">Client kết nối</span><span class="kpi-mini-value mono" id="dash-clients">0 / 5</span></div>
-                <div class="kpi-mini"><span class="kpi-mini-label">RTT trung bình</span><span class="kpi-mini-value mono" id="dash-rtt">—</span></div>
+                <div class="kpi-mini"><span class="kpi-mini-label">Client đã kết nối</span><span class="kpi-mini-value mono" id="dash-clients">0 / 5</span></div>
+                <div class="kpi-mini"><span class="kpi-mini-label">Độ trễ trung bình (RTT)</span><span class="kpi-mini-value mono" id="dash-rtt">—</span></div>
               </div>
 
               <div class="progress-bar-wrapper mt-4 hidden" id="train-progress-box">
@@ -469,29 +469,29 @@
                   </tbody>
                 </table>
               </div>
-              <p class="panel-desc mt-3" id="network-final-test-summary">Final held-out test: chưa có evaluator.</p>
+              <p class="panel-desc mt-3" id="network-final-test-summary">Kiểm tra cuối trên tập ảnh giữ riêng: chưa thực hiện trong phiên này.</p>
             </div>
 
             <details class="panel panel-fold" id="network-audit">
-              <summary>Telemetry và audit từng client (phiên Flower gần nhất)</summary>
-              <p class="panel-desc mt-2" id="network-run-context">Chưa có phiên Flower smoke hoàn tất.</p>
+              <summary>Nhật ký chi tiết từng client (phiên chạy gần nhất)</summary>
+              <p class="panel-desc mt-2" id="network-run-context">Chưa có phiên chạy thử nào hoàn tất.</p>
               <div class="table-responsive mt-3">
                 <table class="data-table">
                   <thead>
                     <tr>
-                      <th>Round</th><th>Accepted</th><th>Suspicious</th><th>Rejected</th><th>Mean update norm</th>
-                      <th>Val acc</th><th>Val loss</th><th>Val macro-F1</th><th>Mean RTT</th><th>Max RTT</th><th>Round fit</th><th>Overhead ước lượng</th>
+                      <th>Vòng</th><th>Chấp nhận</th><th>Đáng ngờ</th><th>Bị loại</th><th>Độ lớn cập nhật TB</th>
+                      <th>Chính xác (kiểm tra)</th><th>Loss (kiểm tra)</th><th>Macro-F1 (kiểm tra)</th><th>RTT trung bình</th><th>RTT lớn nhất</th><th>Thời gian huấn luyện vòng</th><th>Chi phí truyền ước tính</th>
                     </tr>
                   </thead>
-                  <tbody id="network-metrics-body"><tr><td colspan="12" class="text-center text-muted">Chưa chạy Flower localhost smoke.</td></tr></tbody>
+                  <tbody id="network-metrics-body"><tr><td colspan="12" class="text-center text-muted">Chưa có phiên chạy thử nào.</td></tr></tbody>
                 </table>
               </div>
               <div class="table-responsive mt-4">
                 <table class="data-table">
                   <thead>
-                    <tr><th>Round</th><th>Client</th><th>RTT</th><th>Local train</th><th>Data</th><th>Seed</th><th>Partition</th><th>Update norm</th><th>Status</th><th>Reason</th></tr>
+                    <tr><th>Vòng</th><th>Client</th><th>RTT</th><th>Thời gian học</th><th>Loại dữ liệu</th><th>Seed</th><th>Phần dữ liệu</th><th>Độ lớn cập nhật</th><th>Trạng thái</th><th>Lý do</th></tr>
                   </thead>
-                  <tbody id="network-client-rtt-body"><tr><td colspan="10" class="text-center text-muted">Chưa có audit per-client.</td></tr></tbody>
+                  <tbody id="network-client-rtt-body"><tr><td colspan="10" class="text-center text-muted">Chưa có nhật ký từng client.</td></tr></tbody>
                 </table>
               </div>
               <button type="button" class="btn btn-secondary btn-sm mt-3" id="btn-refresh-network">Làm mới</button>

@@ -205,7 +205,9 @@ button {
 .text-secondary { color: var(--text-secondary); }
 .text-center { text-align: center; }
 .fw-600 { font-weight: 600; }
-.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+/* Số liệu: phông chính, chữ số đều cột (bảng thẳng hàng mà không mang dáng "terminal"). Phông code chỉ cho mã/hash/địa chỉ (.code). */
+.mono { font-variant-numeric: tabular-nums; }
+.code { font-family: var(--font-mono); font-size: 0.92em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .nowrap { white-space: nowrap; }
 
 .mt-2 { margin-top: var(--space-2); }
@@ -283,10 +285,14 @@ button {
 
 .brand-title,
 .brand-subtitle {
+  display: block;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.brand > div:last-child { min-width: 0; }
 
 .nav-menu {
   position: relative;
@@ -654,7 +660,7 @@ button {
   font-size: var(--fs-2xl);
   font-weight: 600;
   margin: var(--space-2) 0 var(--space-1);
-  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-variant-numeric: tabular-nums;
   line-height: 1.25;
   letter-spacing: -0.01em;
@@ -684,7 +690,7 @@ button {
 }
 
 .metric-box-val {
-  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-variant-numeric: tabular-nums;
   font-size: var(--fs-xl);
   font-weight: 600;
@@ -1127,7 +1133,7 @@ input[type="checkbox"] {
 
 .client-stat-val {
   color: var(--text-primary);
-  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-variant-numeric: tabular-nums;
   font-weight: 500;
   text-align: right;
