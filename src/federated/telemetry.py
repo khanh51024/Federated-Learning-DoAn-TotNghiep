@@ -59,6 +59,7 @@ class TelemetryManager:
         self._save_json()
 
     def _save_json(self) -> None:
+        self.log_dir.mkdir(parents=True, exist_ok=True)
         file_path = self.log_dir / "telemetry_history.json"
         data = [asdict(r) for r in self.history]
         with open(file_path, "w", encoding="utf-8") as f:
