@@ -53,6 +53,7 @@ ALLOWED_DOCS = {
     "SERVER_DEPLOY_20261005.md", "REFERENCES_IEEE.md", "NEXT_TRAINING_PLAN.md",
     "UI_ACCEPTANCE_2026-10-12.md", "COMMUNITY_FL.md",
     "UI_TRIAL_2026-10-13.md", "UI_VIEWER_REVIEW_2026-10-13.md", "UI_COMPARISON_WIDE_SCREEN_2026-10-13.md",
+    "UI_UX_REVIEW_2026-10-14.md",
 }
 # Số liệu từng xuất hiện trong tài liệu cũ và mâu thuẫn với artifact: không được quay lại docs hiện hành.
 FORBIDDEN_NUMBERS = ("97,12", "97.12", "90,44", "90.44")
