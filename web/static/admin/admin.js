@@ -342,12 +342,26 @@ function renderVersions() {
     : '<tr><td colspan="7" class="text-center text-muted">Chưa có vòng nào hoàn tất.</td></tr>';
 }
 
+// Khóa kỹ thuật của nhật ký → nhãn tiếng Việt; khóa lạ giữ nguyên để không mất thông tin.
+const DETAIL_LABELS = {
+  round_id: "vòng", parent_version: "từ phiên bản", version: "phiên bản", new_version: "phiên bản mới", to: "về phiên bản",
+  clients: "số người", examples: "số ảnh", updates: "số cập nhật", n: "số ảnh", norm: "độ lớn", clipped: "đã cắt",
+  ip: "địa chỉ IP", code_id: "mã số", code: "mã lỗi", reason: "lý do", reasons: "lý do", message: "thông điệp", count: "số lượng",
+  max_uses: "lượt dùng tối đa", ttl_hours: "hạn (giờ)", label: "nhãn", open: "phiên mở", changed: "đã đổi", suffix: "đuôi", changes: "thay đổi",
+};
+const detailValue = value => {
+  if (typeof value === "boolean") return value ? "có" : "không";
+  if (typeof value === "number") return fmtNum(value, Number.isInteger(value) ? 0 : 4); // dấu thập phân kiểu Việt
+  if (Array.isArray(value)) return value.join(", ");
+  if (typeof value === "object" && value !== null) return JSON.stringify(value);
+  return String(value);
+};
+
 function eventDetail(detail) {
   return Object.entries(detail || {})
     .map(([key, value]) => {
       if (key === "participant") return `người …${String(value).slice(-4)}`;
-      if (typeof value === "object" && value !== null) return `${key}: ${JSON.stringify(value)}`;
-      return `${key}: ${value}`;
+      return `${DETAIL_LABELS[key] || key} ${detailValue(value)}`;
     })
     .join(" · ");
 }

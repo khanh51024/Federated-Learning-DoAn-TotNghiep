@@ -42,7 +42,7 @@ function trustChips(summary) {
   const ho = summary?.holdout;
   if (ho?.available) {
     const fed = ho.models.find(x => x.model_id === "fedavg");
-    chips.push(`<a class="trust-chip warn" href="#ket-qua"><b>Kiểm tra lại trên ${fmtInt(ho.count)} ảnh giữ riêng</b><span>bộ chẩn đoán legacy, không dùng để chọn mô hình nhưng chưa nằm trong kiểm tra trùng ảnh · FedAvg đạt ${fmtPct(fed?.plantvillage?.top1)} (ảnh trong phòng) và ${fmtPct(fed?.plantdoc?.top1)} (ảnh ngoài đồng)</span></a>`);
+    chips.push(`<a class="trust-chip warn" href="#ket-qua"><b>Kiểm tra lại trên ${fmtInt(ho.count)} ảnh giữ riêng</b><span>bộ chẩn đoán có sẵn của bộ dữ liệu (legacy), không dùng để chọn mô hình nhưng chưa nằm trong kiểm tra trùng ảnh · FedAvg đạt ${fmtPct(fed?.plantvillage?.top1)} (ảnh trong phòng) và ${fmtPct(fed?.plantdoc?.top1)} (ảnh ngoài đồng)</span></a>`);
   }
   return chips.join("");
 }
@@ -201,17 +201,17 @@ export async function mount() {
     <section class="conclusion-grid mt-4" aria-label="Ba điều rút ra từ kết quả">
       <article class="conclusion fedavg">
         <span class="conclusion-label">Chênh lệch so với Centralized</span>
-        <b>${gapFedCentral > 0.5 ? `−${fmtNum(gapFedCentral, 1)} điểm` : "Gần ngang nhau"}</b>
+        <b>${gapFedCentral > 0.5 ? `−${fmtNum(gapFedCentral, 1)} điểm phần trăm` : "Gần ngang nhau"}</b>
         <p>So với Centralized trên PlantVillage; chênh lệch tham khảo vì điều kiện huấn luyện khác nhau.</p>
       </article>
       <article class="conclusion local">
         <span class="conclusion-label">Chênh lệch so với Local-only</span>
-        <b>${fedOverLocal >= 0 ? "+" : "−"}${fmtNum(Math.abs(fedOverLocal), 1)} điểm</b>
+        <b>${fedOverLocal >= 0 ? "+" : "−"}${fmtNum(Math.abs(fedOverLocal), 1)} điểm phần trăm</b>
         <p>So với mô hình học riêng tốt nhất trên PlantVillage. <a href="#non-iid">Phân bố dữ liệu giữa các client →</a></p>
       </article>
       <article class="conclusion warn">
         <span class="conclusion-label">Chênh lệch PlantVillage → PlantDoc</span>
-        <b>−${fmtNum(domainFed, 1)} điểm</b>
+        <b>−${fmtNum(domainFed, 1)} điểm phần trăm</b>
         <p>FedAvg giảm khi đổi từ PlantVillage sang PlantDoc. <a href="#ket-qua">Xem phạm vi kết quả →</a></p>
       </article>
     </section>
@@ -249,7 +249,7 @@ export async function mount() {
           <div><dt>Ảnh ngoài đồng <small>(PlantDoc)</small></dt><dd class="metric-big" id="m-fed-pd">—</dd></div>
         </dl>
         ${testLine(summary?.holdout, ["fedavg"])}
-        <p class="pillar-foot">Ảnh gốc không rời khỏi nơi sinh ra nó</p>
+        <p class="pillar-foot">Ảnh gốc ở lại trên client</p>
       </article>
       <article class="pillar pillar-local">
         <header><span class="pillar-tag">Huấn luyện riêng · không chia sẻ trọng số</span><h3>Local-only</h3></header>
@@ -263,7 +263,7 @@ export async function mount() {
       </article>
       </section>
 
-      <p class="field-hint mt-3">Số lớn tính trên tập kiểm tra dùng để chọn mô hình. Dòng “Tập giữ riêng” là bộ chẩn đoán legacy không dùng để chọn mô hình, chưa nằm trong kiểm tra trùng ảnh (xem bước 3). Mới có một kịch bản và một lần chạy; đây chưa phải độ chính xác ngoài thực địa.</p>
+      <p class="field-hint mt-3">Số lớn tính trên tập kiểm tra dùng để chọn mô hình. Dòng “Tập giữ riêng” là bộ chẩn đoán có sẵn của bộ dữ liệu, không dùng để chọn mô hình, chưa nằm trong kiểm tra trùng ảnh (xem bước 3). Mới có một kịch bản và một lần chạy; đây chưa phải độ chính xác ngoài thực địa.</p>
     </details>
 
 
@@ -271,25 +271,25 @@ export async function mount() {
     <details class="overview-detail mt-4">
       <summary><span><strong>Cách triển khai, thiết lập và kiểm chứng</strong><small>Quy mô dữ liệu, cách chia và mức độ tin cậy</small></span></summary>
       <div class="overview-detail-body">
-      <p class="panel-desc">Bản demo gồm phân chia dữ liệu giữa các client, điều phối FedAvg qua Flower và đối chiếu kết quả các mô hình. Backbone nhận diện là MobileNetV3-Small.</p><h3 class="panel-title mt-3">Thiết lập thí nghiệm</h3>
+      <p class="panel-desc">Bản demo gồm phân chia dữ liệu giữa các client, điều phối FedAvg qua Flower và đối chiếu kết quả các mô hình. Mạng nền (backbone) là MobileNetV3-Small.</p><h3 class="panel-title mt-3">Thiết lập thí nghiệm</h3>
       <dl class="fact-grid mt-3">
         <div><dt>Mô hình</dt><dd>MobileNetV3-Small${classCount ? `, ${classCount} nhóm` : ""}</dd></div>
-        <div><dt>Số nơi tham gia</dt><dd>${clientCount} client giả lập</dd></div>
-        <div><dt>Cách chia ảnh</dt><dd>Lệch nặng: số ảnh mỗi nhóm chênh rất lớn giữa các nơi (Dirichlet α = 0,1)</dd></div>
+        <div><dt>Số client tham gia</dt><dd>${clientCount} client giả lập</dd></div>
+        <div><dt>Cách chia ảnh</dt><dd>Lệch nặng: số ảnh mỗi nhóm chênh rất lớn giữa các client (Dirichlet α = 0,1)</dd></div>
         <div><dt>Ảnh để học</dt><dd>${fmtInt(trainTotal)} ảnh (PlantVillage + PlantDoc)</dd></div>
         <div><dt>Ảnh để kiểm tra</dt><dd>${fmtInt(val.plantvillage)} + ${fmtInt(val.plantdoc)} ảnh</dd></div>
         <div><dt>Số lần chạy</dt><dd>1 lần (seed ${esc(evidence.seed)})</dd></div>
       </dl>
 
-      <h3 class="panel-title mt-4">Các con số này đáng tin tới đâu?</h3>
+      <h3 class="panel-title mt-4">Mức độ kiểm chứng của các con số</h3>
       <div class="trust-grid mt-3">${trustChips(summary)}</div>
-      ${summary?.checklist?.available ? `<p class="field-hint mt-3">Tiến độ nghiệm thu: <b>${fmtInt(summary.checklist.done)}/${fmtInt(summary.checklist.total)}</b> hạng mục đã xong; ${fmtInt(summary.checklist.blocked)} hạng mục còn lại cần file mô hình gốc hoặc máy huấn luyện GPU — <a href="#bang-chung">xem ở bước 6</a>.</p>` : ""}
+      ${summary?.checklist?.available ? `<p class="field-hint mt-3">Danh mục kiểm tra dự án: <b>${fmtInt(summary.checklist.done)}/${fmtInt(summary.checklist.total)}</b> hạng mục đã xong. ${fmtInt(summary.checklist.blocked)} việc nghiên cứu còn lại cần file mô hình gốc hoặc máy huấn luyện GPU${summary.checklist.todo ? `; ${fmtInt(summary.checklist.todo)} hạng mục kỹ thuật cần chạy lại kiểm thử` : ""} — <a href="#bang-chung">xem ở bước 6</a>.</p>` : ""}
       </div>
     </details>
 
     <section class="cta-row mt-4">
       <a class="btn btn-secondary" href="#ket-qua">Xem kết quả chi tiết →</a>
-      <a class="btn btn-secondary" href="#bang-chung">Bằng chứng và hạn chế →</a>
+      <a class="btn btn-secondary" href="#bang-chung">Kiểm chứng và giới hạn →</a>
     </section>`;
 
   setMetric(byId("m-central-pv"), fmtPct(central.plantvillage.top1_accuracy));

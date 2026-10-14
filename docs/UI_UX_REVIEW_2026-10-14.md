@@ -478,3 +478,26 @@ Bố cục tab Lỗi hai cột ở điện thoại; mục "Hướng phát triể
 ## Phụ lục 3 — Danh sách ảnh
 
 `docs/ui-review-2026-10-14/01…24-*.jpg` (24 ảnh, ~2 MB). Các kịch bản kiểm (mở phiên, tham gia, tiêm lỗi bằng `page.route`) giữ ở máy review và không đưa vào repo; cách tiêm từng lỗi được mô tả ở bảng C.3. tổng quan sáng/tối/mobile; phân bố dữ liệu; kết quả PlantDoc; tab lỗi 390; chẩn đoán 1440; bước 5 ở 1440 và 390; bằng chứng; quản trị (đăng nhập, có dữ liệu); các tình huống Client FL; lỗi 504; cổng admin; huy hiệu Flower.
+
+## Phụ lục 4 — Trạng thái xử lý (cùng ngày, trên nhánh `ui-upgrade-2026-10-14`)
+
+Đã sửa mã theo mục F.1, F.2 (trừ việc số 1) và phần lớn F.3. **Chưa triển khai lên production**; chưa chạy `update_status.py --full-gates` vì máy này thiếu `flwr`.
+
+| Nhóm | Đã làm | Mục tương ứng |
+|---|---|---|
+| Chữ (F.1) | Bỏ "2 GB RAM"/"máy chủ nhỏ"; đồng nhất nhãn bước và tiêu đề; "xác suất dự đoán" thay "tự tin/độ tin cậy"; tiêu đề mô tả thay câu hỏi tu từ; Việt hóa nhãn tùy chọn nâng cao; "điểm phần trăm"; "độ chính xác giám sát"; lệnh chạy `python -m web.app`; ví dụ ở bước 2 nêu cả client giữ ảnh, FedAvg và Centralized (D10) | D1, D2, D6–D17, D20–D23, D26, D31–D37, D39–D42, B2-2, B4-3 |
+| Kết quả (B3) | Mã nguồn số và mức bằng chứng đọc được (giữ mã làm chú thích); đoạn "tập giữ riêng" thành gạch đầu dòng; đoạn so sánh theo cặp tách ý và có chú giải McNemar/bootstrap | B3-1, B3-2, D18–D20 |
+| Bước 6 (P1) | Tách "việc nghiên cứu còn lại" khỏi "hạng mục kỹ thuật"; thanh tiến độ chỉ tính hạng mục kỹ thuật; dòng ở Tổng quan nêu rõ hai loại; câu kiểm thử trong `update_status.py` ghi dấu vân tay mã nguồn thay vì "đúng mã nguồn hiện tại". `artifacts/status_report.json` trong repo đã ghi `full_tests: CHƯA` — cần triển khai bản này | B6-1, B6-2, D3–D5 |
+| Client FL (P1) | Hướng dẫn "Cách tham gia" và câu "Phiên hiện đang đóng" ngay dưới ô mã; lý do dưới mọi nút khóa (kể cả sau khi tải lại); thanh bốn cột mốc Đã tham gia → Đã huấn luyện → Đã gửi → Đã gộp và thông báo "đã gộp" (nhớ qua tải lại trang, đối chiếu `/history`); mất phản hồi thì hỏi lại `already_submitted` trước khi báo; câu riêng cho 429; worker bị đặt lại thì xóa cờ đặc trưng và tự trích lại một lần; lỗi tải mô hình bằng tiếng Việt; phản hồi `/round` cũ không ghi đè mới; kiểm tra khả năng trình duyệt ngay khi mở bước 5; tiến độ tải bộ chạy wasm; ghi dung lượng ~10 MB và ẩn khi đã có bộ nhớ đệm | B5-2, C.2-1…C.2-10, C.4-1…C.4-7, C.4-9, D24–D30, X4 |
+| Trợ năng, hiệu năng | `h2` ẩn cho từng bước (axe `heading-order` còn 0 ở 390/1440 px); `role="status"` cho kết quả chẩn đoán; đồng hồ đếm giây không còn nằm trong vùng đọc; vùng chạm ≥ 24 px (CSS); poll nhàn rỗi 8 s (trạng thái) và 10 s (vòng) thay vì 4 s và 5 s | B4-1, X1, B1-6, B6-4, X3 |
+| Quản trị, Flower | Nhật ký quản trị dùng nhãn tiếng Việt và dấu phẩy thập phân; nêu việc ghi IP trong khối "Gửi gì lên máy chủ"; huy hiệu phiên Flower hiện số vòng đã xong từ `network_processes` | B7-2, B7-4, D35, B5-3 |
+
+**Chưa làm** (không phải lỗi, hoặc cần quyết định/thiết bị): chạy `update_status.py --full-gates` và triển khai lại `status_report.json` (F.2 #1) · dòng "câu hỏi nghiên cứu" ở Tổng quan (B1-1) · chữ < 12 px ở sơ đồ và ma trận (B1-5, B3-6) · tab Lỗi hai cột trên điện thoại · phát hiện ảnh hỏng ngay lúc thêm (C.4-8) · debounce/hủy yêu cầu chẩn đoán (B4-5, B4-6) · mục "Hướng phát triển" (B6-5) · lỗi console CSP của WebKit trên `/quan-tri` (B7-3) · `skip-link` (X2) · kiểm trên Safari, điện thoại và trình đọc màn hình thật.
+
+**Kiểm thử sau khi sửa** (máy local, không có `flwr`):
+
+- `pytest tests`: 339 đạt, 3 lỗi và 9 lỗi thu thập do thiếu `flwr` — trùng mức nền trước khi sửa (test cụm "bộ chẩn đoán legacy" được cập nhật theo câu mới).
+- `scripts/e2e_community.py`: 50/50.
+- `scripts/e2e_community_ux.py` (mới): 25/25 — phiên đóng, nút khóa có lý do sau khi tải lại, "đã gộp", mất phản hồi, worker bị đặt lại, 429, thiếu `OffscreenCanvas`.
+- `scripts/ui_audit.py --quick`: 0 tràn ngang, 0 axe nghiêm trọng, 0 `heading-order`, hash API không đổi.
+- `scripts/perf_audit.py` (local, không gzip): CLS ≤ 0,078 ở mọi bước; LCP mobile vượt 2,5 s như ghi chú ở mục 0 (máy chủ local không nén).

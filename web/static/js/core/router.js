@@ -22,13 +22,13 @@ export const ROUTES = [
     load: () => import("../pages/results.js"),
   },
   {
-    id: "chan-doan", step: 4, group: "Demo trực tiếp", label: "Chẩn đoán bệnh lá",
+    id: "chan-doan", step: 4, group: "Demo trực tiếp", label: "Chẩn đoán bệnh lá cây",
     title: "Chẩn đoán bệnh trên lá cây",
     desc: "Tải ảnh lá cây hoặc chọn ảnh mẫu để xem kết quả dự đoán từ bảy mô hình",
     load: () => import("../pages/diagnosis.js"),
   },
   {
-    id: "huan-luyen", step: 5, group: "Demo trực tiếp", label: "Huấn luyện thử",
+    id: "huan-luyen", step: 5, group: "Demo trực tiếp", label: "Huấn luyện & mô phỏng",
     title: "Huấn luyện và mô phỏng FedAvg",
     desc: "Theo dõi quá trình huấn luyện liên kết giữa các client và máy chủ. Có thể tham gia từ trình duyệt hoặc chạy mô phỏng trên máy chủ",
     load: () => import("../pages/training.js"),
@@ -137,6 +137,7 @@ async function show(id) {
   $$(".tab-pane").forEach(pane => pane.classList.toggle("active", pane.dataset.route === route.id));
 
   setText(byId("page-title"), route.title);
+  setText(byId("page-content-heading"), `Nội dung: ${route.label}`); // tiêu đề h2 ẩn để thứ tự h1 → h2 → h3 không bị nhảy cấp
   setText(byId("route-announcer"), `Bước ${route.step} trên ${ROUTES.length}: ${route.label}`);
   setText(byId("page-desc"), route.desc);
   setText(byId("step-eyebrow"), `Bước ${route.step}/${ROUTES.length} · ${route.group}`);

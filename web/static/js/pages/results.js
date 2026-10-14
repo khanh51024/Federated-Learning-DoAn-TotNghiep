@@ -11,6 +11,16 @@ import {
 const built = new Set();
 let ctx = null; // { evidence, summary }
 
+// Mã nội bộ của API → câu tiếng Việt (giữ mã làm chú thích); mã lạ thì hiện nguyên văn.
+const SOURCE_TEXT = {
+  "published validation_comparison.csv; no local image release":
+    "bảng validation_comparison.csv đã công bố; chưa có ảnh gốc trên máy chủ để chấm lại trực tiếp",
+};
+const EVIDENCE_LEVEL_TEXT = {
+  published_artifact_hash_verified_not_locally_reevaluated: "tệp công bố đã kiểm mã băm, chưa chấm lại cục bộ",
+  unavailable: "chưa có",
+};
+
 function notReady(reason) {
   return `<div class="callout callout-warn" role="note"><b>Phần này chưa có dữ liệu.</b> ${esc(reason || "")}</div>`;
 }
@@ -88,7 +98,7 @@ function buildSummary() {
           <ul>
             <li><b>Tập đánh giá:</b> tập kiểm tra (validation) của release đã ghim — PlantVillage ${fmtInt(evidence.validation_counts.plantvillage)} ảnh, PlantDoc ${fmtInt(evidence.validation_counts.plantdoc)} ảnh. Tập này cũng được dùng để chọn mô hình nên không thay cho kiểm thử độc lập.</li>
             <li><b>Giao thức:</b> <span class="code">${esc(evidence.protocol_id)}</span> · seed ${esc(evidence.seed)} · tiền xử lý <span class="code">${esc(evidence.transform)}</span>.</li>
-            <li><b>Nguồn số:</b> ${esc(evidence.metrics_source)}; mức bằng chứng <span class="code">${esc(evidence.evidence_level)}</span>.</li>
+            <li><b>Nguồn số:</b> ${esc(SOURCE_TEXT[evidence.metrics_source] || evidence.metrics_source)}. <b>Mức bằng chứng:</b> ${esc(EVIDENCE_LEVEL_TEXT[evidence.evidence_level] || evidence.evidence_level)} <span class="code">(${esc(evidence.evidence_level)})</span>.</li>
             <li><b>Checkpoint:</b> Centralized v6 <span class="code">${esc(String(byModel.centralized.checkpoint_sha256).slice(0, 12))}…</span> · FedAvg v7 <span class="code">${esc(String(byModel.fedavg.checkpoint_sha256).slice(0, 12))}…</span> (SHA-256 đã kiểm trước khi nạp).</li>
             <li><b>Cách đọc:</b> Top-1 là tỉ lệ ảnh mà lựa chọn đầu tiên của mô hình đúng nhóm bệnh; chưa phải độ chính xác ngoài thực địa.</li>
           </ul>
@@ -194,7 +204,7 @@ function breakdownBar(label, pillar, block) {
   return `
     <div class="breakdown">
       <div class="breakdown-head">${modelPill(pillar === "centralized" ? "centralized" : "fedavg", label)}
-        <span class="field-hint">${fmtInt(total)} ảnh PlantDoc · đoán đúng ${fmtPct(block.top1, 1)} · ${fmtInt(block.high_confidence_wrong?.count)} ảnh sai nhưng tự tin ≥ ${fmtNum((block.high_confidence_wrong?.threshold || 0.9) * 100, 0)}%</span></div>
+        <span class="field-hint">${fmtInt(total)} ảnh PlantDoc · đoán đúng ${fmtPct(block.top1, 1)} · ${fmtInt(block.high_confidence_wrong?.count)} ảnh sai với xác suất ≥ ${fmtNum((block.high_confidence_wrong?.threshold || 0.9) * 100, 0)}%</span></div>
       <div class="stacked" role="img" aria-label="${esc(label)}: đúng ${e.correct}, sai loại cây ${e.wrong_crop}, đúng cây nhưng sai bệnh ${e.right_crop_wrong_disease}">
         ${seg(e.correct, "seg-ok", "Đúng")}${seg(e.right_crop_wrong_disease, "seg-mid", "Đúng loại cây, sai bệnh")}${seg(e.wrong_crop, "seg-bad", "Sai cả loại cây")}
       </div>
@@ -232,7 +242,7 @@ function buildPlantdoc() {
     </section>
 
     <section class="panel mt-4">
-      <h3 class="panel-title">Sai ở đâu: nhầm cây hay nhầm bệnh?</h3>
+      <h3 class="panel-title">Phân loại lỗi: sai loại cây hoặc sai bệnh</h3>
       <p class="panel-desc">Chia ${fmtInt(pd.models["FedAvg v7"].count)} ảnh PlantDoc theo kết quả dự đoán.</p>
       <div class="legend-row mt-3"><span><i class="swatch seg-ok"></i>Đúng</span><span><i class="swatch seg-mid"></i>Đúng loại cây, sai bệnh</span><span><i class="swatch seg-bad"></i>Sai cả loại cây</span></div>
       <div class="mt-3">${breakdownBar("FedAvg v7", "fedavg", pd.models["FedAvg v7"])}${breakdownBar("Centralized v6", "centralized", pd.models["Centralized v6"])}</div>
@@ -240,10 +250,10 @@ function buildPlantdoc() {
 
     <section class="panel mt-4">
       <h3 class="panel-title">Tỉ lệ nhận đúng theo từng nhóm (ảnh ngoài đồng PlantDoc)</h3>
-      <p class="panel-desc">Chỉ các nhóm có ảnh PlantDoc trong tập kiểm tra. Hàng tô nền là nhóm FedAvg nhận đúng dưới ${fmtNum((pd.weak_threshold || 0.5) * 100, 0)}%. Cột "Chênh miền" = tỉ lệ nhận đúng ở ảnh PlantVillage trừ tỉ lệ ở ảnh PlantDoc của FedAvg (điểm phần trăm).</p>
+      <p class="panel-desc">Chỉ các nhóm có ảnh PlantDoc trong tập kiểm tra. Hàng tô nền là nhóm FedAvg nhận đúng dưới ${fmtNum((pd.weak_threshold || 0.5) * 100, 0)}%. Cột “Chênh lệch miền” = tỉ lệ nhận đúng ở ảnh PlantVillage trừ tỉ lệ ở ảnh PlantDoc của FedAvg (điểm phần trăm).</p>
       <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
         <table class="data-table">
-          <thead><tr><th scope="col">Nhóm</th><th scope="col">Số ảnh</th><th scope="col">FedAvg (%)</th><th scope="col">Centralized (%)</th><th scope="col">FedAvg trên ảnh trong phòng</th><th scope="col">Chênh miền</th></tr></thead>
+          <thead><tr><th scope="col">Nhóm</th><th scope="col">Số ảnh</th><th scope="col">FedAvg (%)</th><th scope="col">Centralized (%)</th><th scope="col">FedAvg trên ảnh trong phòng</th><th scope="col">Chênh lệch miền (PlantVillage − PlantDoc)</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
@@ -295,7 +305,7 @@ function buildCalibration() {
   root.innerHTML = `
     <section class="callout callout-warn">
       <b>Xác suất softmax thô của các mô hình chưa được hiệu chuẩn.</b> Bước 4 hiện cả số thô lẫn số đã hiệu chuẩn bằng temperature scaling (T ở bảng dưới).
-      Trên PlantVillage độ tin cậy khá sát độ chính xác thực, nhưng trên PlantDoc các mô hình <b>tự tin hơn nhiều so với thực tế</b>:
+      Trên PlantVillage độ tin cậy khá sát độ chính xác thực, nhưng trên PlantDoc các mô hình <b>gán xác suất cao hơn nhiều so với tỉ lệ đúng thực tế</b>:
       FedAvg báo trung bình ${fmtPct(re.models.find(m => m.model_id === "fedavg").calibration.plantdoc.mean_confidence, 0)} nhưng chỉ đúng
       ${fmtPct(re.models.find(m => m.model_id === "fedavg").calibration.plantdoc.accuracy, 0)}.
       Việc hiệu chuẩn (temperature scaling) học trên tập ảnh chủ yếu là PlantVillage nên chỉ sửa được một phần sai lệch trên PlantDoc (ECE vẫn cao).
@@ -307,7 +317,7 @@ function buildCalibration() {
       <p class="panel-desc">ECE (Expected Calibration Error, ${re.bins} khoảng) càng thấp càng tốt. "Thô → chỉnh T" là trước và sau khi chia logit cho nhiệt độ T học trên tập hiệu chuẩn riêng ${fmtInt(re.calibration_count)} ảnh; temperature scaling không đổi dự đoán, chỉ đổi xác suất.</p>
       <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
         <table class="data-table">
-          <thead><tr><th scope="col">Mô hình</th><th scope="col">T</th><th scope="col">ECE PlantVillage</th><th scope="col">ECE PlantDoc</th><th scope="col">Ngoài đồng: tự tin TB / thực đúng</th><th scope="col">Sai dù tự tin ≥ ${fmtNum(re.high_confidence_threshold * 100, 0)}% (ngoài đồng)</th></tr></thead>
+          <thead><tr><th scope="col">Mô hình</th><th scope="col">T</th><th scope="col">ECE PlantVillage</th><th scope="col">ECE PlantDoc</th><th scope="col">Ngoài đồng: xác suất TB / tỉ lệ đúng thực</th><th scope="col">Sai dù tự tin ≥ ${fmtNum(re.high_confidence_threshold * 100, 0)}% (ngoài đồng)</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
@@ -452,7 +462,7 @@ function buildHoldout() {
     .map(([src, v]) => `${src === "plantdoc" ? "PlantDoc" : "PlantVillage"} ${v.reproduced ? "khớp" : `lệch ${fmtInt(v.correct_diff_images)} ảnh`}`).join(", ");
 
   root.innerHTML = `
-    <p class="viewer-scope">Ảnh giữ riêng không dùng để chọn mô hình; đây là tập chẩn đoán legacy, chưa phải kiểm thử cuối được khóa trước và chưa nằm trong kiểm tra trùng ảnh.</p>
+    <p class="viewer-scope">Ảnh giữ riêng không dùng để chọn mô hình; đây là bộ chẩn đoán có sẵn của bộ dữ liệu (legacy), chưa phải kiểm thử cuối được khóa trước và chưa nằm trong kiểm tra trùng ảnh.</p>
 
 
     <section class="panel mt-4">
@@ -477,29 +487,37 @@ function buildHoldout() {
       <div class="overview-detail-body">
     ${sel?.available ? `
     <section class="callout callout-warn">
-      <b>Mục đích của tập giữ riêng:</b> Phiên bản mô hình được chọn dựa trên điểm Macro-F1 PlantDoc (chỉ xét các epoch đã đạt ngưỡng F1 PlantVillage) ngay trên <b>chính tập kiểm tra đang dùng để báo cáo</b>, nên con số ở đó có thể hơi đẹp hơn thực tế.
-      Với Centralized, epoch được chọn (${fmtInt(sel.chosen_epoch)}/${fmtInt(sel.epochs)}) có độ chính xác PlantDoc ${fmtPct(sel.chosen_plantdoc_accuracy)}
-      — ${sel.chosen_rank_among_epochs === 1 ? "cao nhất trong mọi epoch" : `hạng ${fmtInt(sel.chosen_rank_among_epochs)}/${fmtInt(sel.epochs)}`} (epoch cuối: ${fmtPct(sel.last_plantdoc_accuracy)}).
-      Vì vậy đồ án chấm lại thêm trên một tập ${fmtInt(ho?.count)} ảnh <b>giữ riêng</b> — tập chẩn đoán "legacy" có sẵn của bộ dữ liệu, không dùng để chọn mô hình
-      nên không bị thiên lệch này. ${valVsTest} Với FedAvg: web chưa có đủ lịch sử từng vòng để đo hiệu ứng chọn mô hình.
-      <br><b>Lưu ý:</b> đây chưa phải bài kiểm tra cuối được khóa trước, và chưa nằm trong phép kiểm tra trùng ảnh ở bước 6;
-      một phần ảnh PlantVillage trong tập này có thể là ảnh chụp lại cùng lá với ảnh học (xem bảng cuối trang).
+      <b>Vì sao cần tập giữ riêng:</b>
+      <ul>
+        <li>Phiên bản mô hình được chọn theo điểm Macro-F1 PlantDoc (chỉ xét epoch đã đạt ngưỡng F1 PlantVillage) ngay trên <b>chính tập kiểm tra dùng để báo cáo</b>, nên con số ở đó có thể hơi đẹp hơn thực tế.
+          Với Centralized, epoch được chọn (${fmtInt(sel.chosen_epoch)}/${fmtInt(sel.epochs)}) có độ chính xác PlantDoc ${fmtPct(sel.chosen_plantdoc_accuracy)}
+          — ${sel.chosen_rank_among_epochs === 1 ? "cao nhất trong mọi epoch" : `hạng ${fmtInt(sel.chosen_rank_among_epochs)}/${fmtInt(sel.epochs)}`} (epoch cuối: ${fmtPct(sel.last_plantdoc_accuracy)}).</li>
+        <li>Vì vậy đồ án chấm lại thêm trên ${fmtInt(ho?.count)} ảnh <b>giữ riêng</b> — bộ chẩn đoán có sẵn của bộ dữ liệu (legacy), không dùng để chọn mô hình nên không bị thiên lệch này. ${valVsTest} Với FedAvg: web chưa có đủ lịch sử từng vòng để đo hiệu ứng chọn mô hình.</li>
+        <li><b>Lưu ý:</b> đây chưa phải bài kiểm tra cuối được khóa trước, và chưa nằm trong phép kiểm tra trùng ảnh ở bước 6;
+          một phần ảnh PlantVillage trong tập này có thể là ảnh chụp lại cùng lá với ảnh học (xem bảng cuối trang).</li>
+      </ul>
     </section>` : ""}
       <p class="field-hint mt-3">Khoảng tin cậy tính bằng bootstrap theo cụm: PlantDoc theo cảnh chụp, PlantVillage theo nhóm lá; nhiều ảnh cùng cảnh/lá không độc lập nhau.</p>
       </div>
     </details>
 
     ${val || test ? `
-    <details class="overview-detail mt-4"><summary>So sánh theo cặp trên cùng ảnh</summary><div class="overview-detail-body">
+    <details class="overview-detail mt-4"><summary>So sánh theo cặp</summary><div class="overview-detail-body">
       <h3 class="panel-title">So sánh theo cặp trên cùng ảnh</h3>
-      <p class="panel-desc">Hiệu số độ chính xác (điểm phần trăm) giữa hai mô hình trên đúng cùng tập ảnh, khoảng tin cậy bootstrap theo cụm, và kiểm định McNemar chính xác (giả định ảnh độc lập — vì vậy ưu tiên đọc khoảng tin cậy). "Khác biệt rõ" nghĩa là khoảng tin cậy không chứa 0; chưa hiệu chỉnh cho 8 phép so sánh (theo Bonferroni ngưỡng p là 0,05/8 ≈ 0,006). "Local tốt nhất" được chọn theo tập kiểm tra, không theo tập giữ riêng.</p>
+      <p class="panel-desc">Mỗi dòng là hiệu số độ chính xác (điểm phần trăm) giữa hai mô hình trên đúng cùng tập ảnh.</p>
+      <ul class="mt-2">
+        <li>“Khác biệt rõ” nghĩa là khoảng tin cậy không chứa 0; ưu tiên đọc khoảng tin cậy hơn giá trị p.</li>
+        <li>Chưa hiệu chỉnh cho 8 phép so sánh; theo Bonferroni, ngưỡng p là 0,05/8 ≈ 0,006.</li>
+        <li>“Local tốt nhất” được chọn theo tập kiểm tra, không theo tập giữ riêng.</li>
+      </ul>
+      <p class="field-hint mt-2"><b>McNemar:</b> kiểm định hai mô hình trên cùng ảnh (giả định ảnh độc lập). <b>Bootstrap theo cụm:</b> ước lượng khoảng dao động khi nhiều ảnh cùng cảnh hoặc cùng lá.</p>
       <div class="pair-grid mt-3">${pairBlock("Trên tập kiểm tra", val)}${pairBlock("Trên tập giữ riêng", test)}</div>
     </div></details>` : ""}
 
     ${leaf ? `
-    <details class="overview-detail mt-4"><summary>Ảnh nghi chụp lại cùng một lá ảnh hưởng thế nào?</summary><div class="overview-detail-body">
+    <details class="overview-detail mt-4"><summary>Độ nhạy với ảnh nghi chụp lại cùng một lá</summary><div class="overview-detail-body">
       <h3 class="panel-title">Độ nhạy với ảnh chụp lại cùng một lá (PlantVillage, tập giữ riêng)</h3>
-      <p class="panel-desc">${fmtInt(leaf.ungrouped_images)} ảnh PlantVillage trong tập giữ riêng không được gắn nhóm theo lá; ${fmtInt(leaf.suspected_reshoots)} ảnh trong đó có ảnh học cùng nhóm mang số thứ tự liền kề (ước lượng ảnh chụp lại cùng lá — có thể làm số đẹp hơn thật). Nếu bỏ chúng mà độ chính xác không giảm thì chưa thấy bằng chứng bị thổi phồng.</p>
+      <p class="panel-desc">${fmtInt(leaf.ungrouped_images)} ảnh PlantVillage trong tập giữ riêng không được gắn nhóm theo lá; ${fmtInt(leaf.suspected_reshoots)} ảnh trong đó có ảnh học cùng nhóm mang số thứ tự liền kề (ước lượng ảnh chụp lại cùng lá — có thể làm số đẹp hơn thật). Nếu bỏ chúng mà độ chính xác không giảm thì chưa thấy bằng chứng con số bị phóng đại.</p>
       <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
         <table class="data-table">
           <thead><tr><th scope="col">Mô hình</th><th scope="col">Tất cả</th><th scope="col">Chỉ ảnh đã gom nhóm lá</th><th scope="col">Bỏ ảnh nghi chụp lại</th></tr></thead>
@@ -608,7 +626,7 @@ async function buildConfusion() {
   render();
 }
 
-// ───────── Tab: Sai mà rất tự tin ─────────
+// ───────── Tab: Sai với xác suất cao ─────────
 const ERR_PAGE = 20; // số thẻ hiện mỗi trang (UI-01): tab không còn dựng cả 175 ảnh một lần
 async function buildErrors() {
   const root = byId("result-errors");
@@ -638,10 +656,10 @@ async function buildErrors() {
 
   root.innerHTML = `
     <section class="panel">
-      <h3 class="panel-title">Ảnh kiểm tra bị đoán sai dù mô hình tự tin ≥ ${fmtNum(floor, 0)}%</h3>
-      <p class="panel-desc">Đây là những lỗi đáng lo nhất: mô hình sai nhưng rất chắc chắn. Phần lớn là ảnh PlantDoc chụp ngoài đồng — đúng chỗ mà độ tin cậy kém đáng tin nhất.</p>
+      <h3 class="panel-title">Ảnh kiểm tra bị dự đoán sai với xác suất ≥ ${fmtNum(floor, 0)}%</h3>
+      <p class="panel-desc">Đây là các dự đoán sai có xác suất cao nhất. Phần lớn là ảnh PlantDoc chụp ngoài đồng, nơi xác suất dự đoán lệch xa nhất so với độ chính xác thực.</p>
       <div class="stat-tiles mt-3">
-        <article class="stat-tile"><b>${fmtInt(items.length)}</b><span>ảnh sai mà tự tin ≥ ${fmtNum(floor, 0)}% (ít nhất một trong hai mô hình)</span></article>
+        <article class="stat-tile"><b>${fmtInt(items.length)}</b><span>ảnh sai với xác suất ≥ ${fmtNum(floor, 0)}% (ít nhất một trong hai mô hình)</span></article>
         <article class="stat-tile warn"><b>${fmtPct(fieldCount / Math.max(items.length, 1), 0)}</b><span>là ảnh PlantDoc chụp ngoài đồng (${fmtInt(fieldCount)} ảnh)</span></article>
         <article class="stat-tile"><b>${fmtInt(fedavgWrong)}</b><span>ảnh trong đó FedAvg sai</span></article>
       </div>
@@ -661,8 +679,8 @@ async function buildErrors() {
           <button type="button" class="segmented-option" role="radio" aria-checked="false" data-err-source="plantdoc">PlantDoc</button>
           <button type="button" class="segmented-option" role="radio" aria-checked="false" data-err-source="plantvillage">PlantVillage</button>
         </div>
-        <div class="segmented" role="radiogroup" aria-label="Độ tự tin tối thiểu">
-          ${levels.map((level, index) => `<button type="button" class="segmented-option${index === 0 ? " is-active" : ""}" role="radio" aria-checked="${index === 0}" data-err-min="${level}">Tự tin ≥ ${level}%</button>`).join("")}
+        <div class="segmented" role="radiogroup" aria-label="Xác suất dự đoán tối thiểu">
+          ${levels.map((level, index) => `<button type="button" class="segmented-option${index === 0 ? " is-active" : ""}" role="radio" aria-checked="${index === 0}" data-err-min="${level}">Xác suất ≥ ${level}%</button>`).join("")}
         </div>
       </div>
       <p class="field-hint mt-3" id="err-count" role="status" aria-live="polite"></p>

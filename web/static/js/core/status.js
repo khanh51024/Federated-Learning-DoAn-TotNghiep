@@ -4,8 +4,8 @@
 import { getJson } from "./api.js";
 import { byId, notify, setClass, setText } from "./dom.js";
 
-let pollMs = 4000;
-const POLL_DEFAULT_MS = 4000;
+let pollMs = 8000;
+const POLL_DEFAULT_MS = 8000; // nhàn rỗi: 8 s (≈7 yêu cầu/phút); khi đang chạy huấn luyện, training.js đặt 1,5 s
 
 let timer = null;
 let serverOnline = null;
@@ -79,7 +79,7 @@ function renderHeader(data) {
   const holder = byId("server-status");
   if (holder) holder.title = indicator.textContent;
   indicator?.parentElement?.classList.remove("offline");
-  const flower = data.flower_server_active ? "Flower đang chạy" : "Flower chờ";
+  const flower = data.flower_server_active ? "Flower đang chạy" : "Flower: chưa chạy";
   setText(byId("system-device"), `Thiết bị: ${data.device} · ${flower}`);
 
   const task = data.task || { status: "idle", message: "Sẵn sàng" };

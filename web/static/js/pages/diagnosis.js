@@ -333,9 +333,9 @@ function headlineHtml(trueClass) {
   return `<div class="diag-headline ${tone}">
       <p class="summary-line">Kết quả chính · ${esc(MODEL_LABELS[ref])}${ref === "fedavg" ? " (học liên kết)" : ""}</p>
       <p class="headline-name">${esc(formatDiseaseName(result.predicted_class))}${uncertain}</p>
-      <p class="headline-meta">${verdictText} · độ tin cậy <b class="mono">${fmtNum(result.confidence_pct, 1)}%</b>${calibrated}</p>
+      <p class="headline-meta">${verdictText} · xác suất dự đoán <b class="mono">${fmtNum(result.confidence_pct, 1)}%</b>${calibrated}</p>
       ${truth}
-      <p class="field-hint">Độ tin cậy là xác suất mô hình gán cho dự đoán này, không phải xác suất dự đoán đúng; ảnh khác kiểu ảnh học có thể sai dù tự tin cao.</p>
+      <p class="field-hint">Xác suất dự đoán là mức mô hình gán cho nhóm đã chọn, không phải xác suất dự đoán đúng; ảnh khác kiểu ảnh học có thể sai dù xác suất cao.</p>
     </div>`;
 }
 

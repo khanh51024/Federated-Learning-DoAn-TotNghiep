@@ -76,6 +76,26 @@ async function loadModelBytes({ url, sha256, bytes: expected }) {
   return bytes;
 }
 
+// Tệp wasm của onnxruntime (~11 MB, nén ~3,5 MB) do chính thư viện tải ngầm nên không có tiến độ. Tải trước vào bộ nhớ đệm HTTP
+// để báo tiến độ; lỗi ở đây không chặn việc khởi động (thư viện sẽ tự tải lại).
+const WASM_URL = `${ORT_BASE}ort-wasm-simd-threaded.wasm`;
+const WASM_BYTES = 11_246_032;
+
+async function warmRuntime() {
+  try {
+    const response = await fetch(WASM_URL, { cache: "force-cache" });
+    if (!response.ok || !response.body || !response.body.getReader) return;
+    const reader = response.body.getReader();
+    let received = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      received += value.length;
+      post({ type: "progress", phase: "runtime", done: Math.min(received, WASM_BYTES), total: WASM_BYTES });
+    }
+  } catch { /* mạng chập chờn: để thư viện tự tải */ }
+}
+
 async function init({ model }) {
   const started = performance.now();
   if (typeof OffscreenCanvas === "undefined" || typeof createImageBitmap === "undefined") {
@@ -87,6 +107,7 @@ async function init({ model }) {
   ort.env.wasm.numThreads = 1; // một luồng: không cần cô lập cross-origin (COOP/COEP)
   ort.env.wasm.proxy = false;
   const bytes = await loadModelBytes(model);
+  await warmRuntime();
   post({ type: "progress", phase: "session", done: 0, total: 1 });
   session = await ort.InferenceSession.create(bytes, { executionProviders: ["wasm"], graphOptimizationLevel: "all" });
   post({ type: "ready", ms: Math.round(performance.now() - started), input: session.inputNames[0], output: session.outputNames[0] });

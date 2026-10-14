@@ -584,8 +584,8 @@ class CommunityStore:
                 "classes": self.assets.classes,
                 "feature_model": self.feature_model_info(),
                 "caveat": (
-                    "Học liên kết chỉ lớp cuối trên đặc trưng của backbone đóng băng. Độ chính xác giám sát tính trên tập "
-                    "validation đã dùng để chọn mô hình gốc: chỉ là tín hiệu theo dõi, không phải số liệu khoa học."
+                    "Người tham gia chỉ huấn luyện lớp phân loại cuối; phần trích đặc trưng giữ nguyên. “Độ chính xác giám sát” "
+                    "tính trên tập kiểm tra đã dùng để chọn mô hình gốc, nên chỉ để theo dõi, không phải kết quả khoa học."
                 ),
             }
         return data

@@ -1401,6 +1401,29 @@ body[data-route="tong-quan"] .top-header .eyebrow { margin-bottom: 0; }
 .comm-result ul { margin: 6px 0 0 18px; }
 .comm-result li + li { margin-top: 4px; }
 .comm-diag { margin-top: var(--space-3); }
+/* hướng dẫn khi phiên đóng + thanh bốn cột mốc của người tham gia */
+.comm-closed { margin: 0; padding: var(--space-3) var(--space-4); border-left: 4px solid var(--accent-amber); border-radius: var(--radius-md); background: var(--tint-amber); font-size: var(--fs-sm); line-height: 1.6; }
+.comm-howto { padding: var(--space-3) var(--space-4); border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-subtle); }
+.comm-howto-title { margin: 0 0 var(--space-1); font-size: var(--fs-sm); font-weight: 600; color: var(--text-secondary); }
+.comm-howto-list { margin: 0; padding-left: 20px; font-size: var(--fs-sm); line-height: 1.7; color: var(--text-secondary); }
+.comm-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-2); }
+.comm-steps li { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: var(--fs-sm); color: var(--text-muted); padding-top: var(--space-2); border-top: 3px solid var(--border-color); }
+.comm-step-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--border-strong); background: transparent; }
+.comm-steps li.is-done { color: var(--text-primary); border-top-color: var(--accent-emerald); }
+.comm-steps li.is-done .comm-step-dot { border-color: var(--accent-emerald); background: var(--accent-emerald); }
+.comm-steps li.is-current { color: var(--text-primary); font-weight: 600; border-top-color: var(--accent-sky); }
+.comm-steps li.is-current .comm-step-dot { border-color: var(--accent-sky); }
+.comm-steps li.is-warn { color: var(--accent-amber); border-top-color: var(--accent-amber); }
+.comm-steps li.is-warn .comm-step-dot { border-color: var(--accent-amber); background: var(--accent-amber); }
+.comm-reason:empty { display: none; }
+@media (max-width: 480px) { .comm-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* WCAG 2.2 AA (2.5.8): vùng chạm tối thiểu 24 px. Liên kết trong câu chỉ nới vùng bấm (padding-block không đổi chiều cao dòng). */
+details > summary { min-height: 24px; }
+.copy-btn { min-height: 24px; min-width: 24px; }
+.main-content p a:not(.btn),
+.main-content li a:not(.btn),
+.main-content dd a:not(.btn) { padding-block: 4px; }
 
 /* pages.css nạp sau style.css, nên `display` của component (vd. .segmented) thắng `.hidden` bên style.css.
    Nhắc lại ở cuối tệp cuối cùng để `.hidden` luôn ẩn; `style.display` do JS đặt (nút Dừng) vẫn thắng lớp này. */

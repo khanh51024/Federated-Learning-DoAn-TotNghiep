@@ -180,7 +180,7 @@ async function mountExplorer() {
     byId("scheme-badge").innerHTML = scheme.has_trained_models
       ? '<span class="status-badge success">Có 7 mô hình đã huấn luyện</span>'
       : '<span class="status-badge is-neutral">Chỉ có dữ liệu, chưa huấn luyện</span>';
-    byId("scheme-desc").textContent = `Độ lệch phân bố nhóm trung bình giữa client và toàn bộ (Jensen–Shannon): ${scheme.mean_js_divergence === null ? "0 (chia đều)" : fmtNum(scheme.mean_js_divergence, 3)} — càng lớn càng non-IID. Tổng ${fmtInt(partitions.total_train)} ảnh train.`;
+    byId("scheme-desc").textContent = `Độ lệch phân bố nhóm trung bình giữa client và toàn bộ (Jensen–Shannon): ${scheme.mean_js_divergence === null ? "0 (chia đều)" : fmtNum(scheme.mean_js_divergence, 3)} — càng lớn càng non-IID. Tổng ${fmtInt(partitions.total_train)} ảnh huấn luyện.`;
     byId("scheme-clients").innerHTML = schemeSummary(scheme);
     byId("scheme-wrap").innerHTML = heatmapTable(schemeAsShards(partitions, scheme), null, "count");
   };
@@ -209,11 +209,17 @@ export async function mount() {
     const othersTotal = others.reduce((sum, [, n]) => sum + n, 0);
     const zeros = others.filter(([, n]) => n === 0).map(([c]) => clientNumber(c));
     const zeroText = zeros.length ? `, trong đó client ${zeros.join(", ")} có <b>0 ảnh</b>` : "";
+    const recallOf = id => {
+      const r = re?.pv_recall?.[id]?.[example.class];
+      return r === undefined || r === null ? "—" : fmtPct(r, 1);
+    };
     const recalls = re
-      ? others.map(([c]) => {
-          const r = re.pv_recall?.[`local_${clientNumber(c)}`]?.[example.class];
-          return `Local ${clientNumber(c)}: ${r === undefined || r === null ? "—" : fmtPct(r, 0)}`;
-        }).join(" · ")
+      ? [
+          `Local ${holder} (giữ ${fmtNum(example.top_share_pct, 0)}% ảnh): ${recallOf(`local_${holder}`)}`,
+          `${others.map(([c]) => `Local ${clientNumber(c)}`).join(", ")}: ${others.map(([c]) => recallOf(`local_${clientNumber(c)}`)).join(" · ")}`,
+          `FedAvg: ${recallOf("fedavg")}`,
+          `Centralized: ${recallOf("centralized")}`,
+        ].join(" · ")
       : "";
     exampleHtml = `
       <section class="viewer-example mt-4" aria-label="Ví dụ dữ liệu lệch giữa các client">
@@ -229,7 +235,7 @@ export async function mount() {
   root.innerHTML = `
     <section class="panel noniid-intro">
       <div>
-        <p class="eyebrow">Phân bố dữ liệu</p>
+        <p class="eyebrow">Khái niệm: non-IID</p>
         <h3 class="panel-title">Số ảnh mỗi nhóm bệnh khác nhau giữa các client</h3>
         <p class="panel-desc">Dữ liệu non-IID là dữ liệu có phân bố khác nhau giữa các client: mỗi client có thể thiếu hẳn một số nhóm bệnh.</p>
       </div>

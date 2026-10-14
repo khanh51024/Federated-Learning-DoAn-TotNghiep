@@ -382,7 +382,7 @@ def test_honest_caveats_are_visible_outside_collapsed_sections():
         for phrase in ("chọn mô hình", "một lần chạy", "chưa phải độ chính xác ngoài thực địa"):
             assert phrase in flat, f"{label}: thiếu lời cảnh báo hiển thị ngoài phần gập: “{phrase}”"
     full = " ".join(JS_BY_REL["pages/overview.js"].split())
-    assert "bộ chẩn đoán legacy" in full and "chưa nằm trong kiểm tra trùng ảnh" in full, "tập giữ riêng phải được gọi đúng là bộ chẩn đoán legacy"
+    assert "bộ chẩn đoán có sẵn của bộ dữ liệu (legacy)" in full and "chưa nằm trong kiểm tra trùng ảnh" in full, "tập giữ riêng phải được gọi đúng là bộ chẩn đoán legacy"
     assert 'class="trust-chip ok" href="#ket-qua"' not in full, "chip tập giữ riêng không được xanh 'đạt' khi chưa qua kiểm tra trùng ảnh"
 
 

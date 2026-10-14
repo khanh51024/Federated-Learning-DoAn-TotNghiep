@@ -50,7 +50,7 @@ function signature(history, isLive, task) {
   return JSON.stringify({ history, isLive, status: task?.status ?? null, total: first ? (first.total_epochs ?? first.total_rounds ?? null) : null });
 }
 
-function renderProgress(kind, history, isLive, task) {
+function renderProgress(kind, history, isLive, task, network = {}) {
   const body = byId("train-progress-body");
   const head = byId("train-progress-head");
   const badge = byId("train-live-badge");
@@ -62,9 +62,13 @@ function renderProgress(kind, history, isLive, task) {
   }
   const first = task?.live_progress?.[0];
   if (isLive) {
-    const total = (kind === "centralized" ? first?.total_epochs : first?.total_rounds) || "?";
+    // Engine Flower thật (federated-network) không ghi live_progress: lấy số vòng đã xong từ network_processes, tổng vòng từ ô cấu hình.
+    const fromNetwork = kind === "federated" && task?.type === "federated-network";
+    const done = fromNetwork ? Number(network.round_completed || 0) : history.length;
+    const total = (kind === "centralized" ? first?.total_epochs : first?.total_rounds)
+      || (fromNetwork ? Number(byId("fl-rounds")?.value) || "?" : "?");
     setClass(badge, "status-badge running");
-    setHtml(badge, `<span class="live-dot pulse"></span> ${kind === "centralized" ? `Đang huấn luyện (${history.length}/${esc(total)} epoch)` : `Đang giao tiếp (vòng ${history.length}/${esc(total)})`}`);
+    setHtml(badge, `<span class="live-dot pulse"></span> ${kind === "centralized" ? `Đang huấn luyện (${history.length}/${esc(total)} epoch)` : `Đang giao tiếp (đã xong ${done}/${esc(total)} vòng)`}`);
   } else if (task?.status === "cancelled") {
     setClass(badge, "status-badge error");
     setHtml(badge, '<span class="live-dot"></span> Đã dừng');
@@ -177,7 +181,7 @@ function renderTopology(task, network) {
   }
   topo.lastRound = completed;
   // poll nhanh khi đang chạy và đang xem bước 5: sơ đồ bám sát trạng thái thật
-  setPollInterval(running && visible ? 1500 : 4000);
+  setPollInterval(running && visible ? 1500 : 8000);
 }
 
 // ───────── Cập nhật từ poll trạng thái ─────────
@@ -205,7 +209,7 @@ function applyStatus(data, { task, network, finished, stale }) {
     setText(byId("train-progress-label"), `Tiến trình: ${pct}%`);
     setText(byId("train-progress-detail"), task.message || "Đang tính toán…");
     setText(byId("train-monitor-desc"), kind === "centralized" ? "Huấn luyện Centralized đang chạy." : "Máy chủ và năm client đang chạy trên localhost.");
-    if (kind && task.live_progress) renderProgress(kind, task.live_progress, true, task);
+    if (kind && task.live_progress) renderProgress(kind, task.live_progress, true, task, network);
     byId("train-progress-fill").classList.toggle("fed-fill", kind !== "centralized");
     return;
   }
@@ -229,7 +233,7 @@ function applyStatus(data, { task, network, finished, stale }) {
   }
   if (finished) {
     loadNetworkMetrics();
-    if (kind && task.live_progress) renderProgress(kind, task.live_progress, false, task);
+    if (kind && task.live_progress) renderProgress(kind, task.live_progress, false, task, network);
   }
 }
 
@@ -355,7 +359,7 @@ function syncEngine() {
     set("fl-rounds", { value: "2", min: "2", max: "2", disabled: true });
     set("fl-epochs", { value: "1", min: "1", max: "1", disabled: true });
     setText(byId("fl-engine-help"), "Server và các client chạy trên cùng một máy; ảnh gốc không gửi lên server."
-      + (policy.requiresAdmin ? " Trên máy chủ nhỏ này phiên Flower chiếm gần hết RAM nên cả trang có thể chậm vài phút; chỉ chạy khi trình diễn." : ""));
+      + (policy.requiresAdmin ? " Phiên Flower chạy năm tiến trình client cùng lúc nên tốn tài nguyên; chỉ chạy khi cần trình diễn." : ""));
   } else {
     set("fl-rounds", { min: "1", max: String(Math.min(FORM_MAX.rounds, policy.limits.max_rounds || FORM_MAX.rounds)), disabled: false });
     set("fl-epochs", { min: "1", max: String(Math.min(FORM_MAX.localEpochs, policy.limits.max_local_epochs || FORM_MAX.localEpochs)), disabled: false });

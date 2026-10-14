@@ -6,8 +6,8 @@ function baseLimits(seed) {
   return [
     ["Mới có một kịch bản và một lần chạy", `Mới thử mức lệch dữ liệu α = 0,1 với seed ${seed ?? "—"}, chưa đủ để nói kết quả ổn định khi điều kiện thay đổi (bước 2 cho xem 12 cách chia, nhưng chỉ α = 0,1 có mô hình).`],
     ["Chưa có kiểm thử thực địa độc lập", "PlantVillage là ảnh chụp trong phòng; PlantDoc là ảnh ngoài đồng nhưng chỉ phủ một phần các nhóm và không có lá khỏe. Cả tập kiểm tra lẫn tập giữ riêng đều lấy từ cùng bộ dữ liệu."],
-    ["Chỉ nhận ảnh một chiếc lá đã cắt", "Mô hình không tự tìm lá trong ảnh toàn cây; ảnh khác kiểu sẽ cho kết quả kém dù độ tự tin hiển thị vẫn cao."],
-    ["Độ tự tin chỉ được chỉnh một phần", "Web hiện cả xác suất gốc và xác suất đã hiệu chuẩn. Việc hiệu chuẩn học trên ảnh chủ yếu là PlantVillage nên với ảnh ngoài đồng mô hình vẫn tự tin quá mức (xem bước 3, tab \"Đánh giá độ tin cậy dự đoán\")."],
+    ["Chỉ nhận ảnh một chiếc lá đã cắt", "Mô hình không tự tìm lá trong ảnh toàn cây; ảnh khác kiểu sẽ cho kết quả kém dù xác suất dự đoán hiển thị vẫn cao."],
+    ["Xác suất dự đoán chỉ được hiệu chuẩn một phần", "Web hiện cả xác suất gốc và xác suất đã hiệu chuẩn. Việc hiệu chuẩn học trên ảnh chủ yếu là PlantVillage nên với ảnh ngoài đồng mô hình vẫn gán xác suất cao hơn độ chính xác thực (xem bước 3, tab \"Đánh giá độ tin cậy dự đoán\")."],
     ["Phần huấn luyện thử chỉ để minh họa", "Phiên Flower dùng ảnh tổng hợp, hai vòng, trên cùng một máy: chứng minh quy trình FedAvg chạy được, không phải kết quả khoa học hay độ trễ mạng thật."],
     ["Chưa thử nghiệm client lỗi hay bị tấn công", "Cơ chế kiểm tra bản cập nhật có sẵn và chạy được ở bước 5, nhưng chưa có thí nghiệm đo độ chính xác nên chưa kết luận được."],
     ["Năm client của phiên Flower là giả lập", "Năm client là năm phần của cùng một bộ dữ liệu, không phải năm nông hộ thật."],
@@ -30,7 +30,7 @@ function evaluationLimits(summary) {
         ? ` Khi chấm lại trên tập giữ riêng, Centralized đạt ${fmtPct(pdTest)} trên ảnh ngoài đồng (tập kiểm tra: ${fmtPct(pdVal)}) — chưa thấy con số bị đẩy lên, nhưng tập giữ riêng chỉ có ${fmtInt(summary.holdout.counts_by_source?.plantdoc)} ảnh ngoài đồng.`
         : ` Khi chấm lại trên tập giữ riêng, Centralized chỉ đạt ${fmtPct(pdTest)} trên ảnh ngoài đồng (tập kiểm tra: ${fmtPct(pdVal)}) — phù hợp với thiên lệch do cách chọn.`;
     out.push(["Mô hình được chọn dựa trên chính tập kiểm tra",
-      `Phiên bản Centralized được chọn ở epoch ${fmtInt(sel.chosen_epoch)}/${fmtInt(sel.epochs)} vì có điểm PlantDoc ${sel.chosen_rank_among_epochs === 1 ? "cao nhất" : `hạng ${fmtInt(sel.chosen_rank_among_epochs)}`} trên tập kiểm tra (${fmtPct(pdVal)}; epoch cuối ${fmtPct(sel.last_plantdoc_accuracy)}), nên số ở tập này có thể hơi đẹp hơn thực tế. Tập giữ riêng (bước 3, tập chẩn đoán "legacy" của bộ dữ liệu) không dùng để chọn nên không bị thiên lệch đó.${observed}`]);
+      `Phiên bản Centralized được chọn ở epoch ${fmtInt(sel.chosen_epoch)}/${fmtInt(sel.epochs)} vì có điểm PlantDoc ${sel.chosen_rank_among_epochs === 1 ? "cao nhất" : `hạng ${fmtInt(sel.chosen_rank_among_epochs)}`} trên tập kiểm tra (${fmtPct(pdVal)}; epoch cuối ${fmtPct(sel.last_plantdoc_accuracy)}), nên số ở tập này có thể hơi đẹp hơn thực tế. Tập giữ riêng (bước 3, bộ chẩn đoán có sẵn của bộ dữ liệu (legacy)) không dùng để chọn nên không bị thiên lệch đó.${observed}`]);
   }
   const test = st?.splits?.test?.available ? st.splits.test.by_source : null;
   const pd = test?.plantdoc;
@@ -46,7 +46,7 @@ function evaluationLimits(summary) {
     const holds = [c, f].every(m => m.without_suspected_reshoots !== null && m.without_suspected_reshoots !== undefined
       && m.all !== null && m.all !== undefined && m.without_suspected_reshoots >= m.all - 0.005);
     out.push(["Một phần ảnh PlantVillage có thể là ảnh chụp lại cùng một lá",
-      `${fmtInt(leaf.ungrouped_images)} ảnh PlantVillage trong tập giữ riêng không được gắn nhóm theo lá; ${fmtInt(leaf.suspected_reshoots)} ảnh trong đó có ảnh học cùng loại với số thứ tự liền kề (nghi là chụp lại cùng lá). Bỏ các ảnh đó: Centralized ${fmtPct(c.all)} → ${fmtPct(c.without_suspected_reshoots)}, FedAvg ${fmtPct(f.all)} → ${fmtPct(f.without_suspected_reshoots)} — ${holds ? "chưa thấy dấu hiệu con số bị thổi phồng" : "độ chính xác giảm, con số có thể bị thổi phồng một phần"}; muốn loại hẳn rủi ro cần gom lại nhóm lá và dựng lại bộ dữ liệu.`]);
+      `${fmtInt(leaf.ungrouped_images)} ảnh PlantVillage trong tập giữ riêng không được gắn nhóm theo lá; ${fmtInt(leaf.suspected_reshoots)} ảnh trong đó có ảnh học cùng loại với số thứ tự liền kề (nghi là chụp lại cùng lá). Bỏ các ảnh đó: Centralized ${fmtPct(c.all)} → ${fmtPct(c.without_suspected_reshoots)}, FedAvg ${fmtPct(f.all)} → ${fmtPct(f.without_suspected_reshoots)} — ${holds ? "chưa thấy dấu hiệu con số bị phóng đại" : "độ chính xác giảm, con số có thể bị thổi phồng một phần"}; muốn loại hẳn rủi ro cần gom lại nhóm lá và dựng lại bộ dữ liệu.`]);
   }
   const ff = summary?.fullframe;
   if (ff?.available) {
@@ -103,38 +103,44 @@ function checklistHtml(cl, seed) {
   if (!cl?.available) {
     return `<div class="callout callout-warn" role="note"><b>Chưa có báo cáo trạng thái.</b> ${esc(cl?.reason || "Chạy scripts/update_status.py.")}</div>`;
   }
-  const open = cl.items.filter(i => i.status !== "XONG");
+  // Hai loại việc khác nhau: BLOCKED = việc nghiên cứu cần file gốc hoặc GPU; còn lại chưa XONG = hạng mục kỹ thuật cần xử lý.
+  const research = cl.items.filter(i => i.status === "BLOCKED");
+  const technicalOpen = cl.items.filter(i => i.status !== "XONG" && i.status !== "BLOCKED");
   const done = cl.items.filter(i => i.status === "XONG");
-  const cards = open.map(item => {
+  const technicalTotal = done.length + technicalOpen.length;
+  const card = item => {
     const friendly = REMAINING[item.id];
+    const blocked = item.status === "BLOCKED";
     return `
     <article class="todo-card">
-      <header><span class="status-badge ${item.status === "BLOCKED" ? "is-neutral" : "error"}">${item.status === "BLOCKED" ? "Chưa làm được" : "Cần xử lý"}</span><b>${esc(friendly?.title || item.title)}</b></header>
-      <p>${esc(item.status === "BLOCKED" && friendly?.why ? friendly.why : item.detail)}</p>
+      <header><span class="status-badge ${blocked ? "is-neutral" : "error"}">${blocked ? "Chưa làm được" : "Cần xử lý"}</span><b>${esc(friendly?.title || item.title)}</b></header>
+      <p>${esc(blocked && friendly?.why ? friendly.why : item.detail)}</p>
       <details class="fold unlock-fold">
-        <summary>Chi tiết kỹ thuật</summary>
+        <summary>Dành cho người vận hành (mã lỗi và lệnh)</summary>
         <p class="field-hint mt-2">${esc(item.detail)}</p>
         ${(item.unlock || []).length ? `<div class="unlock">${item.unlock.map(cmd => `<code>${esc(cmd)}</code>`).join("")}</div>` : ""}
       </details>
     </article>`;
-  }).join("");
-  const onlyBlocked = open.every(i => i.status === "BLOCKED");
-  const intro = !open.length
-    ? "Các hạng mục trong checklist dự án đã hoàn tất."
-    : onlyBlocked
-      ? `${cl.done}/${cl.total} hạng mục trong checklist dự án đã hoàn thành; các việc còn lại cần file gốc hoặc GPU.`
-      : `Còn ${open.length} hạng mục chưa đạt, trong đó có hạng mục kỹ thuật cần xử lý — xem chi tiết bên dưới.`;
+  };
+  const intro = !research.length && !technicalOpen.length
+    ? "Mọi hạng mục trong danh mục kiểm tra dự án đã hoàn tất."
+    : `${research.length} việc nghiên cứu còn lại cần file mô hình gốc hoặc GPU` +
+      (technicalOpen.length ? `; ${technicalOpen.length} hạng mục kỹ thuật cần xử lý.` : ".");
   return `
     <div class="panel-header-flex">
       <div>
-        <h3 class="panel-title">Tiến độ hoàn thiện nghiên cứu: còn ${open.length}/${cl.total} hạng mục</h3>
+        <h3 class="panel-title">Việc nghiên cứu còn lại: ${research.length}</h3>
         <p class="panel-desc">${esc(intro)}</p>
       </div>
     </div>
-    <div class="progress-track mt-3" role="img" aria-label="${cl.done} trên ${cl.total} hạng mục đã xong"><div class="progress-fill fed-fill" style="transform:scaleX(${cl.total ? (cl.done / cl.total).toFixed(3) : 0})"></div></div>
-    ${open.length ? `<div class="todo-grid mt-4">${cards}</div>` : ""}
+    ${research.length ? `<div class="todo-grid mt-4">${research.map(card).join("")}</div>` : ""}
+    ${technicalOpen.length ? `
+    <h3 class="panel-title mt-4">Hạng mục kỹ thuật cần xử lý: ${technicalOpen.length}</h3>
+    <div class="todo-grid mt-3">${technicalOpen.map(card).join("")}</div>` : ""}
+    <h3 class="panel-title mt-4">Hạng mục kỹ thuật đã xong: ${done.length}/${technicalTotal}</h3>
+    <div class="progress-track mt-3" role="img" aria-label="${done.length} trên ${technicalTotal} hạng mục kỹ thuật đã xong"><div class="progress-fill fed-fill" style="transform:scaleX(${technicalTotal ? (done.length / technicalTotal).toFixed(3) : 0})"></div></div>
     <details class="fold mt-4">
-      <summary>Các hạng mục đã xong (${done.length})</summary>
+      <summary>Các hạng mục kỹ thuật đã xong (${done.length})</summary>
       <ul class="done-list">${done.map(i => `<li><span class="verdict ok">✓</span><div><b>${esc(i.title)}</b><span>${esc(i.detail)}</span></div></li>`).join("")}</ul>
     </details>`;
 }
@@ -225,7 +231,7 @@ function verificationHtml(summary) {
         <p class="verify-big mono">${fmtInt(ho.counts_by_source?.plantdoc)}</p>
         <p>ảnh PlantDoc không dùng để chọn mô hình; mẫu nhỏ nên kết quả còn dao động rộng.</p>
         <details class="fold mt-3"><summary>Xem toàn bộ tập giữ riêng</summary><p class="field-hint mt-2">Tổng ${fmtInt(ho.count)} ảnh:</p>
-        <p>ảnh (${fmtInt(ho.counts_by_source?.plantvillage)} PlantVillage, ${fmtInt(ho.counts_by_source?.plantdoc)} PlantDoc) không dùng để chọn mô hình; cả 7 mô hình được chấm lại trên máy này. Đây là tập chẩn đoán "legacy" của bộ dữ liệu — chưa phải bài kiểm tra cuối được khóa trước, và chưa nằm trong phép kiểm tra trùng ảnh bên cạnh.</p>
+        <p>ảnh (${fmtInt(ho.counts_by_source?.plantvillage)} PlantVillage, ${fmtInt(ho.counts_by_source?.plantdoc)} PlantDoc) không dùng để chọn mô hình; cả 7 mô hình được chấm lại trên máy này. Đây là bộ chẩn đoán có sẵn của bộ dữ liệu (legacy) — chưa phải bài kiểm tra cuối được khóa trước, và chưa nằm trong phép kiểm tra trùng ảnh bên cạnh.</p>
         <ul>
           ${line("centralized")}${line("fedavg")}
           ${reproduced.length ? `<li>Số Centralized do nhóm huấn luyện tự ghi: ${reproduced.every(v => v.reproduced) ? "tái lập khớp" : "CÓ lệch"} trên ${reproduced.length} nguồn.</li>` : ""}
@@ -261,7 +267,7 @@ export async function mount() {
       <div class="viewer-limits mt-3">
         <article><h4>Chưa đánh giá qua nhiều lần chạy</h4><p>Một kịch bản, một seed; các client là phân vùng giả lập.</p></article>
         <article><h4>Chưa có kiểm thử độc lập trong điều kiện thực tế</h4><p>Ảnh ngoài đồng hiện có chỉ phủ một phần nhóm lá; kết quả chưa đại diện cho triển khai thực tế.</p></article>
-        <article><h4>Cần ảnh một lá đã cắt</h4><p>Web chưa tự tìm lá trên ảnh toàn cây. Độ tự tin cao vẫn có thể sai.</p></article>
+        <article><h4>Cần ảnh một lá đã cắt</h4><p>Web chưa tự tìm lá trên ảnh toàn cây. Xác suất dự đoán cao vẫn có thể sai.</p></article>
       </div>
       <p class="viewer-scope mt-3">Tập kiểm tra cũng dùng để chọn mô hình; tập giữ riêng chưa được đối soát trùng ảnh. Điều kiện huấn luyện giữa các cách học còn khác nhau.</p>
       <details class="fold mt-3"><summary>Xem đầy đủ ${limits.length} hạn chế và số liệu liên quan</summary>

@@ -335,7 +335,7 @@ def check_full_tests(ctx: Ctx) -> Result:
     if final.get("technical_acceptance") != "pass":
         failed = [c["name"] for c in final.get("checks", []) if c.get("status") != "pass"]
         return Result(TODO, f"technical_acceptance={final.get('technical_acceptance')}; nhóm lỗi: {failed}")
-    return Result(DONE, f"technical_acceptance=pass lúc {final.get('generated_at')} (gồm test mạng, {len(final.get('test_files', []))} file test) trên đúng mã nguồn hiện tại")
+    return Result(DONE, f"technical_acceptance=pass lúc {final.get('generated_at')} (gồm test mạng, {len(final.get('test_files', []))} file test) với mã nguồn có dấu vân tay {str(ctx.fingerprint)[:12]}; thay mã sau thời điểm này thì phải chạy lại")
 
 
 def check_release(ctx: Ctx) -> Result:
