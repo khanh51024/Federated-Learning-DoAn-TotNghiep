@@ -82,11 +82,11 @@ function renderHeader(data) {
   const flower = data.flower_server_active ? "Flower đang chạy" : "Flower chờ";
   setText(byId("system-device"), `Thiết bị: ${data.device} · ${flower}`);
 
-  const task = data.task || { status: "idle", message: "Hệ thống sẵn sàng" };
+  const task = data.task || { status: "idle", message: "Sẵn sàng" };
   const badge = byId("task-badge");
   // Phiên bị dừng vẫn được giữ trong /api/status để bước Huấn luyện xem lại,
   // nhưng thanh trạng thái chung chỉ cần báo hệ thống đã sẵn sàng chạy phiên mới.
-  setText(badge, task.status === "cancelled" ? "Hệ thống sẵn sàng" : (task.message || "Hệ thống sẵn sàng"));
+  setText(badge, task.status === "cancelled" ? "Sẵn sàng" : (task.message || "Sẵn sàng"));
   let cls = "status-badge";
   if (task.status === "running") cls += " running";
   else if (task.status === "completed") cls += " success";
@@ -111,7 +111,7 @@ export async function pollStatus() {
 
   try {
     renderHeader(data);
-    const task = data.task || { status: "idle", message: "Hệ thống sẵn sàng" };
+    const task = data.task || { status: "idle", message: "Sẵn sàng" };
     const network = data.network_processes || {};
     lastTask = task;
     // Endpoint Centralized/simulation đặt status=running trong BackgroundTask SAU khi trả lời, nên một lần poll ngay

@@ -217,8 +217,8 @@ export async function mount() {
       : "";
     exampleHtml = `
       <section class="viewer-example mt-4" aria-label="Ví dụ dữ liệu lệch giữa các client">
-        <div><p class="eyebrow">Một ví dụ cụ thể</p><h3 class="panel-title">${esc(formatDiseaseName(example.class))}</h3>
-        <p class="panel-desc">Client ${holder} giữ <b>${fmtNum(example.top_share_pct, 0)}%</b> ảnh của nhóm này. Các nơi còn lại có rất ít hoặc không có ảnh để học.</p></div>
+        <div><p class="eyebrow">Ví dụ</p><h3 class="panel-title">${esc(formatDiseaseName(example.class))}</h3>
+        <p class="panel-desc">Client ${holder} giữ <b>${fmtNum(example.top_share_pct, 0)}%</b> ảnh của nhóm này. Các client còn lại có ít hoặc không có ảnh của nhóm này.</p></div>
         <ul class="viewer-bars" aria-label="Số ảnh của nhóm này tại từng client">
           ${Object.entries(example.per_client).map(([client, count]) => `<li><span>Client ${clientNumber(client)}</span><span class="viewer-bar-track"><span style="--share:${example.total ? count / example.total : 0}"></span></span><b>${fmtInt(count)} ảnh</b></li>`).join("")}
         </ul>
@@ -229,11 +229,11 @@ export async function mount() {
   root.innerHTML = `
     <section class="panel noniid-intro">
       <div>
-        <p class="eyebrow">Dữ liệu non-IID</p>
-        <h3 class="panel-title">Mỗi client chỉ thấy một phần dữ liệu</h3>
-        <p class="panel-desc">Mỗi nơi có thể thiếu ảnh của một số nhóm. Học chung giúp kết hợp dữ liệu từ các client.</p>
+        <p class="eyebrow">Phân bố dữ liệu</p>
+        <h3 class="panel-title">Số ảnh mỗi nhóm bệnh khác nhau giữa các client</h3>
+        <p class="panel-desc">Dữ liệu non-IID là dữ liệu có phân bố khác nhau giữa các client: mỗi client có thể thiếu hẳn một số nhóm bệnh.</p>
       </div>
-      ${shards ? `<div class="noniid-intro-stat"><strong>${fmtInt(shards.single_client_classes)}/${fmtInt(shards.classes_total)}</strong><span>nhóm có ≥ 90% ảnh ở một client</span></div>` : ""}
+      ${shards ? `<div class="noniid-intro-stat"><strong>${fmtInt(shards.single_client_classes)}/${fmtInt(shards.classes_total)}</strong><span>nhóm có từ 90% ảnh trở lên ở một client</span></div>` : ""}
     </section>
     ${exampleHtml}
 
@@ -270,7 +270,7 @@ export async function mount() {
     </div>`}
 
     <details class="panel panel-fold mt-4" id="scheme-explorer">
-      <summary>Khám phá 12 cách chia dữ liệu có sẵn trong bộ dữ liệu</summary>
+      <summary>Xem 12 cách chia dữ liệu có sẵn</summary>
       <p class="panel-desc mt-2">Bộ dữ liệu dựng sẵn 12 cách chia cho 5 client: IID, lệch nhãn, lệch số lượng, lệch nguồn ảnh và kết hợp.
         Đây <b>chỉ là dữ liệu</b> — mọi kết quả trên web là của cách chia lệch nhãn α = 0,1; các cách chia khác chưa được huấn luyện.</p>
       <div class="mt-3" id="scheme-explorer-body"><div class="skeleton skeleton-block"></div></div>

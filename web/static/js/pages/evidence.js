@@ -7,7 +7,7 @@ function baseLimits(seed) {
     ["Mới có một kịch bản và một lần chạy", `Mới thử mức lệch dữ liệu α = 0,1 với seed ${seed ?? "—"}, chưa đủ để nói kết quả ổn định khi điều kiện thay đổi (bước 2 cho xem 12 cách chia, nhưng chỉ α = 0,1 có mô hình).`],
     ["Chưa có kiểm thử thực địa độc lập", "PlantVillage là ảnh chụp trong phòng; PlantDoc là ảnh ngoài đồng nhưng chỉ phủ một phần các nhóm và không có lá khỏe. Cả tập kiểm tra lẫn tập giữ riêng đều lấy từ cùng bộ dữ liệu."],
     ["Chỉ nhận ảnh một chiếc lá đã cắt", "Mô hình không tự tìm lá trong ảnh toàn cây; ảnh khác kiểu sẽ cho kết quả kém dù độ tự tin hiển thị vẫn cao."],
-    ["Độ tự tin chỉ được chỉnh một phần", "Web hiện cả xác suất gốc và xác suất đã hiệu chuẩn. Việc hiệu chuẩn học trên ảnh chủ yếu là PlantVillage nên với ảnh ngoài đồng mô hình vẫn tự tin quá mức (xem bước 3, tab \"Độ tin cậy xác suất\")."],
+    ["Độ tự tin chỉ được chỉnh một phần", "Web hiện cả xác suất gốc và xác suất đã hiệu chuẩn. Việc hiệu chuẩn học trên ảnh chủ yếu là PlantVillage nên với ảnh ngoài đồng mô hình vẫn tự tin quá mức (xem bước 3, tab \"Đánh giá độ tin cậy dự đoán\")."],
     ["Phần huấn luyện thử chỉ để minh họa", "Phiên Flower dùng ảnh tổng hợp, hai vòng, trên cùng một máy: chứng minh quy trình FedAvg chạy được, không phải kết quả khoa học hay độ trễ mạng thật."],
     ["Chưa thử nghiệm client lỗi hay bị tấn công", "Cơ chế kiểm tra bản cập nhật có sẵn và chạy được ở bước 5, nhưng chưa có thí nghiệm đo độ chính xác nên chưa kết luận được."],
     ["Năm client của phiên Flower là giả lập", "Năm client là năm phần của cùng một bộ dữ liệu, không phải năm nông hộ thật."],
@@ -127,7 +127,7 @@ function checklistHtml(cl, seed) {
   return `
     <div class="panel-header-flex">
       <div>
-        <h3 class="panel-title">Việc còn lại: ${open.length} trên ${cl.total} hạng mục</h3>
+        <h3 class="panel-title">Tiến độ hoàn thiện nghiên cứu: còn ${open.length}/${cl.total} hạng mục</h3>
         <p class="panel-desc">${esc(intro)}</p>
       </div>
     </div>
@@ -184,12 +184,12 @@ function verificationHtml(summary) {
   }
   const reCard = re?.available ? `
       <article class="verify-card ${re.main_models_exact ? "ok" : "warn"}">
-        <h4>Chấm lại trên máy này</h4>
+        <h4>Đối chiếu kết quả suy luận</h4>
         <p class="verify-big">${re.main_models_exact ? "Khớp" : "Có lệch"}</p>
         <p>Centralized và FedAvg ${re.main_models_exact ? "khớp số công bố" : "có lệch so với số công bố"} trên ${fmtInt(re.validation_count)} ảnh kiểm tra.</p>
         <details class="fold mt-3"><summary>Xem phạm vi đối chiếu</summary><p class="field-hint mt-2">${fmtInt(re.comparisons_exact)}/${fmtInt(re.comparisons_total)} phép so khớp tuyệt đối; chấm bằng CPU.</p><ul>${reLines}</ul></details>
       </article>` : `
-      <article class="verify-card warn"><h4>Chấm lại trên máy này</h4><p>${esc(re?.reason || "Chưa có báo cáo.")}</p></article>`;
+      <article class="verify-card warn"><h4>Đối chiếu kết quả suy luận</h4><p>${esc(re?.reason || "Chưa có báo cáo.")}</p></article>`;
   const lkCard = lk?.available ? `
       <article class="verify-card ${lk.passed ? "ok" : "bad"}">
         <h4>Kiểm tra trùng ảnh</h4>
@@ -221,7 +221,7 @@ function verificationHtml(summary) {
     const d = pair?.difference;
     hoCard = `
       <article class="verify-card ok">
-        <h4>Ảnh ngoài đồng giữ riêng</h4>
+        <h4>Đánh giá trên tập PlantDoc giữ riêng</h4>
         <p class="verify-big mono">${fmtInt(ho.counts_by_source?.plantdoc)}</p>
         <p>ảnh PlantDoc không dùng để chọn mô hình; mẫu nhỏ nên kết quả còn dao động rộng.</p>
         <details class="fold mt-3"><summary>Xem toàn bộ tập giữ riêng</summary><p class="field-hint mt-2">Tổng ${fmtInt(ho.count)} ảnh:</p>
@@ -249,18 +249,18 @@ export async function mount() {
   root.innerHTML = `
     ${summary?.available ? `
     <section>
-      <h3 class="panel-title">Những gì đã kiểm chứng</h3>
-      <p class="panel-desc">Ba phép kiểm, mỗi phép có phạm vi riêng.</p>
+      <h3 class="panel-title">Kết quả đã được kiểm chứng</h3>
+      <p class="panel-desc">Kết quả được đối chiếu bằng ba phương pháp kiểm tra; mỗi phương pháp có phạm vi riêng.</p>
       ${verificationHtml(summary)}
-      <p class="field-hint mt-3">Xem số liệu gốc ở <a href="#ket-qua">bước 3 · Kết quả &amp; so sánh</a>: tab “Tổng hợp” (bảy mô hình), “Tập giữ riêng &amp; thống kê” (khoảng tin cậy), “Độ tin cậy xác suất” (hiệu chuẩn). Mã băm của từng mô hình nằm trong mục gập ở cuối trang này.</p>
+      <p class="field-hint mt-3">Xem số liệu gốc ở <a href="#ket-qua">bước 3 · Kết quả &amp; so sánh</a>: tab “Tổng hợp” (bảy mô hình), “Tập giữ riêng và thống kê” (khoảng tin cậy), “Đánh giá độ tin cậy dự đoán” (hiệu chuẩn). Mã băm của từng mô hình nằm trong mục gập ở cuối trang này.</p>
     </section>` : `
       <div class="callout callout-error" role="alert"><b>Chưa có bộ số liệu đã kiểm chứng.</b> ${esc(summary?.reason || evidence?.reason || "Không đọc được /api/evidence/summary.")}</div>`}
 
     <section class="panel mt-4">
-      <h3 class="panel-title">Ba giới hạn chính</h3>
+      <h3 class="panel-title">Giới hạn chính của nghiên cứu</h3>
       <div class="viewer-limits mt-3">
-        <article><h4>Chưa chứng minh độ ổn định</h4><p>Một kịch bản, một seed; các client là phân vùng giả lập.</p></article>
-        <article><h4>Chưa kiểm thử thực địa độc lập</h4><p>Ảnh ngoài đồng hiện có chỉ phủ một phần nhóm lá; kết quả chưa đại diện cho triển khai thực tế.</p></article>
+        <article><h4>Chưa đánh giá qua nhiều lần chạy</h4><p>Một kịch bản, một seed; các client là phân vùng giả lập.</p></article>
+        <article><h4>Chưa có kiểm thử độc lập trong điều kiện thực tế</h4><p>Ảnh ngoài đồng hiện có chỉ phủ một phần nhóm lá; kết quả chưa đại diện cho triển khai thực tế.</p></article>
         <article><h4>Cần ảnh một lá đã cắt</h4><p>Web chưa tự tìm lá trên ảnh toàn cây. Độ tự tin cao vẫn có thể sai.</p></article>
       </div>
       <p class="viewer-scope mt-3">Tập kiểm tra cũng dùng để chọn mô hình; tập giữ riêng chưa được đối soát trùng ảnh. Điều kiện huấn luyện giữa các cách học còn khác nhau.</p>

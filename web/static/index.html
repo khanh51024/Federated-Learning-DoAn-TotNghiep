@@ -68,7 +68,7 @@
           <span class="nav-step">1</span><span class="nav-label">Tổng quan</span>
         </a>
         <a class="nav-item" href="#non-iid" data-route="non-iid">
-          <span class="nav-step">2</span><span class="nav-label">Dữ liệu phân tán</span>
+          <span class="nav-step">2</span><span class="nav-label">Phân bố dữ liệu</span>
         </a>
         <a class="nav-item" href="#ket-qua" data-route="ket-qua">
           <span class="nav-step">3</span><span class="nav-label">Kết quả &amp; so sánh</span>
@@ -82,7 +82,7 @@
         </a>
         <span class="nav-sep" aria-hidden="true"></span>
         <a class="nav-item" href="#bang-chung" data-route="bang-chung">
-          <span class="nav-step">6</span><span class="nav-label">Bằng chứng &amp; hạn chế</span>
+          <span class="nav-step">6</span><span class="nav-label">Kiểm chứng &amp; giới hạn</span>
         </a>
       </nav>
 
@@ -109,7 +109,7 @@
           <p id="page-desc" class="page-desc"></p>
         </div>
         <div class="header-actions">
-          <div class="status-badge" id="task-badge" role="status">Hệ thống sẵn sàng</div>
+          <div class="status-badge" id="task-badge" role="status">Sẵn sàng</div>
         </div>
       </header>
 
@@ -137,11 +137,11 @@
       <section id="page-ket-qua" class="tab-pane" data-route="ket-qua">
         <div class="subtabs" role="tablist" aria-label="Nhóm kết quả">
           <button type="button" class="subtab is-active" role="tab" id="subtab-summary" aria-selected="true" aria-controls="result-summary" data-subtab="summary">Tổng hợp</button>
-          <button type="button" class="subtab" role="tab" id="subtab-holdout" aria-selected="false" aria-controls="result-holdout" data-subtab="holdout">Tập giữ riêng &amp; thống kê</button>
-          <button type="button" class="subtab" role="tab" id="subtab-plantdoc" aria-selected="false" aria-controls="result-plantdoc" data-subtab="plantdoc">Ảnh ngoài đồng theo bệnh</button>
+          <button type="button" class="subtab" role="tab" id="subtab-holdout" aria-selected="false" aria-controls="result-holdout" data-subtab="holdout">Tập giữ riêng và thống kê</button>
+          <button type="button" class="subtab" role="tab" id="subtab-plantdoc" aria-selected="false" aria-controls="result-plantdoc" data-subtab="plantdoc">Kết quả trên PlantDoc theo nhóm bệnh</button>
           <button type="button" class="subtab" role="tab" id="subtab-confusion" aria-selected="false" aria-controls="result-confusion" data-subtab="confusion">Ma trận nhầm lẫn</button>
-          <button type="button" class="subtab" role="tab" id="subtab-errors" aria-selected="false" aria-controls="result-errors" data-subtab="errors">Sai mà rất tự tin</button>
-          <button type="button" class="subtab" role="tab" id="subtab-calibration" aria-selected="false" aria-controls="result-calibration" data-subtab="calibration">Độ tin cậy xác suất</button>
+          <button type="button" class="subtab" role="tab" id="subtab-errors" aria-selected="false" aria-controls="result-errors" data-subtab="errors">Dự đoán sai với độ tin cậy cao</button>
+          <button type="button" class="subtab" role="tab" id="subtab-calibration" aria-selected="false" aria-controls="result-calibration" data-subtab="calibration">Đánh giá độ tin cậy dự đoán</button>
         </div>
         <div id="result-summary" class="subpanel is-active" role="tabpanel" aria-labelledby="subtab-summary"><div class="skeleton skeleton-block"></div></div>
         <div id="result-plantdoc" class="subpanel" role="tabpanel" aria-labelledby="subtab-plantdoc"></div>
@@ -157,13 +157,13 @@
           <div class="diag-input">
             <div class="panel">
               <h3 class="panel-title panel-title-sm">1 · Chọn ảnh lá</h3>
-              <p class="panel-desc">Đầu vào là ảnh vùng lá đã cắt; bộ phân loại không tự tìm lá trên ảnh toàn cây.</p>
+              <p class="panel-desc">Nên dùng ảnh chụp rõ một lá đã cắt. Hệ thống chưa tự tìm lá trên ảnh toàn cây.</p>
 
               <div class="chip-row mt-3" role="group" aria-label="Lọc ảnh mẫu" id="gallery-filters">
                 <button type="button" class="chip is-active" data-filter="all">Tất cả</button>
-                <button type="button" class="chip" data-filter="easy">Dễ</button>
-                <button type="button" class="chip" data-filter="medium">Vừa</button>
-                <button type="button" class="chip" data-filter="hard">Khó</button>
+                <button type="button" class="chip" data-filter="easy">Nhận đúng cao</button>
+                <button type="button" class="chip" data-filter="medium">Trung bình</button>
+                <button type="button" class="chip" data-filter="hard">Nhận đúng thấp</button>
                 <button type="button" class="chip" data-filter="plantvillage">PlantVillage</button>
                 <button type="button" class="chip" data-filter="plantdoc">PlantDoc</button>
               </div>
@@ -172,7 +172,7 @@
                 <span class="skeleton gallery-skeleton"></span><span class="skeleton gallery-skeleton"></span>
               </div>
               <button type="button" class="btn btn-ghost btn-sm mt-2 hidden" id="gallery-more" aria-controls="gallery-grid" aria-expanded="false">Xem tất cả ảnh</button>
-              <p class="field-hint mt-2" id="gallery-note">Ảnh mẫu thuộc tập kiểm tra. Dễ/Khó theo recall của lớp ở FedAvg, không phải độ khó riêng ảnh.</p>
+              <p class="field-hint mt-2" id="gallery-note">Ảnh mẫu thuộc tập kiểm tra. Mức nhận đúng là tỉ lệ nhận đúng của nhóm bệnh ở FedAvg, không phải độ khó riêng của từng ảnh.</p>
 
               <div class="upload-zone mt-4" id="upload-dropzone">
                 <input type="file" id="leaf-image-input" accept="image/*" class="file-input" aria-label="Tải ảnh lá cây từ máy">
@@ -220,8 +220,8 @@
                   <div class="selected-meta hidden" id="selected-meta"></div>
                 </div>
                 <div class="diag-control-grid">
-                  <p class="panel-desc">Chọn ảnh là chạy ngay. Ảnh mẫu có sẵn nhãn để đối chiếu đúng/sai.</p>
-                  <details class="fold"><summary>Tùy chọn so sánh và giải thích</summary>
+                  <p class="panel-desc">Chọn ảnh để bắt đầu phân tích. Ảnh mẫu có nhãn giúp đối chiếu kết quả dự đoán.</p>
+                  <details class="fold"><summary>Tùy chọn nâng cao</summary>
                   <div class="form-group">
                     <label for="inference-true-class">Nhãn thật (nếu biết) — chỉ dùng để chấm đúng/sai</label>
                     <select id="inference-true-class" class="input-field">
@@ -311,7 +311,7 @@
         <section class="panel comm-panel" id="comm-panel" aria-labelledby="comm-title" aria-busy="true">
           <div class="panel-header-flex">
             <div>
-              <h3 class="panel-title panel-title-sm" id="comm-title">Tham gia từ máy của bạn</h3>
+              <h3 class="panel-title panel-title-sm" id="comm-title">Huấn luyện từ trình duyệt</h3>
               <p class="panel-desc">Máy của bạn là một client học liên kết thật. Ảnh lá được xử lý ngay trong trình duyệt; chỉ lớp cuối của mô hình (khoảng 156 KB số) được gửi lên máy chủ để gộp theo FedAvg. Ảnh không rời máy.</p>
             </div>
             <span class="status-badge" id="comm-badge">Đang kiểm tra…</span>
@@ -407,7 +407,7 @@
 
         <div class="train-layout mt-4">
           <div class="panel">
-            <h3 class="panel-title panel-title-sm">Chạy thử</h3>
+            <h3 class="panel-title panel-title-sm">Mô phỏng trên máy chủ</h3>
             <div class="form-group mt-3">
               <span class="form-label" id="train-mode-label">Loại huấn luyện</span>
               <div class="segmented" role="radiogroup" aria-labelledby="train-mode-label">
@@ -531,7 +531,7 @@
             <div class="panel">
               <div class="panel-header-flex">
                 <div>
-                  <h3 class="panel-title panel-title-sm">Theo dõi</h3>
+                  <h3 class="panel-title panel-title-sm">Theo dõi tiến trình</h3>
                   <p class="panel-desc" id="train-monitor-desc">Chưa có phiên nào đang chạy.</p>
                 </div>
                 <span class="status-badge" id="train-live-badge">Sẵn sàng</span>

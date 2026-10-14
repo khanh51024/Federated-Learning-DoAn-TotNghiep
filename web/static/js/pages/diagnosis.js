@@ -9,7 +9,9 @@ import {
 
 const LOCAL_SOURCES = ["local_00", "local_01", "local_02", "local_03", "local_04"];
 const ALL_SOURCES = ["fedavg", ...LOCAL_SOURCES];
-const LEVEL_LABEL = { very_easy: "Rất dễ", easy: "Dễ", medium: "Vừa", hard: "Khó", very_hard: "Rất khó" };
+const LEVEL_LABEL = { very_easy: "Nhận đúng rất cao", easy: "Nhận đúng cao", medium: "Nhận đúng trung bình", hard: "Nhận đúng thấp", very_hard: "Nhận đúng rất thấp" };
+// Nhãn theo tỉ lệ nhận đúng của nhóm bệnh (recall lớp ở FedAvg), không phải độ khó của riêng ảnh
+const levelText = item => LEVEL_LABEL[item.difficulty_key] || item.difficulty;
 
 // Giới hạn dung lượng ảnh tải lên: phải khớp MAX_UPLOAD_BYTES trong web/routers/inference.py (có test kiểm hai số này).
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -75,16 +77,16 @@ function renderGallery() {
   }
   grid.innerHTML = items.map(item => {
     const id = Number(item.id);
-    const level = state.showStats ? `<span class="level level-${esc(item.difficulty_key)}">${esc(item.difficulty)}</span>` : "";
-    const levelLabel = state.showStats ? `, ${esc(item.difficulty)}` : "";
+    const level = state.showStats ? `<span class="level level-${esc(item.difficulty_key)}">${esc(levelText(item))}</span>` : "";
+    const levelLabel = state.showStats ? `, ${esc(levelText(item))}` : "";
     return `
     <button type="button" class="gallery-item${state.item?.id === item.id ? " is-selected" : ""}" data-id="${id}"
       aria-pressed="${state.item?.id === item.id}"
       aria-label="Ảnh mẫu ${id}: ${esc(formatDiseaseName(item.label))}${levelLabel}${item.field_photo ? ", ảnh ngoài đồng" : ""}">
       <img src="/static/samples/demo/${esc(item.thumb)}" alt="" loading="lazy" width="88" height="88">
-      ${level}
       <span class="gallery-cap">${esc(formatDiseaseName(item.label))}</span>
       <span class="gallery-src">${item.source === "plantdoc" ? "PlantDoc · ngoài đồng" : "PlantVillage"}</span>
+      ${level}
     </button>`;
   }).join("");
 }
@@ -163,7 +165,7 @@ function resetResults() {
 
 function itemMeta(item) {
   const verified = state.showStats;
-  const level = verified ? `<span class="level level-${esc(item.difficulty_key)}">${esc(item.difficulty)}</span>` : "";
+  const level = verified ? `<span class="level level-${esc(item.difficulty_key)}">${esc(levelText(item))}</span>` : "";
   const stats = verified
     ? `<p class="field-hint">Trên ${fmtInt(item.class_val_count)} ảnh kiểm tra ${item.source === "plantdoc" ? "PlantDoc" : "PlantVillage"} của nhóm này,
       FedAvg nhận đúng ${fmtPctValue(item.recall_fedavg_pct, 0)}, Centralized ${fmtPctValue(item.recall_centralized_pct, 0)}.</p>`
@@ -348,7 +350,7 @@ function summarize(modelIds) {
     return;
   }
   const pre = state.item
-    ? `<p class="summary-line">Ảnh mẫu #${Number(state.item.id)} · <b>${esc(formatDiseaseName(state.item.label))}</b>${state.showStats ? ` · ${esc(state.item.difficulty)}` : ""}</p>` : "";
+    ? `<p class="summary-line">Ảnh mẫu #${Number(state.item.id)} · <b>${esc(formatDiseaseName(state.item.label))}</b>${state.showStats ? ` · ${esc(levelText(state.item))}` : ""}</p>` : "";
 
   if (trueClass) {
     const ok = results.filter(([id, r]) => verdict(r, trueClass) === "correct");
@@ -375,7 +377,7 @@ function summarize(modelIds) {
     const ranked = [...tally.entries()].sort((a, b) => b[1] - a[1]);
     box.innerHTML = `${pre}${headlineHtml(null)}
       <p class="summary-big">Đối chiếu, các mô hình dự đoán: ${ranked.map(([c, n]) => `<b>${esc(formatDiseaseName(c))}</b> (${n}/${results.length})`).join(" · ")}</p>
-      <p class="field-hint">Chưa biết nhãn thật nên chưa chấm đúng/sai. Mở “Tùy chọn so sánh và giải thích”, chọn “Nhãn thật” nếu biết để đối chiếu kết quả.</p>${timingHtml()}`;
+      <p class="field-hint">Chưa biết nhãn thật nên chưa chấm đúng/sai. Mở “Tùy chọn nâng cao”, chọn “Nhãn thật” nếu biết để đối chiếu kết quả.</p>${timingHtml()}`;
     toggleHidden(explain, true);
     explain.innerHTML = "";
   }

@@ -68,7 +68,7 @@ function heroHtml() {
       <div class="overview-hero-copy">
         <p class="eyebrow">Đồ án học liên kết · chẩn đoán bệnh lá cây</p>
         <h2 class="hero-question">Học chung.<br>Ảnh ở lại từng nơi.</h2>
-        <p class="hero-note">Các client học trên ảnh của mình, gửi trọng số để tạo mô hình nhận diện lá khỏe và bệnh.</p>
+        <p class="hero-note">Mỗi client huấn luyện mô hình trên dữ liệu riêng. Máy chủ tổng hợp trọng số thành một mô hình chung; ảnh không cần tập trung về máy chủ.</p>
         <p class="viewer-scope" id="overview-scope">Thực nghiệm trên các phân vùng dữ liệu giả lập.</p>
         <div class="cta-row overview-hero-actions">
           <a class="btn btn-primary" href="#chan-doan">Thử chẩn đoán ảnh →</a>
@@ -196,21 +196,21 @@ export async function mount() {
       <div class="overview-headline-compare"><span>Local-only</span><strong>${range(pvLocals)}</strong><small>Mỗi client học riêng</small></div>
     </section>
 
-    <p class="viewer-scope mt-3">Một kịch bản, một lần chạy; tập kiểm tra cũng dùng để chọn mô hình. Các cách học chưa được huấn luyện cùng điều kiện; đây chưa phải độ chính xác ngoài thực địa.</p>
+    <p class="viewer-scope mt-3">Kết quả từ một lần chạy; tập kiểm tra đã tham gia quá trình chọn mô hình. Các cách học chưa được huấn luyện cùng điều kiện; đây chưa phải độ chính xác ngoài thực địa. Xem thêm các giới hạn ở bước 6.</p>
 
     <section class="conclusion-grid mt-4" aria-label="Ba điều rút ra từ kết quả">
       <article class="conclusion fedavg">
-        <span class="conclusion-label">Đánh đổi hiệu năng</span>
+        <span class="conclusion-label">Chênh lệch so với Centralized</span>
         <b>${gapFedCentral > 0.5 ? `−${fmtNum(gapFedCentral, 1)} điểm` : "Gần ngang nhau"}</b>
         <p>So với Centralized trên PlantVillage; chênh lệch tham khảo vì điều kiện huấn luyện khác nhau.</p>
       </article>
       <article class="conclusion local">
-        <span class="conclusion-label">Lợi ích hợp tác</span>
+        <span class="conclusion-label">Chênh lệch so với Local-only</span>
         <b>${fedOverLocal >= 0 ? "+" : "−"}${fmtNum(Math.abs(fedOverLocal), 1)} điểm</b>
-        <p>So với mô hình học riêng tốt nhất trên PlantVillage. <a href="#non-iid">Vì sao học chung có ích? →</a></p>
+        <p>So với mô hình học riêng tốt nhất trên PlantVillage. <a href="#non-iid">Phân bố dữ liệu giữa các client →</a></p>
       </article>
       <article class="conclusion warn">
-        <span class="conclusion-label">Giới hạn ngoài đồng</span>
+        <span class="conclusion-label">Chênh lệch PlantVillage → PlantDoc</span>
         <b>−${fmtNum(domainFed, 1)} điểm</b>
         <p>FedAvg giảm khi đổi từ PlantVillage sang PlantDoc. <a href="#ket-qua">Xem phạm vi kết quả →</a></p>
       </article>
@@ -232,7 +232,7 @@ export async function mount() {
       <summary><span><strong>Ba cách huấn luyện được so sánh</strong><small>Centralized · FedAvg · Local-only</small></span></summary>
       <section class="pillar-grid" aria-label="Ba cách huấn luyện">
       <article class="pillar pillar-centralized">
-        <header><span class="pillar-tag">Gom ảnh về một chỗ · mức tham chiếu</span><h3>Centralized</h3></header>
+        <header><span class="pillar-tag">Gom ảnh về một máy · mức tham chiếu</span><h3>Centralized</h3></header>
         <p class="pillar-desc">Gom toàn bộ ảnh về một máy rồi huấn luyện; dùng làm mức tham chiếu cho học liên kết.</p>
         <dl class="pillar-metrics">
           <div><dt>Ảnh chụp trong phòng <small>(PlantVillage)</small></dt><dd class="metric-big" id="m-central-pv">—</dd></div>
@@ -242,8 +242,8 @@ export async function mount() {
         <p class="pillar-foot">Ảnh gốc được gửi về máy chủ</p>
       </article>
       <article class="pillar pillar-fedavg">
-        <header><span class="pillar-tag">Học liên kết · giải pháp của đồ án</span><h3>FedAvg</h3></header>
-        <p class="pillar-desc">Năm nơi huấn luyện trên ảnh của mình, chỉ gửi trọng số; máy chủ lấy trung bình có trọng số theo số ảnh.</p>
+        <header><span class="pillar-tag">Học liên kết · phương pháp đề xuất</span><h3>FedAvg</h3></header>
+        <p class="pillar-desc">Năm client huấn luyện trên ảnh của mình và chỉ gửi trọng số; máy chủ lấy trung bình có trọng số theo số ảnh.</p>
         <dl class="pillar-metrics">
           <div><dt>Ảnh chụp trong phòng <small>(PlantVillage)</small></dt><dd class="metric-big" id="m-fed-pv">—</dd></div>
           <div><dt>Ảnh ngoài đồng <small>(PlantDoc)</small></dt><dd class="metric-big" id="m-fed-pd">—</dd></div>
@@ -252,8 +252,8 @@ export async function mount() {
         <p class="pillar-foot">Ảnh gốc không rời khỏi nơi sinh ra nó</p>
       </article>
       <article class="pillar pillar-local">
-        <header><span class="pillar-tag">Mỗi nơi tự học · không hợp tác</span><h3>Local-only</h3></header>
-        <p class="pillar-desc">Mỗi nơi chỉ học ảnh của mình. Có năm mô hình riêng biệt, không chia sẻ gì với nhau.</p>
+        <header><span class="pillar-tag">Huấn luyện riêng · không chia sẻ trọng số</span><h3>Local-only</h3></header>
+        <p class="pillar-desc">Mỗi client huấn luyện một mô hình riêng trên ảnh của mình. Có năm mô hình, không trao đổi trọng số.</p>
         <dl class="pillar-metrics">
           <div><dt>Ảnh chụp trong phòng <small>(PlantVillage)</small></dt><dd class="metric-big">${range(pvLocals)}</dd></div>
           <div><dt>Ảnh ngoài đồng <small>(PlantDoc)</small></dt><dd class="metric-big">${range(pdLocals)}</dd></div>

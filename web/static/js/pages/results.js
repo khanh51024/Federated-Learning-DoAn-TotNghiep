@@ -75,7 +75,7 @@ function buildSummary() {
 
   root.innerHTML = `
     <section class="panel">
-      <div class="panel-header-flex"><div><h3 class="panel-title">Ba cách học, cùng một tập ảnh</h3><p class="panel-desc">1 mô hình gom ảnh · 1 mô hình học liên kết · 5 mô hình học riêng</p></div>
+      <div class="panel-header-flex"><div><h3 class="panel-title">So sánh ba phương pháp huấn luyện</h3><p class="panel-desc">1 mô hình gom ảnh · 1 mô hình học liên kết · 5 mô hình học riêng</p></div>
         <div class="segmented" role="radiogroup" aria-label="Nguồn ảnh so sánh">
           <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-result-source="plantvillage">PlantVillage</button>
           <button type="button" class="segmented-option" role="radio" aria-checked="false" data-result-source="plantdoc">PlantDoc · ngoài đồng</button>
@@ -83,7 +83,7 @@ function buildSummary() {
       </div>
       <p class="field-hint mt-2" id="result-comparison-source"></p>
       <details class="fold mt-2" id="result-provenance">
-        <summary>Số liệu này lấy từ đâu?</summary>
+        <summary>Nguồn dữ liệu và phương pháp đánh giá</summary>
         <div class="callout mt-2">
           <ul>
             <li><b>Tập đánh giá:</b> tập kiểm tra (validation) của release đã ghim — PlantVillage ${fmtInt(evidence.validation_counts.plantvillage)} ảnh, PlantDoc ${fmtInt(evidence.validation_counts.plantdoc)} ảnh. Tập này cũng được dùng để chọn mô hình nên không thay cho kiểm thử độc lập.</li>
@@ -121,7 +121,7 @@ function buildSummary() {
       </div>
     </details>
 
-    <p class="field-hint mt-3">Mở tab “Tập giữ riêng &amp; thống kê” để xem kết quả trên ảnh không dùng để chọn mô hình và khoảng tin cậy.</p>
+    <p class="field-hint mt-3">Mở tab “Tập giữ riêng và thống kê” để xem kết quả trên ảnh không dùng để chọn mô hình và khoảng tin cậy.</p>
 
     <details class="overview-detail mt-4">
       <summary><span><strong>Xem lịch sử huấn luyện Centralized</strong><small>Đường độ chính xác và sai số theo epoch</small></span></summary>
@@ -477,7 +477,7 @@ function buildHoldout() {
       <div class="overview-detail-body">
     ${sel?.available ? `
     <section class="callout callout-warn">
-      <b>Vì sao cần một tập giữ riêng?</b> Phiên bản mô hình được chọn dựa trên điểm Macro-F1 PlantDoc (chỉ xét các epoch đã đạt ngưỡng F1 PlantVillage) ngay trên <b>chính tập kiểm tra đang dùng để báo cáo</b>, nên con số ở đó có thể hơi đẹp hơn thực tế.
+      <b>Mục đích của tập giữ riêng:</b> Phiên bản mô hình được chọn dựa trên điểm Macro-F1 PlantDoc (chỉ xét các epoch đã đạt ngưỡng F1 PlantVillage) ngay trên <b>chính tập kiểm tra đang dùng để báo cáo</b>, nên con số ở đó có thể hơi đẹp hơn thực tế.
       Với Centralized, epoch được chọn (${fmtInt(sel.chosen_epoch)}/${fmtInt(sel.epochs)}) có độ chính xác PlantDoc ${fmtPct(sel.chosen_plantdoc_accuracy)}
       — ${sel.chosen_rank_among_epochs === 1 ? "cao nhất trong mọi epoch" : `hạng ${fmtInt(sel.chosen_rank_among_epochs)}/${fmtInt(sel.epochs)}`} (epoch cuối: ${fmtPct(sel.last_plantdoc_accuracy)}).
       Vì vậy đồ án chấm lại thêm trên một tập ${fmtInt(ho?.count)} ảnh <b>giữ riêng</b> — tập chẩn đoán "legacy" có sẵn của bộ dữ liệu, không dùng để chọn mô hình

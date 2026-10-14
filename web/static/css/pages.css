@@ -698,7 +698,8 @@ body[data-route="tong-quan"] .top-header .eyebrow { margin-bottom: 0; }
   font-weight: 600;
   white-space: nowrap;
 }
-.gallery-item .level { position: absolute; top: 10px; left: 10px; box-shadow: var(--shadow-1); }
+/* nhãn độ khó nằm dưới tên bệnh, không đè lên ảnh; cho phép xuống dòng vì thẻ chỉ rộng ~88 px trên điện thoại */
+.gallery-item .level { align-self: flex-start; white-space: normal; line-height: 1.25; text-align: left; box-shadow: var(--shadow-1); }
 .level-very_easy,
 .level-easy { background: var(--tint-emerald); color: var(--accent-emerald-strong); border: 1px solid var(--line-emerald); }
 .level-medium { background: var(--tint-sky); color: var(--accent-sky); border: 1px solid var(--line-sky); }
