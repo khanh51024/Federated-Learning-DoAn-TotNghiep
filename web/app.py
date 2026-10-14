@@ -5,6 +5,7 @@ Kiến trúc (từ 2026-10-09, xem docs/MODEL_REGISTRY.md):
 - web/routers/monitoring.py  — status, metrics, clients, weights inspect, artifact status
 - web/routers/inference.py   — dual inference, PlantVillage reference, demo evidence, compare
 - web/routers/training.py    — điều khiển centralized/federated demo + network metrics
+- web/routers/community_fl.py — học liên kết cộng đồng: mỗi người vào web là một client (xem docs/COMMUNITY_FL.md)
 - web/services/model_service.py — service registry/inference duy nhất (đọc artifacts/registry.json)
 - web/state.py               — trạng thái background task + NetworkDemoManager dùng chung
 
@@ -20,9 +21,10 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from web.routers import community_fl as _community_router
 from web.routers import inference as _inference_router
 from web.routers import monitoring as _monitoring_router
 from web.routers import training as _training_router
@@ -71,13 +73,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Giao diện và API cùng một origin nên mặc định không cần CORS cho trang khác. `CORS_ALLOW_ORIGINS` (danh sách phân tách bằng
+# dấu phẩy) mở thêm origin cụ thể khi cần; không còn `*` kèm credentials. Token cộng đồng đi bằng header Authorization.
+_CORS_ORIGINS = [item.strip() for item in os.environ.get("CORS_ALLOW_ORIGINS", "").split(",") if item.strip()]
+if _CORS_ORIGINS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_CORS_ORIGINS,
+        allow_credentials=False,
+        allow_methods=["GET", "POST"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
 
 
 @app.middleware("http")
@@ -96,6 +102,9 @@ async def add_no_cache_headers(request: Request, call_next):
 
 # Windows/Python thường không biết .woff2 và trả text/plain; khai báo tường minh để không phụ thuộc registry của OS.
 mimetypes.add_type("font/woff2", ".woff2")
+# Worker module và onnxruntime-web: trình duyệt từ chối script module/wasm nếu MIME sai (Windows hay trả text/plain).
+mimetypes.add_type("text/javascript", ".mjs")
+mimetypes.add_type("application/wasm", ".wasm")
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
@@ -119,9 +128,32 @@ def serve_index():
     return {"message": "Federated Learning API is running. static/index.html is being prepared."}
 
 
+ADMIN_PAGE = Path(__file__).resolve().parent / "static" / "admin" / "admin.html"
+# Trang quản trị học liên kết cộng đồng: tệp tĩnh riêng, KHÔNG nằm trong sáu bước và không có liên kết từ menu công khai.
+# Quyền thật nằm ở token quản trị mà các API /api/community/admin/* kiểm; các tiêu đề dưới đây chỉ làm trang khó bị nhúng/lập chỉ mục.
+ADMIN_PAGE_HEADERS = {
+    "Cache-Control": "no-store",
+    "X-Robots-Tag": "noindex, nofollow",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+    "Content-Security-Policy": (
+        "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self'; "
+        "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+    ),
+}
+
+
+@app.get("/quan-tri", include_in_schema=False)
+def serve_admin_page():
+    if not ADMIN_PAGE.is_file():
+        return JSONResponse({"detail": "Trang quản trị chưa có trên máy chủ này."}, status_code=404, headers=ADMIN_PAGE_HEADERS)
+    return FileResponse(ADMIN_PAGE, headers=ADMIN_PAGE_HEADERS)
+
+
 app.include_router(_monitoring_router.router)
 app.include_router(_inference_router.router)
 app.include_router(_training_router.router)
+app.include_router(_community_router.router)
 
 # Mount thư mục static assets
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")

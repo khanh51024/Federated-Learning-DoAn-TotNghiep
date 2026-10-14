@@ -65,6 +65,7 @@ HOLDOUT_EVAL_JSON = "artifacts/holdout_eval_report.json"
 FULLFRAME_EVAL_JSON = "artifacts/fullframe_eval.json"  # scripts/eval_fullframe_plantdoc.py (ảnh nguyên khung vs ảnh cắt lá)
 FULLFRAME_CROP_POLICY = "bbox_margin_8pct_v1"
 QUARANTINED_EVAL_JSON = "artifacts/quarantined_plantdoc_eval.json"  # scripts/eval_quarantined_plantdoc.py (lá PlantDoc bị cách ly, nhãn CHƯA kiểm)
+LABEL_SCREENING_JSON = "artifacts/label_screening.json"  # scripts/record_label_screening.py (sàng lọc nhãn bằng mắt do AI làm, KHÔNG phải chuyên gia)
 ERROR_GALLERY_DIR = "web/static/samples/errors"
 ERROR_GALLERY_CATALOG_JSON = f"{ERROR_GALLERY_DIR}/catalog.json"  # scripts/build_error_gallery.py
 STATISTICS_JSON = "artifacts/statistics_report.json"  # scripts/report_statistics.py (khoảng tin cậy theo cụm, McNemar)
@@ -81,6 +82,17 @@ DEMO_GALLERY_DIR = "web/static/samples/demo"
 DEMO_GALLERY_CATALOG_JSON = f"{DEMO_GALLERY_DIR}/catalog.json"  # scripts/build_demo_gallery.py
 TELEMETRY_HISTORY_JSON = "artifacts/metrics/telemetry_history.json"
 NETWORK_FLOWER_HISTORY_JSON = "artifacts/metrics/network_flower_history.json"
+
+# Học liên kết cộng đồng (mỗi người vào web là một client, chỉ học lớp cuối trên đặc trưng của backbone đóng băng).
+# Thư mục gitignored: file ONNX/đặc trưng sinh bằng scripts/export_community_feature_model.py và
+# scripts/build_community_eval_features.py; thư mục state/ chứa SQLite + các phiên bản head (bền qua khởi động lại).
+COMMUNITY_FL_DIR = "artifacts/community_fl"
+COMMUNITY_MANIFEST_JSON = f"{COMMUNITY_FL_DIR}/community_manifest.json"
+COMMUNITY_FEATURE_MODEL_ONNX = f"{COMMUNITY_FL_DIR}/feature_model.onnx"
+COMMUNITY_BASE_HEAD_NPZ = f"{COMMUNITY_FL_DIR}/base_head.npz"
+COMMUNITY_EVAL_FEATURES_NPZ = f"{COMMUNITY_FL_DIR}/eval_features.npz"
+COMMUNITY_STATE_DIR = f"{COMMUNITY_FL_DIR}/state"
+COMMUNITY_MODEL_ID = "demo_fedavg_v7"  # backbone đóng băng + head khởi điểm lấy từ model này (qua cổng web_visible)
 
 # ---------------------------------------------------------------------------
 # Canonical slots (chỉ được ghi bởi run khoa học thật, không bao giờ bởi smoke)

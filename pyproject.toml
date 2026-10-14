@@ -30,6 +30,9 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest>=7.0.0",
+    # Học liên kết cộng đồng: xuất ONNX và kiểm khớp với PyTorch (máy chủ web chạy không cần hai gói này)
+    "onnx>=1.16.0",
+    "onnxruntime>=1.18.0",
 ]
 
 [tool.setuptools.packages.find]

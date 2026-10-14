@@ -62,3 +62,6 @@ artifacts/network_run_logs/
 # Checkpoint nhị phân: quản lý bằng registry (scripts/build_registry.py), không track git
 artifacts/checkpoints/*.pt
 artifacts/checkpoints/smoke/*.pt
+
+# Học liên kết cộng đồng: mô hình ONNX, đặc trưng giám sát và trạng thái vòng (sinh lại được / dữ liệu vận hành)
+artifacts/community_fl/
