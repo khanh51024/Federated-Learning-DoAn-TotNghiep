@@ -28,6 +28,7 @@ SMOKE_CHECKPOINTS_DIR = "artifacts/checkpoints/smoke"
 METRICS_DIR = "artifacts/metrics"
 DEMO_BUNDLE_DIR = "artifacts/branch_demo/20261003"
 WEB_RUNS_DIR = "artifacts/web_runs"
+TRAINING_AUDIT_JSONL = f"{WEB_RUNS_DIR}/training_audit.jsonl"  # web/services/training_guard.py: ai bắt đầu/dừng huấn luyện
 VERIFIED_DIR = "artifacts/verified"
 VERIFIED_NETWORK_DIR = "artifacts/verified_network"
 DATA_PREFLIGHT_JSON = "artifacts/data_preflight.json"

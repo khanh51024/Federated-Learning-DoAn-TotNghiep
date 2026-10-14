@@ -1,11 +1,14 @@
 """Router training: điều khiển centralized/federated demo + network metrics."""
 from __future__ import annotations
 
+import functools
 import json
+import threading
+import uuid
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
-from fastapi import BackgroundTasks, HTTPException
+from fastapi import BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from pydantic import BaseModel, Field
@@ -13,12 +16,17 @@ from pydantic import BaseModel, Field
 from src import registry as reg
 
 from web import state
+from web.services import admin_auth, training_guard
 from web.state import CURRENT_TASK, NETWORK_DEMO, check_port_open
 
 from src.centralized.train import run_centralized_training
 from src.federated.server_app import run_federated_simulation
 
 router = APIRouter()
+
+# Chỉ một tác vụ huấn luyện cùng lúc: khối "kiểm trạng thái rồi đặt running" phải nguyên tử, vì các endpoint `def` chạy
+# trên threadpool nên hai yêu cầu đồng thời có thể cùng thấy status != running.
+_TASK_LOCK = threading.Lock()
 
 
 class CentralizedTrainRequest(BaseModel):
@@ -109,12 +117,58 @@ def _mark_task_running(experiment: str, task_type: str, message: str) -> None:
     CURRENT_TASK.update({
         "status": "running", "experiment": experiment, "type": task_type, "progress": 5,
         "message": message, "error": None, "cancel_requested": False, "live_progress": [],
+        "job_id": uuid.uuid4().hex[:12],
     })
 
 
-@router.post("/api/train/stop")
-def stop_training() -> Dict[str, Any]:
-    """Hủy/Dừng tác vụ huấn luyện đang chạy (Centralized hoặc Federated)."""
+def _expire_job(job_id: str) -> None:
+    """Quá thời gian tối đa: dừng đúng job đó (bỏ qua nếu job đã xong hoặc đã là job khác)."""
+    if CURRENT_TASK.get("status") != "running" or CURRENT_TASK.get("job_id") != job_id:
+        return
+    CURRENT_TASK["cancel_requested"] = True
+    CURRENT_TASK["message"] = f"Đã quá {training_guard.limits()['max_seconds']} giây: tự dừng để bảo vệ máy chủ."
+    if CURRENT_TASK.get("type") == "federated-network":
+        NETWORK_DEMO.stop()
+    training_guard.audit("train_timeout", None, job_id=job_id)
+
+
+def _supervised(kind: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Bọc hàm chạy nền: hẹn giờ dừng khi quá thời gian và ghi nhật ký kết thúc (giữ nguyên __name__ cho test)."""
+    def decorate(function: Callable[..., Any]) -> Callable[..., Any]:
+        @functools.wraps(function)
+        def inner(*args: Any, **kwargs: Any) -> Any:
+            job_id = str(CURRENT_TASK.get("job_id") or "")
+            timer = training_guard.arm_watchdog(job_id, _expire_job)
+            try:
+                return function(*args, **kwargs)
+            finally:
+                timer.cancel()
+                training_guard.audit("train_end", None, kind=kind, job_id=job_id,
+                                     status=CURRENT_TASK.get("status"), message=CURRENT_TASK.get("message"))
+        return inner
+    return decorate
+
+
+def _guard_start(request: Optional[Request]) -> None:
+    """Hạn mức số lần bấm Bắt đầu theo IP (chỉ áp cho yêu cầu HTTP thật)."""
+    if request is None:
+        return
+    allowed, wait = admin_auth.LIMITER.allow(
+        f"trainstart:{admin_auth.client_ip(request)}", training_guard.limits()["starts_per_10_min"], 600)
+    if not allowed:
+        raise HTTPException(status_code=429, detail=f"Bạn bấm Bắt đầu quá nhiều lần. Hãy thử lại sau {int(wait)} giây.",
+                            headers={"Retry-After": str(int(wait))})
+
+
+def _cap(name: str, value: int, label: str) -> None:
+    cap = training_guard.limits()[name]
+    if value > cap:
+        raise HTTPException(status_code=422, detail=f"{label}: máy chủ này chỉ cho tối đa {cap} (bạn chọn {value}).")
+
+
+@router.post("/api/train/stop", dependencies=[Depends(admin_auth.require_admin)])
+def stop_training(request: Request = None) -> Dict[str, Any]:  # type: ignore[assignment]
+    """Hủy/Dừng tác vụ huấn luyện đang chạy (Centralized hoặc Federated). Cần quyền quản trị khi máy chủ đã cấu hình."""
     if CURRENT_TASK["status"] != "running":
         return {
             "status": CURRENT_TASK["status"],
@@ -126,6 +180,7 @@ def stop_training() -> Dict[str, Any]:
     if CURRENT_TASK.get("type") == "federated-network":
         NETWORK_DEMO.stop()
     CURRENT_TASK["message"] = "Đang gửi lệnh dừng tới tiến trình huấn luyện..."
+    training_guard.audit("train_stop", request, job_id=CURRENT_TASK.get("job_id"), kind=CURRENT_TASK.get("type"))
     return {
         "status": "stopping",
         "message": "Đã gửi tín hiệu dừng khẩn cấp tới tiến trình huấn luyện.",
@@ -133,6 +188,7 @@ def stop_training() -> Dict[str, Any]:
     }
 
 
+@_supervised("centralized")
 def _run_centralized_bg(epochs: int, smoke: bool, dataset_root: Optional[str], seed: int):
     # Trạng thái running/cancel_requested đã được endpoint đặt đồng bộ (_mark_task_running); không đặt lại ở đây.
     mode_text = "demo" if smoke else "thực tế"
@@ -182,26 +238,36 @@ def _run_centralized_bg(epochs: int, smoke: bool, dataset_root: Optional[str], s
             CURRENT_TASK["error"] = str(e)
 
 
-@router.post("/api/centralized/train")
+@router.post("/api/centralized/train", dependencies=[Depends(admin_auth.require_admin)])
 def trigger_centralized_train(
     background_tasks: BackgroundTasks,
     req: CentralizedTrainRequest = CentralizedTrainRequest(),
+    request: Request = None,  # type: ignore[assignment]
 ):
     """
     Kích hoạt huấn luyện Centralized (chỉ smoke demo):
     - Demo run lưu vào artifacts/web_runs/centralized_demo/, không đụng slot canonical.
+    - Cần quyền quản trị khi máy chủ đã cấu hình; chỉ một tác vụ một lúc (409 nếu đang chạy).
     """
+    with _TASK_LOCK:
+        _guard_start(request)
+        return _start_centralized(background_tasks, req, request)
+
+
+def _start_centralized(background_tasks: BackgroundTasks, req: CentralizedTrainRequest, request: Optional[Request]):
     if CURRENT_TASK["status"] == "running":
-        raise HTTPException(status_code=400, detail="Một tác vụ huấn luyện khác đang chạy. Vui lòng chờ tác vụ hiện tại hoàn tất.")
+        raise HTTPException(status_code=409, detail="Một tác vụ huấn luyện khác đang chạy. Vui lòng chờ tác vụ hiện tại hoàn tất.")
 
     if not req.smoke:
         raise HTTPException(status_code=400, detail="Chế độ ảnh thật chưa khả dụng: thiếu release mixed pv_pd_v3, manifest và W0.")
+    _cap("max_centralized_epochs", req.epochs, "Số epoch")
 
     CURRENT_TASK["config"] = req.model_dump()
     _mark_task_running(
         "Centralized", "centralized",
         f"Đang khởi động huấn luyện Centralized ({req.epochs} epochs, {'demo' if req.smoke else 'thực tế'})...",
     )
+    training_guard.audit("train_start", request, kind="centralized", job_id=CURRENT_TASK["job_id"], config=req.model_dump())
     background_tasks.add_task(_run_centralized_bg, req.epochs, req.smoke, None, req.seed)
     return {
         "status": "started",
@@ -210,6 +276,7 @@ def trigger_centralized_train(
     }
 
 
+@_supervised("federated")
 def _run_federated_bg(rounds: int, local_epochs: int, partition_dir: str, smoke: bool, dataset_root: Optional[str], seed: int):
     # Trạng thái running/cancel_requested đã được endpoint đặt đồng bộ (_mark_task_running); không đặt lại ở đây.
     mode_text = "demo" if smoke else "thực tế"
@@ -261,6 +328,7 @@ def _run_federated_bg(rounds: int, local_epochs: int, partition_dir: str, smoke:
             CURRENT_TASK["error"] = str(e)
 
 
+@_supervised("federated-network")
 def _run_federated_network_bg(
     rounds: int, local_epochs: int, port: int, seed: int,
     reject_suspicious_updates: bool, max_update_norm: Optional[float],
@@ -301,17 +369,25 @@ def _run_federated_network_bg(
             CURRENT_TASK["error"] = str(e)
 
 
-@router.post("/api/federated/train")
+@router.post("/api/federated/train", dependencies=[Depends(admin_auth.require_admin)])
 def trigger_federated_train(
     background_tasks: BackgroundTasks,
     req: FederatedTrainRequest = FederatedTrainRequest(),
+    request: Request = None,  # type: ignore[assignment]
 ):
     """
     Kích hoạt huấn luyện FedAvg (chỉ smoke demo, simulation hoặc network).
     Demo run lưu vào artifacts/web_runs/, không đụng slot canonical.
+    Cần quyền quản trị khi máy chủ đã cấu hình; chỉ một tác vụ một lúc (409 nếu đang chạy).
     """
+    with _TASK_LOCK:
+        _guard_start(request)
+        return _start_federated(background_tasks, req, request)
+
+
+def _start_federated(background_tasks: BackgroundTasks, req: FederatedTrainRequest, request: Optional[Request]):
     if CURRENT_TASK["status"] == "running":
-        raise HTTPException(status_code=400, detail="Một tác vụ huấn luyện khác đang chạy. Vui lòng chờ tác vụ hiện tại hoàn tất.")
+        raise HTTPException(status_code=409, detail="Một tác vụ huấn luyện khác đang chạy. Vui lòng chờ tác vụ hiện tại hoàn tất.")
 
     engine = req.engine.strip().lower()
     if engine not in {"simulation", "network"}:
@@ -346,8 +422,10 @@ def trigger_federated_train(
             "type": "federated-network", "progress": 0,
             "message": "Đang khởi động Flower server và 5 client localhost...",
             "error": None, "cancel_requested": False, "live_progress": [],
-            "network_history_available": False,
+            "network_history_available": False, "job_id": uuid.uuid4().hex[:12],
         })
+        training_guard.audit("train_start", request, kind="federated-network", job_id=CURRENT_TASK["job_id"],
+                             config=req.model_dump())
         background_tasks.add_task(
             _run_federated_network_bg,
             req.rounds,
@@ -378,6 +456,8 @@ def trigger_federated_train(
         raise HTTPException(status_code=400, detail="Simulation chỉ hỗ trợ alpha=0.1, 1.0 hoặc 100.0")
     if req.dataset_root:
         raise HTTPException(status_code=400, detail="Simulation web chỉ dùng smoke tổng hợp; dataset_root ảnh thật chưa khả dụng")
+    _cap("max_rounds", req.rounds, "Số vòng")
+    _cap("max_local_epochs", req.local_epochs, "Epoch cục bộ")
     part_dir = Path(alpha_map[matched_key])
     if not part_dir.exists():
         raise HTTPException(
@@ -390,6 +470,7 @@ def trigger_federated_train(
         "Federated", "federated",
         f"Đang điều phối FedAvg ({req.rounds} rounds, E={req.local_epochs}, {'demo' if req.smoke else 'thực tế'})...",
     )
+    training_guard.audit("train_start", request, kind="federated", job_id=CURRENT_TASK["job_id"], config=req.model_dump())
     background_tasks.add_task(
         _run_federated_bg,
         req.rounds,

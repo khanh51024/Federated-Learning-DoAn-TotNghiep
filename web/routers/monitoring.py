@@ -13,7 +13,7 @@ from fastapi.routing import APIRouter
 
 from src import registry as reg
 
-from web.services import model_service
+from web.services import model_service, training_guard
 from web.state import NETWORK_DEMO, check_port_open
 
 from src.data.partition import calculate_data_scarcity
@@ -49,6 +49,8 @@ def get_system_status() -> Dict[str, Any]:
         "models_available": model_service.status_models_available(),
         "checkpoints_info": model_service.status_checkpoints_info(),
         "traced_reference_available": traced_ready,
+        # Giao diện biết trước có cần đăng nhập quản trị để bấm Bắt đầu/Dừng và các trần tham số của máy chủ này
+        "training": training_guard.status_block(),
     }
 
 

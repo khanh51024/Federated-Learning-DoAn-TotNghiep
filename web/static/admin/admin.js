@@ -2,8 +2,10 @@
 // các API /api/community/admin/*. Token chỉ giữ trong sessionStorage của tab; mã vừa tạo chỉ giữ trong bộ nhớ.
 import { getJson, postJson } from "/static/js/core/api.js";
 import { esc, fmtNum, formatApiError } from "/static/js/core/dom.js";
+import {
+  DEFAULT_USER, authHeader, clearCredential, isRemembered, readCredential, storeCredential,
+} from "/static/js/core/admin-auth.js";
 
-const TOKEN_KEY = "cropfed.admin.token";
 const REFRESH_MS = 10000;          // /admin/state bị nginx giới hạn 20 yêu cầu/phút: 10 giây là đủ thoải mái
 const HISTORY_EVERY = 3;            // lịch sử công khai: mỗi 3 lần làm mới (30 giây) hoặc sau một thao tác
 
@@ -83,17 +85,7 @@ function flash(kind, message) {
   setTimeout(() => box.remove(), kind === "error" ? 12000 : 6000);
 }
 
-const DEFAULT_USER = "admin";
-
-/** `user:password` -> base64 an toàn với mọi ký tự (kể cả tiếng Việt): đi qua UTF-8 chứ không dùng btoa trực tiếp. */
-function basicCredential(user, password) {
-  const bytes = new TextEncoder().encode(`${user}:${password}`);
-  let binary = "";
-  bytes.forEach(byte => { binary += String.fromCharCode(byte); });
-  return btoa(binary);
-}
-
-const headers = () => ({ Authorization: `Basic ${basicCredential(S.user, S.token)}` });
+const headers = () => authHeader(S.user, S.token);
 
 async function api(method, path, payload) {
   const url = `/api/community/admin/${path}`;
@@ -123,30 +115,10 @@ function confirmable(button, label, action) {
 }
 
 // ───────── Đăng nhập ─────────
-// Token luôn nằm trong sessionStorage của tab; "ghi nhớ" thêm một bản trong localStorage để lần sau mở trang không phải nhập lại.
-// Đăng xuất, hoặc máy chủ báo token sai, xóa cả hai.
-function saveToken(remember) {
-  try {
-    const value = JSON.stringify({ u: S.user, p: S.token });
-    sessionStorage.setItem(TOKEN_KEY, value);
-    if (remember) localStorage.setItem(TOKEN_KEY, value);
-    else localStorage.removeItem(TOKEN_KEY);
-  } catch { /* bị chặn */ }
-}
-/** {user, password} đã lưu, hoặc null. Chấp nhận cả giá trị cũ (chỉ là chuỗi mật khẩu, tài khoản mặc định). */
-function loadToken() {
-  let raw = null;
-  try { raw = sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY); } catch { return null; }
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed.p === "string" && parsed.p) return { user: String(parsed.u || DEFAULT_USER), password: parsed.p };
-  } catch { /* giá trị cũ: chuỗi thuần */ }
-  return { user: DEFAULT_USER, password: raw };
-}
-function clearToken() {
-  try { sessionStorage.removeItem(TOKEN_KEY); localStorage.removeItem(TOKEN_KEY); } catch { /* bị chặn */ }
-}
+// Lưu/đọc/xóa thông tin đăng nhập: core/admin-auth.js (dùng chung với các nút huấn luyện ở bước 5).
+const saveToken = remember => storeCredential(S.user, S.token, remember);
+const loadToken = readCredential;
+const clearToken = clearCredential;
 
 function showLoginError(message) {
   const el = $("login-error");
@@ -645,7 +617,7 @@ function init() {
     $("token-input").value = "";
     api("GET", "state").then(async state => {
       S.state = state;
-      saveToken(fromLink ? true : !!localStorage.getItem(TOKEN_KEY) || $("remember-token").checked);
+      saveToken(fromLink ? true : isRemembered() || $("remember-token").checked);
       enterApp();
       await afterState({ firstTime: true });
       await loadHistory();

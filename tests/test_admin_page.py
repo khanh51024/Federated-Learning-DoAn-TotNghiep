@@ -42,9 +42,14 @@ def test_page_is_served_with_hardened_headers(client: TestClient):
     assert "unsafe-inline" not in csp and "unsafe-eval" not in csp
 
 
-def test_admin_page_is_not_one_of_the_six_public_steps_and_not_linked_from_the_public_page():
+def test_admin_page_is_not_one_of_the_six_public_steps_and_is_linked_only_from_the_training_gate():
     index = (STATIC / "index.html").read_text(encoding="utf-8")
-    assert "quan-tri" not in index, "trang quản trị không được có liên kết từ trang trình bày"
+    gate = re.search(r'<div[^>]*id="train-gate".*?</div>', index, flags=re.S)
+    assert gate and "/quan-tri" in gate.group(0), "khung cổng huấn luyện phải dẫn tới trang quản trị"
+    outside = index.replace(gate.group(0), "")
+    assert "quan-tri" not in outside, "ngoài khung cổng huấn luyện, trang trình bày không được liên kết tới trang quản trị"
+    header = re.search(r'<header class="app-topbar".*?</header>', index, flags=re.S)
+    assert header and "quan-tri" not in header.group(0), "menu công khai không có liên kết quản trị"
     router = (STATIC / "js" / "core" / "router.js").read_text(encoding="utf-8")
     assert "quan-tri" not in router
 

@@ -16,9 +16,6 @@ quản trị bị tắt). Phiên mặc định ĐÓNG cho tới khi quản trị
 """
 from __future__ import annotations
 
-import base64
-import binascii
-import hmac
 import json
 import logging
 import os
@@ -34,7 +31,7 @@ from starlette.concurrency import run_in_threadpool
 
 from src import registry as reg
 from src.federated.community import CommunityError
-from web.services import community_inference
+from web.services import admin_auth, community_inference
 from web.services.community_store import AssetsUnavailable, CommunityAssets, CommunityStore
 
 router = APIRouter(prefix="/api/community", tags=["community"])
@@ -104,6 +101,7 @@ def _build_state() -> StoreState:
             state_dir, assets,
             secret=os.environ.get("COMMUNITY_SECRET") or None,
             admin_token=os.environ.get("COMMUNITY_ADMIN_TOKEN") or None,
+            limiter=admin_auth.LIMITER,  # chung bộ đếm đăng nhập sai với /api/federated/train... (không nhân đôi lượt đoán)
         )
     except (AssetsUnavailable, OSError) as exc:
         return _unavailable(f"cannot initialise community state: {exc}")
@@ -143,7 +141,7 @@ def _fail(error: CommunityError) -> HTTPException:
 
 
 def _client_ip(request: Request) -> str:
-    return request.client.host if request.client else "unknown"
+    return admin_auth.client_ip(request)
 
 
 def _limit(store: CommunityStore, key: str, limit: int, window: float) -> None:
@@ -158,28 +156,6 @@ def _limit(store: CommunityStore, key: str, limit: int, window: float) -> None:
 def _bearer(request: Request) -> Optional[str]:
     header = request.headers.get("authorization", "")
     return header[7:].strip() if header[:7].lower() == "bearer " else None
-
-
-def _admin_secret(request: Request) -> Optional[str]:
-    """Mật khẩu quản trị từ tiêu đề Authorization: `Bearer <mật khẩu>` (curl/script) hoặc `Basic base64(tài khoản:mật khẩu)`
-    (trang /quan-tri). Với Basic, tài khoản phải khớp COMMUNITY_ADMIN_USER (mặc định "admin"); sai tài khoản thì coi như
-    không có mật khẩu, để thông báo lỗi và bộ đếm thất bại giống hệt khi sai mật khẩu."""
-    header = request.headers.get("authorization", "")
-    scheme, _, value = header.partition(" ")
-    scheme = scheme.lower()
-    if scheme == "bearer":
-        return value.strip() or None
-    if scheme == "basic":
-        try:
-            decoded = base64.b64decode(value.strip(), validate=True).decode("utf-8")
-        except (binascii.Error, UnicodeDecodeError, ValueError):
-            return None
-        user, _, password = decoded.partition(":")
-        expected = os.environ.get("COMMUNITY_ADMIN_USER") or "admin"
-        if not hmac.compare_digest(user.encode("utf-8"), expected.encode("utf-8")):
-            return None
-        return password or None
-    return None
 
 
 def _participant(request: Request, store: CommunityStore) -> str:
@@ -209,14 +185,13 @@ async def _read_json(request: Request, limit: int) -> Any:
 
 def _admin(request: Request, store: CommunityStore) -> None:
     ip = _client_ip(request)
-    if store.limiter.count(f"adminfail:{ip}", 600) >= 5 or store.limiter.count("adminfail:*", 600) >= 60:
+    if admin_auth.locked_out(store.limiter, ip):
         raise HTTPException(status_code=429, detail="Đăng nhập quản trị sai quá nhiều lần. Hãy thử lại sau ít phút.")
     try:
-        store.check_admin(_admin_secret(request))
+        store.check_admin(admin_auth.admin_secret(request))
     except CommunityError as error:
-        if error.code == "bad_admin":
-            store.limiter.allow(f"adminfail:{ip}", 10**6, 600)
-            store.limiter.allow("adminfail:*", 10**6, 600)
+        if error.code == "bad_admin" and request.headers.get("authorization"):  # chỉ đếm lần đoán sai thật
+            admin_auth.record_failure(store.limiter, ip)
         raise _fail(error) from error
 
 

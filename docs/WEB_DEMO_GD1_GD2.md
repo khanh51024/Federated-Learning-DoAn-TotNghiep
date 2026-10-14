@@ -42,6 +42,20 @@ Khoảng 3 phút cho phần chính (bước 1, 2, 4); các tab của bước 3 v
 
 Nếu artifact thiếu, sai hash, khác class map hoặc khác protocol/split, web ẩn toàn bộ số liệu và khóa chọn checkpoint. Không có fallback sang số liệu scratch cũ.
 
+### Quyền và giới hạn của các nút huấn luyện (bước 5)
+
+Ba API `POST /api/federated/train`, `POST /api/centralized/train` và `POST /api/train/stop` chạy việc nặng trong cùng tiến trình web,
+nên trên máy chủ công khai chúng được bảo vệ ở **backend** (không chỉ khóa nút):
+
+- **Đăng nhập quản trị.** Khi biến `COMMUNITY_ADMIN_TOKEN` được đặt (máy chủ công khai luôn đặt), ba API đòi tiêu đề `Authorization`
+  (Basic `admin:<mật khẩu>` hoặc `Bearer <mật khẩu>`); thiếu hoặc sai trả 401, sai nhiều lần trả 429 (chung bộ đếm với `/api/community/admin/*`).
+  Khi biến này **không** đặt (chạy web trên máy dev) các API mở như trước. Người xem vẫn thấy tiến trình, bảng và lịch sử; giao diện hiện
+  khung "Cần quyền quản trị" kèm liên kết `/quan-tri`, và tự mở khóa khi đăng nhập ở tab quản trị (có "Ghi nhớ trên máy này").
+- **Một tác vụ một lúc.** Khối kiểm trạng thái và đặt `running` nằm trong một khóa; yêu cầu thứ hai trong lúc đang chạy nhận **409**.
+- **Trần tham số**, trả 422 nếu vượt, và `/api/status` nêu các trần để biểu mẫu đặt `max`: `TRAIN_MAX_CENTRALIZED_EPOCHS` (10),
+  `TRAIN_MAX_ROUNDS` (10), `TRAIN_MAX_LOCAL_EPOCHS` (3), `TRAIN_MAX_SECONDS` (900, quá giờ thì tự dừng), `TRAIN_STARTS_PER_10_MIN` (6 mỗi IP).
+- **Nhật ký** `artifacts/web_runs/training_audit.jsonl`: ai (tài khoản, IP), lúc nào, cấu hình, bắt đầu/dừng/hết giờ/kết thúc và trạng thái.
+
 ### Cổng registry cho inference
 
 Mọi dự đoán đi qua một cửa `web/services/model_service.py` và chỉ chạy được với model có `web_visible=true` trong

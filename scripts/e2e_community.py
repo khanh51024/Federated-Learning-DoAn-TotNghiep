@@ -224,6 +224,42 @@ def admin_ui_checks(browser: Any, base: str, admin_token: str) -> None:
     context.close()
 
 
+def training_gate_checks(browser: Any, base: str, admin_token: str) -> None:
+    """Cổng huấn luyện: API trả 401/422 đúng, trang bước 5 khóa nút khi chưa đăng nhập và mở khi đã đăng nhập ở trang quản trị."""
+    train = {"epochs": 2, "smoke": True, "seed": 1}
+    check("huấn luyện: không đăng nhập bị 401 (Centralized)", http("POST", f"{base}/api/centralized/train", train)[0] == 401)
+    check("huấn luyện: không đăng nhập bị 401 (Flower)", http("POST", f"{base}/api/federated/train", {"engine": "network"})[0] == 401)
+    check("huấn luyện: không đăng nhập bị 401 (Dừng)", http("POST", f"{base}/api/train/stop", {})[0] == 401)
+    over = http("POST", f"{base}/api/centralized/train", {**train, "epochs": 11}, admin_token)
+    check("huấn luyện: đã đăng nhập nhưng vượt trần epoch bị 422, không có job nào chạy", over[0] == 422, str(over[1])[:90])
+    status = http("GET", f"{base}/api/status")[1]
+    check("huấn luyện: /api/status nêu cần quyền quản trị và các trần", status["training"]["requires_admin"] is True
+          and status["training"]["limits"]["max_rounds"] >= 1, json.dumps(status["training"]["limits"]))
+
+    posts: list[str] = []
+    context = browser.new_context(viewport={"width": 1280, "height": 900})
+    page = context.new_page()
+    page.on("request", lambda r: posts.append(r.url) if r.method == "POST" and "/train" in r.url else None)
+    page.goto(f"{base}/#huan-luyen", wait_until="load", timeout=60000)
+    page.wait_for_selector("#train-gate:not(.hidden)", timeout=30000)
+    check("bước 5: chưa đăng nhập thì hiện khung 'Cần quyền quản trị' kèm liên kết", page.locator("#train-gate a[href='/quan-tri']").count() == 1)
+    page.click("#btn-train-start")
+    page.wait_for_timeout(600)
+    check("bước 5: bấm Bắt đầu khi chưa đăng nhập không gửi yêu cầu nào lên máy chủ", not posts, str(posts))
+    check("bước 5: trần số vòng/epoch từ máy chủ được áp lên ô nhập",
+          int(page.locator("#cent-epochs").get_attribute("max")) <= status["training"]["limits"]["max_centralized_epochs"])
+
+    login = context.new_page()  # cùng trình duyệt: đăng nhập ở tab khác với "Ghi nhớ trên máy này"
+    login.goto(f"{base}/quan-tri", wait_until="load", timeout=60000)
+    login.fill("#token-input", admin_token)
+    login.click("#btn-login")
+    login.wait_for_selector("#admin-app:not(.hidden)", timeout=30000)
+    page.wait_for_selector("#train-gate", state="hidden", timeout=15000)
+    check("bước 5: đăng nhập ở tab quản trị thì khung khóa tự biến mất (không cần tải lại)", True)
+    login.close()
+    context.close()
+
+
 def main() -> int:
     manifest_path = reg.abs_path(reg.COMMUNITY_MANIFEST_JSON)
     if not manifest_path.is_file() or "eval_features" not in json.loads(manifest_path.read_text(encoding="utf-8")):
@@ -382,6 +418,7 @@ def main() -> int:
                   prediction["ready"] and prediction["version"] == 1 and "baseline" in prediction, prediction["predicted_class"])
 
             admin_ui_checks(browser, base, ADMIN)
+            training_gate_checks(browser, base, ADMIN)
 
             for context, _page, _errors in pages:
                 context.close()

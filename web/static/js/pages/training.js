@@ -1,10 +1,12 @@
 // Bước 5 · Huấn luyện thử: chạy FedAvg qua Flower (5 client localhost) hoặc Centralized, theo dõi trực tiếp.
 import { getJson, postJson } from "../core/api.js";
+import { clearCredential, readCredential, storedAuthHeader } from "../core/admin-auth.js";
 import { currentTask, markTaskStarted, onStatus, pollStatus, setPollInterval } from "../core/status.js";
 import { beat, diagramHtml, pulse } from "../core/flnet.js";
 import { mount as mountCommunity } from "./community.js";
 import {
-  $$, byId, esc, fmtNum, formatApiError, notify, setBar, setClass, setDisabled, setDisplay, setHtml, setText, toggleHidden,
+  $$, byId, esc, fmtNum, formatApiError, notify, prefersReducedMotion, setBar, setClass, setDisabled, setDisplay, setHtml,
+  setText, toggleHidden,
 } from "../core/dom.js";
 
 const SPINNER = '<svg class="svg-icon icon-sm spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
@@ -12,6 +14,9 @@ const PLAY = '<svg class="svg-icon icon-sm" viewBox="0 0 24 24" fill="none" stro
 const STOP = '<svg class="svg-icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>';
 
 const state = { mode: "federated", layerLoaded: false };
+// Chính sách huấn luyện của máy chủ (từ /api/status): có cần đăng nhập quản trị không và các trần tham số.
+const policy = { requiresAdmin: false, limits: {} };
+const FORM_MAX = { rounds: 50, localEpochs: 10, centralizedEpochs: 50 }; // trần của biểu mẫu khi máy chủ chưa nêu trần
 const topo = { lastRound: null }; // số vòng đã hoàn tất ở lần poll trước (null: chưa biết, không chạy nhịp khi mới mở trang)
 
 const HEAD = {
@@ -176,7 +181,8 @@ function renderTopology(task, network) {
 }
 
 // ───────── Cập nhật từ poll trạng thái ─────────
-function applyStatus(_data, { task, network, finished, stale }) {
+function applyStatus(data, { task, network, finished, stale }) {
+  if (data?.training) applyPolicy(data.training);
   if (stale) return; // poll đầu tiên sau khi bấm Bắt đầu có thể còn trả tác vụ cũ: không vẽ lại trạng thái cũ
   const kind = kindOfTask(task);
   const running = task.status === "running";
@@ -350,10 +356,52 @@ function syncEngine() {
     set("fl-epochs", { value: "1", min: "1", max: "1", disabled: true });
     setText(byId("fl-engine-help"), "Server và các client chạy trên cùng một máy; ảnh gốc không gửi lên server.");
   } else {
-    set("fl-rounds", { min: "1", max: "50", disabled: false });
-    set("fl-epochs", { min: "1", max: "10", disabled: false });
+    set("fl-rounds", { min: "1", max: String(Math.min(FORM_MAX.rounds, policy.limits.max_rounds || FORM_MAX.rounds)), disabled: false });
+    set("fl-epochs", { min: "1", max: String(Math.min(FORM_MAX.localEpochs, policy.limits.max_local_epochs || FORM_MAX.localEpochs)), disabled: false });
     setText(byId("fl-engine-help"), "Simulation chạy các client trong cùng process; không dùng để chứng minh độ trễ mạng thật.");
   }
+}
+
+// ───────── Quyền thao tác và trần tham số ─────────
+function renderGate() {
+  toggleHidden(byId("train-gate"), !(policy.requiresAdmin && !readCredential()));
+}
+
+function applyPolicy(training) {
+  const before = JSON.stringify(policy);
+  policy.requiresAdmin = !!training.requires_admin;
+  policy.limits = training.limits || {};
+  if (JSON.stringify(policy) !== before) {
+    syncEngine(); // áp trần số vòng/epoch lên ô nhập
+    const cent = byId("cent-epochs");
+    if (cent) {
+      const cap = Math.min(FORM_MAX.centralizedEpochs, policy.limits.max_centralized_epochs || FORM_MAX.centralizedEpochs);
+      cent.max = String(cap);
+      if (Number(cent.value) > cap) cent.value = String(cap);
+    }
+    for (const [id, cap] of [["fl-rounds", policy.limits.max_rounds], ["fl-epochs", policy.limits.max_local_epochs]]) {
+      const input = byId(id);
+      if (input && !input.disabled && cap && Number(input.value) > cap) input.value = String(cap);
+    }
+  }
+  renderGate();
+}
+
+/** true nếu được phép gửi lệnh; ngược lại nhắc đăng nhập quản trị (máy chủ vẫn là nơi kiểm quyền thật). */
+function ensureAdmin() {
+  if (!policy.requiresAdmin || readCredential()) return true;
+  renderGate();
+  byId("train-gate")?.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+  notify("warning", "Cần quyền quản trị", "Hãy đăng nhập quản trị (liên kết ngay phía trên nút Bắt đầu) rồi quay lại bấm Bắt đầu.");
+  return false;
+}
+
+function handleAuthFailure(error) {
+  if (error?.status !== 401) return false;
+  clearCredential(); // mật khẩu đã lưu không còn đúng
+  renderGate();
+  notify("error", "Cần đăng nhập quản trị", "Phiên quản trị không còn hiệu lực. Hãy đăng nhập lại ở trang quản trị.");
+  return true;
 }
 
 function setTrainMode(mode) {
@@ -452,6 +500,7 @@ async function start() {
   const button = byId("btn-train-start");
   const stop = byId("btn-train-stop");
   const federated = state.mode === "federated";
+  if (!ensureAdmin()) return;
   if (!validateTrainForm()) return;
   button.disabled = true;
   setHtml(button, `${SPINNER} ${federated ? "Đang điều phối FedAvg…" : "Đang huấn luyện…"}`);
@@ -489,13 +538,13 @@ async function start() {
         require_real_evaluation: byId("fl-require-real-evaluation").checked,
         reject_suspicious_updates: byId("fl-validator-policy").value === "reject",
         max_update_norm: normRaw === "" ? null : parseFloat(normRaw),
-      });
+      }, { headers: storedAuthHeader() });
     } else {
       data = await postJson("/api/centralized/train", {
         epochs: num("cent-epochs"),
         seed: num("cent-seed"),
         smoke: byId("cent-smoke-val").value === "true",
-      });
+      }, { headers: storedAuthHeader() });
     }
     markTaskStarted();
     setDisabled(stop, false);
@@ -503,17 +552,20 @@ async function start() {
     notify("info", `Đã bắt đầu huấn luyện ${federated ? "FedAvg" : "Centralized"}`, data.message || "");
     await pollStatus();
   } catch (error) {
-    notify("error", `Không bắt đầu được huấn luyện ${federated ? "FedAvg" : "Centralized"}`, error.message);
+    if (!handleAuthFailure(error)) {
+      notify("error", `Không bắt đầu được huấn luyện ${federated ? "FedAvg" : "Centralized"}`, error.message);
+    }
     resetAfterFailedStart();
   }
 }
 
 async function stopTraining() {
   const stop = byId("btn-train-stop");
+  if (!ensureAdmin()) return;
   stop.disabled = true;
   setHtml(stop, `${SPINNER} Đang dừng…`);
   try {
-    const data = await postJson("/api/train/stop", {});
+    const data = await postJson("/api/train/stop", {}, { headers: storedAuthHeader() });
     if (data.stopped === false) {
       notify("warning", "Không có tác vụ để dừng", data.message || "Hiện không có tiến trình huấn luyện nào đang chạy.");
     } else {
@@ -523,7 +575,7 @@ async function stopTraining() {
   } catch (error) {
     stop.disabled = false;
     setHtml(stop, `${STOP} Dừng tiến trình`);
-    notify("error", "Không dừng được huấn luyện", formatApiError(error.body, error.message));
+    if (!handleAuthFailure(error)) notify("error", "Không dừng được huấn luyện", formatApiError(error.body, error.message));
   }
 }
 
@@ -543,6 +595,8 @@ export async function mount() {
   }
   syncEngine();
   setTrainMode("federated");
+  // đăng nhập ở tab khác (trang /quan-tri với "Ghi nhớ trên máy này") thì mở khóa ngay, không cần tải lại
+  window.addEventListener("storage", renderGate);
   onStatus(applyStatus);
   pollStatus(); // đồng bộ ngay trạng thái hiện tại (không đợi chu kỳ 4 giây)
   // Khối "Tham gia từ máy của bạn" tự tải trạng thái của nó; lỗi ở đó không được làm hỏng phần chạy thử Flower.

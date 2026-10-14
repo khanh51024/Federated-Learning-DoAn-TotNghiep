@@ -186,6 +186,7 @@ class CommunityStore:
         secret: Optional[str],
         admin_token: Optional[str] = None,
         clock: Callable[[], float] = time.time,
+        limiter: Optional["RateLimiter"] = None,
     ):
         self.assets = assets
         self.state_dir = Path(state_dir)
@@ -197,7 +198,7 @@ class CommunityStore:
         self.admin_token_too_short = bool(admin_token) and len(admin_token) < ADMIN_TOKEN_MIN_LENGTH
         self._clock = clock
         self._lock = threading.RLock()
-        self.limiter = RateLimiter(clock)
+        self.limiter = limiter if limiter is not None else RateLimiter(clock)
         self.state_dir.mkdir(parents=True, exist_ok=True)
         self.heads_dir.mkdir(parents=True, exist_ok=True)
         with self._conn() as conn:
