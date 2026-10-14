@@ -171,6 +171,7 @@
                 <span class="skeleton gallery-skeleton"></span><span class="skeleton gallery-skeleton"></span>
                 <span class="skeleton gallery-skeleton"></span><span class="skeleton gallery-skeleton"></span>
               </div>
+              <button type="button" class="btn btn-ghost btn-sm mt-2 hidden" id="gallery-more" aria-controls="gallery-grid" aria-expanded="false">Xem tất cả ảnh</button>
               <p class="field-hint mt-2" id="gallery-note">Ảnh mẫu thuộc tập kiểm tra. Dễ/Khó theo recall của lớp ở FedAvg, không phải độ khó riêng ảnh.</p>
 
               <div class="upload-zone mt-4" id="upload-dropzone">
@@ -307,7 +308,7 @@
       <!-- BƯỚC 5: HUẤN LUYỆN THỬ -->
       <section id="page-huan-luyen" class="tab-pane" data-route="huan-luyen">
         <!-- THAM GIA TỪ MÁY CỦA BẠN: học liên kết thật, huấn luyện lớp cuối ngay trong trình duyệt -->
-        <section class="panel comm-panel" id="comm-panel" aria-labelledby="comm-title">
+        <section class="panel comm-panel" id="comm-panel" aria-labelledby="comm-title" aria-busy="true">
           <div class="panel-header-flex">
             <div>
               <h3 class="panel-title panel-title-sm" id="comm-title">Tham gia từ máy của bạn</h3>
@@ -317,6 +318,11 @@
           </div>
 
           <div class="callout callout-warn mt-3 hidden" id="comm-disabled" role="note"></div>
+
+          <!-- Giữ chỗ trong lúc chờ /api/status: nếu không, khối này dựng muộn và đẩy cả khung Flower xuống (CLS 0,19 đo trên production) -->
+          <div class="comm-loading mt-3" id="comm-loading" aria-hidden="true">
+            <span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span><span class="skeleton skeleton-line"></span>
+          </div>
 
           <div id="comm-main" class="hidden">
             <div class="comm-block mt-3" id="comm-join-box">

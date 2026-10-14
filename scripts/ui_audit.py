@@ -130,6 +130,49 @@ def run_axe(page: Any, axe_source: str) -> list[dict[str, Any]]:
         ".then(r => r.violations.map(v => ({ id: v.id, impact: v.impact, nodes: v.nodes.length })))")
 
 
+def keyboard_journey(browser: Any, base: str) -> dict[str, Any]:
+    """Hành trình chính chỉ bằng bàn phím: Tab tới một ảnh mẫu ở bước 4, Enter, thấy kết quả; chuyển bước bằng phím; focus không mất."""
+    context = browser.new_context(viewport={"width": 1280, "height": 900}, bypass_csp=True)
+    page = context.new_page()
+    out: dict[str, Any] = {"state": "ban-phim", "ok": False, "notes": []}
+    try:
+        page.goto(f"{base}/#chan-doan", wait_until="load", timeout=60000)
+        wait_ready(page, "chan-doan")
+        page.wait_for_selector("#gallery-grid .gallery-item", timeout=30000)
+        reached = False
+        for _ in range(60):
+            page.keyboard.press("Tab")
+            if page.evaluate("document.activeElement && document.activeElement.classList.contains('gallery-item')"):
+                reached = True
+                break
+        out["notes"].append(f"Tab tới ảnh mẫu: {'được' if reached else 'KHÔNG'}")
+        visible = page.evaluate("""() => { const el = document.activeElement; if (!el) return false;
+            const s = getComputedStyle(el); return s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) > 0; }""")
+        out["notes"].append(f"có viền focus nhìn thấy: {'có' if visible else 'KHÔNG'}")
+        if reached:
+            page.keyboard.press("Enter")
+            page.wait_for_selector("#diag-summary .diag-headline", timeout=180000)
+            kept = page.evaluate("document.activeElement && document.activeElement !== document.body")
+            out["notes"].append(f"sau Enter focus còn trên phần tử: {'có' if kept else 'KHÔNG (mất focus)'}")
+            out["ok"] = bool(visible and kept)
+        # đi sang bước kế bằng phím: Tab tới liên kết "Sau" rồi Enter
+        moved = False
+        for _ in range(80):
+            page.keyboard.press("Tab")
+            if page.evaluate("document.activeElement && document.activeElement.id === 'step-next'"):
+                page.keyboard.press("Enter")
+                page.wait_for_selector("#page-huan-luyen.active", timeout=15000)
+                moved = True
+                break
+        out["notes"].append(f"chuyển bước bằng phím: {'được' if moved else 'KHÔNG'}")
+        out["ok"] = out["ok"] and moved
+    except Exception as exc:  # noqa: BLE001
+        out["notes"].append(f"lỗi: {type(exc).__name__}: {str(exc)[:100]}")
+    finally:
+        context.close()
+    return out
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--label", default="run")
@@ -137,6 +180,8 @@ def main() -> int:
     parser.add_argument("--quick", action="store_true", help="Chỉ 390 và 1440 px")
     parser.add_argument("--no-axe", action="store_true")
     parser.add_argument("--no-shots", action="store_true")
+    parser.add_argument("--interact", action="store_true",
+                        help="Thêm trạng thái 'đã chẩn đoán một ảnh mẫu' (gửi POST /api/inference/all; mặc định bật khi dựng máy chủ cục bộ)")
     parser.add_argument("--compare", nargs=2, metavar=("BEFORE", "AFTER"))
     args = parser.parse_args()
     if args.compare:
@@ -193,12 +238,32 @@ def main() -> int:
                             page.screenshot(path=str(shots / f"{name}.png"), full_page=True)
                         rows.append({"state": f"{route}{'/' + tab if tab else ''}", "width": width, "theme": theme, **metrics,
                                      "axe": axe, "errors": list(errors)})
+                    if args.interact or args.base_url is None:
+                        errors.clear()
+                        page.goto(f"{base}/#chan-doan", wait_until="load", timeout=60000)
+                        wait_ready(page, "chan-doan")
+                        page.click("#gallery-grid .gallery-item")
+                        page.wait_for_selector("#diag-summary .diag-headline", timeout=180000)
+                        for _ in range(80):
+                            if page.evaluate("document.querySelectorAll('#diag-summary .skeleton').length") == 0:
+                                break
+                            page.wait_for_timeout(100)
+                        page.wait_for_timeout(500)
+                        metrics = page.evaluate(MEASURE_JS)
+                        metrics["headline"] = page.evaluate("(document.querySelector('#diag-summary .diag-headline') || {}).innerText || ''")[:160]
+                        axe = [] if args.no_axe else run_axe(page, axe_source)
+                        if not args.no_shots and width in (390, 1440):
+                            page.screenshot(path=str(shots / f"chan-doan-ket-qua-{width}-{theme}.png"), full_page=True)
+                        rows.append({"state": "chan-doan/da-chan-doan", "width": width, "theme": theme, **metrics,
+                                     "axe": axe, "errors": list(errors)})
                     context.close()
+            keyboard = keyboard_journey(browser, base) if (args.interact or args.base_url is None) else None
             browser.close()
     finally:
         if server is not None:
             server.terminate()
     result = {"label": args.label, "base": base, "seconds": round(time.time() - started, 1), "api": api, "rows": rows,
+              "keyboard": keyboard,
               "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S")}
     (OUT_DIR / f"{args.label}.json").write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
     return summarize(result)
@@ -211,6 +276,16 @@ def summarize(result: dict[str, Any]) -> int:
     errors = [r for r in rows if r["errors"]]
     print(f"[{result['label']}] {len(rows)} trạng thái trong {result['seconds']} s ({result['base']})")
     print(f"  tràn ngang: {len(overflow)} | axe serious/critical: {len(serious)} | trạng thái có lỗi trang: {len(errors)}")
+    minor: dict[str, int] = {}
+    for r in rows:
+        for v in r["axe"]:
+            if v["impact"] not in SERIOUS:
+                minor[v["id"]] = minor.get(v["id"], 0) + 1
+    if minor:
+        print("  axe mức vừa/nhẹ (số trạng thái): " + ", ".join(f"{k}×{n}" for k, n in sorted(minor.items())))
+    keyboard = result.get("keyboard")
+    if keyboard:
+        print(f"  bàn phím: {'ĐẠT' if keyboard['ok'] else 'CHƯA ĐẠT'} — " + "; ".join(keyboard["notes"]))
     for r in overflow[:8]:
         print(f"    TRÀN {r['state']} @ {r['width']} {r['theme']}: +{r['overflow']} px")
     for r, v in serious[:8]:
@@ -222,7 +297,7 @@ def summarize(result: dict[str, Any]) -> int:
         print("  @1440 sáng: trạng thái · chiều cao · ảnh · thẻ lỗi · cỡ chữ")
         for r in light:
             print(f"    {r['state']:22s} {r['height']:6d} px  img={r['imgs']:4d}  cards={r['cards']:4d}  font={r['bodyFont']:.0f}")
-    return 1 if (overflow or serious or errors) else 0
+    return 1 if (overflow or serious or errors or (keyboard and not keyboard["ok"])) else 0
 
 
 def compare(before_path: Path, after_path: Path) -> int:

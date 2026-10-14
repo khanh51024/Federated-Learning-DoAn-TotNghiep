@@ -23,6 +23,7 @@ const state = {
   mode: "all",
   quickModel: "fedavg",
   filter: "all",
+  galleryAll: false, // đang xem toàn bộ thư viện ảnh mẫu (mặc định chỉ 8 ảnh đầu)
   runId: 0,
   selectToken: 0, // chỉ lần chọn ảnh MỚI NHẤT được áp dụng (fetch ảnh mẫu có thể về không đúng thứ tự)
   showStats: false, // chỉ hiện độ khó/recall từ catalog khi bundle khả dụng và ảnh đã đối chiếu manifest validation
@@ -49,10 +50,21 @@ const FILTERS = {
   plantdoc: i => i.source === "plantdoc",
 };
 
+const GALLERY_PAGE = 8; // UI-05: mặc định 8 ảnh đại diện + "Xem tất cả"; bộ lọc vẫn áp lên toàn bộ thư viện
+
 function renderGallery() {
   const grid = byId("gallery-grid");
-  const items = state.gallery.filter(FILTERS[state.filter] || FILTERS.all);
+  const matching = state.gallery.filter(FILTERS[state.filter] || FILTERS.all);
+  let items = state.galleryAll ? matching : matching.slice(0, GALLERY_PAGE);
+  if (state.item && !items.includes(state.item) && matching.includes(state.item)) items = [...items, state.item]; // ảnh đang chọn luôn hiện
+  const more = byId("gallery-more");
+  if (more) {
+    toggleHidden(more, matching.length <= GALLERY_PAGE);
+    more.textContent = state.galleryAll ? `Chỉ hiện ${GALLERY_PAGE} ảnh` : `Xem tất cả ${matching.length} ảnh`;
+    more.setAttribute("aria-expanded", String(state.galleryAll));
+  }
   grid.removeAttribute("aria-busy");
+  grid.classList.toggle("is-expanded", state.galleryAll);
   if (!state.gallery.length) {
     grid.innerHTML = '<p class="field-hint">Chưa có thư viện ảnh mẫu trên máy chủ này — hãy tải ảnh lên.</p>';
     return;
@@ -301,6 +313,30 @@ function renderTable(modelIds, { animateIds = [] } = {}) {
   }
 }
 
+/** Kết quả chính (UI-03): mô hình học liên kết đứng đầu với nhãn dự đoán, đúng/sai và độ tin cậy; các mô hình còn lại chỉ là đối chiếu. */
+function headlineHtml(trueClass) {
+  const ref = state.mode === "quick" && state.quickModel ? state.quickModel : "fedavg";
+  const result = state.rows.get(ref);
+  if (!result || result.error) return "";
+  const v = verdict(result, trueClass);
+  const tone = v === "correct" ? "is-correct" : v ? "is-wrong" : "is-unknown";
+  const verdictText = v === "correct" ? '<span class="verdict ok">✓ Đúng</span>'
+    : v === "wrong-disease" ? '<span class="verdict mid">✕ Sai bệnh (đúng loại cây)</span>'
+      : v === "wrong" ? '<span class="verdict bad">✕ Sai cả loại cây</span>'
+        : '<span class="verdict none">chưa biết nhãn thật nên chưa chấm</span>';
+  const calibrated = result.calibrated ? ` · sau hiệu chuẩn <b class="mono">${fmtNum(result.calibrated.confidence_pct, 1)}%</b>` : "";
+  const uncertain = result.is_uncertain ? ' <span class="pill-flag" title="Xác suất cao nhất dưới 50% hoặc hai nhóm đầu quá sát nhau">không chắc</span>' : "";
+  const truth = trueClass && v !== "correct"
+    ? `<p class="headline-truth">Nhãn thật: <b>${esc(formatDiseaseName(trueClass))}</b></p>` : "";
+  return `<div class="diag-headline ${tone}">
+      <p class="summary-line">Kết quả chính · ${esc(MODEL_LABELS[ref])}${ref === "fedavg" ? " (học liên kết)" : ""}</p>
+      <p class="headline-name">${esc(formatDiseaseName(result.predicted_class))}${uncertain}</p>
+      <p class="headline-meta">${verdictText} · độ tin cậy <b class="mono">${fmtNum(result.confidence_pct, 1)}%</b>${calibrated}</p>
+      ${truth}
+      <p class="field-hint">Độ tin cậy là xác suất mô hình gán cho dự đoán này, không phải xác suất dự đoán đúng; ảnh khác kiểu ảnh học có thể sai dù tự tin cao.</p>
+    </div>`;
+}
+
 function summarize(modelIds) {
   const trueClass = targetClass();
   const results = modelIds.map(id => [id, state.rows.get(id)]).filter(([, r]) => r && !r.error);
@@ -323,8 +359,8 @@ function summarize(modelIds) {
       if (!r || r.error) return "—";
       return verdict(r, trueClass) === "correct" ? "✓" : "✕";
     };
-    box.innerHTML = `${pre}
-      <p class="summary-big"><b>${ok.length}/${results.length}</b> mô hình nhận đúng ảnh này</p>
+    box.innerHTML = `${pre}${headlineHtml(trueClass)}
+      <p class="summary-big">Đối chiếu: <b>${ok.length}/${results.length}</b> mô hình nhận đúng ảnh này</p>
       <div class="summary-pillars">
         ${state.rows.has("centralized") ? `<span class="summary-pill centralized">Centralized ${mark("centralized")}</span>` : ""}
         ${state.rows.has("fedavg") || state.mode === "quick" ? `<span class="summary-pill fedavg">${state.mode === "quick" && state.quickModel !== "fedavg" ? MODEL_LABELS[state.quickModel] : "FedAvg"} ${mark(state.mode === "quick" ? state.quickModel : "fedavg")}</span>` : ""}
@@ -337,8 +373,8 @@ function summarize(modelIds) {
     const tally = new Map();
     for (const [, r] of results) tally.set(r.predicted_class, (tally.get(r.predicted_class) || 0) + 1);
     const ranked = [...tally.entries()].sort((a, b) => b[1] - a[1]);
-    box.innerHTML = `${pre}
-      <p class="summary-big">Các mô hình dự đoán: ${ranked.map(([c, n]) => `<b>${esc(formatDiseaseName(c))}</b> (${n}/${results.length})`).join(" · ")}</p>
+    box.innerHTML = `${pre}${headlineHtml(null)}
+      <p class="summary-big">Đối chiếu, các mô hình dự đoán: ${ranked.map(([c, n]) => `<b>${esc(formatDiseaseName(c))}</b> (${n}/${results.length})`).join(" · ")}</p>
       <p class="field-hint">Chưa biết nhãn thật nên chưa chấm đúng/sai. Mở “Tùy chọn so sánh và giải thích”, chọn “Nhãn thật” nếu biết để đối chiếu kết quả.</p>${timingHtml()}`;
     toggleHidden(explain, true);
     explain.innerHTML = "";
@@ -759,6 +795,10 @@ export async function mount() {
     if (!button) return;
     const item = state.gallery.find(i => String(i.id) === button.dataset.id);
     if (item) selectGallery(item);
+  });
+  byId("gallery-more")?.addEventListener("click", () => {
+    state.galleryAll = !state.galleryAll;
+    renderGallery();
   });
   byId("gallery-filters").addEventListener("click", event => {
     const chip = event.target.closest("[data-filter]");

@@ -261,6 +261,7 @@ def _start_centralized(background_tasks: BackgroundTasks, req: CentralizedTrainR
     if not req.smoke:
         raise HTTPException(status_code=400, detail="Chế độ ảnh thật chưa khả dụng: thiếu release mixed pv_pd_v3, manifest và W0.")
     _cap("max_centralized_epochs", req.epochs, "Số epoch")
+    training_guard.require_memory("inprocess")
 
     CURRENT_TASK["config"] = req.model_dump()
     _mark_task_running(
@@ -415,6 +416,7 @@ def _start_federated(background_tasks: BackgroundTasks, req: FederatedTrainReque
             raise HTTPException(status_code=400, detail="Demo Flower dùng manifest phân vùng nhãn alpha=0.1")
         if check_port_open(port=port) or check_port_open(port=port + 1):
             raise HTTPException(status_code=409, detail="Cổng Flower hoặc cổng RTT đang được sử dụng")
+        training_guard.require_memory("network")
         NETWORK_DEMO.prepare()
         CURRENT_TASK["config"] = req.model_dump()
         CURRENT_TASK.update({
@@ -458,6 +460,7 @@ def _start_federated(background_tasks: BackgroundTasks, req: FederatedTrainReque
         raise HTTPException(status_code=400, detail="Simulation web chỉ dùng smoke tổng hợp; dataset_root ảnh thật chưa khả dụng")
     _cap("max_rounds", req.rounds, "Số vòng")
     _cap("max_local_epochs", req.local_epochs, "Epoch cục bộ")
+    training_guard.require_memory("inprocess")
     part_dir = Path(alpha_map[matched_key])
     if not part_dir.exists():
         raise HTTPException(

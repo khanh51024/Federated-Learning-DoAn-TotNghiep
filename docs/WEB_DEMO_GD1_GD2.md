@@ -54,6 +54,9 @@ nên trên máy chủ công khai chúng được bảo vệ ở **backend** (kh�
 - **Một tác vụ một lúc.** Khối kiểm trạng thái và đặt `running` nằm trong một khóa; yêu cầu thứ hai trong lúc đang chạy nhận **409**.
 - **Trần tham số**, trả 422 nếu vượt, và `/api/status` nêu các trần để biểu mẫu đặt `max`: `TRAIN_MAX_CENTRALIZED_EPOCHS` (10),
   `TRAIN_MAX_ROUNDS` (10), `TRAIN_MAX_LOCAL_EPOCHS` (3), `TRAIN_MAX_SECONDS` (900, quá giờ thì tự dừng), `TRAIN_STARTS_PER_10_MIN` (6 mỗi IP).
+- **RAM trống tối thiểu** (503 nếu thiếu): `TRAIN_MIN_AVAILABLE_MB` (500, job trong tiến trình) và `TRAIN_MIN_AVAILABLE_MB_NETWORK` (1400, Flower).
+  Đo trên EC2 2 GiB: Centralized 10 epoch 36 s / RSS đỉnh ~1,08 GB; simulation 10 vòng × 3 epoch 149 s / ~1,05 GB; **Flower 5 client chiếm
+  ~1,6 GB và làm bản web không trả lời trong 30 giây** (swap nặng) — chỉ chạy khi trình diễn và máy rảnh.
 - **Nhật ký** `artifacts/web_runs/training_audit.jsonl`: ai (tài khoản, IP), lúc nào, cấu hình, bắt đầu/dừng/hết giờ/kết thúc và trạng thái.
 
 ### Cổng registry cho inference

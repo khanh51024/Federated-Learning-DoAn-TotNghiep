@@ -11,7 +11,7 @@ import threading
 import time
 from typing import Any, Callable, Dict, Optional
 
-from fastapi import Request
+from fastapi import HTTPException, Request
 
 from src import registry as reg
 from web.services import admin_auth
@@ -38,6 +38,41 @@ def limits() -> Dict[str, int]:
             value = default
         out[key] = max(1, min(value, hard))
     return out
+
+
+def available_mb() -> Optional[int]:
+    """RAM còn dùng được (MemAvailable, MB) trên Linux; None nếu không đọc được (Windows/macOS: không kiểm)."""
+    try:
+        with open("/proc/meminfo", encoding="ascii") as stream:
+            for line in stream:
+                if line.startswith("MemAvailable:"):
+                    return int(line.split()[1]) // 1024
+    except (OSError, ValueError, IndexError):
+        return None
+    return None
+
+
+def _min_available(kind: str) -> int:
+    # Đo trên EC2 2 GiB (2026-10-14): cây tiến trình Flower (server + 5 client) chiếm ~1,6 GB; khi đó bản web không trả lời trong
+    # 30 giây. Máy rảnh còn ~1,5 GB trống nên ngưỡng 1400 chỉ cho chạy khi máy hoàn toàn rảnh. Job trong tiến trình (Centralized,
+    # simulation) đỉnh ~1,05 GB RSS nên chỉ cần còn ~500 MB.
+    env, default = ("TRAIN_MIN_AVAILABLE_MB_NETWORK", 1400) if kind == "network" else ("TRAIN_MIN_AVAILABLE_MB", 500)
+    try:
+        return max(0, int(os.environ.get(env, default)))
+    except ValueError:
+        return default
+
+
+def require_memory(kind: str) -> None:
+    """Từ chối bắt đầu job khi RAM trống quá thấp: trên máy chủ 2 GB, job Flower 5 client + ứng dụng làm cả máy swap nặng và
+    kéo cả trang xuống. Trả 503 kèm số liệu thật để người vận hành biết vì sao."""
+    free = available_mb()
+    need = _min_available(kind)
+    if free is not None and free < need:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Máy chủ chưa đủ RAM trống để chạy phiên này (còn {free} MB, cần tối thiểu {need} MB). "
+                   "Hãy thử lại sau ít phút hoặc đợi tác vụ khác của máy chủ kết thúc.")
 
 
 def status_block() -> Dict[str, Any]:

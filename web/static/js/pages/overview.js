@@ -191,7 +191,7 @@ export async function mount() {
 
   body.innerHTML = `
     <section class="overview-headline-results" aria-label="Kết quả chính trên ảnh PlantVillage">
-      <div class="overview-headline-intro"><span class="eyebrow">Trên tập kiểm tra PlantVillage</span><h3>FedAvg đạt <strong>${fmtPct(fed.plantvillage.top1_accuracy)}</strong></h3><p>${fmtInt(val.plantvillage)} ảnh · độ chính xác Top-1</p></div>
+      <div class="overview-headline-intro"><span class="eyebrow">Trên tập kiểm tra PlantVillage</span><h3>FedAvg đạt <strong>${fmtPct(fed.plantvillage.top1_accuracy)}</strong></h3><p>${fmtInt(val.plantvillage)} ảnh · độ chính xác Top-1 (lựa chọn đầu tiên của mô hình đúng nhóm bệnh)</p></div>
       <div class="overview-headline-compare"><span>Centralized</span><strong>${fmtPct(central.plantvillage.top1_accuracy)}</strong><small>Gom ảnh một nơi</small></div>
       <div class="overview-headline-compare"><span>Local-only</span><strong>${range(pvLocals)}</strong><small>Mỗi client học riêng</small></div>
     </section>

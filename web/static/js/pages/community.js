@@ -86,6 +86,8 @@ function renderMetricNote() {
 
 function renderStatus() {
   const st = S.status;
+  byId("comm-panel")?.setAttribute("aria-busy", "false"); // hết giữ chỗ: từ đây chiều cao theo nội dung thật
+  toggleHidden(byId("comm-loading"), true);
   const main = byId("comm-main");
   const disabled = byId("comm-disabled");
   if (!st || st.enabled === false) {

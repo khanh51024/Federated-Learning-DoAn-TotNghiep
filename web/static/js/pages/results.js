@@ -82,6 +82,18 @@ function buildSummary() {
         </div>
       </div>
       <p class="field-hint mt-2" id="result-comparison-source"></p>
+      <details class="fold mt-2" id="result-provenance">
+        <summary>Số liệu này lấy từ đâu?</summary>
+        <div class="callout mt-2">
+          <ul>
+            <li><b>Tập đánh giá:</b> tập kiểm tra (validation) của release đã ghim — PlantVillage ${fmtInt(evidence.validation_counts.plantvillage)} ảnh, PlantDoc ${fmtInt(evidence.validation_counts.plantdoc)} ảnh. Tập này cũng được dùng để chọn mô hình nên không thay cho kiểm thử độc lập.</li>
+            <li><b>Giao thức:</b> <span class="code">${esc(evidence.protocol_id)}</span> · seed ${esc(evidence.seed)} · tiền xử lý <span class="code">${esc(evidence.transform)}</span>.</li>
+            <li><b>Nguồn số:</b> ${esc(evidence.metrics_source)}; mức bằng chứng <span class="code">${esc(evidence.evidence_level)}</span>.</li>
+            <li><b>Checkpoint:</b> Centralized v6 <span class="code">${esc(String(byModel.centralized.checkpoint_sha256).slice(0, 12))}…</span> · FedAvg v7 <span class="code">${esc(String(byModel.fedavg.checkpoint_sha256).slice(0, 12))}…</span> (SHA-256 đã kiểm trước khi nạp).</li>
+            <li><b>Cách đọc:</b> Top-1 là tỉ lệ ảnh mà lựa chọn đầu tiên của mô hình đúng nhóm bệnh; chưa phải độ chính xác ngoài thực địa.</li>
+          </ul>
+        </div>
+      </details>
       <div class="viewer-comparison mt-3" id="result-key-comparison"></div>
       <p class="viewer-takeaway mt-3" id="result-takeaway" aria-live="polite"></p>
       <p class="viewer-scope mt-2">Một kịch bản, một lần chạy; tập này cũng dùng để chọn mô hình. Điều kiện huấn luyện khác nhau; đây chưa phải độ chính xác ngoài thực địa.</p>
@@ -127,7 +139,7 @@ function buildSummary() {
     const central = byModel.centralized.metrics[source].top1_accuracy;
     const gain = (fed - Math.max(...values)) * 100;
     const name = source === "plantvillage" ? "PlantVillage" : "PlantDoc";
-    byId("result-comparison-source").textContent = `${fmtInt(evidence.validation_counts[source])} ảnh ${name} · tỉ lệ dự đoán đúng (Top-1)`;
+    byId("result-comparison-source").textContent = `${fmtInt(evidence.validation_counts[source])} ảnh ${name} trong tập kiểm tra · tỉ lệ dự đoán đúng (Top-1) · seed ${evidence.seed}`;
     byId("result-key-comparison").innerHTML = [
       ["local", "Local-only", `${fmtPct(Math.min(...values), 1)}–${fmtPct(Math.max(...values), 1)}`, "Mỗi client học riêng"],
       ["fedavg", "FedAvg", fmtPct(fed), "Học chung, giữ ảnh tại client"],
@@ -597,6 +609,7 @@ async function buildConfusion() {
 }
 
 // ───────── Tab: Sai mà rất tự tin ─────────
+const ERR_PAGE = 20; // số thẻ hiện mỗi trang (UI-01): tab không còn dựng cả 175 ảnh một lần
 async function buildErrors() {
   const root = byId("result-errors");
   root.innerHTML = '<div class="skeleton skeleton-block"></div>';
@@ -606,12 +619,38 @@ async function buildErrors() {
     root.innerHTML = notReady(errors?.reason || details.reason || "Chưa có thư viện ảnh lỗi.");
     return;
   }
-  const state = { model: "all", source: "all" };
+  const items = errors.items;
+  const floor = Math.round((errors.threshold || 0.9) * 100); // ngưỡng mà thư viện ảnh được dựng theo
+  const levels = [...new Set([floor, 95, 99].filter(value => value >= floor))];
+  const state = { model: "all", source: "all", min: floor, shown: ERR_PAGE };
+
+  // Tóm tắt trên TOÀN BỘ thư viện (không đổi theo bộ lọc): giúp thấy ngay lỗi nào đáng chú ý trước khi cuộn qua từng ảnh.
+  const fieldCount = items.filter(item => item.source === "plantdoc").length;
+  const pairs = new Map();
+  for (const item of items) {
+    const wrong = item.wrong_by.fedavg;
+    if (!wrong) continue;
+    const key = `${item.target}\u0000${wrong.predicted}`;
+    pairs.set(key, { target: item.target, predicted: wrong.predicted, count: (pairs.get(key)?.count || 0) + 1 });
+  }
+  const topPairs = [...pairs.values()].sort((a, b) => b.count - a.count).slice(0, 3);
+  const fedavgWrong = items.filter(item => item.wrong_by.fedavg).length;
+
   root.innerHTML = `
     <section class="panel">
-      <h3 class="panel-title">Ảnh kiểm tra bị đoán sai dù mô hình tự tin ≥ ${fmtNum((errors.threshold || 0.9) * 100, 0)}%</h3>
+      <h3 class="panel-title">Ảnh kiểm tra bị đoán sai dù mô hình tự tin ≥ ${fmtNum(floor, 0)}%</h3>
       <p class="panel-desc">Đây là những lỗi đáng lo nhất: mô hình sai nhưng rất chắc chắn. Phần lớn là ảnh PlantDoc chụp ngoài đồng — đúng chỗ mà độ tin cậy kém đáng tin nhất.</p>
-      <div class="cm-controls mt-3">
+      <div class="stat-tiles mt-3">
+        <article class="stat-tile"><b>${fmtInt(items.length)}</b><span>ảnh sai mà tự tin ≥ ${fmtNum(floor, 0)}% (ít nhất một trong hai mô hình)</span></article>
+        <article class="stat-tile warn"><b>${fmtPct(fieldCount / Math.max(items.length, 1), 0)}</b><span>là ảnh PlantDoc chụp ngoài đồng (${fmtInt(fieldCount)} ảnh)</span></article>
+        <article class="stat-tile"><b>${fmtInt(fedavgWrong)}</b><span>ảnh trong đó FedAvg sai</span></article>
+      </div>
+      ${topPairs.length ? `
+      <h4 class="subhead mt-4">FedAvg nhầm nhiều nhất</h4>
+      <ol class="confusion-list mt-2">
+        ${topPairs.map(c => `<li><span>${esc(formatDiseaseName(c.target))}</span><span class="arrow">→</span><span>${esc(formatDiseaseName(c.predicted))}</span><b class="mono">${fmtInt(c.count)} ảnh</b></li>`).join("")}
+      </ol>` : ""}
+      <div class="cm-controls mt-4">
         <div class="segmented" role="radiogroup" aria-label="Mô hình">
           <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-err-model="all">Tất cả</button>
           <button type="button" class="segmented-option" role="radio" aria-checked="false" data-err-model="fedavg">FedAvg sai</button>
@@ -622,16 +661,24 @@ async function buildErrors() {
           <button type="button" class="segmented-option" role="radio" aria-checked="false" data-err-source="plantdoc">PlantDoc</button>
           <button type="button" class="segmented-option" role="radio" aria-checked="false" data-err-source="plantvillage">PlantVillage</button>
         </div>
+        <div class="segmented" role="radiogroup" aria-label="Độ tự tin tối thiểu">
+          ${levels.map((level, index) => `<button type="button" class="segmented-option${index === 0 ? " is-active" : ""}" role="radio" aria-checked="${index === 0}" data-err-min="${level}">Tự tin ≥ ${level}%</button>`).join("")}
+        </div>
       </div>
-      <p class="field-hint mt-3" id="err-count"></p>
+      <p class="field-hint mt-3" id="err-count" role="status" aria-live="polite"></p>
       <div class="error-grid mt-2" id="err-grid"></div>
+      <div class="mt-3"><button type="button" class="btn btn-secondary hidden" id="err-more"></button></div>
       <p class="field-hint mt-3">${esc(errors.attribution)}</p>
     </section>`;
+
+  const matches = item => (state.source === "all" || item.source === state.source)
+    && Object.entries(item.wrong_by).some(([model, v]) => (state.model === "all" || model === state.model) && v.confidence * 100 >= state.min - 1e-9);
   const render = () => {
-    const items = errors.items.filter(item => (state.source === "all" || item.source === state.source)
-      && (state.model === "all" || item.wrong_by[state.model]));
-    byId("err-count").textContent = `${fmtInt(items.length)} ảnh`;
-    byId("err-grid").innerHTML = items.map(item => `
+    const matched = items.filter(matches);
+    const visible = matched.slice(0, state.shown); // chỉ dựng một trang: DOM không tăng theo số lần lọc
+    const rest = matched.length - visible.length;
+    byId("err-count").textContent = `${fmtInt(matched.length)} ảnh khớp bộ lọc · đang hiện ${fmtInt(visible.length)}`;
+    byId("err-grid").innerHTML = visible.map(item => `
       <figure class="error-card">
         <img src="/static/samples/errors/${encodeURIComponent(item.thumb)}" alt="" loading="lazy" width="160" height="160">
         <figcaption>
@@ -640,17 +687,26 @@ async function buildErrors() {
           ${Object.entries(item.wrong_by).map(([model, v]) => `<span class="error-pred">${modelPill(model)} đoán <b>${esc(formatDiseaseName(v.predicted))}</b> · ${fmtPct(v.confidence, 0)}</span>`).join("")}
         </figcaption>
       </figure>`).join("") || '<p class="field-hint">Không có ảnh khớp bộ lọc.</p>';
+    const more = byId("err-more");
+    more.classList.toggle("hidden", rest <= 0);
+    more.textContent = `Xem thêm ${Math.min(ERR_PAGE, rest)} ảnh (còn ${fmtInt(rest)})`;
   };
-  const bind = (attr, key) => root.querySelectorAll(`[${attr}]`).forEach(button => button.addEventListener("click", () => {
+  const bind = (attr, key, parse = value => value) => root.querySelectorAll(`[${attr}]`).forEach(button => button.addEventListener("click", () => {
     root.querySelectorAll(`[${attr}]`).forEach(b => {
       b.classList.toggle("is-active", b === button);
       b.setAttribute("aria-checked", String(b === button));
     });
-    state[key] = button.getAttribute(attr);
+    state[key] = parse(button.getAttribute(attr));
+    state.shown = ERR_PAGE; // đổi bộ lọc thì về trang đầu
     render();
   }));
   bind("data-err-model", "model");
   bind("data-err-source", "source");
+  bind("data-err-min", "min", Number);
+  byId("err-more").addEventListener("click", () => {
+    state.shown += ERR_PAGE;
+    render();
+  });
   render();
 }
 

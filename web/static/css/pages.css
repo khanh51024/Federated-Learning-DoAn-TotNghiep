@@ -661,12 +661,12 @@ body[data-route="tong-quan"] .top-header .eyebrow { margin-bottom: 0; }
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
   gap: var(--space-2);
-  max-height: 372px;
-  overflow-y: auto;
   padding: 3px;
   margin: -3px;
   overscroll-behavior: contain;
 }
+/* mặc định hiện 8 ảnh đại diện, đủ chỗ không cuộn; khi xem tất cả thì khung cuộn để cột không dài vô hạn */
+.gallery-grid.is-expanded { max-height: 372px; overflow-y: auto; }
 .gallery-skeleton { height: 150px; border-radius: var(--radius-md); }
 .diag-input .upload-zone { padding: 18px var(--space-4); }
 .gallery-item {
@@ -714,6 +714,20 @@ body[data-route="tong-quan"] .top-header .eyebrow { margin-bottom: 0; }
 .summary-line { font-size: var(--fs-xs); color: var(--text-muted); margin-bottom: 4px; }
 .summary-big { font-size: var(--fs-md); line-height: 1.5; }
 .summary-pillars { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+/* UI-03: kết quả chính của mô hình học liên kết nổi lên đầu; đúng/sai không chỉ dựa vào màu (có chữ ✓/✕) */
+.diag-headline {
+  margin-bottom: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-color);
+  border-left-width: 4px;
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+}
+.diag-headline.is-correct { border-left-color: var(--accent-emerald); background: var(--tint-emerald); }
+.diag-headline.is-wrong { border-left-color: var(--accent-rose); background: var(--tint-rose); }
+.headline-name { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+.headline-meta { margin-top: 4px; font-size: var(--fs-base); }
+.headline-truth { margin-top: 4px; font-size: var(--fs-sm); color: var(--text-secondary); }
 .summary-pill { padding: 3px 12px; border-radius: 999px; font-weight: 600; font-size: var(--fs-sm); border: 1px solid transparent; }
 .summary-pill.centralized { background: var(--tint-sky); color: var(--accent-sky); border-color: var(--line-sky); }
 .summary-pill.fedavg { background: var(--tint-emerald); color: var(--accent-emerald-strong); border-color: var(--line-emerald); }
@@ -1342,6 +1356,11 @@ body[data-route="tong-quan"] .top-header .eyebrow { margin-bottom: 0; }
 
 /* ───────── Học liên kết cộng đồng (bước 5): tham gia từ máy của bạn ───────── */
 .comm-panel { margin-bottom: var(--space-4); }
+/* chiều cao cuối của khối (đo ở 320–1920 px) để lúc đang tải không chiếm ít chỗ hơn rồi đẩy nội dung bên dưới */
+.comm-panel[aria-busy="true"] { min-height: 430px; }
+@media (max-width: 1000px) { .comm-panel[aria-busy="true"] { min-height: 470px; } }
+@media (max-width: 600px) { .comm-panel[aria-busy="true"] { min-height: 640px; } }
+.comm-loading { display: grid; gap: var(--space-3); }
 .comm-block + .comm-block { margin-top: var(--space-5); padding-top: var(--space-4); border-top: 1px solid var(--border-color); }
 .comm-join,
 .comm-bulk { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }

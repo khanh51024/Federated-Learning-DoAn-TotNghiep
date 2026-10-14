@@ -205,3 +205,21 @@ def test_requests_without_credentials_do_not_lock_out_the_real_admin(api: TestCl
     for _ in range(12):
         assert api.post("/api/train/stop", json={}).status_code == 401
     assert api.post("/api/train/stop", json={}, headers=_basic("admin", PASSWORD)).status_code == 200
+
+
+def test_start_is_refused_with_503_when_the_server_has_too_little_free_memory(monkeypatch: pytest.MonkeyPatch, api: TestClient):
+    monkeypatch.setattr(training_guard, "available_mb", lambda: 120)
+    auth = _basic("admin", PASSWORD)
+    central = api.post("/api/centralized/train", json=START, headers=auth)
+    assert central.status_code == 503 and "120 MB" in central.json()["detail"]
+    sim = api.post("/api/federated/train", headers=auth,
+                   json={"engine": "simulation", "rounds": 1, "local_epochs": 1, "alpha": 0.1})
+    assert sim.status_code in (503, 400), sim.text  # 400 nếu thiếu thư mục phân hoạch ở máy này; không bao giờ bắt đầu job
+    assert CURRENT_TASK["status"] == "idle"
+    monkeypatch.setattr(training_guard, "available_mb", lambda: 4000)
+    assert api.post("/api/centralized/train", json=START, headers=auth).status_code == 200
+
+
+def test_memory_threshold_is_unknown_on_platforms_without_proc_meminfo(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(training_guard, "available_mb", lambda: None)
+    training_guard.require_memory("network")  # không ném: không biết thì không chặn

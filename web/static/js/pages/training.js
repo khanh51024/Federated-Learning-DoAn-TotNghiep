@@ -354,7 +354,8 @@ function syncEngine() {
     byId("fl-alpha").value = "0.1"; // máy chủ chỉ nhận α=0,1 cho engine network
     set("fl-rounds", { value: "2", min: "2", max: "2", disabled: true });
     set("fl-epochs", { value: "1", min: "1", max: "1", disabled: true });
-    setText(byId("fl-engine-help"), "Server và các client chạy trên cùng một máy; ảnh gốc không gửi lên server.");
+    setText(byId("fl-engine-help"), "Server và các client chạy trên cùng một máy; ảnh gốc không gửi lên server."
+      + (policy.requiresAdmin ? " Trên máy chủ nhỏ này phiên Flower chiếm gần hết RAM nên cả trang có thể chậm vài phút; chỉ chạy khi trình diễn." : ""));
   } else {
     set("fl-rounds", { min: "1", max: String(Math.min(FORM_MAX.rounds, policy.limits.max_rounds || FORM_MAX.rounds)), disabled: false });
     set("fl-epochs", { min: "1", max: String(Math.min(FORM_MAX.localEpochs, policy.limits.max_local_epochs || FORM_MAX.localEpochs)), disabled: false });

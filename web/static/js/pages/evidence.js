@@ -252,6 +252,7 @@ export async function mount() {
       <h3 class="panel-title">Những gì đã kiểm chứng</h3>
       <p class="panel-desc">Ba phép kiểm, mỗi phép có phạm vi riêng.</p>
       ${verificationHtml(summary)}
+      <p class="field-hint mt-3">Xem số liệu gốc ở <a href="#ket-qua">bước 3 · Kết quả &amp; so sánh</a>: tab “Tổng hợp” (bảy mô hình), “Tập giữ riêng &amp; thống kê” (khoảng tin cậy), “Độ tin cậy xác suất” (hiệu chuẩn). Mã băm của từng mô hình nằm trong mục gập ở cuối trang này.</p>
     </section>` : `
       <div class="callout callout-error" role="alert"><b>Chưa có bộ số liệu đã kiểm chứng.</b> ${esc(summary?.reason || evidence?.reason || "Không đọc được /api/evidence/summary.")}</div>`}
 

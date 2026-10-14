@@ -65,7 +65,7 @@
 
   --fs-xs: 12px;
   --fs-sm: 13px;
-  --fs-base: 14px;
+  --fs-base: 15px;   /* UI-02: 14px nhỏ trên laptop/máy chiếu; metadata giữ 12–13px */
   --fs-md: 16px;
   --fs-lg: 20px;
   --fs-xl: 24px;
@@ -186,7 +186,7 @@ body {
   color: var(--text-primary);
   font-family: var(--font-main);
   font-size: var(--fs-base);
-  line-height: 1.55;
+  line-height: 1.6;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -552,7 +552,7 @@ button {
 
 .panel-desc,
 .viewer-scope,
-.field-hint { max-width: 85ch; }
+.field-hint { max-width: 72ch; } /* 55–85 ký tự mỗi dòng để đọc thoải mái */
 
 .nav-item[data-route="chan-doan"] .nav-label { font-weight: 600; }
 
@@ -854,7 +854,7 @@ select.input-field option {
 }
 
 .field-hint {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm); /* chú thích mang nội dung giải thích, không dùng 12px */
   color: var(--text-muted);
 }
 
