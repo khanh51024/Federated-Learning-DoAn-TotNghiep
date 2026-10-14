@@ -1,0 +1,56 @@
+/* Trang quản trị: chỉ phần bố cục riêng; màu, nút, ô nhập, bảng dùng lại token và component của style.css / pages.css. */
+.admin-main { padding-bottom: var(--space-6); }
+.admin-main > .panel,
+.admin-main > #admin-app > .panel { margin-top: var(--space-4); }
+.admin-topbar-actions { margin-left: auto; display: flex; align-items: center; gap: var(--space-2); }
+@media (max-width: 560px) {
+  /* thanh trên cùng ở màn hẹp: chỉ giữ nút; trạng thái phiên đã có ngay trong khối "Phiên học liên kết" */
+  .admin-topbar-actions #session-badge-top { display: none; }
+  .admin-topbar-actions { gap: var(--space-1); min-width: 0; }
+}
+
+/* .sr-only là position:absolute: nếu vùng cuộn không phải khối chứa thì nó thoát ra ngoài và kéo rộng cả trang ở màn hẹp. */
+.admin-main .table-responsive { position: relative; }
+
+.admin-flash { display: grid; gap: var(--space-2); }
+.admin-flash:empty { display: none; }
+
+.admin-login { max-width: 560px; }
+.admin-login-form { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.admin-login-form .input-field { flex: 1 1 200px; min-width: 0; }
+.admin-remember { flex: 1 0 100%; font-size: var(--fs-sm); color: var(--text-secondary); }
+
+.admin-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: var(--space-3); }
+.admin-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+
+.admin-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: var(--space-3); align-items: start; }
+.admin-fields .form-group { margin: 0; }
+.admin-form-submit { align-self: end; }
+.admin-unit { color: var(--text-muted); font-weight: 400; }
+
+.code-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); counter-reset: code; }
+.code-item {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+}
+.code-value { font-family: var(--font-mono); font-size: var(--fs-lg); font-weight: 600; letter-spacing: 0.06em; }
+.code-link { color: var(--text-muted); font-size: var(--fs-xs); overflow-wrap: anywhere; align-self: center; }
+
+.row-state { overflow-wrap: anywhere; }
+.row-state.is-ok { color: var(--accent-emerald-strong); }
+.row-state.is-bad { color: var(--accent-rose); }
+.row-state.is-warn { color: var(--accent-amber); }
+
+@media print {
+  .app-topbar, .app-footer, .no-print, .top-header, .skip-link, #login-panel, #admin-app > .panel:not(#codes-panel),
+  #codes-form, #codes-panel > .panel-desc, #codes-panel > .subhead, #codes-panel > .table-responsive { display: none !important; }
+  #codes-result { border: 0; background: none; }
+  .code-item { break-inside: avoid; }
+  body::before { display: none; }
+}

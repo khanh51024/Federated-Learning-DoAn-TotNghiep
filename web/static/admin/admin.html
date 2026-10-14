@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#f6f4ec">
+  <title>Quản trị — CropFed FL</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23047857' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 20A7 7 0 0 1 4 13a7 7 0 0 1 7-7c4 0 9 2 9 7v1a6 6 0 0 1-6 6h-3z'/%3E%3Cpath d='M11 20v-8'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/fonts/fonts.css?v=5.0.0">
+  <link rel="stylesheet" href="/static/css/style.css?v=7.1.0">
+  <link rel="stylesheet" href="/static/css/pages.css?v=7.1.0">
+  <link rel="stylesheet" href="/static/admin/admin.css?v=1.0.0">
+  <script src="/static/admin/theme.js?v=1.0.0"></script>
+</head>
+<body class="admin-body">
+  <a class="skip-link" href="#main">Bỏ qua điều hướng</a>
+
+  <header class="app-topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/" aria-label="CropFed FL — về trang chính">
+        <span class="brand-logo">
+          <svg class="brand-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M11 20A7 7 0 0 1 4 13a7 7 0 0 1 7-7c4 0 9 2 9 7v1a6 6 0 0 1-6 6h-3z"/>
+            <path d="M11 20v-8"/>
+          </svg>
+        </span>
+        <span class="brand-text">
+          <span class="brand-title">CropFed FL</span>
+          <span class="brand-subtitle">Quản trị học liên kết cộng đồng</span>
+        </span>
+      </a>
+      <div class="topbar-actions admin-topbar-actions">
+        <span class="status-badge is-neutral" id="session-badge-top">Chưa đăng nhập</span>
+        <button type="button" class="btn btn-ghost btn-sm hidden" id="btn-logout">Đăng xuất</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-theme" title="Đổi nền sáng / tối">
+          <svg class="svg-icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <span class="btn-text" id="btn-theme-label">Nền tối</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content admin-main" id="main" tabindex="-1">
+    <header class="top-header">
+      <div>
+        <p class="eyebrow">Khu vực quản trị</p>
+        <h1 class="page-title">Học liên kết cộng đồng</h1>
+        <p class="page-desc">Mở/đóng phiên, phát mã tham gia, theo dõi từng vòng và khôi phục phiên bản mô hình. Trang này chỉ dùng được với token quản trị.</p>
+      </div>
+    </header>
+
+    <div id="flash" class="admin-flash" role="status" aria-live="polite"></div>
+
+    <!-- ĐĂNG NHẬP -->
+    <section class="panel admin-login" id="login-panel" aria-labelledby="login-title">
+      <h2 class="panel-title panel-title-sm" id="login-title">Đăng nhập quản trị</h2>
+      <p class="panel-desc">Đăng nhập bằng tài khoản và mật khẩu quản trị. Chỉ cần nhập một lần: bật “Ghi nhớ trên máy này” hoặc để trình duyệt lưu mật khẩu; hoặc lưu trang với địa chỉ <span class="code">…/quan-tri#token=&lt;mật khẩu&gt;</span> (phần sau dấu # không bao giờ được gửi lên máy chủ).</p>
+      <form id="login-form" class="admin-login-form mt-3">
+        <label class="sr-only" for="user-input">Tài khoản</label>
+        <input type="text" id="user-input" name="username" class="input-field" value="admin" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Tài khoản" required>
+        <label class="sr-only" for="token-input">Mật khẩu</label>
+        <input type="password" id="token-input" name="password" class="input-field" autocomplete="current-password" spellcheck="false" placeholder="Mật khẩu" required>
+        <button type="submit" class="btn btn-primary" id="btn-login">Đăng nhập</button>
+        <label class="check-label admin-remember" for="remember-token">
+          <input type="checkbox" id="remember-token" checked> Ghi nhớ trên máy này (bỏ chọn nếu dùng máy chung; bấm “Đăng xuất” để xóa)
+        </label>
+      </form>
+      <p class="field-error hidden" id="login-error" role="alert"></p>
+    </section>
+
+    <!-- QUẢN TRỊ -->
+    <div id="admin-app" class="hidden">
+      <section class="panel" id="session-panel" aria-labelledby="session-title">
+        <div class="panel-header-flex">
+          <div>
+            <h2 class="panel-title panel-title-sm" id="session-title">Phiên học liên kết</h2>
+            <p class="panel-desc" id="session-note">Đang tải…</p>
+          </div>
+          <span class="status-badge is-neutral" id="session-badge">—</span>
+        </div>
+        <div class="admin-kpis mt-3" role="group" aria-label="Số liệu hiện tại">
+          <div class="kpi-mini"><span class="kpi-mini-label">Phiên bản mô hình</span><span class="kpi-mini-value mono" id="kpi-version">—</span></div>
+          <div class="kpi-mini"><span class="kpi-mini-label">Chính xác giám sát</span><span class="kpi-mini-value mono" id="kpi-accuracy">—</span></div>
+          <div class="kpi-mini"><span class="kpi-mini-label">Vòng hiện tại</span><span class="kpi-mini-value mono" id="kpi-round">—</span></div>
+          <div class="kpi-mini"><span class="kpi-mini-label">Đã gửi / cần</span><span class="kpi-mini-value mono" id="kpi-received">—</span></div>
+          <div class="kpi-mini"><span class="kpi-mini-label">Còn lại</span><span class="kpi-mini-value mono" id="kpi-left">—</span></div>
+          <div class="kpi-mini"><span class="kpi-mini-label">Người đã vào</span><span class="kpi-mini-value mono" id="kpi-participants">—</span></div>
+        </div>
+        <div class="admin-actions mt-3">
+          <button type="button" class="btn btn-primary" id="btn-toggle-session">Mở phiên</button>
+          <button type="button" class="btn btn-secondary" id="btn-close-round" disabled>Gộp vòng hiện tại ngay</button>
+          <button type="button" class="btn btn-ghost" id="btn-refresh">Làm mới</button>
+        </div>
+        <p class="field-hint mt-2" id="metric-note"></p>
+      </section>
+
+      <section class="panel" id="codes-panel" aria-labelledby="codes-title">
+        <h2 class="panel-title panel-title-sm" id="codes-title">Mã tham gia</h2>
+        <p class="panel-desc">Phát <b>mỗi người một mã</b>: mỗi mã chỉ gửi được một cập nhật mỗi vòng. Mã chỉ hiện đúng một lần ngay sau khi tạo (máy chủ chỉ lưu giá trị băm).</p>
+        <form id="codes-form" class="admin-fields mt-3">
+          <div class="form-group">
+            <label for="codes-count">Số mã</label>
+            <input type="number" id="codes-count" class="input-field" value="5" min="1" max="500" step="1" required>
+          </div>
+          <div class="form-group">
+            <label for="codes-uses">Lượt vào mỗi mã</label>
+            <input type="number" id="codes-uses" class="input-field" value="3" min="1" max="100000" step="1" required>
+          </div>
+          <div class="form-group">
+            <label for="codes-hours">Hạn dùng (giờ)</label>
+            <input type="number" id="codes-hours" class="input-field" value="6" min="0.5" max="8760" step="0.5" required>
+          </div>
+          <div class="form-group">
+            <label for="codes-label">Ghi chú (tùy chọn)</label>
+            <input type="text" id="codes-label" class="input-field" maxlength="80" placeholder="Ví dụ: buổi bảo vệ">
+          </div>
+          <div class="form-group admin-form-submit">
+            <button type="submit" class="btn btn-primary" id="btn-create-codes">Tạo mã</button>
+          </div>
+        </form>
+
+        <div class="callout callout-warn mt-3 hidden" id="codes-result" role="status">
+          <b>Mã vừa tạo — hãy lưu lại ngay, trang này sẽ không hiện lại.</b>
+          <ol class="code-list mt-2" id="codes-list" aria-label="Danh sách mã vừa tạo"></ol>
+          <div class="admin-actions mt-3 no-print">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-copy-codes">Sao chép mã</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-copy-links">Sao chép link tham gia</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-print-codes">In danh sách</button>
+          </div>
+        </div>
+
+        <h3 class="subhead mt-4">Các mã đã tạo</h3>
+        <div tabindex="0" role="group" aria-label="Bảng mã tham gia, cuộn được bằng phím mũi tên" class="table-responsive mt-2 no-print">
+          <table class="data-table wrap-head">
+            <thead>
+              <tr><th scope="col">#</th><th scope="col">Ghi chú</th><th scope="col">Đã dùng</th><th scope="col">Hết hạn</th><th scope="col">Trạng thái</th><th scope="col"><span class="sr-only">Thao tác</span></th></tr>
+            </thead>
+            <tbody id="codes-body"><tr><td colspan="6" class="text-center text-muted">Chưa có mã nào.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel no-print" id="config-panel" aria-labelledby="config-title">
+        <h2 class="panel-title panel-title-sm" id="config-title">Cấu hình</h2>
+        <p class="panel-desc">Thay đổi áp dụng ngay cho cả vòng đang mở. Muốn thấy mô hình tốt lên cần K từ 10 trở lên và người tham gia có nhiều nhóm bệnh.</p>
+        <form id="policy-form" class="mt-3" novalidate>
+          <div class="admin-fields" id="policy-main"></div>
+          <details class="fold mt-3">
+            <summary>Cài đặt nâng cao</summary>
+            <div class="admin-fields fold-body" id="policy-advanced"></div>
+          </details>
+          <p class="field-error hidden" id="policy-error" role="alert"></p>
+          <div class="admin-actions mt-3">
+            <button type="submit" class="btn btn-primary" id="btn-save-policy">Lưu cấu hình</button>
+            <button type="button" class="btn btn-ghost" id="btn-reset-policy">Điền giá trị mặc định</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel no-print" id="rounds-panel" aria-labelledby="rounds-title">
+        <h2 class="panel-title panel-title-sm" id="rounds-title">Vòng và phiên bản mô hình</h2>
+        <div tabindex="0" role="group" aria-label="Bảng các phiên bản mô hình, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
+          <table class="data-table wrap-head">
+            <thead>
+              <tr><th scope="col">Phiên bản</th><th scope="col">Loại</th><th scope="col">Người</th><th scope="col">Ảnh</th><th scope="col">Chính xác</th><th scope="col">Macro-recall</th><th scope="col">PlantDoc</th><th scope="col">Lúc</th></tr>
+            </thead>
+            <tbody id="versions-body"><tr><td colspan="8" class="text-center text-muted">Đang tải…</td></tr></tbody>
+          </table>
+        </div>
+        <div tabindex="0" role="group" aria-label="Bảng các vòng, cuộn được bằng phím mũi tên" class="table-responsive mt-4">
+          <table class="data-table wrap-head">
+            <thead>
+              <tr><th scope="col">Vòng</th><th scope="col">Từ bản</th><th scope="col">Người</th><th scope="col">Ảnh</th><th scope="col">Bị cắt</th><th scope="col">Kết quả</th><th scope="col">Chính xác</th></tr>
+            </thead>
+            <tbody id="rounds-body"><tr><td colspan="7" class="text-center text-muted">Chưa có vòng nào hoàn tất.</td></tr></tbody>
+          </table>
+        </div>
+        <div class="admin-fields mt-4">
+          <div class="form-group">
+            <label for="rollback-version">Khôi phục về phiên bản</label>
+            <select id="rollback-version" class="input-field"></select>
+          </div>
+          <div class="form-group admin-form-submit">
+            <button type="button" class="btn btn-danger" id="btn-rollback" disabled>Khôi phục</button>
+          </div>
+        </div>
+        <p class="field-hint mt-2">Khôi phục tạo ra một phiên bản mới có nội dung của phiên bản đã chọn (lịch sử không bị xóa) và hủy vòng đang mở.</p>
+      </section>
+
+      <section class="panel no-print" id="events-panel" aria-labelledby="events-title">
+        <h2 class="panel-title panel-title-sm" id="events-title">Nhật ký gần đây</h2>
+        <div tabindex="0" role="group" aria-label="Bảng nhật ký sự kiện, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
+          <table class="data-table wrap-head">
+            <thead><tr><th scope="col">Lúc</th><th scope="col">Sự kiện</th><th scope="col">Chi tiết</th></tr></thead>
+            <tbody id="events-body"><tr><td colspan="3" class="text-center text-muted">Đang tải…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="app-footer no-print">
+    <span>CropFed FL · khu vực quản trị học liên kết cộng đồng</span>
+    <a href="/">Về trang chính</a>
+  </footer>
+
+  <script type="module" src="/static/admin/admin.js?v=1.0.0"></script>
+</body>
+</html>
