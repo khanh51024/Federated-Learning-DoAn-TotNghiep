@@ -30,7 +30,7 @@ export const ROUTES = [
   {
     id: "huan-luyen", step: 5, group: "Demo trực tiếp", label: "Huấn luyện thử",
     title: "Xem FedAvg chạy từng vòng",
-    desc: "Một máy chủ và năm client chạy thật trên máy này với ảnh tổng hợp, để minh họa quy trình học liên kết",
+    desc: "Tham gia như một client thật từ máy của bạn, hoặc xem một máy chủ và năm client chạy trên máy này với ảnh tổng hợp",
     load: () => import("../pages/training.js"),
   },
   {
@@ -114,7 +114,12 @@ function renderStepNav(route) {
 async function show(id) {
   const route = ROUTES.find(r => r.id === id) || ROUTES[0];
   const mine = ++token;
+  // Toast lỗi không tự tắt: lỗi của biểu mẫu ở bước cũ không được theo người dùng sang bước khác và che nội dung
+  // (đặc biệt ở 320 px). Dọn ngay khi đổi bước, không đợi trang đích dựng xong. Thông báo trạng thái hệ thống
+  // (sticky, vd. mất kết nối) vẫn giữ.
+  if (activeId !== null && activeId !== route.id) window.toast?.dismissAll({ keepSticky: true });
   activeId = route.id;
+  document.body.dataset.route = route.id;
 
   const activeIndex = routeIndex(route.id);
   $$(".nav-item").forEach(item => {
@@ -137,12 +142,16 @@ async function show(id) {
   setText(byId("step-eyebrow"), `Bước ${route.step}/${ROUTES.length} · ${route.group}`);
   document.title = `${route.label} — CropFed FL`;
   renderStepNav(route);
+  // Thanh Trước/Sau nằm dưới nội dung: trong lúc trang đích chưa dựng xong nó đang ở sát đầu trang, rồi bị đẩy xuống
+  // khi nội dung xuất hiện (CLS ~0,1 ở mạng chậm). Ẩn tới khi dựng xong; visibility giữ nguyên chỗ nên không đổi bố cục.
+  byId("step-nav")?.classList.add("is-pending");
   window.scrollTo({ top: 0, behavior: "auto" }); // đổi bước: về đầu trang ngay, không cuộn dài làm giật khung hình
   const header = $(".top-header");
   if (header) enter(header, { distance: 6, duration: 280 });
 
   const pane = byId(`page-${route.id}`);
   pane?.querySelector(":scope > .pane-error")?.remove();
+  if (pane) enter(pane, { distance: 6, duration: 240 });
   try {
     let mod = mounted.get(route.id);
     if (!mod) {
@@ -165,6 +174,7 @@ async function show(id) {
     }
     notify("error", "Không dựng được trang", route.label, { detail: error.message });
   }
+  byId("step-nav")?.classList.remove("is-pending");
   for (const fn of listeners) fn(route);
 }
 

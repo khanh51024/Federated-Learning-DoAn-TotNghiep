@@ -4,7 +4,10 @@ Không cần trình duyệt: kiểm bằng phân tích văn bản và TestClient
 """
 from __future__ import annotations
 
+import json
 import re
+import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -414,3 +417,159 @@ def test_fullframe_limitation_numbers_come_from_the_api_not_the_source():
     literal_percent = re.findall(r"(?<![\w$.{])\d{1,3}[,.]\d\s*%", block)
     assert not literal_percent, f"số phần trăm gõ cứng trong giới hạn ảnh nguyên khung: {literal_percent}"
 
+
+
+# ───────── Sửa lỗi nghiệm thu UI 12/10/2026 ─────────
+def test_training_form_is_validated_and_stop_waits_for_the_task_to_be_accepted():
+    source = JS_BY_REL["pages/training.js"]
+    start = source[source.index("async function start()"):source.index("async function stopTraining()")]
+    post = start.index("postJson(")
+    assert start.index("validateTrainForm()") < post, "phải kiểm biểu mẫu trước khi gửi"
+    assert start.index("stop.disabled = true") < post, "nút Dừng không được bật trước khi máy chủ nhận tác vụ"
+    assert start.index("setDisabled(stop, false)") > post, "chỉ bật Dừng sau khi POST thành công"
+
+
+def test_result_tabs_stay_wired_when_evidence_is_unavailable():
+    source = JS_BY_REL["pages/results.js"]
+    mount = source[source.index("export async function mount()"):]
+    assert mount.index(".subtab") < mount.index("if (!evidence.available)"), "handler phải gắn trước nhánh unavailable"
+    assert "if (!ctx) return;" in source[source.index("async function activate"):source.index("export async function mount()")]
+
+
+def test_route_change_clears_form_errors_but_keeps_connection_status():
+    assert "keepSticky" in JS_BY_REL["toast.js"]
+    router = JS_BY_REL["core/router.js"]
+    show = router[router.index("async function show("):]
+    # dọn ngay đầu show(), trước mọi await: nếu đợi mount() của trang đích xong thì toast lỗi còn che nội dung
+    assert show.index("dismissAll({ keepSticky: true })") < show.index("await ")
+    assert re.search(r"Mất kết nối máy chủ.*?sticky: true", JS_BY_REL["core/status.js"], flags=re.S)
+
+
+def test_wide_grid_minimums_never_exceed_their_container():
+    """Cột tối thiểu cố định ≥ 280 px làm lưới tràn ngang ở viewport 320 px: phải bọc bằng min(100%, …)."""
+    rules = re.sub(r"/\*.*?\*/", "", CSS, flags=re.S)
+    fixed = [int(n) for n in re.findall(r"repeat\(auto-(?:fit|fill),\s*minmax\((\d+)px,\s*1fr\)\)", rules)]
+    assert not [n for n in fixed if n >= 280], f"lưới có cột tối thiểu cố định: {fixed}"
+
+
+def test_upload_limit_is_the_same_on_client_and_server():
+    from web.routers import inference
+
+    match = re.search(r"MAX_UPLOAD_BYTES\s*=\s*(\d+)\s*\*\s*1024\s*\*\s*1024", JS_BY_REL["pages/diagnosis.js"])
+    assert match, "diagnosis.js thiếu MAX_UPLOAD_BYTES"
+    megabytes = int(match.group(1))
+    assert megabytes * 1024 * 1024 == inference.MAX_UPLOAD_BYTES
+    assert f"tối đa {megabytes} MB" in HTML, "gợi ý trên vùng tải ảnh phải nêu đúng giới hạn"
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="cần Node.js để nạp mô-đun JS")
+def test_validation_errors_from_the_api_read_in_vietnamese():
+    url = (JS_DIR / "core" / "dom.js").resolve().as_uri()
+    script = (
+        f"import {{ formatApiError }} from {json.dumps(url)};"
+        "const item = (type, field, ctx, msg) => ({ detail: [{ type, loc: ['body', field], ctx, msg }] });"
+        "console.log(JSON.stringify(["
+        "formatApiError(item('greater_than_equal', 'epochs', { ge: 1 }, 'Input should be greater than or equal to 1'), 'x'),"
+        "formatApiError(item('less_than_equal', 'rounds', { le: 100 }, 'Input should be less than or equal to 100'), 'x'),"
+        "formatApiError(item('int_parsing', 'seed', {}, 'Input should be a valid integer'), 'x'),"
+        "formatApiError(item('some_new_type', 'epochs', {}, 'Original message'), 'x'),"
+        "formatApiError({ detail: 'Một tác vụ khác đang chạy' }, 'x'),"
+        "]))"
+    )
+    done = subprocess.run(["node", "--input-type=module", "-e", script], capture_output=True, text=True, encoding="utf-8", timeout=30)
+    assert done.returncode == 0, done.stderr
+    assert json.loads(done.stdout) == [
+        "Số epoch: tối thiểu là 1.",
+        "Số vòng: tối đa là 100.",
+        "Seed: phải là một số hợp lệ.",
+        "Original message",
+        "Một tác vụ khác đang chạy",
+    ]
+
+
+def test_segmented_groups_wrap_instead_of_overflowing_and_required_numbers_are_marked():
+    bodies = _rule_bodies(".segmented")
+    assert bodies and any("max-width: 100%" in body and "flex-wrap: wrap" in body for body in bodies), \
+        "nhóm nút phân đoạn có flex-shrink:0 nên cần max-width:100% để xuống dòng ở 320 px"
+    for field in ("fl-rounds", "fl-epochs", "fl-seed", "cent-epochs", "cent-seed"):
+        tag = re.search(rf'<input[^>]*id="{field}"[^>]*>', HTML)
+        assert tag and " required" in tag.group(0), f"{field} phải có required để ô rỗng không bị gửi lên máy chủ"
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="cần Node.js để nạp mô-đun JS")
+def test_network_failure_reads_in_vietnamese_not_the_browsers_english():
+    url = (JS_DIR / "core" / "api.js").resolve().as_uri()
+    script = (
+        f"import {{ getJson }} from {json.dumps(url)};"
+        "try { await getJson('http://127.0.0.1:9/x', { timeoutMs: 5000 }); }"
+        "catch (e) { console.log(JSON.stringify([e.name, e.message, e.status])); }"
+    )
+    done = subprocess.run(["node", "--input-type=module", "-e", script], capture_output=True, text=True, encoding="utf-8", timeout=30)
+    assert done.returncode == 0, done.stderr
+    name, message, status = json.loads(done.stdout)
+    assert name == "ApiError" and status == 0
+    assert "Không kết nối được máy chủ" in message and "fetch" not in message.lower()
+
+
+def test_scrollable_regions_are_keyboard_focusable_and_rows_use_real_buttons():
+    """axe: vùng cuộn phải focus được (2.1.1); aria-expanded không hợp lệ trên <tr> của table nên dùng nút thật."""
+    sources = {"index.html": HTML, **{rel: text for rel, text in JS_BY_REL.items() if rel.startswith("pages/")}}
+    for name, text in sources.items():
+        for tag in re.findall(r"<div[^>]*class=\"[^\"]*table-responsive[^\"]*\"[^>]*>", text):
+            assert 'tabindex="0"' in tag and re.search(r'role="(?:region|group)"', tag) and "aria-label=" in tag, f"{name}: {tag[:90]}"
+    diagnosis = JS_BY_REL["pages/diagnosis.js"]
+    assert 'class="row-toggle"' in diagnosis and "aria-controls=" in diagnosis
+    assert not re.search(r'<tr class="diag-row[^>]*aria-expanded', diagnosis), "aria-expanded không được đặt trên <tr>"
+
+
+def test_step_nav_is_hidden_until_the_page_is_mounted_to_avoid_layout_shift():
+    router = JS_BY_REL["core/router.js"]
+    show = router[router.index("async function show("):]
+    assert show.index('classList.add("is-pending")') < show.index("await mod.mount")
+    assert show.index('classList.remove("is-pending")') > show.index("await mod.mount")
+    assert re.search(r"\.step-nav\.is-pending\s*\{\s*visibility:\s*hidden", CSS), "visibility giữ chỗ nên không gây layout"
+
+
+def test_chart_library_does_not_block_the_app_and_modulepreload_targets_exist():
+    assert re.search(r'<script src="/static/vendor/chart\.umd\.js\?v=4\.4\.1" async></script>', HTML), \
+        "Chart.js phải async: defer khiến app.js phải đợi 200 KB (LCP mobile)"
+    preloaded = re.findall(r'<link rel="modulepreload" href="/static/js/([\w/.-]+)">', HTML)
+    assert preloaded, "thiếu modulepreload cho chuỗi import của bước mặc định"
+    for rel in preloaded:
+        assert (JS_DIR / rel).is_file(), rel
+    charts = JS_BY_REL["core/charts.js"]
+    assert "waiting.set(canvas, factory)" in charts and "settleWaiting" in charts, "makeChart phải xếp hàng khi Chart.js chưa nạp xong"
+
+
+def test_wide_screen_content_is_capped_where_readability_needs_it():
+    """Khung chính rộng tới 1760 px; hình 16:9 theo dõi và thanh phân bố phải có trần riêng để không cao/dài quá mức."""
+    assert re.search(r"--page-max:\s*1[67]\d\dpx", CSS), "khung chính phải rộng hơn 1280 px ở màn hình rộng"
+    stage = [b for b in _rule_bodies(".fl-live .fl-stage")]
+    assert stage and "max-width:" in stage[0], "sơ đồ theo dõi cần trần bề rộng"
+    bars = _rule_bodies(".viewer-bars")
+    assert bars and "max-width:" in bars[0], "thanh phân bố cần trần bề rộng để nhãn và số không cách nhau quá xa"
+
+
+def test_hero_sends_the_model_back_and_training_ring_is_compositor_only():
+    flnet = JS_BY_REL["core/flnet.js"]
+    overview = JS_BY_REL["pages/overview.js"]
+    assert "reverse = false" in flnet and "points.reverse()" in flnet
+    assert "reverse: true" in overview, "hero phải có đợt gửi mô hình chung quay lại client"
+    assert "reverse: true" not in JS_BY_REL["pages/training.js"], "sơ đồ thật chỉ chạy theo sự kiện thật, không dựng đợt quay lại"
+    ring = re.search(r"\.fl-client\.is-training \.fl-node-card::after\s*\{([^}]*)\}", CSS)
+    assert ring and "animation: topo-ring" in ring.group(1)
+    keyframes = re.search(r"@keyframes topo-ring\s*\{(.*?)\n\}", CSS, flags=re.S)
+    assert keyframes and set(re.findall(r"([a-z-]+)\s*:", keyframes.group(1))) <= {"transform", "opacity"}
+
+
+def test_hover_effects_are_pointer_gated_compositor_only_and_charts_build_when_visible():
+    rules = re.sub(r"/\*.*?\*/", "", CSS, flags=re.S)
+    block = rules[rules.index("@media (hover: hover) and (pointer: fine)"):]
+    block = block[: block.index("@media (prefers-reduced-motion: reduce)")]
+    for decl in re.findall(r"transition\s*:\s*([^;}]+)[;}]", block):
+        names = re.sub(r"var\([^)]*\)|[\d.]+m?s|cubic-bezier\([^)]*\)|ease(?:-in-out|-in|-out)?|linear", " ", decl)
+        assert not re.search(r"box-shadow|filter|width|height", names), f"hover animate thuộc tính đắt: {decl}"
+    assert "overflow: hidden" in block and "box-shadow: var(--shadow-2)" in block and "::after" in block
+    results = JS_BY_REL["pages/results.js"]
+    assert "makeChartWhenVisible" in results and "makeChart(" not in results.replace("makeChartWhenVisible(", "")
+    assert "createImageBitmap" in JS_BY_REL["pages/diagnosis.js"], "ảnh lớn phải được thu nhỏ ngoài luồng chính"

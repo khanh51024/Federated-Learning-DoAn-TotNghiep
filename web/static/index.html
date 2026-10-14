@@ -26,16 +26,28 @@
   <link rel="preload" as="font" type="font/woff2" crossorigin href="/static/fonts/source-serif-4-600-700-latin.woff2">
   <link rel="preload" as="font" type="font/woff2" crossorigin href="/static/fonts/source-serif-4-600-700-vietnamese.woff2">
   <link rel="stylesheet" href="/static/fonts/fonts.css?v=5.0.0">
-  <link rel="stylesheet" href="/static/css/style.css?v=7.0.0">
-  <link rel="stylesheet" href="/static/css/pages.css?v=7.0.0">
+  <link rel="stylesheet" href="/static/css/style.css?v=7.1.0">
+  <link rel="stylesheet" href="/static/css/pages.css?v=7.1.0">
   <!-- Chart.js ghim phiên bản và tự host: demo không phụ thuộc CDN -->
-  <script src="/static/vendor/chart.umd.js?v=4.4.1" defer></script>
+  <!-- Chart.js nạp async (không chặn app.js, xem core/charts.js). Các module của bước mặc định được tải trước song song
+       thay vì lần theo chuỗi import (mỗi tầng một vòng RTT): ở mạng chậm đây là phần lớn chênh lệch LCP. -->
+  <link rel="modulepreload" href="/static/js/core/dom.js">
+  <link rel="modulepreload" href="/static/js/core/motion.js">
+  <link rel="modulepreload" href="/static/js/core/router.js">
+  <link rel="modulepreload" href="/static/js/core/status.js">
+  <link rel="modulepreload" href="/static/js/core/theme.js">
+  <link rel="modulepreload" href="/static/js/core/api.js">
+  <link rel="modulepreload" href="/static/js/core/store.js">
+  <link rel="modulepreload" href="/static/js/core/charts.js">
+  <link rel="modulepreload" href="/static/js/core/flnet.js">
+  <link rel="modulepreload" href="/static/js/pages/overview.js">
+  <script src="/static/vendor/chart.umd.js?v=4.4.1" async></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Bỏ qua điều hướng</a>
   <div id="route-announcer" class="sr-only" role="status" aria-live="polite"></div>
 
-  <!-- THANH TRÊN CÙNG: thương hiệu, sáu bước theo đúng trình tự bảo vệ đồ án, nền và trình chiếu -->
+  <!-- THANH TRÊN CÙNG: thương hiệu, sáu bước theo đúng trình tự bảo vệ đồ án, nền sáng/tối -->
   <header class="app-topbar" id="app-topbar">
     <div class="topbar-inner">
       <a class="brand" href="#tong-quan" aria-label="CropFed FL — về Tổng quan">
@@ -82,12 +94,6 @@
         <button type="button" class="btn btn-ghost btn-sm" id="btn-theme" title="Đổi nền sáng / tối">
           <svg class="svg-icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
           <span class="btn-text" id="btn-theme-label">Nền tối</span>
-        </button>
-        <button type="button" class="btn btn-secondary btn-sm" id="btn-present" aria-pressed="false" title="Chế độ trình chiếu (phím P)">
-          <span class="btn-text">Trình chiếu</span> <kbd>P</kbd>
-        </button>
-        <button type="button" class="btn btn-secondary btn-sm" id="btn-present-exit" hidden>
-          Thoát <kbd>Esc</kbd>
         </button>
       </div>
     </div>
@@ -165,7 +171,7 @@
                 <span class="skeleton gallery-skeleton"></span><span class="skeleton gallery-skeleton"></span>
                 <span class="skeleton gallery-skeleton"></span><span class="skeleton gallery-skeleton"></span>
               </div>
-              <p class="field-hint mt-2" id="gallery-note">Ảnh mẫu thuộc tập kiểm tra, xếp từ dễ đến khó.</p>
+              <p class="field-hint mt-2" id="gallery-note">Ảnh mẫu thuộc tập kiểm tra. Dễ/Khó theo recall của lớp ở FedAvg, không phải độ khó riêng ảnh.</p>
 
               <div class="upload-zone mt-4" id="upload-dropzone">
                 <input type="file" id="leaf-image-input" accept="image/*" class="file-input" aria-label="Tải ảnh lá cây từ máy">
@@ -178,7 +184,7 @@
                     </svg>
                   </div>
                   <p class="upload-text">Hoặc kéo thả ảnh của bạn vào đây</p>
-                  <span class="upload-sub">JPG, PNG, WEBP · ảnh một lá, chiếm từ 70% khung hình; ảnh cả cây làm kết quả kém đi (bước 6)</span>
+                  <span class="upload-sub">JPG, PNG, WEBP, tối đa 10 MB · ảnh một lá, chiếm từ 70% khung hình; ảnh cả cây làm kết quả kém đi (bước 6)</span>
                 </div>
               </div>
             </div>
@@ -189,7 +195,7 @@
               <div class="panel-header-flex">
                 <div>
                   <h3 class="panel-title panel-title-sm">2 · Chẩn đoán</h3>
-                  <p class="panel-desc">Bảy mô hình nhận cùng một ảnh (đã xử lý giống nhau) và dự đoán độc lập với nhau.</p>
+                  <p class="panel-desc">So sánh học liên kết, gom ảnh và học riêng trên cùng một ảnh.</p>
                 </div>
                 <div class="diag-header-actions">
                   <span class="status-badge hidden" id="diag-progress-badge">Đang chạy</span>
@@ -213,6 +219,8 @@
                   <div class="selected-meta hidden" id="selected-meta"></div>
                 </div>
                 <div class="diag-control-grid">
+                  <p class="panel-desc">Chọn ảnh là chạy ngay. Ảnh mẫu có sẵn nhãn để đối chiếu đúng/sai.</p>
+                  <details class="fold"><summary>Tùy chọn so sánh và giải thích</summary>
                   <div class="form-group">
                     <label for="inference-true-class">Nhãn thật (nếu biết) — chỉ dùng để chấm đúng/sai</label>
                     <select id="inference-true-class" class="input-field">
@@ -232,10 +240,13 @@
                       <option value="fedavg" selected>FedAvg v7</option>
                     </select>
                   </div>
-                  <div class="diag-actions">
+                  <div class="diag-actions mt-3">
                     <label class="check-label switch-label" for="explain-toggle">
                       <input type="checkbox" id="explain-toggle"> Xem vùng mô hình nhìn (Grad-CAM)
                     </label>
+                  </div>
+                  </details>
+                  <div class="diag-actions">
                     <button type="button" class="btn btn-primary" id="btn-diagnose" disabled>
                       <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                       Chẩn đoán
@@ -251,7 +262,9 @@
 
               <div id="diag-result" class="hidden">
                 <div class="diag-summary" id="diag-summary"></div>
-                <div class="table-responsive mt-3">
+                <div class="callout mt-3 hidden" id="diag-explain" role="note"></div>
+                <details class="fold mt-3" id="diag-model-details"><summary>Xem dự đoán và xác suất của từng mô hình</summary>
+                <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
                   <table class="data-table diag-table" id="diag-table">
                     <thead>
                       <tr>
@@ -264,17 +277,13 @@
                     <tbody id="diag-body"></tbody>
                   </table>
                 </div>
-                <div class="callout mt-3 hidden" id="diag-explain" role="note"></div>
+                </details>
                 <div class="gradcam hidden mt-3" id="diag-gradcam">
                   <h4 class="subhead">Vùng mỗi mô hình dựa vào (Grad-CAM)</h4>
                   <p class="field-hint">Màu đỏ/vàng là vùng ảnh ảnh hưởng mạnh tới nhóm mà mô hình chọn. Đây là gợi ý trực quan (độ phân giải gốc 7×7), không phải bằng chứng nhân quả.</p>
                   <div class="gradcam-grid mt-2" id="diag-gradcam-grid"></div>
                 </div>
-                <p class="field-hint mt-3">
-                  Số đầu là xác suất <b>gốc</b> do mô hình tính; số "hiệu chuẩn" là xác suất sau khi điều chỉnh bằng một hệ số học trên tập ảnh riêng
-                  (không đổi dự đoán). Độ tự tin cao vẫn không có nghĩa là chắc chắn đúng, nhất là với ảnh khác kiểu ảnh chụp trong phòng.
-                  Cột "ảnh của nhóm này đã học" cho biết mô hình có từng thấy nhóm đó hay không — đó thường là lý do mô hình học riêng đoán sai.
-                </p>
+                <p class="field-hint mt-3">Độ tự tin cao vẫn có thể sai. “Hiệu chuẩn” điều chỉnh xác suất, không đổi dự đoán; số ảnh đã học chỉ cho thấy sự liên hệ với dữ liệu.</p>
               </div>
             </div>
 
@@ -284,16 +293,110 @@
               <button type="button" class="btn btn-secondary mt-3" id="btn-plantvillage" disabled>Nhận diện bằng PlantVillage</button>
               <div id="plantvillage-result" class="pv-result" role="status" aria-live="polite"></div>
             </details>
+
+            <details class="panel panel-fold" id="community-model">
+              <summary>Mô hình cộng đồng (thử nghiệm, không nằm trong bảy mô hình đã kiểm hash)</summary>
+              <p class="panel-desc mt-2">Dùng phiên bản lớp cuối mới nhất do người tham gia ở bước 5 cùng huấn luyện, trên backbone của FedAvg v7. Mô hình đã qua cổng kiểm tra của máy chủ nhưng chỉ là thử nghiệm, chưa phải số liệu khoa học.</p>
+              <button type="button" class="btn btn-secondary mt-3" id="btn-community" disabled>Nhận diện bằng mô hình cộng đồng</button>
+              <div id="community-result" class="comm-diag" role="status" aria-live="polite"></div>
+            </details>
           </div>
         </div>
       </section>
 
       <!-- BƯỚC 5: HUẤN LUYỆN THỬ -->
       <section id="page-huan-luyen" class="tab-pane" data-route="huan-luyen">
-        <div class="callout callout-warn" role="note">
-          <b>Thử nghiệm kỹ thuật, không phải kết quả khoa học.</b>
-          Phiên huấn luyện dùng ảnh tổng hợp, hai vòng, một epoch cục bộ trên cùng một máy; nó chứng minh luồng FedAvg qua Flower hoạt động,
-          còn độ chính xác của đồ án nằm ở bước 3.
+        <!-- THAM GIA TỪ MÁY CỦA BẠN: học liên kết thật, huấn luyện lớp cuối ngay trong trình duyệt -->
+        <section class="panel comm-panel" id="comm-panel" aria-labelledby="comm-title">
+          <div class="panel-header-flex">
+            <div>
+              <h3 class="panel-title panel-title-sm" id="comm-title">Tham gia từ máy của bạn</h3>
+              <p class="panel-desc">Máy của bạn là một client học liên kết thật. Ảnh lá được xử lý ngay trong trình duyệt; chỉ lớp cuối của mô hình (khoảng 156 KB số) được gửi lên máy chủ để gộp theo FedAvg. Ảnh không rời máy.</p>
+            </div>
+            <span class="status-badge" id="comm-badge">Đang kiểm tra…</span>
+          </div>
+
+          <div class="callout callout-warn mt-3 hidden" id="comm-disabled" role="note"></div>
+
+          <div id="comm-main" class="hidden">
+            <div class="comm-block mt-3" id="comm-join-box">
+              <h4 class="subhead">1 · Nhập mã tham gia</h4>
+              <form class="comm-join mt-2" id="comm-join-form" autocomplete="off">
+                <label class="sr-only" for="comm-code">Mã tham gia</label>
+                <input type="text" id="comm-code" class="input-field" inputmode="text" autocapitalize="characters" spellcheck="false" maxlength="14" placeholder="Mã tham gia, ví dụ ABCDE-FGHJK" required>
+                <button type="submit" class="btn btn-primary" id="btn-comm-join">Tham gia</button>
+              </form>
+              <p class="field-hint mt-2">Mã do người tổ chức phát. Phiên tham gia hết hạn sau vài giờ.</p>
+            </div>
+
+            <div class="comm-block hidden" id="comm-joined-box">
+              <div class="panel-header-flex">
+                <h4 class="subhead">Vòng hiện tại</h4>
+                <button type="button" class="btn btn-ghost btn-sm" id="btn-comm-leave">Rời phiên</button>
+              </div>
+              <div class="kpi-mini-grid mt-2" role="status" aria-live="polite">
+                <div class="kpi-mini"><span class="kpi-mini-label">Vòng</span><span class="kpi-mini-value mono" id="comm-kpi-round">—</span></div>
+                <div class="kpi-mini"><span class="kpi-mini-label">Người đã gửi</span><span class="kpi-mini-value mono" id="comm-kpi-people">—</span></div>
+                <div class="kpi-mini"><span class="kpi-mini-label">Còn lại</span><span class="kpi-mini-value mono" id="comm-kpi-left">—</span></div>
+                <div class="kpi-mini"><span class="kpi-mini-label">Phiên bản mô hình</span><span class="kpi-mini-value mono" id="comm-kpi-version">—</span></div>
+              </div>
+              <p class="field-hint mt-2" id="comm-metric-note"></p>
+            </div>
+
+            <div class="comm-block hidden" id="comm-work-box">
+              <h4 class="subhead">2 · Thêm ảnh lá và chọn nhóm</h4>
+              <p class="field-hint mt-2">Ảnh một lá, chiếm phần lớn khung hình. Chọn đúng nhóm cho từng ảnh: nhãn sai làm mô hình kém đi. <span id="comm-limit-note"></span></p>
+              <div class="comm-add mt-3">
+                <input type="file" id="comm-files" accept="image/*" multiple class="input-field" aria-label="Thêm ảnh lá từ máy">
+                <div class="comm-bulk">
+                  <label class="sr-only" for="comm-bulk-label">Nhóm áp dụng cho các ảnh chưa gán</label>
+                  <select id="comm-bulk-label" class="input-field"><option value="">Nhóm áp dụng hàng loạt…</option></select>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-comm-bulk">Gán cho ảnh chưa có nhóm</button>
+                  <button type="button" class="btn btn-ghost btn-sm" id="btn-comm-clear">Xóa hết ảnh</button>
+                </div>
+              </div>
+              <p class="field-hint mt-2" id="comm-count" role="status" aria-live="polite">Chưa có ảnh nào.</p>
+              <ul class="comm-items mt-2" id="comm-items" aria-label="Ảnh đã thêm"></ul>
+
+              <h4 class="subhead mt-4">3 · Huấn luyện trên máy này</h4>
+              <p class="field-hint mt-2" id="comm-train-note">Lần đầu tải mô hình đặc trưng (khoảng 6 MB, được ghi nhớ cho các lần sau).</p>
+              <div class="btn-stack mt-3">
+                <button type="button" class="btn btn-primary" id="btn-comm-train" disabled>Huấn luyện trên máy này</button>
+              </div>
+              <div class="progress-bar-wrapper mt-3 hidden" id="comm-progress-box">
+                <div class="progress-head">
+                  <span id="comm-progress-label" class="progress-label is-emerald">Đang chuẩn bị…</span>
+                  <span id="comm-progress-detail" class="progress-detail"></span>
+                </div>
+                <div class="progress-track"><div class="progress-fill fed-fill" id="comm-progress-fill"></div></div>
+              </div>
+              <div class="comm-result mt-3 hidden" id="comm-local-result" role="status" aria-live="polite"></div>
+
+              <h4 class="subhead mt-4">4 · Gửi cho máy chủ</h4>
+              <p class="field-hint mt-2">Chỉ gửi khoảng 156 KB số (trọng số lớp cuối), số ảnh, phân bố nhóm và vài số đo của lần học (độ chính xác trước/sau, thời gian). Không gửi ảnh. Trọng số vẫn có thể để lộ thông tin về dữ liệu của bạn; hệ thống chưa dùng gộp bảo mật.</p>
+              <div class="btn-stack mt-3">
+                <button type="button" class="btn btn-primary" id="btn-comm-submit" disabled>Gửi trọng số lên máy chủ</button>
+              </div>
+              <div class="comm-result mt-3 hidden" id="comm-submit-result" role="status" aria-live="polite"></div>
+            </div>
+
+            <div class="comm-block" id="comm-history-box">
+              <h4 class="subhead">Các vòng gần đây</h4>
+              <div tabindex="0" role="group" aria-label="Bảng các vòng học liên kết cộng đồng, cuộn được bằng phím mũi tên" class="table-responsive mt-2">
+                <table class="data-table wrap-head">
+                  <thead>
+                    <tr><th scope="col">Vòng</th><th scope="col">Người</th><th scope="col">Ảnh</th><th scope="col">Kết quả</th><th scope="col">Chính xác giám sát</th></tr>
+                  </thead>
+                  <tbody id="comm-history-body"><tr><td colspan="5" class="text-center text-muted">Chưa có vòng nào hoàn tất.</td></tr></tbody>
+                </table>
+              </div>
+              <p class="field-hint mt-2" id="comm-caveat"></p>
+            </div>
+          </div>
+        </section>
+
+        <div class="callout callout-warn mt-4" role="note">
+          <b>Phần chạy thử Flower bên dưới là demo quy trình trên ảnh tổng hợp.</b> Độ chính xác của đồ án xem ở bước 3; chỉ số phiên thử này dùng để theo dõi quy trình.
         </div>
 
         <div class="train-layout mt-4">
@@ -309,12 +412,10 @@
 
             <!-- FedAvg -->
             <div id="train-fed-box" class="mt-3">
-              <div class="chip-row" id="train-fed-chips" aria-label="Thiết lập cố định của phiên Flower">
+              <div class="chip-row" id="train-fed-chips" role="group" aria-label="Thiết lập cố định của phiên Flower">
                 <span class="chip chip-static">2 vòng giao tiếp</span>
                 <span class="chip chip-static">1 epoch cục bộ</span>
                 <span class="chip chip-static">5 client</span>
-                <span class="chip chip-static">α = 0,1</span>
-                <span class="chip chip-static code">127.0.0.1:8089</span>
               </div>
               <p class="panel-desc mt-2" id="fl-engine-help">Web tự khởi động một Flower server và năm tiến trình client riêng trên localhost.</p>
             </div>
@@ -324,11 +425,11 @@
               <div class="form-row">
                 <div class="form-group">
                   <label for="cent-epochs">Số epoch</label>
-                  <input type="number" id="cent-epochs" value="5" min="1" max="50" class="input-field">
+                  <input type="number" id="cent-epochs" value="5" min="1" max="50" required class="input-field">
                 </div>
                 <div class="form-group">
                   <label for="cent-seed">Seed</label>
-                  <input type="number" id="cent-seed" value="42" min="0" class="input-field">
+                  <input type="number" id="cent-seed" value="42" min="0" max="2147483647" required class="input-field">
                 </div>
               </div>
               <p class="panel-desc mt-2">Lấy mẫu cân bằng 38 nhóm, chạy nhanh, phù hợp kiểm tra thuật toán. Chế độ dùng toàn bộ ảnh cần bộ ảnh đầy đủ trên máy huấn luyện.</p>
@@ -347,15 +448,15 @@
                 <div class="form-row mt-3">
                   <div class="form-group">
                     <label for="fl-rounds">Số vòng</label>
-                    <input type="number" id="fl-rounds" value="2" min="1" max="50" class="input-field">
+                    <input type="number" id="fl-rounds" value="2" min="1" max="50" required class="input-field">
                   </div>
                   <div class="form-group">
                     <label for="fl-epochs">Epoch cục bộ</label>
-                    <input type="number" id="fl-epochs" value="1" min="1" max="10" class="input-field">
+                    <input type="number" id="fl-epochs" value="1" min="1" max="10" required class="input-field">
                   </div>
                   <div class="form-group">
                     <label for="fl-seed">Seed</label>
-                    <input type="number" id="fl-seed" value="42" min="0" class="input-field">
+                    <input type="number" id="fl-seed" value="42" min="0" max="2147483647" required class="input-field">
                   </div>
                 </div>
                 <div class="form-group mt-3">
@@ -439,7 +540,8 @@
                 <div class="progress-track"><div class="progress-fill fed-fill" id="train-progress-fill"></div></div>
               </div>
 
-              <div class="table-responsive mt-4">
+              <details class="fold mt-4"><summary>Xem chỉ số từng vòng</summary>
+              <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
                 <table class="data-table wrap-head" id="train-progress-table">
                   <thead id="train-progress-head"></thead>
                   <tbody id="train-progress-body">
@@ -447,13 +549,14 @@
                   </tbody>
                 </table>
               </div>
+              </details>
               <p class="panel-desc mt-3" id="network-final-test-summary">Kiểm tra cuối trên tập ảnh giữ riêng: chưa thực hiện trong phiên này.</p>
             </div>
 
             <details class="panel panel-fold" id="network-audit">
               <summary>Nhật ký chi tiết từng client (phiên chạy gần nhất)</summary>
               <p class="panel-desc mt-2" id="network-run-context">Chưa có phiên chạy thử nào hoàn tất.</p>
-              <div class="table-responsive mt-3">
+              <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
                 <table class="data-table">
                   <thead>
                     <tr>
@@ -464,7 +567,7 @@
                   <tbody id="network-metrics-body"><tr><td colspan="12" class="text-center text-muted">Chưa có phiên chạy thử nào.</td></tr></tbody>
                 </table>
               </div>
-              <div class="table-responsive mt-4">
+              <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-4">
                 <table class="data-table">
                   <thead>
                     <tr><th>Vòng</th><th>Client</th><th>RTT</th><th>Thời gian học</th><th>Loại dữ liệu</th><th>Seed</th><th>Phần dữ liệu</th><th>Độ lớn cập nhật</th><th>Trạng thái</th><th>Lý do</th></tr>
@@ -475,13 +578,13 @@
               <button type="button" class="btn btn-secondary btn-sm mt-3" id="btn-refresh-network">Làm mới</button>
             </details>
 
-            <details class="panel panel-fold tech-only" id="weight-inspector">
+            <details class="panel panel-fold" id="weight-inspector">
               <summary>Phụ lục kỹ thuật: Weight Inspector và cách chạy trên máy thật</summary>
               <div class="panel-header-flex mt-3">
                 <p class="panel-desc">Tensor trọng số từng lớp của checkpoint FedAvg đã kiểm hash.</p>
                 <select id="layer-selector" class="input-field select-layer" aria-label="Chọn lớp mạng"></select>
               </div>
-              <div class="table-responsive mt-3">
+              <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
                 <table class="data-table" id="layer-stats-table">
                   <thead>
                     <tr><th>Tên lớp</th><th>Kích thước</th><th>Số tham số</th><th>L2 norm</th><th>Chuẩn cập nhật ||Δ<sub>k</sub>||<sub>2</sub></th><th>Mean ± Std</th><th>Mẫu giá trị</th></tr>

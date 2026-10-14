@@ -1,5 +1,6 @@
 // web/static/js/toast.js: thông báo dạng toast thay cho alert() của trình duyệt.
-// API: toast.success|error|warning|info(title, message?, { detail, duration })  ->  { close() }
+// API: toast.success|error|warning|info(title, message?, { detail, duration, sticky })  ->  { close() }
+// - sticky: true  = thông báo trạng thái hệ thống (vd. mất kết nối): dismissAll({ keepSticky: true }) bỏ qua nó.
 // - Không dùng innerHTML với nội dung truyền vào (thông điệp lỗi có thể chứa chuỗi từ server).
 // - Lỗi không tự tắt (duration = 0); các loại khác tự tắt sau 5 giây, tạm dừng khi rê chuột/focus.
 // - Chỉ animate transform/opacity (xem .toast trong style.css); giảm chuyển động do CSS xử lý.
@@ -127,7 +128,7 @@
       el.appendChild(bar);
     }
 
-    var entry = { el: el, key: key, duration: duration, remaining: duration, timer: null, startedAt: 0 };
+    var entry = { el: el, key: key, duration: duration, remaining: duration, timer: null, startedAt: 0, sticky: !!options.sticky };
     close.addEventListener("click", function () { remove(entry); });
 
     if (duration) {
@@ -160,6 +161,9 @@
     error: function (title, message, options) { return show("error", title, message, options); },
     warning: function (title, message, options) { return show("warning", title, message, options); },
     info: function (title, message, options) { return show("info", title, message, options); },
-    dismissAll: function () { live.slice().forEach(function (entry) { remove(entry, true); }); },
+    dismissAll: function (options) {
+      var keepSticky = !!(options && options.keepSticky);
+      live.slice().forEach(function (entry) { if (!(keepSticky && entry.sticky)) remove(entry, true); });
+    },
   };
 })();

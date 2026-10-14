@@ -44,7 +44,7 @@ function clientCards(evidence, shards, byModel) {
       <article class="client-tile">
         <header><b>Client ${clientNumber(client)}</b><span class="model-pill local">Local ${clientNumber(client)}</span></header>
         <p class="client-tile-n mono">${fmtInt(counts[client])} <span>ảnh để học · ${fmtNum((counts[client] / total) * 100, 1)}%</span></p>
-        <p class="client-tile-sub">${shard ? `${shard.classes_with_images}/38 nhóm có ảnh` : "Số nhóm có ảnh: chưa có báo cáo"}</p>
+        <p class="client-tile-sub">${shard ? `${shard.classes_with_images}/${shards.classes_total} nhóm có ảnh` : "Số nhóm có ảnh: chưa có báo cáo"}</p>
         <dl class="client-tile-metrics">
           <div><dt>Học riêng · ảnh trong phòng</dt><dd class="mono">${fmtPct(model.metrics.plantvillage.top1_accuracy, 1)}</dd></div>
           <div><dt>Học riêng · ngoài đồng</dt><dd class="mono">${fmtPct(model.metrics.plantdoc.top1_accuracy, 1)}</dd></div>
@@ -171,7 +171,7 @@ async function mountExplorer() {
     </div>
     <p class="field-hint mt-2" id="scheme-desc"></p>
     <ul class="scheme-clients mt-3" id="scheme-clients"></ul>
-    <div class="table-responsive heat-wrap mt-3" id="scheme-wrap"></div>`;
+    <div tabindex="0" role="region" aria-label="Phân bố nhóm ảnh theo client của cách chia đang chọn, cuộn được bằng phím mũi tên" class="table-responsive heat-wrap mt-3" id="scheme-wrap"></div>`;
   const select = byId("scheme-select");
   attachCrosshair(byId("scheme-wrap"));
   const render = () => {
@@ -216,15 +216,14 @@ export async function mount() {
         }).join(" · ")
       : "";
     exampleHtml = `
-      <details class="fold mt-3">
-        <summary>Ví dụ: ${esc(formatDiseaseName(example.class))}</summary>
-        <div class="callout callout-info mt-3">
-        <b>${fmtInt(shards.single_client_classes)}/${fmtInt(shards.classes_total)} nhóm</b> có từ 90% ảnh nằm ở đúng một client.
-        Ví dụ <b>${esc(formatDiseaseName(example.class))}</b>: client ${holder} có <b>${fmtInt(holderCount)} ảnh</b>
-        (${fmtNum(example.top_share_pct, 0)}% của nhóm); bốn client còn lại cộng lại chỉ có ${fmtInt(othersTotal)} ảnh${zeroText}.
-        ${recalls ? `Tỉ lệ nhận đúng nhóm này của bốn mô hình học riêng đó: ${recalls}.` : "Local-only của các client đó có rất ít hoặc không có ảnh để học nhóm này."}
-        </div>
-      </details>`;
+      <section class="viewer-example mt-4" aria-label="Ví dụ dữ liệu lệch giữa các client">
+        <div><p class="eyebrow">Một ví dụ cụ thể</p><h3 class="panel-title">${esc(formatDiseaseName(example.class))}</h3>
+        <p class="panel-desc">Client ${holder} giữ <b>${fmtNum(example.top_share_pct, 0)}%</b> ảnh của nhóm này. Các nơi còn lại có rất ít hoặc không có ảnh để học.</p></div>
+        <ul class="viewer-bars" aria-label="Số ảnh của nhóm này tại từng client">
+          ${Object.entries(example.per_client).map(([client, count]) => `<li><span>Client ${clientNumber(client)}</span><span class="viewer-bar-track"><span style="--share:${example.total ? count / example.total : 0}"></span></span><b>${fmtInt(count)} ảnh</b></li>`).join("")}
+        </ul>
+        <details class="fold"><summary>Đối chiếu với kết quả học riêng</summary><p class="panel-desc mt-2">Client ${holder}: ${fmtInt(holderCount)} ảnh; các client khác: ${fmtInt(othersTotal)} ảnh${zeroText}. ${recalls ? `Tỉ lệ nhận đúng nhóm này: ${recalls}.` : "Chưa có kết quả theo nhóm."} Đây là sự liên hệ với phân bố dữ liệu, chưa phải kiểm chứng nguyên nhân.</p></details>
+      </section>`;
   }
 
   root.innerHTML = `
@@ -232,19 +231,23 @@ export async function mount() {
       <div>
         <p class="eyebrow">Dữ liệu non-IID</p>
         <h3 class="panel-title">Mỗi client chỉ thấy một phần dữ liệu</h3>
-        <p class="panel-desc">Ảnh được chia lệch cho năm client. Mô hình học riêng dễ bỏ sót nhóm ít ảnh; FedAvg kết hợp kiến thức của cả năm nơi.</p>
+        <p class="panel-desc">Mỗi nơi có thể thiếu ảnh của một số nhóm. Học chung giúp kết hợp dữ liệu từ các client.</p>
       </div>
       ${shards ? `<div class="noniid-intro-stat"><strong>${fmtInt(shards.single_client_classes)}/${fmtInt(shards.classes_total)}</strong><span>nhóm có ≥ 90% ảnh ở một client</span></div>` : ""}
-      ${exampleHtml}
     </section>
+    ${exampleHtml}
 
-    <section class="client-grid mt-4" aria-label="Năm client">${clientCards(evidence, shards, byModel)}</section>
+    <details class="overview-detail mt-4"><summary><span><strong>Xem dữ liệu và mô hình của từng client</strong><small>${Object.keys(evidence.shard_counts || {}).length} phân vùng giả lập</small></span></summary>
+      <div class="overview-detail-body"><section class="client-grid" aria-label="Các client">${clientCards(evidence, shards, byModel)}</section></div>
+    </details>
 
     ${shards ? `
-    <section class="panel mt-4">
+    <details class="overview-detail mt-4">
+      <summary><span><strong>Xem bảng đầy đủ ${fmtInt(shards.classes_total)} nhóm × ${shards.clients.length} client</strong><small>Số ảnh và tỉ lệ nhận đúng theo nhóm</small></span></summary>
+      <div class="overview-detail-body">
       <div class="panel-header-flex">
         <div>
-          <h3 class="panel-title">38 nhóm × 5 client</h3>
+          <h3 class="panel-title">Phân bố ảnh theo client</h3>
           <p class="panel-desc" id="heat-desc">Số ảnh của mỗi nhóm ở từng client. Ô càng đậm thì client đó giữ phần càng lớn của nhóm ấy.</p>
         </div>
         <div class="segmented" role="radiogroup" aria-label="Chọn bảng hiển thị">
@@ -252,7 +255,7 @@ export async function mount() {
           <button type="button" class="segmented-option" role="radio" aria-checked="false" data-heat="recall">Tỉ lệ nhận đúng</button>
         </div>
       </div>
-      <div class="table-responsive heat-wrap mt-3" id="heat-wrap">${heatmapTable(shards, re?.pv_recall, "count")}</div>
+      <div tabindex="0" role="region" aria-label="Số ảnh theo client và nhóm, cuộn được bằng phím mũi tên" class="table-responsive heat-wrap mt-3" id="heat-wrap">${heatmapTable(shards, re?.pv_recall, "count")}</div>
       <p class="field-hint mt-2">Tỉ lệ nhận đúng (recall) lấy từ lần chấm lại trên ảnh kiểm tra PlantVillage; chỉ có ở nhóm có ảnh kiểm tra.</p>
       ${presence && presence.absentMean !== null ? `
       <div class="callout mt-3">
@@ -260,7 +263,8 @@ export async function mount() {
         ${presence.absentMean === 0 ? "luôn bằng <b>0%</b>" : `trung bình chỉ <b>${fmtPct(presence.absentMean, 1)}</b>`};
         ở ${fmtInt(presence.presentN)} ô có ảnh, tỉ lệ nhận đúng trung bình là <b>${fmtPct(presence.presentMean, 1)}</b>.
       </div>` : ""}
-    </section>` : `
+      </div>
+    </details>` : `
     <div class="callout callout-warn mt-4" role="note">
       <b>Chưa có báo cáo phân bố nhóm theo client.</b> ${esc(summary?.shards?.reason || "Chạy scripts/report_client_shards.py trên máy có dataset.")}
     </div>`}

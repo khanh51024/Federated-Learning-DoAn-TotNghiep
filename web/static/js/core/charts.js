@@ -1,6 +1,6 @@
 // Chart.js: cấu hình chung lấy từ token CSS để biểu đồ luôn khớp giao diện; chỉ tạo khi canvas đang hiện.
 // makeChart nhận một HÀM trả cấu hình: khi đổi nền sáng/tối, mọi biểu đồ còn trên trang được dựng lại với màu mới.
-import { cssVar, prefersReducedMotion } from "./dom.js";
+import { cssVar, prefersReducedMotion, withAlpha } from "./dom.js";
 
 /** Cột mọc từ đáy: 400 ms, easeOutQuart, mỗi cột trễ 30 ms (báo hiệu "dữ liệu vừa được nạp"). Tắt khi giảm chuyển động. */
 export function barRise() {
@@ -109,7 +109,7 @@ export function pillarColors() {
 }
 
 function build(canvas, factory, { animate = true } = {}) {
-  const config = factory();
+  const config = trackHover(factory());
   const existing = Chart.getChart(canvas);
   if (existing) existing.destroy();
   const printing = document.documentElement.dataset.printing === "1"; // đang in: vẽ đồng bộ, không chờ khung hình animation
@@ -124,21 +124,119 @@ function build(canvas, factory, { animate = true } = {}) {
   });
 }
 
+// Chart.js (200 KB) được nạp `async` để không chặn app.js: ở mạng chậm nó chiếm ~1 s băng thông ngay trước mọi thứ khác
+// và là lý do chính khiến LCP vượt 2,5 s. Hệ quả: makeChart có thể chạy trước lúc thư viện nạp xong. Khi đó biểu đồ được
+// xếp hàng và dựng ngay khi script load; script lỗi hoặc quá hạn thì mới ghi chú "không khả dụng".
+const CHART_WAIT_MS = 8000;
+const waiting = new Map(); // canvas -> factory, chờ Chart.js
+let waitStarted = false;
+let chartSettled = false; // đã biết kết quả nạp (thành công hoặc hết hạn): không chờ nữa
+
+function chartScript() {
+  return document.querySelector('script[src*="chart.umd"]');
+}
+
+function showFallback(canvas) {
+  const host = canvas.parentElement;
+  if (host && !host.querySelector(".chart-fallback-notice")) {
+    const notice = document.createElement("div");
+    notice.className = "chart-fallback-notice";
+    notice.textContent = "Biểu đồ không khả dụng: không nạp được thư viện Chart.js.";
+    host.appendChild(notice);
+  }
+}
+
+function settleWaiting() {
+  if (chartSettled) return;
+  chartSettled = true;
+  const batch = Array.from(waiting);
+  waiting.clear();
+  for (const [canvas, factory] of batch) {
+    if (!canvas.isConnected) continue;
+    if (chartAvailable()) {
+      registerOnce();
+      factories.set(canvas, factory);
+      build(canvas, factory);
+    } else {
+      showFallback(canvas);
+    }
+  }
+}
+
+function waitForChart() {
+  if (waitStarted) return;
+  waitStarted = true;
+  const script = chartScript();
+  script.addEventListener("load", settleWaiting, { once: true });
+  script.addEventListener("error", settleWaiting, { once: true });
+  setTimeout(settleWaiting, CHART_WAIT_MS);
+}
+
+/** Biểu đồ nằm trong <details>: dựng khi mục được mở, để hiệu ứng mọc cột chạy lúc người xem nhìn thấy (dựng lúc ẩn
+ *  thì hoạt ảnh trôi qua trên canvas rộng 0 và hình cuối bật ra tức thì). Mở lại thì chạy lại hiệu ứng. */
+export function makeChartWhenVisible(canvas, configOrFactory) {
+  if (!canvas) return null;
+  const host = canvas.closest("details");
+  if (!host || host.open) return makeChart(canvas, configOrFactory);
+  host.addEventListener("toggle", () => { if (host.open) makeChart(canvas, configOrFactory); });
+  return null;
+}
+
+/** Cột nào đang được rê thì giữ nguyên, các cột còn lại phủ mờ bằng màu nền: chỉ `chart.draw()` (không update/animation). */
+const hoverDim = {
+  id: "hoverDim",
+  afterDatasetsDraw(chart) {
+    const hi = chart.$hoverIndex;
+    if (hi === null || hi === undefined || chart.config.type !== "bar") return;
+    const { ctx, chartArea } = chart;
+    ctx.save();
+    ctx.fillStyle = withAlpha(cssVar("--bg-surface", "#ffffff"), 0.6);
+    chart.data.datasets.forEach((_dataset, di) => {
+      chart.getDatasetMeta(di).data.forEach((bar, index) => {
+        if (index === hi || !bar) return;
+        const { x, y, base, width } = bar.getProps(["x", "y", "base", "width"], true);
+        ctx.fillRect(x - width / 2, Math.min(y, base), width, Math.abs(base - y));
+      });
+    });
+    ctx.restore();
+    void chartArea;
+  },
+};
+
+function trackHover(config) {
+  if (config.type !== "bar") return config;
+  const previous = config.options?.onHover;
+  return {
+    ...config,
+    plugins: [...(config.plugins || []), hoverDim],
+    options: {
+      ...(config.options || {}),
+      onHover(event, active, chart) {
+        const next = active.length ? active[0].index : null;
+        if (chart.$hoverIndex !== next) {
+          chart.$hoverIndex = next;
+          chart.draw();
+        }
+        if (previous) previous(event, active, chart);
+      },
+    },
+  };
+}
+
 /** Tạo (hoặc thay) biểu đồ. `configOrFactory` nên là hàm để biểu đồ đổi màu theo nền; không có Chart.js thì ghi chú. */
 export function makeChart(canvas, configOrFactory) {
   if (!canvas) return null;
+  const factory = typeof configOrFactory === "function" ? configOrFactory : () => configOrFactory;
   if (!chartAvailable()) {
-    const host = canvas.parentElement;
-    if (host && !host.querySelector(".chart-fallback-notice")) {
-      const notice = document.createElement("div");
-      notice.className = "chart-fallback-notice";
-      notice.textContent = "Biểu đồ không khả dụng: không nạp được thư viện Chart.js.";
-      host.appendChild(notice);
+    if (!chartSettled && chartScript()) {
+      waiting.set(canvas, factory);
+      waitForChart();
+    } else {
+      showFallback(canvas);
     }
     return null;
   }
   registerOnce();
-  const factory = typeof configOrFactory === "function" ? configOrFactory : () => configOrFactory;
   factories.set(canvas, factory);
   return build(canvas, factory);
 }

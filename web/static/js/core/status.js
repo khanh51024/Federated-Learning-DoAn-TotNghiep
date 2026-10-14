@@ -68,7 +68,7 @@ function markOffline(error) {
   setText(badge, "Mất kết nối API");
   setClass(badge, "status-badge error");
   if (serverOnline !== false) {
-    offlineToast = notify("error", "Mất kết nối máy chủ", "Giao diện sẽ tự thử lại sau vài giây.", { detail: error.message, duration: 0 });
+    offlineToast = notify("error", "Mất kết nối máy chủ", "Giao diện sẽ tự thử lại sau vài giây.", { detail: error.message, duration: 0, sticky: true });
   }
   serverOnline = false;
 }
@@ -84,11 +84,13 @@ function renderHeader(data) {
 
   const task = data.task || { status: "idle", message: "Hệ thống sẵn sàng" };
   const badge = byId("task-badge");
-  setText(badge, task.message || "Hệ thống sẵn sàng");
+  // Phiên bị dừng vẫn được giữ trong /api/status để bước Huấn luyện xem lại,
+  // nhưng thanh trạng thái chung chỉ cần báo hệ thống đã sẵn sàng chạy phiên mới.
+  setText(badge, task.status === "cancelled" ? "Hệ thống sẵn sàng" : (task.message || "Hệ thống sẵn sàng"));
   let cls = "status-badge";
   if (task.status === "running") cls += " running";
   else if (task.status === "completed") cls += " success";
-  else if (task.status === "failed" || task.status === "cancelled") cls += " error";
+  else if (task.status === "failed") cls += " error";
   setClass(badge, cls);
 }
 

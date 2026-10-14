@@ -49,7 +49,7 @@ export function diagramHtml({ count = 5, labels = [], variant = "hero", serverLa
       </div>`;
   const clients = g.clients.map((c, i) => `
       <div class="fl-node fl-client" data-client="${i}" style="--x:${c.x};--y:${c.y}">
-        <div class="fl-node-card"><span class="fl-node-head"><span class="topo-dot" aria-hidden="true"></span><b>${clientLabel(labels[i] || `Client ${String(i + 1).padStart(2, "0")}`)}</b></span><small class="fl-node-sub">giữ ảnh riêng</small></div>
+        <div class="fl-node-card"><span class="fl-node-head"><span class="topo-dot" aria-hidden="true"></span><b>${clientLabel(labels[i] || `Client ${String(i).padStart(2, "0")}`)}</b></span><small class="fl-node-sub">giữ ảnh riêng</small></div>
       </div>`).join("");
   const dots = variant === "hero"
     ? Array.from({ length: count * 2 }, () => '<span class="fl-dot" aria-hidden="true"></span>').join("")
@@ -76,17 +76,20 @@ function stageScale(stage) {
   return stage.clientWidth / VIEW.w || 1;
 }
 
-/** Chạy một đợt "gửi trọng số" từ các client (theo chỉ số) về máy chủ; trả về thời lượng ước tính (ms). */
-export function pulse(stage, indices, { delay = 0, perClientGap = 110, duration = 900 } = {}) {
+/** Chạy một đợt "gửi trọng số" từ các client (theo chỉ số) về máy chủ; trả về thời lượng ước tính (ms).
+ *  `reverse`: chiều ngược lại (máy chủ → client), dùng chấm dự phòng của hero (nửa sau) để không cắt đợt đi. */
+export function pulse(stage, indices, { delay = 0, perClientGap = 110, duration = 900, reverse = false } = {}) {
   if (!stage) return 0;
-  const g = geometry(stage.querySelectorAll(".fl-client").length || 5);
+  const clients = stage.querySelectorAll(".fl-client").length || 5;
+  const g = geometry(clients);
   const dots = stage.querySelectorAll(".fl-dot");
   const scale = stageScale(stage);
   indices.forEach((index, order) => {
     const wire = g.clients[index];
-    const dot = dots[index];
+    const dot = dots[reverse && dots.length >= clients * 2 ? index + clients : index];
     if (!wire || !dot) return;
-    travel(dot, quadPoints(wire.p0, wire.c, wire.p1, 16), { scale, delay: delay + order * perClientGap, duration });
+    const points = quadPoints(wire.p0, wire.c, wire.p1, 16);
+    travel(dot, reverse ? points.reverse() : points, { scale, delay: delay + order * perClientGap, duration });
   });
   return delay + indices.length * perClientGap + duration;
 }

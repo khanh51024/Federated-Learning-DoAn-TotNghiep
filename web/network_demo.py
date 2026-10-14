@@ -215,7 +215,7 @@ class NetworkDemoManager:
                 if self._stop.is_set():
                     raise InterruptedError("Flower demo stopped by user")
                 if time.monotonic() >= deadline:
-                    raise TimeoutError(f"Flower smoke demo exceeded {timeout_seconds} seconds")
+                    raise TimeoutError(f"Chạy thử Flower vượt quá {timeout_seconds} giây")
                 report()
                 time.sleep(0.5)
             report()

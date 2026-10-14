@@ -136,15 +136,39 @@ export function diseaseOf(raw) {
   return part ? part.replace(/_/g, " ") : String(raw || "");
 }
 
+// Tên trường trong body của các endpoint huấn luyện, để lỗi validate 422 của pydantic đọc được bằng tiếng Việt.
+const API_FIELD_LABELS = {
+  rounds: "Số vòng", local_epochs: "Epoch cục bộ", epochs: "Số epoch", seed: "Seed",
+  alpha: "Mức lệch dữ liệu (α)", num_clients: "Số client", max_update_norm: "Ngưỡng L2 norm",
+};
+
+function describeValidationItem(item) {
+  if (!item || typeof item !== "object") return String(item);
+  const field = Array.isArray(item.loc) ? item.loc[item.loc.length - 1] : null;
+  const name = API_FIELD_LABELS[field] || (typeof field === "string" ? field : "Giá trị");
+  const ctx = item.ctx || {};
+  switch (item.type) {
+    case "greater_than_equal": if (ctx.ge !== undefined) return `${name}: tối thiểu là ${ctx.ge}.`; break;
+    case "less_than_equal": if (ctx.le !== undefined) return `${name}: tối đa là ${ctx.le}.`; break;
+    case "greater_than": if (ctx.gt !== undefined) return `${name}: phải lớn hơn ${ctx.gt}.`; break;
+    case "less_than": if (ctx.lt !== undefined) return `${name}: phải nhỏ hơn ${ctx.lt}.`; break;
+    case "missing": return `${name}: còn thiếu.`;
+    case "int_parsing": case "int_type": case "int_from_float": case "float_parsing": case "float_type":
+      return `${name}: phải là một số hợp lệ.`;
+    default: break;
+  }
+  return item.msg || item.message || JSON.stringify(item);
+}
+
 // Thông điệp lỗi từ FastAPI: detail có thể là chuỗi, mảng lỗi validate hoặc object.
 export function formatApiError(data, fallback) {
   if (!data) return fallback;
   const detail = data.detail ?? data.message;
   if (typeof detail === "string" && detail) return detail;
   if (Array.isArray(detail) && detail.length) {
-    return detail.map(item => (item && (item.msg || item.message)) || JSON.stringify(item)).join("; ");
+    return detail.map(describeValidationItem).join(" ");
   }
-  if (detail && typeof detail === "object") return JSON.stringify(detail);
+  if (detail && typeof detail === "object") return typeof detail.message === "string" && detail.message ? detail.message : JSON.stringify(detail);
   return fallback;
 }
 

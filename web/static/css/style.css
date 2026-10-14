@@ -97,8 +97,8 @@
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 
   --topbar-h: 60px;
-  --page-max: 1280px;
-  --page-gutter: 32px;
+  --page-max: 1760px;
+  --page-gutter: clamp(24px, 2.4vw, 40px);
 
   --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235e6759' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
@@ -203,6 +203,7 @@ body::before {
   contain: strict;
   background-image: radial-gradient(circle at 1px 1px, var(--dot) 1px, transparent 1.3px);
   background-size: 22px 22px;
+  opacity: 0.4;
 }
 
 [hidden] { display: none !important; }
@@ -288,7 +289,7 @@ button {
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  max-width: 1600px;
+  max-width: var(--page-max);
   height: var(--topbar-h);
   margin: 0 auto;
   padding: 0 var(--page-gutter);
@@ -508,7 +509,7 @@ button {
   max-width: var(--page-max);
   min-width: 0;
   margin: 0 auto;
-  padding: var(--space-6) var(--page-gutter) 48px;
+  padding: var(--space-5) var(--page-gutter) 48px;
   scroll-margin-top: var(--topbar-h);
 }
 
@@ -538,6 +539,7 @@ button {
   font-size: 30px;
   font-weight: 700;
   line-height: 1.2;
+  font-family: var(--font-main);
 }
 
 .page-desc {
@@ -547,6 +549,12 @@ button {
   max-width: 70ch;
 }
 .page-desc:empty { display: none; }
+
+.panel-desc,
+.viewer-scope,
+.field-hint { max-width: 85ch; }
+
+.nav-item[data-route="chan-doan"] .nav-label { font-weight: 600; }
 
 /* ───────────── 4. THÀNH PHẦN ───────────── */
 /* badge trạng thái */
@@ -849,6 +857,15 @@ select.input-field option {
   font-size: var(--fs-xs);
   color: var(--text-muted);
 }
+
+.field-error {
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  color: var(--accent-rose);
+}
+
+.input-field[aria-invalid="true"],
+.input-field[aria-invalid="true"]:hover:not(:disabled) { border-color: var(--accent-rose); }
 
 input[type="checkbox"] {
   width: 16px;
@@ -1201,10 +1218,9 @@ input[type="checkbox"] {
   .brand-text { display: none; }
 }
 
-/* thu gọn thêm: bỏ vạch ngăn, nút trình chiếu (phím P vẫn dùng được), giảm đệm; còn tràn thì dải bước cuộn và mờ mép */
+/* thu gọn thêm: bỏ vạch ngăn, giảm đệm; còn tràn thì dải bước cuộn và mờ mép */
 @media (max-width: 1180px) {
   .nav-sep { display: none; }
-  #btn-present { display: none; }
   .nav-item { padding: 0 8px; }
 }
 
@@ -1220,7 +1236,6 @@ input[type="checkbox"] {
 @media (max-width: 760px) {
   :root { --topbar-h: 54px; }
   .topbar-inner { gap: var(--space-2); padding: 0 var(--space-3); }
-  #btn-present { display: none; } /* phím P vẫn dùng được; chấm trạng thái máy chủ vẫn hiện (chữ đã ẩn bằng .status-text) */
   .nav-label { font-size: var(--fs-xs); }
 }
 
@@ -1270,8 +1285,8 @@ body::before,
 .gallery-item,
 .trust-chip,
 .copy-btn {
-  transition-property: transform, background-color, border-color, color, box-shadow, opacity;
-  transition-duration: var(--dur-press), var(--dur-hover), var(--dur-hover), var(--dur-hover), var(--dur-hover), var(--dur-hover);
+  transition-property: transform, background-color, border-color, color, opacity;
+  transition-duration: var(--dur-press), var(--dur-hover), var(--dur-hover), var(--dur-hover), var(--dur-hover);
   transition-timing-function: var(--ease);
 }
 
@@ -1283,11 +1298,6 @@ body::before,
 .gallery-item:active,
 .trust-chip:active {
   transform: scale(0.98);
-}
-
-@media (hover: hover) {
-  .gallery-item:hover,
-.trust-chip:hover { box-shadow: var(--shadow-2); }
 }
 
 /* đổi nền sáng/tối: tắt transition vài khung để mọi thứ đổi màu cùng lúc */

@@ -101,6 +101,17 @@ def get_federated_network_metrics() -> Dict[str, Any]:
     }
 
 
+def _mark_task_running(experiment: str, task_type: str, message: str) -> None:
+    """Đặt tác vụ nền thành "running" NGAY trong endpoint, không đợi BackgroundTask (chạy sau khi đã trả lời).
+
+    Nếu để BackgroundTask đặt, lệnh Dừng gửi sát sau Bắt đầu sẽ thấy status != running và bị từ chối,
+    còn cancel_requested=False đặt muộn sẽ xóa luôn lệnh dừng đến sớm."""
+    CURRENT_TASK.update({
+        "status": "running", "experiment": experiment, "type": task_type, "progress": 5,
+        "message": message, "error": None, "cancel_requested": False, "live_progress": [],
+    })
+
+
 @router.post("/api/train/stop")
 def stop_training() -> Dict[str, Any]:
     """Hủy/Dừng tác vụ huấn luyện đang chạy (Centralized hoặc Federated)."""
@@ -123,15 +134,8 @@ def stop_training() -> Dict[str, Any]:
 
 
 def _run_centralized_bg(epochs: int, smoke: bool, dataset_root: Optional[str], seed: int):
-    CURRENT_TASK["status"] = "running"
-    CURRENT_TASK["experiment"] = "Centralized"
-    CURRENT_TASK["type"] = "centralized"
-    CURRENT_TASK["progress"] = 5
-    CURRENT_TASK["live_progress"] = []
-    CURRENT_TASK["cancel_requested"] = False
+    # Trạng thái running/cancel_requested đã được endpoint đặt đồng bộ (_mark_task_running); không đặt lại ở đây.
     mode_text = "demo" if smoke else "thực tế"
-    CURRENT_TASK["message"] = f"Đang khởi động huấn luyện Centralized ({epochs} epochs, {mode_text})..."
-    CURRENT_TASK["error"] = None
 
     def is_cancelled() -> bool:
         return CURRENT_TASK.get("cancel_requested", False)
@@ -194,6 +198,10 @@ def trigger_centralized_train(
         raise HTTPException(status_code=400, detail="Chế độ ảnh thật chưa khả dụng: thiếu release mixed pv_pd_v3, manifest và W0.")
 
     CURRENT_TASK["config"] = req.model_dump()
+    _mark_task_running(
+        "Centralized", "centralized",
+        f"Đang khởi động huấn luyện Centralized ({req.epochs} epochs, {'demo' if req.smoke else 'thực tế'})...",
+    )
     background_tasks.add_task(_run_centralized_bg, req.epochs, req.smoke, None, req.seed)
     return {
         "status": "started",
@@ -203,15 +211,8 @@ def trigger_centralized_train(
 
 
 def _run_federated_bg(rounds: int, local_epochs: int, partition_dir: str, smoke: bool, dataset_root: Optional[str], seed: int):
-    CURRENT_TASK["status"] = "running"
-    CURRENT_TASK["experiment"] = "Federated"
-    CURRENT_TASK["type"] = "federated"
-    CURRENT_TASK["progress"] = 5
-    CURRENT_TASK["live_progress"] = []
-    CURRENT_TASK["cancel_requested"] = False
+    # Trạng thái running/cancel_requested đã được endpoint đặt đồng bộ (_mark_task_running); không đặt lại ở đây.
     mode_text = "demo" if smoke else "thực tế"
-    CURRENT_TASK["message"] = f"Đang điều phối FedAvg ({rounds} rounds, E={local_epochs}, {mode_text})..."
-    CURRENT_TASK["error"] = None
 
     def is_cancelled() -> bool:
         return CURRENT_TASK.get("cancel_requested", False)
@@ -270,7 +271,7 @@ def _run_federated_network_bg(
         completed = int(snapshot["round_completed"])
         CURRENT_TASK["progress"] = min(99, int(completed / max(rounds, 1) * 100))
         CURRENT_TASK["message"] = (
-            f"Flower smoke: {snapshot['connected_clients']}/5 client đã kết nối, "
+            f"Chạy thử Flower: {snapshot['connected_clients']}/5 client đã kết nối, "
             f"{snapshot['client_processes_running']}/5 tiến trình đang chạy; "
             f"vòng hiện tại {snapshot['round_in_progress']}/{rounds}, hoàn tất {completed}/{rounds}; "
             f"{snapshot['accepted_clients_last_round']}/5 update hợp lệ ở vòng cuối."
@@ -287,13 +288,13 @@ def _run_federated_network_bg(
         )
         CURRENT_TASK["progress"] = 100
         CURRENT_TASK["status"] = "completed"
-        CURRENT_TASK["message"] = f"Flower smoke hoàn tất {rounds} vòng với 5 client; đây là demo kỹ thuật trên ảnh tổng hợp."
+        CURRENT_TASK["message"] = f"Chạy thử Flower hoàn tất {rounds} vòng với 5 client; đây là demo kỹ thuật trên ảnh tổng hợp."
         CURRENT_TASK["network_history_available"] = True
         CURRENT_TASK["run_dir"] = result["run_dir"]
     except Exception as e:
         if isinstance(e, InterruptedError) or CURRENT_TASK.get("cancel_requested"):
             CURRENT_TASK["status"] = "cancelled"
-            CURRENT_TASK["message"] = "Đã dừng toàn bộ tiến trình Flower smoke."
+            CURRENT_TASK["message"] = "Đã dừng toàn bộ tiến trình chạy thử Flower."
         else:
             CURRENT_TASK["status"] = "failed"
             CURRENT_TASK["message"] = f"Flower network thất bại: {e}"
@@ -321,7 +322,7 @@ def trigger_federated_train(
 
     if engine == "network":
         if req.rounds != 2 or req.local_epochs != 1:
-            raise HTTPException(status_code=400, detail="Flower smoke demo cố định 2 vòng và 1 local epoch")
+            raise HTTPException(status_code=400, detail="Chạy thử Flower cố định 2 vòng và 1 epoch cục bộ")
         if ":" not in req.server_address:
             raise HTTPException(status_code=400, detail="server_address phải có dạng HOST:PORT, ví dụ 127.0.0.1:8089")
         host, port_text = req.server_address.rsplit(":", 1)
@@ -331,7 +332,7 @@ def trigger_federated_train(
         if not 1024 <= port <= 65534:
             raise HTTPException(status_code=400, detail="Port phải nằm trong khoảng 1024..65534")
         if not req.smoke or req.require_real_clients or req.require_real_evaluation or req.dataset_root:
-            raise HTTPException(status_code=400, detail="Chế độ ảnh thật cần release mixed pv_pd_v3 và manifest; hiện web chỉ cho Flower smoke tổng hợp.")
+            raise HTTPException(status_code=400, detail="Chế độ ảnh thật cần release mixed pv_pd_v3 và manifest; hiện web chỉ cho chạy thử Flower trên ảnh tổng hợp.")
         if req.num_clients != 5:
             raise HTTPException(status_code=400, detail="Demo Flower yêu cầu đúng 5 client")
         if abs(req.alpha - 0.1) > 1e-9:
@@ -341,7 +342,7 @@ def trigger_federated_train(
         NETWORK_DEMO.prepare()
         CURRENT_TASK["config"] = req.model_dump()
         CURRENT_TASK.update({
-            "status": "running", "experiment": "Flower localhost smoke",
+            "status": "running", "experiment": "Chạy thử Flower trên máy này",
             "type": "federated-network", "progress": 0,
             "message": "Đang khởi động Flower server và 5 client localhost...",
             "error": None, "cancel_requested": False, "live_progress": [],
@@ -361,7 +362,7 @@ def trigger_federated_train(
             "engine": "network",
             "message": (
                 f"Đang khởi động Flower server 0.0.0.0:{port} và 5 client 127.0.0.1:{port}; "
-                f"chạy {req.rounds} vòng smoke tổng hợp."
+                f"chạy thử {req.rounds} vòng trên ảnh tổng hợp."
             ),
             "config": req.model_dump(),
         }
@@ -385,6 +386,10 @@ def trigger_federated_train(
         )
 
     CURRENT_TASK["config"] = req.model_dump()
+    _mark_task_running(
+        "Federated", "federated",
+        f"Đang điều phối FedAvg ({req.rounds} rounds, E={req.local_epochs}, {'demo' if req.smoke else 'thực tế'})...",
+    )
     background_tasks.add_task(
         _run_federated_bg,
         req.rounds,

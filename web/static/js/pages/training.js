@@ -2,6 +2,7 @@
 import { getJson, postJson } from "../core/api.js";
 import { currentTask, markTaskStarted, onStatus, pollStatus, setPollInterval } from "../core/status.js";
 import { beat, diagramHtml, pulse } from "../core/flnet.js";
+import { mount as mountCommunity } from "./community.js";
 import {
   $$, byId, esc, fmtNum, formatApiError, notify, setBar, setClass, setDisabled, setDisplay, setHtml, setText, toggleHidden,
 } from "../core/dom.js";
@@ -347,7 +348,7 @@ function syncEngine() {
     byId("fl-alpha").value = "0.1"; // máy chủ chỉ nhận α=0,1 cho engine network
     set("fl-rounds", { value: "2", min: "2", max: "2", disabled: true });
     set("fl-epochs", { value: "1", min: "1", max: "1", disabled: true });
-    setText(byId("fl-engine-help"), "Một server và năm tiến trình client localhost, ảnh tổng hợp, cố định hai vòng và một epoch cục bộ. RTT đo trên cùng máy.");
+    setText(byId("fl-engine-help"), "Server và các client chạy trên cùng một máy; ảnh gốc không gửi lên server.");
   } else {
     set("fl-rounds", { min: "1", max: "50", disabled: false });
     set("fl-epochs", { min: "1", max: "10", disabled: false });
@@ -377,6 +378,68 @@ function setTrainMode(mode) {
   }
 }
 
+// ───────── Kiểm tra biểu mẫu trước khi gửi ─────────
+// Ràng buộc min/max/step đã có trên input; ở đây chỉ đọc `validity` để báo lỗi tiếng Việt ngay tại trường
+// thay vì để máy chủ trả 422 tiếng Anh sau một vòng gửi.
+const TRAIN_FIELDS = {
+  federated: ["fl-rounds", "fl-epochs", "fl-seed", "fl-max-update-norm"],
+  centralized: ["cent-epochs", "cent-seed"],
+};
+
+function fieldName(input) {
+  const label = document.querySelector(`label[for="${input.id}"]`);
+  return label ? label.textContent.replace(/\s*\(.*\)\s*$/, "").trim() : "Giá trị";
+}
+
+function validationMessage(input) {
+  const name = fieldName(input);
+  const { validity } = input;
+  if (validity.valueMissing) return `${name}: hãy nhập một số.`;
+  if (validity.badInput) return `${name}: chỉ nhập số.`;
+  if (validity.rangeUnderflow) return `${name}: tối thiểu là ${input.min.replace(".", ",")}.`;
+  if (validity.rangeOverflow) return `${name}: tối đa là ${input.max.replace(".", ",")}.`;
+  if (validity.stepMismatch) return `${name}: phải là số nguyên.`;
+  return `${name}: giá trị không hợp lệ.`;
+}
+
+function clearFieldError(input) {
+  byId(`${input.id}-error`)?.remove();
+  input.removeAttribute("aria-invalid");
+  input.removeAttribute("aria-describedby");
+}
+
+function showFieldError(input, message) {
+  let note = byId(`${input.id}-error`);
+  if (!note) {
+    note = document.createElement("p");
+    note.id = `${input.id}-error`;
+    note.className = "field-error";
+    input.insertAdjacentElement("afterend", note);
+  }
+  note.textContent = message;
+  input.setAttribute("aria-invalid", "true");
+  input.setAttribute("aria-describedby", note.id);
+}
+
+/** true nếu mọi trường đang áp dụng đều hợp lệ; ngược lại hiện lỗi tại trường và đưa focus tới trường lỗi đầu tiên. */
+function validateTrainForm() {
+  let first = null;
+  for (const id of TRAIN_FIELDS[state.mode] || []) {
+    const input = byId(id);
+    // trường bị vô hiệu hóa (engine network cố định 2 vòng) hoặc nằm trong khối đang ẩn thì không áp dụng
+    if (!input || input.disabled || input.closest(".hidden")) continue;
+    clearFieldError(input);
+    if (input.checkValidity()) continue;
+    showFieldError(input, validationMessage(input));
+    first = first || input;
+  }
+  if (first) {
+    first.closest("details")?.setAttribute("open", ""); // trường lỗi nằm trong mục "Tùy chọn nâng cao" đang đóng
+    first.focus();
+  }
+  return first === null;
+}
+
 function resetAfterFailedStart() {
   const start = byId("btn-train-start");
   setDisabled(start, false);
@@ -389,11 +452,14 @@ async function start() {
   const button = byId("btn-train-start");
   const stop = byId("btn-train-stop");
   const federated = state.mode === "federated";
+  if (!validateTrainForm()) return;
   button.disabled = true;
   setHtml(button, `${SPINNER} ${federated ? "Đang điều phối FedAvg…" : "Đang huấn luyện…"}`);
+  // Nút Dừng chỉ dùng được khi máy chủ đã nhận tác vụ: bấm sớm hơn sẽ bị báo "không có tác vụ để dừng"
+  // trong khi tác vụ vẫn khởi chạy ngay sau đó.
   setDisplay(stop, "inline-flex");
-  stop.disabled = false;
-  setHtml(stop, `${STOP} Dừng tiến trình`);
+  stop.disabled = true;
+  setHtml(stop, `${SPINNER} Đang khởi tạo…`);
   toggleHidden(byId("train-progress-box"), false);
   setBar(byId("train-progress-fill"), 5);
   setText(byId("train-progress-label"), "Tiến trình: 5%");
@@ -432,6 +498,8 @@ async function start() {
       });
     }
     markTaskStarted();
+    setDisabled(stop, false);
+    setHtml(stop, `${STOP} Dừng tiến trình`);
     notify("info", `Đã bắt đầu huấn luyện ${federated ? "FedAvg" : "Centralized"}`, data.message || "");
     await pollStatus();
   } catch (error) {
@@ -470,9 +538,14 @@ export async function mount() {
   byId("weight-inspector").addEventListener("toggle", event => {
     if (event.target.open && !state.layerLoaded) loadLayerList();
   });
+  for (const id of Object.values(TRAIN_FIELDS).flat()) {
+    byId(id)?.addEventListener("input", event => clearFieldError(event.currentTarget));
+  }
   syncEngine();
   setTrainMode("federated");
   onStatus(applyStatus);
   pollStatus(); // đồng bộ ngay trạng thái hiện tại (không đợi chu kỳ 4 giây)
+  // Khối "Tham gia từ máy của bạn" tự tải trạng thái của nó; lỗi ở đó không được làm hỏng phần chạy thử Flower.
+  mountCommunity().catch(error => notify("error", "Không khởi tạo được phần tham gia từ máy của bạn", formatApiError(error.body, error.message)));
   await loadNetworkMetrics();
 }

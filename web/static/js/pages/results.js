@@ -1,7 +1,7 @@
 // Bước 3 · Kết quả chi tiết: tổng hợp 7 mô hình, PlantDoc theo lớp, độ tin cậy của xác suất.
 import { getDetails, getEvidence, getSummary, modelsById } from "../core/store.js";
 import { attachCrosshair } from "../core/crosshair.js";
-import { lineDraw, makeChart, pillarColors } from "../core/charts.js";
+import { lineDraw, makeChartWhenVisible, pillarColors } from "../core/charts.js";
 import { play } from "../core/motion.js";
 import {
   $$, MODEL_LABELS, MODEL_ORDER, byId, diseaseOf, cropOf, esc, fmtInt, fmtNum, fmtPct, fmtPctValue,
@@ -74,17 +74,24 @@ function buildSummary() {
   }
 
   root.innerHTML = `
-    <section class="stat-tiles result-overview-tiles" aria-label="Kết quả nổi bật">
-      <article class="stat-tile"><b class="text-sky">${fmtPct(byModel.centralized.metrics.plantvillage.top1_accuracy)}</b><span>Centralized · PlantVillage</span></article>
-      <article class="stat-tile"><b class="text-emerald">${fmtPct(byModel.fedavg.metrics.plantvillage.top1_accuracy)}</b><span>FedAvg · PlantVillage</span></article>
-      <article class="stat-tile warn"><b>${fmtPct(byModel.fedavg.metrics.plantdoc.top1_accuracy)}</b><span>FedAvg · PlantDoc ngoài đồng</span></article>
+    <section class="panel">
+      <div class="panel-header-flex"><div><h3 class="panel-title">Ba cách học, cùng một tập ảnh</h3><p class="panel-desc">1 mô hình gom ảnh · 1 mô hình học liên kết · 5 mô hình học riêng</p></div>
+        <div class="segmented" role="radiogroup" aria-label="Nguồn ảnh so sánh">
+          <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-result-source="plantvillage">PlantVillage</button>
+          <button type="button" class="segmented-option" role="radio" aria-checked="false" data-result-source="plantdoc">PlantDoc · ngoài đồng</button>
+        </div>
+      </div>
+      <p class="field-hint mt-2" id="result-comparison-source"></p>
+      <div class="viewer-comparison mt-3" id="result-key-comparison"></div>
+      <p class="viewer-takeaway mt-3" id="result-takeaway" aria-live="polite"></p>
+      <p class="viewer-scope mt-2">Một kịch bản, một lần chạy; tập này cũng dùng để chọn mô hình. Điều kiện huấn luyện khác nhau; đây chưa phải độ chính xác ngoài thực địa.</p>
     </section>
 
     <details class="overview-detail mt-4">
       <summary><span><strong>Bảng đầy đủ của 7 mô hình</strong><small>Độ chính xác, Macro-F1 và kết quả chấm lại</small></span></summary>
       <div class="overview-detail-body">
       <p class="panel-desc">PlantVillage ${fmtInt(evidence.validation_counts.plantvillage)} ảnh (cùng kiểu với ảnh học) và PlantDoc ${fmtInt(evidence.validation_counts.plantdoc)} ảnh (ảnh ngoài đồng). Số đậm là cao nhất mỗi cột.</p>
-      <div class="table-responsive mt-3">
+      <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
         <table class="data-table result-table">
           <thead>
             <tr>
@@ -102,16 +109,43 @@ function buildSummary() {
       </div>
     </details>
 
-    <p class="field-hint mt-3">Số trên tập kiểm tra cũng được dùng để chọn mô hình, và mới có một kịch bản (α = 0,1), một lần chạy: đây chưa phải độ chính xác ngoài thực địa. Xem tab “Tập giữ riêng &amp; thống kê” để kiểm tra thêm.</p>
+    <p class="field-hint mt-3">Mở tab “Tập giữ riêng &amp; thống kê” để xem kết quả trên ảnh không dùng để chọn mô hình và khoảng tin cậy.</p>
 
-    <section class="panel mt-4">
+    <details class="overview-detail mt-4">
+      <summary><span><strong>Xem lịch sử huấn luyện Centralized</strong><small>Đường độ chính xác và sai số theo epoch</small></span></summary>
+      <div class="overview-detail-body">
       <h3 class="panel-title">Quá trình huấn luyện Centralized v6</h3>
-      <p class="panel-desc">${fmtInt(evidence.centralized_history.length)} epoch. Bản công bố của FedAvg v7 chỉ kèm log 27 vòng đầu (đến vòng được chọn; lần chạy gốc kết thúc ở vòng 32, log vòng 28–32 không có trong bộ công bố) nên web chưa vẽ đường hội tụ tương ứng — web không tự dựng đường từ một điểm cuối.</p>
+      <p class="panel-desc">${fmtInt(evidence.centralized_history.length)} epoch trong dữ liệu công bố. Lịch sử từng vòng của FedAvg chưa đủ trong bộ dữ liệu giao diện để vẽ đường so sánh tương ứng.</p>
       <div class="chart-container mt-4"><canvas id="chart-central-history" aria-label="Độ chính xác và sai số trên tập kiểm tra của Centralized qua các epoch"></canvas></div>
-    </section>`;
+      </div>
+    </details>`;
+
+  const showSource = source => {
+    const locals = MODEL_ORDER.filter(id => id.startsWith("local_"));
+    const values = locals.map(id => byModel[id].metrics[source].top1_accuracy);
+    const fed = byModel.fedavg.metrics[source].top1_accuracy;
+    const central = byModel.centralized.metrics[source].top1_accuracy;
+    const gain = (fed - Math.max(...values)) * 100;
+    const name = source === "plantvillage" ? "PlantVillage" : "PlantDoc";
+    byId("result-comparison-source").textContent = `${fmtInt(evidence.validation_counts[source])} ảnh ${name} · tỉ lệ dự đoán đúng (Top-1)`;
+    byId("result-key-comparison").innerHTML = [
+      ["local", "Local-only", `${fmtPct(Math.min(...values), 1)}–${fmtPct(Math.max(...values), 1)}`, "Mỗi client học riêng"],
+      ["fedavg", "FedAvg", fmtPct(fed), "Học chung, giữ ảnh tại client"],
+      ["centralized", "Centralized", fmtPct(central), "Gom ảnh về máy chủ"],
+    ].map(([kind, label, value, desc]) => `<article class="viewer-model ${kind}"><span>${label}</span><b>${value}</b><small>${desc}</small></article>`).join("");
+    byId("result-takeaway").textContent = `Trong lần chạy này, FedAvg ${gain >= 0 ? "cao hơn" : "thấp hơn"} mô hình học riêng tốt nhất ${fmtNum(Math.abs(gain), 1)} điểm phần trăm trên ${name}.`;
+    $$("[data-result-source]", root).forEach(button => {
+      const on = button.dataset.resultSource === source;
+      button.classList.toggle("is-active", on);
+      button.setAttribute("aria-checked", String(on));
+      button.setAttribute("tabindex", on ? "0" : "-1");
+    });
+  };
+  $$("[data-result-source]", root).forEach(button => button.addEventListener("click", () => showSource(button.dataset.resultSource)));
+  showSource("plantvillage");
 
   const history = evidence.centralized_history || [];
-  makeChart(byId("chart-central-history"), () => {
+  makeChartWhenVisible(byId("chart-central-history"), () => {
     const colors = pillarColors();
     return {
     type: "line",
@@ -195,7 +229,7 @@ function buildPlantdoc() {
     <section class="panel mt-4">
       <h3 class="panel-title">Tỉ lệ nhận đúng theo từng nhóm (ảnh ngoài đồng PlantDoc)</h3>
       <p class="panel-desc">Chỉ các nhóm có ảnh PlantDoc trong tập kiểm tra. Hàng tô nền là nhóm FedAvg nhận đúng dưới ${fmtNum((pd.weak_threshold || 0.5) * 100, 0)}%. Cột "Chênh miền" = tỉ lệ nhận đúng ở ảnh PlantVillage trừ tỉ lệ ở ảnh PlantDoc của FedAvg (điểm phần trăm).</p>
-      <div class="table-responsive mt-3">
+      <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
         <table class="data-table">
           <thead><tr><th scope="col">Nhóm</th><th scope="col">Số ảnh</th><th scope="col">FedAvg (%)</th><th scope="col">Centralized (%)</th><th scope="col">FedAvg trên ảnh trong phòng</th><th scope="col">Chênh miền</th></tr></thead>
           <tbody>${rows}</tbody>
@@ -259,7 +293,7 @@ function buildCalibration() {
     <section class="panel mt-4">
       <h3 class="panel-title">ECE: độ tin cậy lệch bao nhiêu so với thực tế</h3>
       <p class="panel-desc">ECE (Expected Calibration Error, ${re.bins} khoảng) càng thấp càng tốt. "Thô → chỉnh T" là trước và sau khi chia logit cho nhiệt độ T học trên tập hiệu chuẩn riêng ${fmtInt(re.calibration_count)} ảnh; temperature scaling không đổi dự đoán, chỉ đổi xác suất.</p>
-      <div class="table-responsive mt-3">
+      <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
         <table class="data-table">
           <thead><tr><th scope="col">Mô hình</th><th scope="col">T</th><th scope="col">ECE PlantVillage</th><th scope="col">ECE PlantDoc</th><th scope="col">Ngoài đồng: tự tin TB / thực đúng</th><th scope="col">Sai dù tự tin ≥ ${fmtNum(re.high_confidence_threshold * 100, 0)}% (ngoài đồng)</th></tr></thead>
           <tbody>${rows}</tbody>
@@ -284,7 +318,7 @@ function buildCalibration() {
   const draw = source => {
     const points = id => (re.reliability?.[id]?.[source] || []).filter(b => b.n > 0)
       .map(b => ({ x: +(b.confidence * 100).toFixed(1), y: +(b.accuracy * 100).toFixed(1), n: b.n }));
-    makeChart(byId("chart-reliability"), () => {
+    makeChartWhenVisible(byId("chart-reliability"), () => {
       const colors = pillarColors();
       return {
       type: "scatter",
@@ -360,7 +394,7 @@ function buildHoldout() {
   const test = split("test");
   const sel = st?.selection_effect;
 
-  const rows = MODEL_ORDER.map(id => {
+  const renderRows = ids => ids.map(id => {
     const pub = byModel[id].metrics;
     const h = holdoutById[id];
     const cell = (source, block, value) => withCi(value, block?.[source]?.models?.[id]);
@@ -372,6 +406,8 @@ function buildHoldout() {
       <td>${h ? cell("plantdoc", test, h.plantdoc.top1) : "—"}</td>
     </tr>`;
   }).join("");
+  const rows = renderRows(["centralized", "fedavg"]);
+  const localRows = renderRows(MODEL_ORDER.filter(id => id.startsWith("local_")));
 
   const bestLocal = st?.best_local_chosen_on_val || {};
   // so val với test của Centralized trên PlantDoc: câu nhận xét đi theo số liệu, không viết cứng
@@ -404,47 +440,61 @@ function buildHoldout() {
     .map(([src, v]) => `${src === "plantdoc" ? "PlantDoc" : "PlantVillage"} ${v.reproduced ? "khớp" : `lệch ${fmtInt(v.correct_diff_images)} ảnh`}`).join(", ");
 
   root.innerHTML = `
+    <p class="viewer-scope">Ảnh giữ riêng không dùng để chọn mô hình; đây là tập chẩn đoán legacy, chưa phải kiểm thử cuối được khóa trước và chưa nằm trong kiểm tra trùng ảnh.</p>
+
+
+    <section class="panel mt-4">
+      <h3 class="panel-title">Tập kiểm tra và tập giữ riêng, kèm khoảng tin cậy 95%</h3>
+      <p class="panel-desc">Tỉ lệ dự đoán đúng, kèm khoảng tin cậy 95%. Khoảng càng rộng, kết quả càng dao động. Tập giữ riêng: PlantVillage ${fmtInt(ho?.counts_by_source?.plantvillage)} ảnh, PlantDoc ${fmtInt(ho?.counts_by_source?.plantdoc)} ảnh.</p>
+      <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
+        <table class="data-table result-table">
+          <thead><tr><th scope="col">Mô hình</th><th scope="col">PlantVillage · tập kiểm tra</th><th scope="col">PlantVillage · tập giữ riêng</th><th scope="col">PlantDoc · tập kiểm tra</th><th scope="col">PlantDoc · tập giữ riêng</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <details class="fold mt-3"><summary>Xem thêm 5 mô hình học riêng</summary>
+        <div class="table-responsive mt-3" tabindex="0" role="group" aria-label="Kết quả các mô hình học riêng">
+          <table class="data-table result-table"><thead><tr><th scope="col">Mô hình</th><th scope="col">PlantVillage · tập kiểm tra</th><th scope="col">PlantVillage · tập giữ riêng</th><th scope="col">PlantDoc · tập kiểm tra</th><th scope="col">PlantDoc · tập giữ riêng</th></tr></thead><tbody>${localRows}</tbody></table>
+        </div>
+      </details>
+      ${recordedText ? `<p class="field-hint mt-2">Đối chiếu: số Centralized trên tập giữ riêng do nhóm huấn luyện tự ghi (summary.json) — ${recordedText} (số gốc làm tròn 4 chữ số).</p>` : ""}
+    </section>
+
+    <details class="overview-detail mt-4">
+      <summary><span><strong>Cách chọn mô hình và phương pháp thống kê</strong><small>Phạm vi tập giữ riêng, bootstrap theo cụm</small></span></summary>
+      <div class="overview-detail-body">
     ${sel?.available ? `
     <section class="callout callout-warn">
       <b>Vì sao cần một tập giữ riêng?</b> Phiên bản mô hình được chọn dựa trên điểm Macro-F1 PlantDoc (chỉ xét các epoch đã đạt ngưỡng F1 PlantVillage) ngay trên <b>chính tập kiểm tra đang dùng để báo cáo</b>, nên con số ở đó có thể hơi đẹp hơn thực tế.
       Với Centralized, epoch được chọn (${fmtInt(sel.chosen_epoch)}/${fmtInt(sel.epochs)}) có độ chính xác PlantDoc ${fmtPct(sel.chosen_plantdoc_accuracy)}
       — ${sel.chosen_rank_among_epochs === 1 ? "cao nhất trong mọi epoch" : `hạng ${fmtInt(sel.chosen_rank_among_epochs)}/${fmtInt(sel.epochs)}`} (epoch cuối: ${fmtPct(sel.last_plantdoc_accuracy)}).
       Vì vậy đồ án chấm lại thêm trên một tập ${fmtInt(ho?.count)} ảnh <b>giữ riêng</b> — tập chẩn đoán "legacy" có sẵn của bộ dữ liệu, không dùng để chọn mô hình
-      nên không bị thiên lệch này. ${valVsTest} Với FedAvg v7: lịch sử từng vòng chỉ nằm trong checkpoint (27 vòng đầu, không có tệp log riêng) nên web chưa đo hiệu ứng chọn của nó.
+      nên không bị thiên lệch này. ${valVsTest} Với FedAvg: web chưa có đủ lịch sử từng vòng để đo hiệu ứng chọn mô hình.
       <br><b>Lưu ý:</b> đây chưa phải bài kiểm tra cuối được khóa trước, và chưa nằm trong phép kiểm tra trùng ảnh ở bước 6;
       một phần ảnh PlantVillage trong tập này có thể là ảnh chụp lại cùng lá với ảnh học (xem bảng cuối trang).
     </section>` : ""}
-
-    <section class="panel mt-4">
-      <h3 class="panel-title">Tập kiểm tra và tập giữ riêng, kèm khoảng tin cậy 95%</h3>
-      <p class="panel-desc">Khoảng tin cậy tính bằng bootstrap theo <b>cụm</b> (PlantDoc: theo cảnh chụp; PlantVillage: theo nhóm lá) vì nhiều ảnh cùng một cảnh/lá không độc lập nhau. Tập giữ riêng: PlantVillage ${fmtInt(ho?.counts_by_source?.plantvillage)} ảnh, PlantDoc ${fmtInt(ho?.counts_by_source?.plantdoc)} ảnh.</p>
-      <div class="table-responsive mt-3">
-        <table class="data-table result-table">
-          <thead><tr><th scope="col">Mô hình</th><th scope="col">PlantVillage · tập kiểm tra</th><th scope="col">PlantVillage · tập giữ riêng</th><th scope="col">PlantDoc · tập kiểm tra</th><th scope="col">PlantDoc · tập giữ riêng</th></tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
+      <p class="field-hint mt-3">Khoảng tin cậy tính bằng bootstrap theo cụm: PlantDoc theo cảnh chụp, PlantVillage theo nhóm lá; nhiều ảnh cùng cảnh/lá không độc lập nhau.</p>
       </div>
-      ${recordedText ? `<p class="field-hint mt-2">Đối chiếu: số Centralized trên tập giữ riêng do nhóm huấn luyện tự ghi (summary.json) — ${recordedText} (số gốc làm tròn 4 chữ số).</p>` : ""}
-    </section>
+    </details>
 
     ${val || test ? `
-    <section class="panel mt-4">
+    <details class="overview-detail mt-4"><summary>So sánh theo cặp trên cùng ảnh</summary><div class="overview-detail-body">
       <h3 class="panel-title">So sánh theo cặp trên cùng ảnh</h3>
       <p class="panel-desc">Hiệu số độ chính xác (điểm phần trăm) giữa hai mô hình trên đúng cùng tập ảnh, khoảng tin cậy bootstrap theo cụm, và kiểm định McNemar chính xác (giả định ảnh độc lập — vì vậy ưu tiên đọc khoảng tin cậy). "Khác biệt rõ" nghĩa là khoảng tin cậy không chứa 0; chưa hiệu chỉnh cho 8 phép so sánh (theo Bonferroni ngưỡng p là 0,05/8 ≈ 0,006). "Local tốt nhất" được chọn theo tập kiểm tra, không theo tập giữ riêng.</p>
       <div class="pair-grid mt-3">${pairBlock("Trên tập kiểm tra", val)}${pairBlock("Trên tập giữ riêng", test)}</div>
-    </section>` : ""}
+    </div></details>` : ""}
 
     ${leaf ? `
-    <section class="panel mt-4">
+    <details class="overview-detail mt-4"><summary>Ảnh nghi chụp lại cùng một lá ảnh hưởng thế nào?</summary><div class="overview-detail-body">
       <h3 class="panel-title">Độ nhạy với ảnh chụp lại cùng một lá (PlantVillage, tập giữ riêng)</h3>
       <p class="panel-desc">${fmtInt(leaf.ungrouped_images)} ảnh PlantVillage trong tập giữ riêng không được gắn nhóm theo lá; ${fmtInt(leaf.suspected_reshoots)} ảnh trong đó có ảnh học cùng nhóm mang số thứ tự liền kề (ước lượng ảnh chụp lại cùng lá — có thể làm số đẹp hơn thật). Nếu bỏ chúng mà độ chính xác không giảm thì chưa thấy bằng chứng bị thổi phồng.</p>
-      <div class="table-responsive mt-3">
+      <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
         <table class="data-table">
           <thead><tr><th scope="col">Mô hình</th><th scope="col">Tất cả</th><th scope="col">Chỉ ảnh đã gom nhóm lá</th><th scope="col">Bỏ ảnh nghi chụp lại</th></tr></thead>
           <tbody>${leafRows}</tbody>
         </table>
       </div>
-    </section>` : ""}`;
+    </div></details>` : ""}`;
 }
 
 // ───────── Tab: Ma trận nhầm lẫn ─────────
@@ -511,7 +561,7 @@ async function buildConfusion() {
         </div>` : ""}
       </div>
       <p class="field-hint mt-3" id="cm-summary"></p>
-      <div class="table-responsive cm-wrap mt-2" id="cm-wrap"></div>
+      <div tabindex="0" role="region" aria-label="Ma trận nhầm lẫn, cuộn được bằng phím mũi tên" class="table-responsive cm-wrap mt-2" id="cm-wrap"></div>
     </section>
     <section class="panel mt-4">
       <h3 class="panel-title">Nhầm lẫn nhiều nhất</h3>
@@ -617,8 +667,10 @@ async function activate(name) {
     tab.setAttribute("aria-selected", String(on));
   });
   $$(".subpanel").forEach(panel => panel.classList.toggle("is-active", panel.id === `result-${name}`));
+  if (!ctx) return; // bằng chứng không khả dụng: panel đã có thông báo lý do, không có gì để dựng
   if (built.has(name) || building.has(name)) return;
-  const task = Promise.resolve().then(() => BUILDERS[name]());
+  // chờ một khung: nút tab/panel đổi trạng thái được vẽ trước, việc dựng nặng không làm click có cảm giác trễ
+  const task = new Promise(resolve => requestAnimationFrame(() => resolve())).then(() => BUILDERS[name]());
   building.set(name, task);
   try {
     await task;
@@ -634,12 +686,17 @@ async function activate(name) {
 }
 
 export async function mount() {
-  const [evidence, summary] = await Promise.all([getEvidence(), getSummary().catch(() => null)]);
+  const [evidence, summary] = await Promise.all([
+    getEvidence().catch(error => ({ available: false, reason: error.message })),
+    getSummary().catch(() => null),
+  ]);
+  // Gắn handler trước khi xét `available`: tab không được "chết"; khi thiếu bằng chứng, mọi tab đổi panel và nói rõ lý do.
+  $$(".subtab").forEach(tab => tab.addEventListener("click", () => activate(tab.dataset.subtab)));
   if (!evidence.available) {
-    byId("result-summary").innerHTML = `<div class="callout callout-error" role="alert"><b>Chưa có bộ số liệu đã kiểm hash.</b> ${esc(evidence.reason || "")}</div>`;
+    const callout = role => `<div class="callout callout-error"${role}><b>Chưa có bộ số liệu đã kiểm hash.</b> ${esc(evidence.reason || "")}</div>`;
+    $$(".subpanel").forEach(panel => { panel.innerHTML = callout(panel.id === "result-summary" ? ' role="alert"' : ""); });
     return;
   }
   ctx = { evidence, summary };
-  $$(".subtab").forEach(tab => tab.addEventListener("click", () => activate(tab.dataset.subtab)));
   activate("summary");
 }

@@ -21,6 +21,10 @@ ALL_MODELS = (
     ("fedavg", "demo_fedavg_v7"),
     *((f"local_{i:02d}", f"demo_local_{i:02d}") for i in range(5)),
 )
+# Giới hạn ảnh tải lên. MAX_UPLOAD_BYTES phải khớp MAX_UPLOAD_BYTES trong web/static/js/pages/diagnosis.js
+# (tests/test_web_static_frontend.py kiểm hai số này bằng nhau). Mô hình chỉ cần 224 px nên 40 triệu điểm ảnh là dư.
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+MAX_IMAGE_PIXELS = 40_000_000
 SCIENTIFIC_STATUS = {
     "evidence_level": "published_artifact_hash_verified",
     "overall_scientific_valid": False,
@@ -49,9 +53,33 @@ def _explain(model_id: str, image: Image.Image, class_name: str) -> Dict[str, An
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
+def _reject_oversized(data: bytes) -> None:
+    """Gọi sau khi đọc tối đa MAX_UPLOAD_BYTES + 1 byte: dư một byte nghĩa là tệp vượt giới hạn (không đọc hết vào RAM)."""
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail=f"Ảnh vượt giới hạn {MAX_UPLOAD_BYTES // (1024 * 1024)} MB. Hãy chọn ảnh nhỏ hơn.")
+
+
+def _reject_too_many_pixels(size: tuple[int, int]) -> None:
+    """Kiểm trên kích thước đọc từ header (chưa giải mã) để ảnh nén cực lớn không làm cạn RAM khi giải mã."""
+    pixels = size[0] * size[1]
+    if pixels > MAX_IMAGE_PIXELS:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Ảnh có {pixels / 1_000_000:.0f} triệu điểm ảnh, vượt giới hạn {MAX_IMAGE_PIXELS // 1_000_000} triệu. Hãy thu nhỏ ảnh trước khi tải lên.",
+        )
+
+
 def _read_image(file: UploadFile) -> Image.Image:
+    data = file.file.read(MAX_UPLOAD_BYTES + 1)
+    _reject_oversized(data)
     try:
-        return Image.open(io.BytesIO(file.file.read())).convert("RGB")
+        image = Image.open(io.BytesIO(data))  # mở lười: chỉ đọc header
+        size = image.size
+    except Exception:
+        raise HTTPException(status_code=400, detail="File tải lên không phải là ảnh hợp lệ")
+    _reject_too_many_pixels(size)
+    try:
+        return image.convert("RGB")
     except Exception:
         raise HTTPException(status_code=400, detail="File tải lên không phải là ảnh hợp lệ")
 
@@ -148,9 +176,11 @@ def get_comparison_table(protocol_id: str = PROTOCOL_ID) -> Dict[str, Any]:
 @router.post("/api/inference/plantvillage")
 async def run_plantvillage_reference(file: UploadFile = File(...)) -> Dict[str, Any]:
     """Standalone PlantVillage reference; independent from FedAvg comparison."""
-    contents = await file.read()
+    contents = await file.read(MAX_UPLOAD_BYTES + 1)
+    _reject_oversized(contents)
     try:
         with Image.open(io.BytesIO(contents)) as image:
+            _reject_too_many_pixels(image.size)
             return _predict("plantvillage_traced_reference", image)
     except (OSError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=f"Ảnh hoặc model PlantVillage không hợp lệ: {exc}") from exc

@@ -11,6 +11,9 @@ const LOCAL_SOURCES = ["local_00", "local_01", "local_02", "local_03", "local_04
 const ALL_SOURCES = ["fedavg", ...LOCAL_SOURCES];
 const LEVEL_LABEL = { very_easy: "Rất dễ", easy: "Dễ", medium: "Vừa", hard: "Khó", very_hard: "Rất khó" };
 
+// Giới hạn dung lượng ảnh tải lên: phải khớp MAX_UPLOAD_BYTES trong web/routers/inference.py (có test kiểm hai số này).
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
 const DIAGNOSE_HTML = '<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Chẩn đoán';
 
 const state = {
@@ -84,11 +87,40 @@ function markSelected() {
 }
 
 // ───────── Chọn ảnh ─────────
+const BIG_PREVIEW_BYTES = 1.5 * 1024 * 1024;
+
+/** Ảnh lớn: thu về 960 px bằng createImageBitmap (giải mã ngoài luồng chính) trước khi gắn vào <img>;
+ *  giải mã thẳng ảnh ~10 MB làm đứng luồng chính hơn 1 s. Lỗi thì rơi về ảnh gốc. */
+async function downscaledPreviewUrl(file) {
+  const bitmap = await createImageBitmap(file, { resizeWidth: 960, resizeQuality: "medium" });
+  const canvas = document.createElement("canvas");
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  canvas.getContext("2d").drawImage(bitmap, 0, 0);
+  bitmap.close?.();
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.9));
+  if (!blob) throw new Error("toBlob");
+  return URL.createObjectURL(blob);
+}
+
 function setPreview(file, metaHtml) {
   if (state.previewUrl) URL.revokeObjectURL(state.previewUrl);
-  state.previewUrl = URL.createObjectURL(file);
   const img = byId("preview-image");
-  img.src = state.previewUrl;
+  img.decoding = "async";
+  if (file.size > BIG_PREVIEW_BYTES && typeof createImageBitmap === "function") {
+    const original = URL.createObjectURL(file);
+    state.previewUrl = original;
+    img.removeAttribute("src");
+    downscaledPreviewUrl(file).then(url => {
+      if (state.file !== file) { URL.revokeObjectURL(url); return; } // đã chọn ảnh khác
+      URL.revokeObjectURL(original);
+      state.previewUrl = url;
+      img.src = url;
+    }).catch(() => { if (state.file === file) img.src = original; });
+  } else {
+    state.previewUrl = URL.createObjectURL(file);
+    img.src = state.previewUrl;
+  }
   byId("selected-stage").classList.remove("hidden");
   resetStage();
   byId("selected-empty").classList.add("hidden");
@@ -98,6 +130,8 @@ function setPreview(file, metaHtml) {
   setDisabled(byId("btn-diagnose"), false);
   setDisabled(byId("btn-plantvillage"), false);
   byId("plantvillage-result").textContent = "";
+  setDisabled(byId("btn-community"), false);
+  byId("community-result").textContent = "";
 }
 
 function resetResults() {
@@ -129,7 +163,7 @@ function itemMeta(item) {
       <span class="chip chip-static">ảnh mẫu #${Number(item.id)}${verified ? " · thuộc tập kiểm tra" : " · chưa đối chiếu được"}</span>
     </div>
     <p class="meta-label">${esc(formatDiseaseName(item.label))}</p>
-    ${stats}`;
+    <details class="fold"><summary>Thống kê của nhóm ảnh</summary>${stats}<p class="field-hint">Dễ/Khó theo recall của lớp ở FedAvg, không phải độ khó đo riêng ảnh này.</p></details>`;
 }
 
 async function selectGallery(item) {
@@ -154,6 +188,15 @@ async function selectGallery(item) {
 async function selectUpload(file) {
   if (file.type && !file.type.startsWith("image/")) {
     notify("warning", "Tệp không phải ảnh", `"${file.name}" có định dạng ${file.type}. Hãy chọn ảnh JPG, PNG hoặc WEBP.`);
+    return;
+  }
+  // chặn trước resetResults(): ảnh đang chọn và kết quả của nó không bị mất vì một tệp bị từ chối
+  if (file.size === 0) {
+    notify("warning", "Tệp rỗng", `"${file.name}" không có dữ liệu. Hãy chọn một ảnh khác.`);
+    return;
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    notify("warning", "Ảnh quá lớn", `"${file.name}" nặng ${fmtNum(file.size / 1048576, 1)} MB, vượt giới hạn ${MAX_UPLOAD_BYTES / 1048576} MB. Hãy chọn ảnh nhỏ hơn.`);
     return;
   }
   state.selectToken += 1;
@@ -190,7 +233,7 @@ function verdict(result, trueClass) {
   return cropOf(result.predicted_class) === cropOf(trueClass) ? "wrong-disease" : "wrong";
 }
 
-function rowHtml(modelId) {
+function rowHtml(modelId, expanded = false) {
   const result = state.rows.get(modelId);
   const label = MODEL_LABELS[modelId];
   const phase = modelId === "centralized" ? "Gom ảnh" : modelId === "fedavg" ? "Học liên kết" : "Học riêng";
@@ -217,7 +260,8 @@ function rowHtml(modelId) {
         <span class="row-sub">${esc(info.scope)}</span></span>`
     : '<span class="text-muted">—</span>';
   const uncertain = result.is_uncertain ? ' <span class="pill-flag" title="Xác suất cao nhất dưới 50% hoặc hai nhóm đầu quá sát nhau">không chắc</span>' : "";
-  return `<th scope="row">${modelPill(modelId)}<span class="row-sub">${phase}</span></th>
+  // aria-expanded chỉ hợp lệ trên hàng của treegrid, không phải của table: dùng một nút thật trong ô tên mô hình
+  return `<th scope="row"><button type="button" class="row-toggle" aria-expanded="${expanded}" aria-controls="detail-${modelId}">${modelPill(modelId)}<span class="row-sub">${phase}</span><span class="sr-only">Xem top 3 xác suất</span></button></th>
     <td class="cell-pred">
       <b>${esc(formatDiseaseName(result.predicted_class))}</b>${uncertain}
       <div class="conf"><div class="conf-track"><span class="conf-fill ${pillarOf(modelId)}" style="transform:scaleX(0)" data-pct="${result.confidence_pct}"></span></div><span class="mono">${fmtNum(result.confidence_pct, 1)}%</span></div>
@@ -246,8 +290,8 @@ function renderTable(modelIds, { animateIds = [] } = {}) {
   const body = byId("diag-body");
   const expanded = new Set($$("tr.detail-row:not(.hidden)", body).map(r => r.dataset.model));
   body.innerHTML = modelIds.map(id => `
-    <tr class="diag-row row-${pillarOf(id)}${state.rows.get(id) && !state.rows.get(id).error ? " is-clickable" : ""}" data-model="${id}" tabindex="${state.rows.get(id) && !state.rows.get(id).error ? 0 : -1}"${state.rows.get(id) && !state.rows.get(id).error ? ` aria-expanded="${expanded.has(id)}"` : ""}>${rowHtml(id)}</tr>
-    <tr class="detail-row${expanded.has(id) ? "" : " hidden"}" data-model="${id}">${detailHtml(id)}</tr>`).join("");
+    <tr class="diag-row row-${pillarOf(id)}${state.rows.get(id) && !state.rows.get(id).error ? " is-clickable" : ""}" data-model="${id}">${rowHtml(id, expanded.has(id))}</tr>
+    <tr class="detail-row${expanded.has(id) ? "" : " hidden"}" id="detail-${id}" data-model="${id}">${detailHtml(id)}</tr>`).join("");
   // thanh độ tin cậy chạy từ 0 → giá trị (một lần reflow để chốt style ban đầu)
   void body.offsetWidth;
   $$(".conf-fill", body).forEach(el => setBar(el, Number(el.dataset.pct)));
@@ -280,7 +324,7 @@ function summarize(modelIds) {
       return verdict(r, trueClass) === "correct" ? "✓" : "✕";
     };
     box.innerHTML = `${pre}
-      <p class="summary-big"><b>${ok.length}/${results.length}</b> mô hình đúng với nhãn <b>${esc(formatDiseaseName(trueClass))}</b></p>
+      <p class="summary-big"><b>${ok.length}/${results.length}</b> mô hình nhận đúng ảnh này</p>
       <div class="summary-pillars">
         ${state.rows.has("centralized") ? `<span class="summary-pill centralized">Centralized ${mark("centralized")}</span>` : ""}
         ${state.rows.has("fedavg") || state.mode === "quick" ? `<span class="summary-pill fedavg">${state.mode === "quick" && state.quickModel !== "fedavg" ? MODEL_LABELS[state.quickModel] : "FedAvg"} ${mark(state.mode === "quick" ? state.quickModel : "fedavg")}</span>` : ""}
@@ -295,7 +339,7 @@ function summarize(modelIds) {
     const ranked = [...tally.entries()].sort((a, b) => b[1] - a[1]);
     box.innerHTML = `${pre}
       <p class="summary-big">Các mô hình dự đoán: ${ranked.map(([c, n]) => `<b>${esc(formatDiseaseName(c))}</b> (${n}/${results.length})`).join(" · ")}</p>
-      <p class="field-hint">Chưa biết nhãn thật nên chưa chấm đúng/sai. Chọn nhãn ở ô "Nhãn thật" phía trên để thấy mô hình nào sai và vì sao.</p>${timingHtml()}`;
+      <p class="field-hint">Chưa biết nhãn thật nên chưa chấm đúng/sai. Mở “Tùy chọn so sánh và giải thích”, chọn “Nhãn thật” nếu biết để đối chiếu kết quả.</p>${timingHtml()}`;
     toggleHidden(explain, true);
     explain.innerHTML = "";
   }
@@ -336,7 +380,10 @@ function explanation(results, trueClass) {
       ? `<b>FedAvg</b> đúng: học từ cả năm client, tổng cộng ${fmtInt(info?.count)} ảnh của nhóm này mà không ảnh nào rời khỏi client.`
       : `<b>FedAvg</b> sai dù đã tổng hợp ${fmtInt(info?.count)} ảnh của nhóm này từ các client — ảnh này khó với cả mô hình học liên kết.`);
   }
-  return lines.length ? `<b>Vì sao?</b><ul>${lines.map(l => `<li>${l}</li>`).join("")}</ul>` : "";
+  const overview = [];
+  if (wrongZero.length) overview.push(`${names(wrongZero)} nhận sai và không có ảnh của nhóm này trong phần dữ liệu học.`);
+  if (fed && !fed.error) overview.push(`FedAvg ${verdict(fed, trueClass) === "correct" ? "nhận đúng" : "nhận sai"}; dữ liệu của các client có tổng ${fmtInt(shardInfo("fedavg", trueClass)?.count)} ảnh của nhóm này.`);
+  return lines.length ? `<b>Liên hệ với dữ liệu huấn luyện</b><p class="panel-desc mt-2">${overview.map(esc).join(" ")}</p><p class="field-hint mt-2">Thiếu dữ liệu có thể góp phần vào lỗi; đây chưa phải kiểm chứng nguyên nhân của dự đoán.</p><details class="fold mt-2"><summary>Đối chiếu từng client</summary><ul>${lines.map(l => `<li>${l}</li>`).join("")}</ul></details>` : "";
 }
 
 // ───────── Chạy chẩn đoán ─────────
@@ -575,6 +622,37 @@ function haveResultsFor(models) {
   return complete && gradcamOk;
 }
 
+/** Mô hình cộng đồng (thử nghiệm): phiên bản head mới nhất đã qua cổng của máy chủ, so với FedAvg v7 trên cùng ảnh. */
+async function runCommunityModel() {
+  if (!state.file) return;
+  const button = byId("btn-community");
+  const output = byId("community-result");
+  const file = state.file;
+  button.disabled = true;
+  output.textContent = "Đang nhận diện bằng mô hình cộng đồng...";
+  const form = new FormData();
+  form.append("file", file);
+  try {
+    const data = await postForm("/api/community/predict", form, { timeoutMs: 90000 });
+    if (file !== state.file) return; // ảnh đã đổi: không ghi kết quả của ảnh cũ cạnh ảnh mới
+    const top = data.top3.map((r, i) => `<li>${esc(formatDiseaseName(r.class))}: <b class="mono">${fmtNum(r.confidence, 2)}%</b></li>`).join("");
+    const note = data.version === 0
+      ? "Chưa có vòng cộng đồng nào được nhận: mô hình cộng đồng hiện trùng FedAvg v7."
+      : `Phiên bản ${esc(data.version)} · chính xác giám sát ${fmtPct(data.metrics?.accuracy, 1)} (mô hình gốc ${fmtPct(data.base_metrics?.accuracy, 1)}).`;
+    output.innerHTML = `
+      <p><b>${esc(formatDiseaseName(data.predicted_class))}</b> · ${fmtNum(data.confidence_pct, 2)}%</p>
+      <ol class="mt-2">${top}</ol>
+      <p class="field-hint mt-2">FedAvg v7 trên cùng ảnh: <b>${esc(formatDiseaseName(data.baseline.predicted_class))}</b> (${fmtNum(data.baseline.confidence_pct, 2)}%) — ${data.same_as_baseline ? "cùng kết luận" : "khác kết luận"}.</p>
+      <p class="field-hint mt-2">${note}</p>
+      <p class="field-hint mt-2">${esc(data.caveat)}</p>`;
+  } catch (error) {
+    if (file !== state.file) return;
+    output.textContent = `Không thể nhận diện: ${error.message}`;
+  } finally {
+    button.disabled = state.file === null;
+  }
+}
+
 async function runPlantVillageReference() {
   if (!state.file) return;
   const button = byId("btn-plantvillage");
@@ -711,26 +789,32 @@ export async function mount() {
     rerender();
   });
   byId("btn-print").addEventListener("click", () => window.print());
+  let restoreModelDetails = false;
+  window.addEventListener("beforeprint", () => {
+    const details = byId("diag-model-details");
+    restoreModelDetails = !details.open;
+    details.open = true;
+  });
+  window.addEventListener("afterprint", () => {
+    if (restoreModelDetails) byId("diag-model-details").open = false;
+    restoreModelDetails = false;
+  });
   $$("[data-stage-view]").forEach(button => button.addEventListener("click", () => setStageView(button.dataset.stageView)));
   byId("btn-diagnose").addEventListener("click", run);
   byId("btn-plantvillage").addEventListener("click", runPlantVillageReference);
+  byId("btn-community").addEventListener("click", runCommunityModel);
 
-  // bấm hoặc Enter/Space trên một dòng kết quả để mở top-3
+  // bấm dòng kết quả (hoặc Enter/Space trên nút trong ô tên mô hình) để mở top-3
   const body = byId("diag-body");
   const toggleRow = row => {
     const detail = body.querySelector(`tr.detail-row[data-model="${row.dataset.model}"]`);
     if (detail && detail.innerHTML.trim()) {
       const open = detail.classList.toggle("hidden") === false;
-      row.setAttribute("aria-expanded", String(open));
+      row.querySelector(".row-toggle")?.setAttribute("aria-expanded", String(open));
     }
   };
   body.addEventListener("click", event => {
     const row = event.target.closest("tr.diag-row");
     if (row) toggleRow(row);
-  });
-  body.addEventListener("keydown", event => {
-    if (event.key !== "Enter" && event.key !== " ") return;
-    const row = event.target.closest("tr.diag-row");
-    if (row) { event.preventDefault(); toggleRow(row); }
   });
 }

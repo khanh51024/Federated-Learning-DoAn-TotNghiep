@@ -1,8 +1,7 @@
-// Điểm khởi động: thanh 6 bước ở đầu trang, chế độ trình chiếu, poll trạng thái server.
+// Điểm khởi động: thanh 6 bước ở đầu trang, poll trạng thái server.
 // Mọi trang nằm trong js/pages/*.js và được tải lười khi mở lần đầu.
 import { byId } from "./core/dom.js";
 import "./core/motion.js";
-import { initPresent } from "./core/present.js";
 import { initRouter } from "./core/router.js";
 import { startStatusPolling } from "./core/status.js";
 import { initTheme } from "./core/theme.js";
@@ -45,6 +44,5 @@ function initGroupArrowKeys() {
 initTheme();
 initSkipLink();
 initGroupArrowKeys();
-initPresent();
 initRouter();
 startStatusPolling();
