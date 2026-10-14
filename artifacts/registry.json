@@ -2952,7 +2952,7 @@
   },
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-14T15:43:53",
+      "generated_at": "2026-10-14T16:35:49",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -2964,7 +2964,7 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-14T15:43:55",
+      "generated_at": "2026-10-14T16:35:50",
       "overall": "not_ready",
       "source": "artifacts/pre_demo_check.json"
     },
@@ -2999,7 +2999,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-14T15:43:57",
+      "generated_at": "2026-10-14T16:35:53",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
