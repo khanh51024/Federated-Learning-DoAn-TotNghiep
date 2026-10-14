@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)",
+  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 2 mục kỹ thuật chưa XONG)",
   "canonical_run_id": "20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62",
   "dataset_truth": {
     "source": "data/partitions_stage2_scratch_v3/suite.json",
@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-12T22:08:09",
+      "generated_at": "2026-10-14T14:28:22",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,8 +145,8 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-12T22:08:19",
-      "overall": "technical_demo_ready",
+      "generated_at": "2026-10-14T14:28:24",
+      "overall": "not_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
@@ -180,16 +180,16 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-12T22:08:16",
+      "generated_at": "2026-10-14T14:28:27",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
     },
     "checkpoint_catalog": {
       "status": "complete",
-      "total_pt_files": 59,
+      "total_pt_files": 61,
       "in_models": 15,
-      "in_groups": 44,
+      "in_groups": 46,
       "unclassified": [],
       "source": "quét đĩa (scripts/build_registry.py)"
     }
@@ -199,7 +199,7 @@
       "id": "registry",
       "title": "Registry v2 + danh mục mọi checkpoint trên đĩa",
       "status": "XONG",
-      "detail": "schema v2; 18 model; 59 file .pt đều có tên (15 trong model, 44 trong nhóm)",
+      "detail": "schema v2; 18 model; 61 file .pt đều có tên (15 trong model, 46 trong nhóm)",
       "unlock": []
     },
     {
@@ -262,14 +262,14 @@
       "id": "deps",
       "title": "Dependency khai báo một nơi (pyproject = requirements)",
       "status": "XONG",
-      "detail": "15 dependency trùng giữa pyproject.toml và requirements.txt; ghim cũ nằm ở legacy/pyproject.toml",
+      "detail": "17 dependency trùng giữa pyproject.toml và requirements.txt; ghim cũ nằm ở legacy/pyproject.toml",
       "unlock": []
     },
     {
       "id": "full_tests",
       "title": "Full tests pass trên mã nguồn hiện tại",
-      "status": "XONG",
-      "detail": "technical_acceptance=pass lúc 2026-10-12T22:16:09 (gồm test mạng, 50 file test) trên đúng mã nguồn hiện tại",
+      "status": "CHƯA",
+      "detail": "kết quả cũ (2026-10-12T22:16:09) không còn khớp mã nguồn hiện tại — chạy lại --full-gates",
       "unlock": []
     },
     {
@@ -355,8 +355,8 @@
     {
       "id": "release",
       "title": "Release sạch (mọi gate kỹ thuật XONG)",
-      "status": "XONG",
-      "detail": "mọi mục kỹ thuật XONG; trước khi nộp vẫn phải `git status` sạch và gắn tag",
+      "status": "CHƯA",
+      "detail": "còn mục kỹ thuật chưa XONG: ['full_tests']",
       "unlock": []
     }
   ],

@@ -19,4 +19,5 @@
 | [WEB_DEMO_GD1_GD2.md](WEB_DEMO_GD1_GD2.md) | Hướng dẫn demo web + nguồn số liệu published_demo hash-verified |
 | [AWS_DEPLOYMENT_GUIDE.md](AWS_DEPLOYMENT_GUIDE.md) | Triển khai EC2 end-to-end |
 | [SERVER_DEPLOY_20261005.md](SERVER_DEPLOY_20261005.md) | Trạng thái triển khai server thật (datn.tranngochung.id.vn) |
+| [COMMUNITY_FL.md](COMMUNITY_FL.md) | Học liên kết cộng đồng: mỗi người vào web là một client (giao thức, phòng thủ, triển khai, bằng chứng đo) |
 | [REFERENCES_IEEE.md](REFERENCES_IEEE.md) | Danh mục trích dẫn IEEE |

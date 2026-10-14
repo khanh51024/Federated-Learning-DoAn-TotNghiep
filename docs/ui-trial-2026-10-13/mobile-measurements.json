@@ -1,0 +1,38 @@
+[
+  {
+    "page": "evidence",
+    "height": 3033,
+    "scrollWidth": 305,
+    "width": 305
+  },
+  {
+    "page": "training",
+    "height": 1903,
+    "scrollWidth": 305,
+    "width": 305
+  },
+  {
+    "page": "diagnosis",
+    "height": 2145,
+    "scrollWidth": 305,
+    "width": 305
+  },
+  {
+    "page": "results",
+    "height": 1850,
+    "scrollWidth": 305,
+    "width": 305
+  },
+  {
+    "page": "noniid",
+    "height": 1707,
+    "scrollWidth": 305,
+    "width": 305
+  },
+  {
+    "page": "overview",
+    "height": 2509,
+    "scrollWidth": 305,
+    "width": 305
+  }
+]

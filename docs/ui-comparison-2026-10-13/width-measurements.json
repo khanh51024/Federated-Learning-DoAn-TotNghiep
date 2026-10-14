@@ -1,0 +1,32 @@
+[
+  {
+    "page": "noniid",
+    "left": 312.5,
+    "mainWidth": 1280,
+    "viewport": 1905
+  },
+  {
+    "page": "results",
+    "left": 312.5,
+    "mainWidth": 1280,
+    "viewport": 1905
+  },
+  {
+    "page": "diagnosis",
+    "left": 312.5,
+    "mainWidth": 1280,
+    "viewport": 1905
+  },
+  {
+    "page": "training",
+    "left": 312.5,
+    "mainWidth": 1280,
+    "viewport": 1905
+  },
+  {
+    "page": "evidence",
+    "left": 312.5,
+    "mainWidth": 1280,
+    "viewport": 1905
+  }
+]

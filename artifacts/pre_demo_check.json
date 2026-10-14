@@ -1,18 +1,18 @@
 {
-  "generated_at": "2026-10-12T22:08:19",
-  "overall": "technical_demo_ready",
-  "fail_count": 0,
+  "generated_at": "2026-10-14T14:28:24",
+  "overall": "not_ready",
+  "fail_count": 1,
   "warn_count": 4,
   "checks": [
     {
       "name": "flower_installed",
-      "status": "pass",
-      "detail": "flwr=1.36.0"
+      "status": "fail",
+      "detail": "Flower unavailable: No package metadata was found for flwr"
     },
     {
       "name": "pytorch",
       "status": "pass",
-      "detail": "torch=2.14.0+cpu, device=CPU"
+      "detail": "torch=2.11.0+cpu, device=CPU"
     },
     {
       "name": "deployment_scripts",
