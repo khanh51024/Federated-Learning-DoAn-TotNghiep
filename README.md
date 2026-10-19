@@ -1,6 +1,6 @@
 # Đồ Án Tốt Nghiệp: Federated Learning trên PlantVillage với MobileNetV3-Small
 
-> **Demo bảo vệ GĐ1/GĐ2 hiện tại:** xem [hướng dẫn web và nguồn số liệu](docs/WEB_DEMO_GD1_GD2.md). Trang web dùng ba nhánh mixed PlantVillage/PlantDoc đã ghim; phiên Flower 5 client localhost là smoke kỹ thuật trên ảnh tổng hợp. Các lệnh và số liệu scratch trong phần lịch sử bên dưới không phải đối chứng chính của demo.
+> **Demo bảo vệ GĐ1/GĐ2 hiện tại:** xem [hướng dẫn web và nguồn số liệu](docs/WEB_DEMO_GD1_GD2.md). Trang web dùng ba nhánh mixed PlantVillage/PlantDoc đã ghim; phiên Flower 5 client localhost là smoke kỹ thuật trên ảnh nhiễu ngẫu nhiên (kiểm chứng hệ thống, không đo độ chính xác). Các lệnh và số liệu scratch trong phần lịch sử bên dưới không phải đối chứng chính của demo.
 
 > **Nghiên Cứu & Triển Khai Hệ Thống Học Liên Hợp (Federated Learning) Ứng Dụng Chẩn Đoán Bệnh Cây Trồng Trên Nền Tảng Flower Framework**
 

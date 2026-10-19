@@ -7,7 +7,9 @@ Wants=network-online.target
 Type=simple
 User=ubuntu
 Group=ubuntu
-WorkingDirectory=/home/ubuntu/fl-demo-20261013
+# __RELEASE_DIR__ là thư mục phát hành đang phục vụ: render bằng `sed "s#__RELEASE_DIR__#$NEW#g"` (xem docs/SERVER_DEPLOY_20261005.md).
+# Chép nguyên tệp này lên máy chủ mà không render sẽ hỏng ngay và to tiếng, thay vì âm thầm trỏ về một bản phát hành cũ.
+WorkingDirectory=__RELEASE_DIR__
 Environment=PYTHONUNBUFFERED=1
 Environment=OMP_NUM_THREADS=1
 Environment=MKL_NUM_THREADS=1
@@ -15,7 +17,7 @@ Environment=MKL_NUM_THREADS=1
 # tùy chọn COMMUNITY_RATE_SCALE, CORS_ALLOW_ORIGINS. Tệp nằm NGOÀI repo, chmod 600, thuộc root (systemd đọc bằng quyền root). Dấu "-" = không có thì vẫn chạy.
 EnvironmentFile=-/etc/cropfed/community.env
 # Đúng MỘT worker: vòng học được gộp trong tiến trình và khóa nằm trong bộ nhớ. Không tăng --workers.
-ExecStart=/home/ubuntu/fl-demo-20261013/.venv/bin/python -m uvicorn web.app:app --host 127.0.0.1 --port 8088 --workers 1 --proxy-headers --forwarded-allow-ips 127.0.0.1
+ExecStart=__RELEASE_DIR__/.venv/bin/python -m uvicorn web.app:app --host 127.0.0.1 --port 8088 --workers 1 --proxy-headers --forwarded-allow-ips 127.0.0.1
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=30
