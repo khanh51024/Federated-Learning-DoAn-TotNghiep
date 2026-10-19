@@ -9,8 +9,9 @@ Kiến trúc (từ 2026-10-09, xem docs/MODEL_REGISTRY.md):
 - web/services/model_service.py — service registry/inference duy nhất (đọc artifacts/registry.json)
 - web/state.py               — trạng thái background task + NetworkDemoManager dùng chung
 
-Web chỉ làm nhiệm vụ Presentation, API và Inference; tuyệt đối không chứa logic
-training nặng nề bên trong và không tự hardcode đường dẫn checkpoint.
+Web phục vụ giao diện, API và suy luận. Huấn luyện thử Centralized và FedAvg mô phỏng chạy TRONG tiến trình web
+(BackgroundTasks) dưới khóa một tác vụ, trần tham số, hẹn giờ và kiểm RAM (web/services/training_guard.py); phiên Flower
+chạy NGOÀI tiến trình (1 server + 5 client, web/network_demo.py). Không tự hardcode đường dẫn checkpoint.
 """
 from __future__ import annotations
 
@@ -23,6 +24,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from web.routers import community_fl as _community_router
 from web.routers import inference as _inference_router
@@ -86,17 +88,67 @@ if _CORS_ORIGINS:
     )
 
 
+LONG_CACHE_PREFIXES = ("/static/fonts/", "/static/vendor/")
+
+
+def cache_control_for(path: str, status: int) -> str | None:
+    """Chính sách cache theo đường dẫn + mã trạng thái (hàm thuần để test được).
+
+    - Phông và thư viện ghim phiên bản hiếm khi đổi: giữ một ngày, KỂ CẢ khi trình duyệt hỏi lại và nhận 304
+      (trước đây 304 rơi vào nhánh no-store làm trình duyệt vứt bản đã giữ).
+    - Mã nguồn giao diện: `no-cache` = luôn hỏi lại máy chủ nhưng được nhận 304 (ETag) thay vì tải lại cả tệp. Các module JS
+      import lẫn nhau không có ?v= nên KHÔNG được dùng max-age cho chúng, nếu không bản cũ sẽ còn lại sau khi phát hành.
+    - 404/lỗi không bao giờ được cache lâu."""
+    if path.startswith(LONG_CACHE_PREFIXES) and status in (200, 304):
+        return "public, max-age=86400"
+    if path == "/" or path.startswith("/static/"):
+        return "no-cache"
+    return None
+
+
 @app.middleware("http")
-async def add_no_cache_headers(request: Request, call_next):
+async def add_cache_headers(request: Request, call_next):
     response = await call_next(request)
-    path = request.url.path
-    if path.startswith(("/static/fonts/", "/static/vendor/")) and response.status_code == 200:
-        # Phông và thư viện ghim phiên bản hiếm khi đổi: cho trình duyệt giữ một ngày để mở tab/đổi tab không tải lại.
-        response.headers["Cache-Control"] = "public, max-age=86400"
-    elif path == "/" or path.startswith("/static/"):
-        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        response.headers["Pragma"] = "no-cache"
-        response.headers["Expires"] = "0"
+    policy = cache_control_for(request.url.path, response.status_code)
+    if policy is not None:
+        response.headers["Cache-Control"] = policy
+    return response
+
+
+# ───────── Tiêu đề bảo mật cho trang chính ─────────
+# CSP cho mọi trang HTML (trừ /docs, /redoc của FastAPI nạp Swagger từ CDN và /quan-tri đã có chính sách riêng chặt hơn).
+# - script-src 'self' + 'wasm-unsafe-eval': onnxruntime-web biên dịch WebAssembly trong Web Worker; KHÔNG có 'unsafe-eval'/'unsafe-inline'.
+# - style-src 'self': giao diện không dùng style="" (dùng data-style → CSSOM, xem core/dom.js applyStyleData).
+# - img-src data:/blob: cho favicon, mũi tên của <select>, ảnh Grad-CAM từ API và ảnh xem trước của người dùng.
+# Không gắn CSP lên tệp JS của worker: chính sách của worker lấy từ phản hồi của nó, bỏ trống thì wasm biên dịch được ở mọi trình duyệt.
+PAGE_CSP = (
+    "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' data: blob:; "
+    "font-src 'self'; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; "
+    "form-action 'self'; frame-ancestors 'none'"
+)
+CSP_MODE_ENV = "CROPFED_CSP_MODE"  # enforce (mặc định) | report | off — công tắc lùi nhanh không cần sửa mã
+CSP_EXEMPT_PREFIXES = ("/docs", "/redoc", "/openapi.json")
+
+
+def security_headers_for(path: str, content_type: str, csp_mode: str | None = None) -> dict[str, str]:
+    """Tiêu đề bảo mật theo đường dẫn và loại nội dung (hàm thuần để test được). Dùng setdefault khi gắn để /quan-tri giữ chính sách riêng."""
+    headers = {"X-Content-Type-Options": "nosniff"}
+    if not content_type.startswith("text/html") or path.startswith(CSP_EXEMPT_PREFIXES):
+        return headers
+    headers["Referrer-Policy"] = "same-origin"
+    headers["X-Frame-Options"] = "DENY"
+    mode = (csp_mode if csp_mode is not None else os.environ.get(CSP_MODE_ENV, "enforce")).strip().lower()
+    if mode == "off":
+        return headers
+    headers["Content-Security-Policy-Report-Only" if mode == "report" else "Content-Security-Policy"] = PAGE_CSP
+    return headers
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    for name, value in security_headers_for(request.url.path, response.headers.get("content-type", "")).items():
+        response.headers.setdefault(name, value)
     return response
 
 
@@ -113,19 +165,16 @@ STATIC_DIR.mkdir(parents=True, exist_ok=True)
 (STATIC_DIR / "js").mkdir(parents=True, exist_ok=True)
 
 
+# Cùng một đối tượng StaticFiles vừa gắn ở /static vừa phục vụ trang chủ: có ETag/Last-Modified và trả 304 cho "/".
+_STATIC_FILES = StaticFiles(directory=str(STATIC_DIR))
+
+
 @app.get("/")
-def serve_index():
-    index_file = STATIC_DIR / "index.html"
-    if index_file.exists():
-        return FileResponse(
-            index_file,
-            headers={
-                "Cache-Control": "no-cache, no-store, must-revalidate",
-                "Pragma": "no-cache",
-                "Expires": "0",
-            },
-        )
-    return {"message": "Federated Learning API is running. static/index.html is being prepared."}
+async def serve_index(request: Request):
+    try:
+        return await _STATIC_FILES.get_response("index.html", request.scope)
+    except StarletteHTTPException:
+        return {"message": "Federated Learning API is running. static/index.html is being prepared."}
 
 
 ADMIN_PAGE = Path(__file__).resolve().parent / "static" / "admin" / "admin.html"
@@ -156,7 +205,7 @@ app.include_router(_training_router.router)
 app.include_router(_community_router.router)
 
 # Mount thư mục static assets
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+app.mount("/static", _STATIC_FILES, name="static")
 
 if __name__ == "__main__":
     import uvicorn

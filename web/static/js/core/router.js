@@ -114,6 +114,8 @@ function renderStepNav(route) {
 async function show(id) {
   const route = ROUTES.find(r => r.id === id) || ROUTES[0];
   const mine = ++token;
+  // Sau mỗi `await` người dùng có thể đã sang bước khác: lượt dựng cũ không được chạy onShow, bật lại thanh Trước/Sau hay báo cho người nghe.
+  const stale = () => mine !== token;
   // Toast lỗi không tự tắt: lỗi của biểu mẫu ở bước cũ không được theo người dùng sang bước khác và che nội dung
   // (đặc biệt ở 320 px). Dọn ngay khi đổi bước, không đợi trang đích dựng xong. Thông báo trạng thái hệ thống
   // (sticky, vd. mất kết nối) vẫn giữ.
@@ -160,6 +162,7 @@ async function show(id) {
       await mod.mount(pane);
       mounted.set(route.id, mod); // chỉ coi là đã dựng khi mount() xong; lỗi thì lần mở sau thử lại
     }
+    if (stale()) return; // trang đã dựng xong (mounted giữ nguyên) nhưng người dùng đã rời đi: lần vào sau sẽ chạy onShow
     if (typeof mod.onShow === "function") await mod.onShow(pane);
   } catch (error) {
     console.error(`[Router] Không dựng được trang ${route.id}:`, error);
@@ -173,8 +176,9 @@ async function show(id) {
       box.querySelector("button").addEventListener("click", () => show(route.id));
       pane.prepend(box);
     }
-    notify("error", "Không dựng được trang", route.label, { detail: error.message });
+    if (!stale()) notify("error", "Không dựng được trang", route.label, { detail: error.message });
   }
+  if (stale()) return;
   byId("step-nav")?.classList.remove("is-pending");
   for (const fn of listeners) fn(route);
 }

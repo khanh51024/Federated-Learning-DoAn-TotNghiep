@@ -34,6 +34,10 @@ test = [
     "onnx>=1.16.0",
     "onnxruntime>=1.18.0",
 ]
+# Kiểm thử đầu-cuối bằng trình duyệt thật (scripts/e2e_*.py, ui_audit.py); không nằm trong gate nên tách khỏi `test`.
+e2e = [
+    "playwright>=1.50",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]

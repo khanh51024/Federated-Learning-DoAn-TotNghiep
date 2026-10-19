@@ -33,6 +33,7 @@ data/*
 *kaggle*
 *KAGGLE*
 *upload*
+!tests/test_web_upload_limits.py
 
 !kaggle_*.ipynb
 !legacy/configs/*kaggle*.yaml
@@ -65,3 +66,4 @@ artifacts/checkpoints/smoke/*.pt
 
 # Học liên kết cộng đồng: mô hình ONNX, đặc trưng giám sát và trạng thái vòng (sinh lại được / dữ liệu vận hành)
 artifacts/community_fl/
+artifacts/community_demo_packs/

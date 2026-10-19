@@ -6,11 +6,12 @@ Giao diện web không phụ thuộc Google Fonts lúc chạy; các tệp ở đ
 |---|---|---|---|
 | Be Vietnam Pro | 400, 500, 600, 700 | Toàn bộ chữ giao diện (có bộ glyph tiếng Việt đầy đủ) | SIL Open Font License 1.1 |
 | JetBrains Mono | 400–600 (biến thiên) | Mã/hash, địa chỉ, chip thiết bị | SIL Open Font License 1.1 |
-| Source Serif 4 | 600–700 (biến thiên) | Tiêu đề trang, câu hỏi nghiên cứu, tiêu đề khối (có glyph tiếng Việt) | SIL Open Font License 1.1 |
+| Source Serif 4 | 600–700 (biến thiên) | Thương hiệu, tiêu đề khối, câu hỏi nghiên cứu (có glyph tiếng Việt); tiêu đề trang `.page-title` dùng Be Vietnam Pro 700 | SIL Open Font License 1.1 |
 
 - `fonts.css` chứa các khối `@font-face` (kèm `unicode-range`), được nạp bởi `web/static/index.html`.
 - Trình duyệt chỉ tải subset nào có ký tự được dùng; trang tiếng Việt thường dùng `latin` + `vietnamese`.
-- Máy chủ trả các tệp này với `Cache-Control: public, max-age=86400` (xem `web/app.py`), các tệp khác của `/static/` vẫn `no-store`.
+- Máy chủ trả các tệp này với `Cache-Control: public, max-age=86400` (xem `web/app.py`), các tệp khác của `/static/` dùng `no-cache` (luôn hỏi lại máy chủ, nhận 304 nếu chưa đổi; module JS import lẫn nhau không có `?v=` nên không được dùng `max-age`).
+- Đo ngày 19/10/2026: lần mở đầu tải 15–16 tệp phông (~283 KB), mọi `<link rel="preload">` đều được dùng (không cảnh báo "preloaded but not used"). Tiêu đề trang (weight 700) là ứng viên LCP nên có preload riêng. Muốn giảm thật số tệp phải gộp bớt trọng số (ví dụ dùng phông biến thiên), không phải cắt preload.
 - Source Serif 4 được tải bằng `python -I scripts/fetch_webfonts.py` (chạy tay một lần, không chạy lúc web hoạt động); script ghi
   `source-serif-4-600-700-{latin,latin-ext,vietnamese}.woff2` và khối `BEGIN/END source-serif-4` trong `fonts.css`.
 - Thay phông: tải lại woff2 từ Google Fonts, cập nhật tên tệp trong `fonts.css`, và nhớ cập nhật `<link rel="preload">` ở `index.html`.
