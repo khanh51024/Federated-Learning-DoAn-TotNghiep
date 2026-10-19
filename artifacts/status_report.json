@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 2 mục kỹ thuật chưa XONG)",
+  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)",
   "canonical_run_id": "20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62",
   "dataset_truth": {
     "source": "data/partitions_stage2_scratch_v3/suite.json",
@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-19T22:27:54",
+      "generated_at": "2026-10-19T23:58:32",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,13 +145,13 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-19T22:27:57",
+      "generated_at": "2026-10-19T23:58:45",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
-      "generated_at": "2026-10-19T21:50:40",
-      "code_fingerprint": "fc59eed5eb115d77c7970f2b678b5478c2277fbf224d85767cbf59308f6f5e73",
+      "generated_at": "2026-10-20T00:07:14",
+      "code_fingerprint": "d91fb6b19c5beafbefb1d0ae54b68326aca528a6f800c18132fa8cc0b03b0f79",
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
@@ -180,7 +180,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-19T22:28:02",
+      "generated_at": "2026-10-19T23:58:39",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
@@ -233,8 +233,8 @@
     {
       "id": "docs_clean",
       "title": "Dọn tài liệu mâu thuẫn",
-      "status": "CHƯA",
-      "detail": "tài liệu ngoài danh mục: gốc=[] docs=['CAU_HOI_BAO_VE_2026-10-19.md']",
+      "status": "XONG",
+      "detail": "gốc repo chỉ còn README.md + PROJECT_STATUS.md; docs/ chỉ gồm tài liệu hiện hành",
       "unlock": []
     },
     {
@@ -269,7 +269,7 @@
       "id": "full_tests",
       "title": "Full tests pass trên mã nguồn hiện tại",
       "status": "XONG",
-      "detail": "technical_acceptance=pass lúc 2026-10-19T21:50:40 (gồm test mạng, 60 file test) với mã nguồn có dấu vân tay fc59eed5eb11; thay mã sau thời điểm này thì phải chạy lại",
+      "detail": "technical_acceptance=pass lúc 2026-10-20T00:07:14 (gồm test mạng, 60 file test) với mã nguồn có dấu vân tay d91fb6b19c5b; thay mã sau thời điểm này thì phải chạy lại",
       "unlock": []
     },
     {
@@ -357,8 +357,8 @@
     {
       "id": "release",
       "title": "Release sạch (mọi gate kỹ thuật XONG)",
-      "status": "CHƯA",
-      "detail": "còn mục kỹ thuật chưa XONG: ['docs_clean']",
+      "status": "XONG",
+      "detail": "mọi mục kỹ thuật XONG; trước khi nộp vẫn phải `git status` sạch và gắn tag",
       "unlock": []
     }
   ],
