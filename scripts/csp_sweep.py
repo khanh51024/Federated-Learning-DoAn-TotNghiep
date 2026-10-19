@@ -1,7 +1,8 @@
 """Quét vi phạm CSP của trang chính: mở đủ 6 bước, mọi tab con, mọi mục gấp, chẩn đoán một ảnh mẫu, nền tối, bằng Chromium/Firefox/WebKit.
 
 Máy chủ thử chạy với CSP ở chế độ `enforce` (mặc định). Một vi phạm nghĩa là có thứ thật sự bị chặn.
-Chạy:  python scripts/csp_sweep.py [--browser chromium|firefox|webkit|all]
+Chạy:  python scripts/csp_sweep.py [--browser chromium|firefox|webkit|all] [--base-url https://máy-chủ-đang-chạy]
+Có --base-url thì quét máy chủ đó (chỉ đọc, cộng một lần chẩn đoán ảnh mẫu) thay vì tự dựng máy chủ thử.
 Thoát mã 0 nếu không có vi phạm/lỗi console, 1 nếu có, 2 nếu thiếu điều kiện chạy.
 """
 from __future__ import annotations
@@ -67,6 +68,7 @@ def sweep(browser_type: Any, base: str, label: str) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--browser", default="all", choices=["chromium", "firefox", "webkit", "all"])
+    parser.add_argument("--base-url", default=None, help="quét một máy chủ đang chạy thay vì dựng máy chủ thử")
     args = parser.parse_args()
     try:
         from playwright.sync_api import sync_playwright
@@ -74,14 +76,19 @@ def main() -> int:
         print("Cần Playwright (pip install playwright && playwright install)", file=sys.stderr)
         return 2
 
-    state_dir = tempfile.mkdtemp(prefix="csp-sweep-")
-    port = free_port()
-    base = f"http://127.0.0.1:{port}"
-    env = {key: value for key, value in os.environ.items() if key != "CROPFED_CSP_MODE"}
-    env.update({"COMMUNITY_SECRET": SECRET, "COMMUNITY_ADMIN_TOKEN": ADMIN, "COMMUNITY_STATE_DIR": state_dir, "PYTHONUNBUFFERED": "1"})
-    log_file = (Path(state_dir) / "server.log").open("wb")
-    server = subprocess.Popen([sys.executable, "-m", "uvicorn", "web.app:app", "--host", "127.0.0.1", "--port", str(port), "--log-level", "warning"],
-                              cwd=ROOT, env=env, stdout=log_file, stderr=subprocess.STDOUT)
+    server = None
+    log_file = None
+    if args.base_url:
+        base = args.base_url.rstrip("/")
+    else:
+        state_dir = tempfile.mkdtemp(prefix="csp-sweep-")
+        port = free_port()
+        base = f"http://127.0.0.1:{port}"
+        env = {key: value for key, value in os.environ.items() if key != "CROPFED_CSP_MODE"}
+        env.update({"COMMUNITY_SECRET": SECRET, "COMMUNITY_ADMIN_TOKEN": ADMIN, "COMMUNITY_STATE_DIR": state_dir, "PYTHONUNBUFFERED": "1"})
+        log_file = (Path(state_dir) / "server.log").open("wb")
+        server = subprocess.Popen([sys.executable, "-m", "uvicorn", "web.app:app", "--host", "127.0.0.1", "--port", str(port), "--log-level", "warning"],
+                                  cwd=ROOT, env=env, stdout=log_file, stderr=subprocess.STDOUT)
     problems: list[str] = []
     try:
         wait_for(lambda: http("GET", f"{base}/api/status")[0] == 200, 120, 1, "máy chủ khởi động")
@@ -97,12 +104,14 @@ def main() -> int:
                 print(f"{name}: {'sạch' if not found else f'{len(found)} vấn đề'}")
                 problems.extend(found)
     finally:
-        server.terminate()
-        try:
-            server.wait(15)
-        except subprocess.TimeoutExpired:
-            server.kill()
-        log_file.close()
+        if server is not None:
+            server.terminate()
+            try:
+                server.wait(15)
+            except subprocess.TimeoutExpired:
+                server.kill()
+        if log_file is not None:
+            log_file.close()
     for item in dict.fromkeys(problems):
         print("  " + item)
     return 1 if problems else 0
