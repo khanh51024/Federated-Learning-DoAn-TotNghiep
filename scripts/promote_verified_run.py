@@ -7,8 +7,6 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict
 
-import torch
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -16,6 +14,7 @@ import sys as _sys
 if str(ROOT) not in _sys.path:
     _sys.path.insert(0, str(ROOT))
 from src import registry as reg  # noqa: E402
+from src.common.checkpoint_io import load_checkpoint  # noqa: E402
 
 def sha256_file(path: Path) -> str:
     h = hashlib.sha256()
@@ -30,7 +29,7 @@ def load_json(path: Path) -> Dict[str, Any]:
 
 
 def checkpoint_meta(path: Path) -> Dict[str, Any]:
-    payload = torch.load(path, map_location="cpu", weights_only=False)
+    payload = load_checkpoint(path)
     out: Dict[str, Any] = {"file_sha256": sha256_file(path)}
     if isinstance(payload, dict):
         for key in ("seed", "epochs", "rounds", "num_clients", "local_epochs", "source"):

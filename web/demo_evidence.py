@@ -193,20 +193,14 @@ _TRANSFORM: Any = None
 
 def _build_model(source: Any, model_id: str) -> Any:
     """`source`: đường dẫn hoặc file-like chứa ĐÚNG các byte đã băm (xem `_published_model`)."""
-    import numpy as np
-    import torch
-    from numpy._core.multiarray import _reconstruct
     from torch import nn
-    from torch.serialization import safe_globals
     from torchvision.models import mobilenet_v3_small
 
-    # NumPy RNG state in the trusted training checkpoint requires these narrow
-    # safe globals. The checkpoint is hashed before any deserialization.
-    numpy_types = [type(np.dtype(kind)) for kind in (
-        "float64", "int64", "float32", "uint32", "uint64", "int32", "uint8"
-    )]
-    with safe_globals([_reconstruct, np.ndarray, np.dtype, *numpy_types]):
-        checkpoint = torch.load(source, map_location="cpu", weights_only=True)
+    from src.common.checkpoint_io import load_checkpoint
+
+    # Checkpoint đã được băm trước khi giải nén (xem `_published_model`); `load_checkpoint` giữ
+    # allowlist numpy ở mức tối thiểu và nạp `weights_only=True` thay vì mở pickle tùy ý.
+    checkpoint = load_checkpoint(source)
     if (checkpoint.get("release_manifest_sha256") != RELEASE_SHA
             or checkpoint.get("w0_fingerprint") != W0):
         raise ValueError("Checkpoint protocol metadata mismatch")

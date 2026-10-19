@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT))
 
 from src import registry as reg  # noqa: E402
 from scripts.import_branch_demo import classes_from_taxonomy  # noqa: E402
+from src.common.checkpoint_io import load_checkpoint  # noqa: E402
 
 import torch  # noqa: E402
 
@@ -73,9 +74,10 @@ def stable_state_hash(state: dict[str, torch.Tensor]) -> str:
 
 
 def inspect_checkpoint(rel_path: str, expected_sha256: str | None = None) -> dict[str, Any]:
-    """Băm file; chỉ nạp (unpickle) khi không khai báo hash mong đợi hoặc hash khớp.
+    """Băm file; chỉ nạp khi không khai báo hash mong đợi hoặc hash khớp.
 
-    Checkpoint của bundle công bố mà hash lệch manifest KHÔNG được torch.load (pickle có thể thực thi mã)."""
+    Checkpoint của bundle công bố mà hash lệch manifest KHÔNG được nạp. Kể cả khi hash khớp vẫn
+    nạp qua `load_checkpoint` (`weights_only=True`) để một file bị thay trên đĩa không thực thi mã."""
     path = ROOT / rel_path
     out: dict[str, Any] = {
         "checkpoint_path": rel_path,
@@ -93,7 +95,7 @@ def inspect_checkpoint(rel_path: str, expected_sha256: str | None = None) -> dic
         out["metadata"] = {"load_skipped": "hash khác manifest — không nạp checkpoint chưa tin cậy"}
         return out
     try:
-        payload = torch.load(path, map_location="cpu", weights_only=False)
+        payload = load_checkpoint(path)
     except Exception as exc:  # TorchScript / format lạ
         out["metadata"] = {"load_error": f"{type(exc).__name__}: {exc}"}
         return out

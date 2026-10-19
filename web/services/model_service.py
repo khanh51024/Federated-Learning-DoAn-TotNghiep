@@ -14,6 +14,7 @@ import torch
 
 from src import registry as reg
 
+from src.common.checkpoint_io import load_checkpoint
 from src.federated.weight_inspector import inspect_layer_weights
 
 
@@ -292,7 +293,7 @@ def inspect_weights(layer: Optional[str] = None) -> Dict[str, Any]:
         }
 
     try:
-        ckpt = torch.load(fedavg_ckpt, map_location="cpu", weights_only=False)
+        ckpt = load_checkpoint(fedavg_ckpt)
         state = ckpt.get("model_state", ckpt) if isinstance(ckpt, dict) else ckpt
         weights = {k: v.cpu().detach() if hasattr(v, "cpu") else torch.tensor(v) for k, v in state.items()}
     except Exception as e:

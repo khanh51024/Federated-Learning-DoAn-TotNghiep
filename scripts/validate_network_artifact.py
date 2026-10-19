@@ -8,8 +8,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 
-import torch
-
 ROOT = Path(__file__).resolve().parents[1]
 import sys as _sys
 if str(ROOT) not in _sys.path:
@@ -20,6 +18,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.model.mobilenetv3 import compute_model_hash
+from src.common.checkpoint_io import load_checkpoint  # noqa: E402
 
 
 def sha256_file(path: Path) -> str:
@@ -50,7 +49,7 @@ def main() -> int:
         report = {"ok": False, "checks": checks, "details": details}
     else:
         metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
-        ckpt = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+        ckpt = load_checkpoint(checkpoint_path)
 
         checks["require_real_clients"] = metrics.get("require_real_clients") is True
         checks["require_real_evaluation"] = metrics.get("require_real_evaluation") is True

@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src import registry as reg  # noqa: E402
+from src.common.checkpoint_io import load_checkpoint  # noqa: E402
 
 MANIFEST = reg.abs_path(reg.CANONICAL_MANIFEST_JSON)
 OUT = reg.abs_path(reg.PROVENANCE_VALIDATION_JSON)
@@ -51,7 +52,7 @@ def _inspect_checkpoint(path: Path) -> Dict[str, Any]:
         return result
 
     result["file_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
-    payload = torch.load(path, map_location="cpu", weights_only=False)
+    payload = load_checkpoint(path)
     if isinstance(payload, dict):
         state = _state_dict_from_checkpoint(payload)
         if state is not None:
