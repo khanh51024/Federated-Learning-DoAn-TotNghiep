@@ -4,7 +4,7 @@ import { beat, diagramHtml, pulse } from "../core/flnet.js";
 import { cancelWithin, followPointer, onMotionPrefChange, play } from "../core/motion.js";
 import { onRouteChange } from "../core/router.js";
 import {
-  applyStyleData, byId, esc, fmtInt, fmtNum, fmtPct, formatDiseaseName, prefersReducedMotion, revealItems,
+  applyStyleData, byId, esc, fmtInt, fmtNum, fmtPct, formatDiseaseName, prefersReducedMotion, revealItems, sectionHead,
 } from "../core/dom.js";
 
 const LOCALS = ["local_00", "local_01", "local_02", "local_03", "local_04"];
@@ -148,15 +148,13 @@ export async function mount() {
   body.innerHTML = `
     <div class="report-pair mt-4">
     <section class="panel report-section" aria-labelledby="problem-title">
-      <p class="eyebrow">1.1 · Bài toán</p>
-      <h3 class="panel-title" id="problem-title">Huấn luyện chung khi ảnh nằm ở nhiều nơi và không muốn gom về một máy</h3>
+      ${sectionHead("1.1", "Bài toán", { id: "problem-title", lead: "Huấn luyện chung khi ảnh nằm ở nhiều nơi và không muốn gom về một máy" })}
       <p class="panel-desc mt-2">Ảnh bệnh lá cây do nhiều nơi giữ riêng. Gom hết về một máy để huấn luyện thì tốn đường truyền và mỗi nơi phải giao ảnh gốc. Học liên kết cho mỗi nơi (client) tự huấn luyện trên ảnh của mình, chỉ gửi trọng số mô hình lên máy chủ để gộp lại.</p>
       <p class="panel-desc mt-2">Khó khăn của đề tài: ảnh ở các client không giống nhau, ví dụ nơi này nhiều ảnh cà chua, nơi kia gần như không có. Với dữ liệu lệch như vậy, mô hình gộp có thể kém hơn mô hình huấn luyện trên toàn bộ ảnh.</p>
     </section>
 
     <section class="panel report-section" aria-labelledby="questions-title">
-      <p class="eyebrow">1.2 · Câu hỏi nghiên cứu</p>
-      <h3 class="panel-title" id="questions-title">Ba câu hỏi đồ án trả lời</h3>
+      ${sectionHead("1.2", "Câu hỏi nghiên cứu", { id: "questions-title", lead: "Ba câu hỏi đồ án trả lời" })}
       <ol class="question-list mt-3">
         <li><b>So với gom ảnh.</b> Khi ảnh chia lệch cho ${fmtInt(clientCount)} client, FedAvg đạt gần mô hình Centralized (gom ảnh một nơi) đến đâu?</li>
         <li><b>So với học riêng.</b> Học chung có hơn việc mỗi client tự học riêng (Local-only) không?</li>
@@ -166,17 +164,17 @@ export async function mount() {
     </section>
     </div>
 
-    <section class="overview-headline-results mt-4" aria-label="Kết quả chính trên ảnh PlantVillage">
-      <div class="overview-headline-intro"><span class="eyebrow">1.3 · Kết quả chính, trên tập kiểm tra PlantVillage</span><h3>FedAvg đạt <strong>${fmtPct(fed.plantvillage.top1_accuracy)}</strong></h3><p>${fmtInt(val.plantvillage)} ảnh · độ chính xác Top-1 (lựa chọn đầu tiên của mô hình đúng nhóm bệnh)</p></div>
+    <div class="mt-5">${sectionHead("1.3", "Kết quả chính", { id: "headline-title" })}</div>
+    <section class="overview-headline-results mt-3" aria-labelledby="headline-title">
+      <div class="overview-headline-intro"><span class="eyebrow">Trên tập kiểm tra PlantVillage</span><h4>FedAvg đạt <strong>${fmtPct(fed.plantvillage.top1_accuracy)}</strong></h4><p>${fmtInt(val.plantvillage)} ảnh · độ chính xác Top-1 (lựa chọn đầu tiên của mô hình đúng nhóm bệnh)</p></div>
       <div class="overview-headline-compare"><span>Centralized</span><strong>${fmtPct(central.plantvillage.top1_accuracy)}</strong><small>Gom ảnh một nơi</small></div>
       <div class="overview-headline-compare"><span>Local-only</span><strong>${range(pvLocals)}</strong><small>Mỗi client học riêng</small></div>
     </section>
 
     <p class="viewer-scope mt-3"><b class="scope-tag">Phạm vi</b> Kết quả từ một lần chạy; tập kiểm tra đã tham gia quá trình chọn mô hình và các cách học chưa huấn luyện cùng điều kiện, nên chưa phải độ chính xác ngoài thực địa. Xem hạn chế ở <a href="#ket-luan">chương 5</a>.</p>
 
-    <section class="mt-4" aria-labelledby="toc-title">
-      <p class="eyebrow">1.4 · Cấu trúc báo cáo</p>
-      <h3 class="panel-title" id="toc-title">Đọc theo thứ tự hoặc nhảy tới phần cần xem</h3>
+    <section class="mt-5" aria-labelledby="toc-title">
+      ${sectionHead("1.4", "Cấu trúc báo cáo", { id: "toc-title", lead: "Đọc theo thứ tự hoặc nhảy tới phần cần xem" })}
       <div class="toc-grid mt-3">
         <a class="toc-card" href="#du-lieu"><span class="toc-no">2</span><b>Dữ liệu</b><span>Bộ ảnh, cách chia tập học, kiểm tra, giữ riêng và dữ liệu lệch giữa các client.</span></a>
         <a class="toc-card" href="#phuong-phap"><span class="toc-no">3</span><b>Phương pháp</b><span>Ba cách huấn luyện, thuật toán FedAvg, thiết lập thí nghiệm và cách đánh giá.</span></a>

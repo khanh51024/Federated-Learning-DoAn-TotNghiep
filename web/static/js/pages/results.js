@@ -5,7 +5,7 @@ import { barRise, lineDraw, makeChartWhenVisible, pillarColors } from "../core/c
 import { play } from "../core/motion.js";
 import {
   applyStyleData, $$, MODEL_LABELS, MODEL_ORDER, byId, diseaseOf, cropOf, esc, fmtInt, fmtNum, fmtPct,
-  formatDiseaseName, modelPill, notify, pillarOf, withAlpha,
+  formatDiseaseName, modelPill, notify, pillarOf, sectionHead, withAlpha,
 } from "../core/dom.js";
 
 const built = new Set();
@@ -41,7 +41,7 @@ function buildSummary() {
   const covered = summary?.plantdoc?.available ? summary.plantdoc.classes_covered : null;
   root.innerHTML = `
     <section class="panel">
-      <div class="panel-header-flex"><div><p class="eyebrow">4.1 · Tổng hợp</p><h3 class="panel-title">So sánh ba phương pháp huấn luyện</h3><p class="panel-desc">1 mô hình gom ảnh · 1 mô hình học liên kết · 5 mô hình học riêng</p></div>
+      <div class="panel-header-flex"><div>${sectionHead("4.1", "Tổng hợp: so sánh ba phương pháp huấn luyện")}<p class="panel-desc">1 mô hình gom ảnh · 1 mô hình học liên kết · 5 mô hình học riêng</p></div>
         <div class="segmented" role="radiogroup" aria-label="Nguồn ảnh so sánh">
           <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-result-source="plantvillage">PlantVillage</button>
           <button type="button" class="segmented-option" role="radio" aria-checked="false" data-result-source="plantdoc">PlantDoc · ngoài đồng</button>
@@ -55,7 +55,7 @@ function buildSummary() {
 
     <section class="panel mt-4" aria-labelledby="result-chart-title">
       <div class="overview-section-heading">
-        <div><h3 class="panel-title" id="result-chart-title">Bảy mô hình trên hai nguồn ảnh</h3></div>
+        <div><h4 class="panel-title" id="result-chart-title">Bảy mô hình trên hai nguồn ảnh</h4></div>
         <span class="overview-chart-unit">Tỉ lệ đoán đúng · %</span>
       </div>
       <div class="chart-container chart-tall mt-3"><canvas id="chart-overview" aria-label="So sánh tỉ lệ đoán đúng của bảy mô hình"></canvas></div>
@@ -63,7 +63,7 @@ function buildSummary() {
     </section>
 
     <section class="panel mt-4" id="result-full-table" aria-labelledby="result-table-title">
-      <h3 class="panel-title" id="result-table-title">Bảng đầy đủ của 7 mô hình</h3>
+      <h4 class="panel-title" id="result-table-title">Bảng đầy đủ của 7 mô hình</h4>
       <p class="panel-desc">PlantVillage ${fmtInt(evidence.validation_counts.plantvillage)} ảnh (cùng kiểu với ảnh học) và PlantDoc ${fmtInt(evidence.validation_counts.plantdoc)} ảnh (ảnh ngoài đồng). Số đậm là cao nhất mỗi cột.</p>
       <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
         <table class="data-table result-table">
@@ -84,7 +84,7 @@ function buildSummary() {
     <details class="overview-detail mt-4">
       <summary><span><strong>Lịch sử huấn luyện Centralized</strong><small>Đường độ chính xác và sai số theo epoch</small></span></summary>
       <div class="overview-detail-body">
-      <h3 class="panel-title">Quá trình huấn luyện Centralized v6</h3>
+      <h4 class="panel-title">Quá trình huấn luyện Centralized v6</h4>
       <p class="panel-desc">${fmtInt(evidence.centralized_history.length)} epoch trong dữ liệu công bố. Lịch sử từng vòng của FedAvg chưa đủ trong bộ dữ liệu giao diện để vẽ đường so sánh tương ứng.</p>
       <div class="chart-container mt-4"><canvas id="chart-central-history" aria-label="Độ chính xác và sai số trên tập kiểm tra của Centralized qua các epoch"></canvas></div>
       </div>
@@ -238,14 +238,14 @@ function buildPlantdoc() {
     </section>
 
     <section class="panel mt-4">
-      <h3 class="panel-title">Phân loại lỗi: sai loại cây hoặc sai bệnh</h3>
+      <h5 class="panel-title">Phân loại lỗi: sai loại cây hoặc sai bệnh</h5>
       <p class="panel-desc">Chia ${fmtInt(pd.models["FedAvg v7"].count)} ảnh PlantDoc theo kết quả dự đoán.</p>
       <div class="legend-row mt-3"><span><i class="swatch seg-ok"></i>Đúng</span><span><i class="swatch seg-mid"></i>Đúng loại cây, sai bệnh</span><span><i class="swatch seg-bad"></i>Sai cả loại cây</span></div>
       <div class="mt-3">${breakdownBar("FedAvg v7", "fedavg", pd.models["FedAvg v7"])}${breakdownBar("Centralized v6", "centralized", pd.models["Centralized v6"])}</div>
     </section>
 
     <section class="panel mt-4">
-      <h3 class="panel-title">Tỉ lệ nhận đúng theo từng nhóm (ảnh ngoài đồng PlantDoc)</h3>
+      <h5 class="panel-title">Tỉ lệ nhận đúng theo từng nhóm (ảnh ngoài đồng PlantDoc)</h5>
       <p class="panel-desc">Chỉ các nhóm có ảnh PlantDoc trong tập kiểm tra. Hàng tô nền là nhóm FedAvg nhận đúng dưới ${fmtNum((pd.weak_threshold || 0.5) * 100, 0)}%. Cột “Chênh lệch miền” = tỉ lệ nhận đúng ở ảnh PlantVillage trừ tỉ lệ ở ảnh PlantDoc của FedAvg (điểm phần trăm).</p>
       <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
         <table class="data-table">
@@ -292,8 +292,8 @@ function buildCalibration() {
   }).join("");
 
   root.innerHTML = `
-    <p class="eyebrow">4.4 · Độ tin cậy của xác suất</p>
-    <section class="callout callout-warn mt-2">
+    ${sectionHead("4.4", "Độ tin cậy của xác suất")}
+    <section class="callout callout-warn mt-3">
       <b>Xác suất softmax thô của các mô hình chưa được hiệu chuẩn.</b> Trang Chẩn đoán ảnh hiện cả số thô lẫn số đã hiệu chuẩn bằng temperature scaling (T ở bảng dưới).
       Trên PlantVillage độ tin cậy khá sát độ chính xác thực, nhưng trên PlantDoc các mô hình <b>gán xác suất cao hơn nhiều so với tỉ lệ đúng thực tế</b>:
       FedAvg báo trung bình ${fmtPct(re.models.find(m => m.model_id === "fedavg").calibration.plantdoc.mean_confidence, 0)} nhưng chỉ đúng
@@ -303,7 +303,7 @@ function buildCalibration() {
     </section>
 
     <section class="panel mt-4">
-      <h3 class="panel-title">ECE: độ tin cậy lệch bao nhiêu so với thực tế</h3>
+      <h4 class="panel-title">ECE: độ tin cậy lệch bao nhiêu so với thực tế</h4>
       <p class="panel-desc">ECE (Expected Calibration Error, ${re.bins} khoảng) càng thấp càng tốt. "Thô → chỉnh T" là trước và sau khi chia logit cho nhiệt độ T học trên tập hiệu chuẩn riêng ${fmtInt(re.calibration_count)} ảnh; temperature scaling không đổi dự đoán, chỉ đổi xác suất.</p>
       <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
         <table class="data-table">
@@ -316,7 +316,7 @@ function buildCalibration() {
     <section class="panel mt-4">
       <div class="panel-header-flex">
         <div>
-          <h3 class="panel-title">Biểu đồ độ tin cậy</h3>
+          <h4 class="panel-title">Biểu đồ độ tin cậy</h4>
           <p class="panel-desc">Mỗi điểm là một khoảng độ tin cậy: trục ngang là độ tin cậy trung bình, trục dọc là tỉ lệ đúng thực tế. Đường nét đứt là hiệu chuẩn hoàn hảo; điểm dưới đường là tự tin quá mức.</p>
         </div>
         <div class="segmented" role="radiogroup" aria-label="Nguồn ảnh kiểm tra">
@@ -432,7 +432,7 @@ function buildHoldout() {
   const pairs = (block, source) => block?.[source]?.pairs || {};
   const pairBlock = (title, block) => (block ? `
       <div class="pair-block">
-        <h4 class="subhead">${title}</h4>
+        <h5 class="subhead">${title}</h5>
         <ul class="pair-list">
           ${pairLine("PlantDoc · Centralized − FedAvg", pairs(block, "plantdoc").centralized_vs_fedavg)}
           ${pairLine(`PlantDoc · FedAvg − ${esc(MODEL_LABELS[bestLocal.plantdoc] || "Local tốt nhất")}`, pairs(block, "plantdoc").fedavg_vs_best_local)}
@@ -452,11 +452,11 @@ function buildHoldout() {
     .map(([src, v]) => `${src === "plantdoc" ? "PlantDoc" : "PlantVillage"} ${v.reproduced ? "khớp" : `lệch ${fmtInt(v.correct_diff_images)} ảnh`}`).join(", ");
 
   root.innerHTML = `
-    <p class="eyebrow">4.2 · Tập giữ riêng và thống kê</p>
+    ${sectionHead("4.2", "Tập giữ riêng và thống kê")}
     <p class="viewer-scope mt-2">Tập giữ riêng không dùng để chọn mô hình, nhưng chưa phải kiểm thử cuối được khóa trước và chưa nằm trong kiểm tra trùng ảnh (định nghĩa ở <a href="#du-lieu">chương 2</a>).</p>
 
     <section class="panel mt-3">
-      <h3 class="panel-title">Tập kiểm tra và tập giữ riêng, kèm khoảng tin cậy 95%</h3>
+      <h4 class="panel-title">Tập kiểm tra và tập giữ riêng, kèm khoảng tin cậy 95%</h4>
       <p class="panel-desc">Tỉ lệ dự đoán đúng, kèm khoảng tin cậy 95%. Khoảng càng rộng, kết quả càng dao động. Tập giữ riêng: PlantVillage ${fmtInt(ho?.counts_by_source?.plantvillage)} ảnh, PlantDoc ${fmtInt(ho?.counts_by_source?.plantdoc)} ảnh.</p>
       <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
         <table class="data-table result-table">
@@ -489,8 +489,7 @@ function buildHoldout() {
     </details>
 
     ${val || test ? `
-    <details class="overview-detail mt-4"><summary>So sánh theo cặp</summary><div class="overview-detail-body">
-      <h3 class="panel-title">So sánh theo cặp trên cùng ảnh</h3>
+    <details class="overview-detail mt-4"><summary><span><strong>So sánh theo cặp trên cùng ảnh</strong><small>Hiệu số giữa hai mô hình, khoảng tin cậy, McNemar</small></span></summary><div class="overview-detail-body">
       <p class="panel-desc">Mỗi dòng là hiệu số độ chính xác (điểm phần trăm) giữa hai mô hình trên đúng cùng tập ảnh.</p>
       <ul class="mt-2">
         <li>“Khác biệt rõ” nghĩa là khoảng tin cậy không chứa 0; ưu tiên đọc khoảng tin cậy hơn giá trị p.</li>
@@ -502,8 +501,7 @@ function buildHoldout() {
     </div></details>` : ""}
 
     ${leaf ? `
-    <details class="overview-detail mt-4"><summary>Độ nhạy với ảnh nghi chụp lại cùng một lá</summary><div class="overview-detail-body">
-      <h3 class="panel-title">Độ nhạy với ảnh chụp lại cùng một lá (PlantVillage, tập giữ riêng)</h3>
+    <details class="overview-detail mt-4"><summary><span><strong>Độ nhạy với ảnh nghi chụp lại cùng một lá</strong><small>PlantVillage, tập giữ riêng</small></span></summary><div class="overview-detail-body">
       <p class="panel-desc">${fmtInt(leaf.ungrouped_images)} ảnh PlantVillage trong tập giữ riêng không được gắn nhóm theo lá; ${fmtInt(leaf.suspected_reshoots)} ảnh trong đó có ảnh học cùng nhóm mang số thứ tự liền kề (ước lượng ảnh chụp lại cùng lá — có thể làm số đẹp hơn thật). Nếu bỏ chúng mà độ chính xác không giảm thì chưa thấy bằng chứng con số bị phóng đại.</p>
       <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
         <table class="data-table">
@@ -580,7 +578,7 @@ async function buildConfusion() {
       <div tabindex="0" role="region" aria-label="Ma trận nhầm lẫn, cuộn được bằng phím mũi tên" class="table-responsive cm-wrap mt-2" id="cm-wrap"></div>
     </section>
     <section class="panel mt-4">
-      <h3 class="panel-title">Nhầm lẫn nhiều nhất</h3>
+      <h5 class="panel-title">Nhầm lẫn nhiều nhất</h5>
       <ol class="confusion-list mt-3" id="cm-top"></ol>
     </section>`;
   const render = () => {
@@ -634,8 +632,7 @@ async function buildErrors() {
 
   root.innerHTML = `
     <section class="panel">
-      <h3 class="panel-title">Ảnh kiểm tra bị dự đoán sai với xác suất ≥ ${fmtNum(floor, 0)}%</h3>
-      <p class="panel-desc">Đây là các dự đoán sai có xác suất cao nhất. Phần lớn là ảnh PlantDoc chụp ngoài đồng, nơi xác suất dự đoán lệch xa nhất so với độ chính xác thực.</p>
+      <p class="panel-desc">Ảnh kiểm tra bị dự đoán sai dù mô hình báo xác suất từ ${fmtNum(floor, 0)}% trở lên. Phần lớn là ảnh PlantDoc chụp ngoài đồng, nơi xác suất dự đoán lệch xa nhất so với độ chính xác thực.</p>
       <div class="stat-tiles mt-3">
         <article class="stat-tile"><b>${fmtInt(items.length)}</b><span>ảnh sai với xác suất ≥ ${fmtNum(floor, 0)}% (ít nhất một trong hai mô hình)</span></article>
         <article class="stat-tile warn"><b>${fmtPct(fieldCount / Math.max(items.length, 1), 0)}</b><span>là ảnh PlantDoc chụp ngoài đồng (${fmtInt(fieldCount)} ảnh)</span></article>
@@ -732,6 +729,7 @@ async function activate(name) {
     const on = tab.dataset.subtab === name;
     tab.classList.toggle("is-active", on);
     tab.setAttribute("aria-selected", String(on));
+    tab.tabIndex = on ? 0 : -1;
   });
   $$(".subpanel").forEach(panel => panel.classList.toggle("is-active", panel.id === `result-${name}`));
   if (!ctx) return; // bằng chứng không khả dụng: panel đã có thông báo lý do, không có gì để dựng

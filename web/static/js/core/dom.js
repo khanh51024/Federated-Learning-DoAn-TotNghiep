@@ -12,6 +12,15 @@ export const NARROW_QUERY = "(max-width: 1100px)";
 export const WIDE_QUERY = "(min-width: 1101px)";
 
 /** Mở sẵn một mục gấp khi màn đủ rộng để bảng không chiếm hết khung (máy chiếu/laptop); điện thoại vẫn gấp. Chỉ chạy một lần khi dựng. */
+/**
+ * Tiêu đề mục đánh số kiểu báo cáo: "1.1 Bài toán", "A. Kiểm chứng số liệu", kèm một dòng dẫn tùy chọn.
+ * `title` và `lead` là HTML viết trong mã (đã an toàn); `no` và `id` được escape.
+ */
+export function sectionHead(no, title, { id = "", lead = "", tag = "h3" } = {}) {
+  const idAttr = id ? ` id="${esc(id)}"` : "";
+  return `<${tag} class="panel-title section-title"${idAttr}><span class="sec-no">${esc(no)}</span> ${title}</${tag}>${lead ? `<p class="section-lead">${lead}</p>` : ""}`;
+}
+
 export function openOnWide(details) {
   if (details && window.matchMedia?.(WIDE_QUERY).matches) details.open = true;
 }

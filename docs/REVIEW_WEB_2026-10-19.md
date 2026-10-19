@@ -133,3 +133,18 @@ Cấu trúc mới (chi tiết ở [WEB_DEMO_GD1_GD2.md](WEB_DEMO_GD1_GD2.md)):
 - Nội dung chính hiện sẵn: biểu đồ và bảng bảy mô hình, năm thẻ client, danh sách hạn chế đầy đủ; chỉ bảng dài và mục thống kê phụ còn gấp. Chương Kết quả còn bốn tab (trước đây sáu).
 - Địa chỉ cũ (`#tong-quan`, `#non-iid`, `#huan-luyen`, `#bang-chung`) được router đổi sang địa chỉ mới; mã tham gia đã in vẫn dùng được.
 - Sửa kèm: bảng nhật ký vòng của phụ lục không còn cột độ chính xác/loss/Macro-F1 (chạy trên ảnh nhiễu); câu "Tổng N ảnh:" bị gãy ở thẻ tập giữ riêng; tiêu đề thẻ trùng ảnh nhất quán; bảng bảy mô hình luôn mở (trước đây chỉ tự mở sau khi vào tab PlantDoc).
+
+## 8. Review UI lần 2 (desktop và laptop)
+
+Đo lại 8 trang ở 1280, 1366, 1440, 1536, 1920 px, nền sáng và tối (điện thoại để sau theo yêu cầu). Đã sửa:
+
+- Tiêu đề mục đánh số như báo cáo ("1.1 Bài toán", "4.3.1 …", "A. Kiểm chứng số liệu") qua một helper `sectionHead` trong `core/dom.js`;
+  câu tiêu đề dài cũ thành dòng dẫn. Cấp tiêu đề thống nhất: mục h3, khung con h4, khung trong mục con h5.
+- Độ dài dòng: danh sách hạn chế, hướng phát triển, hạng mục đã xong và chữ trong khung lưu ý giữ khoảng 70–80 ký tự mỗi dòng
+  ở mọi bề rộng (trước đây tới 140 ký tự ở 1920 px).
+- Chương 2: định nghĩa ba tập ảnh không còn in đậm cả đoạn; ví dụ Tomato — Bacterial spot có bảng nhỏ "Mô hình | Ảnh nhóm này đã học | Tỉ lệ nhận đúng".
+- Chương 5: thẻ kết luận hiện hiệu số ngắn (−6,1 / +37,7 / −45,9 điểm) kèm một dòng nói rõ phép so sánh.
+- Kết quả: mục gấp của tab Tập giữ riêng cùng kiểu với các mục gấp khác, bỏ tiêu đề lặp; tab dùng roving tabindex.
+- Demo: trang Chẩn đoán chỉ còn một câu hướng dẫn khi chưa có ảnh; trang Học liên kết chia hai cột từ 1280 px (các bước bên trái,
+  "Các vòng gần đây" bên phải), tiêu đề khung không lặp tiêu đề trang.
+- Phụ lục: "Chạy thử trên máy chủ" thay cho "Mô phỏng trên máy chủ"; mục lục dính có viền dưới.

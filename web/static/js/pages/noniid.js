@@ -2,7 +2,7 @@
 import { getEvidence, getPartitions, getSummary, modelsById } from "../core/store.js";
 import { attachCrosshair } from "../core/crosshair.js";
 import {
-  byId, cropOf, diseaseOf, esc, fmtInt, fmtNum, fmtPct, formatDiseaseName, revealItems,
+  byId, cropOf, diseaseOf, esc, fmtInt, fmtNum, fmtPct, formatDiseaseName, revealItems, sectionHead,
 } from "../core/dom.js";
 
 const LOCALS = ["local_00", "local_01", "local_02", "local_03", "local_04"];
@@ -197,8 +197,7 @@ function datasetHtml(evidence, summary) {
   const ho = summary?.holdout?.available ? summary.holdout : null;
   return `
     <section class="panel report-section" aria-labelledby="dataset-title">
-      <p class="eyebrow">2.1 · Bộ dữ liệu</p>
-      <h3 class="panel-title" id="dataset-title">Hai nguồn ảnh, ${classCount ? `${fmtInt(classCount)} nhóm lá khỏe/bệnh` : "nhiều nhóm lá khỏe/bệnh"}</h3>
+      ${sectionHead("2.1", "Bộ dữ liệu", { id: "dataset-title", lead: `Hai nguồn ảnh, ${classCount ? `${fmtInt(classCount)} nhóm lá khỏe/bệnh` : "nhiều nhóm lá khỏe/bệnh"}` })}
       <div class="source-grid mt-3">
         <article class="source-card">
           <h4>PlantVillage</h4>
@@ -210,10 +209,10 @@ function datasetHtml(evidence, summary) {
         </article>
       </div>
       <h4 class="subhead mt-4">Ba tập ảnh và mục đích của từng tập</h4>
-      <dl class="fact-grid mt-3">
-        <div><dt>Tập học</dt><dd>${fmtInt(trainTotal)} ảnh (PlantVillage + PlantDoc), chia cho ${Object.keys(counts).length} client. Mô hình chỉ cập nhật trọng số trên tập này.</dd></div>
-        <div><dt>Tập kiểm tra</dt><dd>${fmtInt(val.plantvillage)} ảnh PlantVillage + ${fmtInt(val.plantdoc)} ảnh PlantDoc. Dùng trong lúc huấn luyện để chọn phiên bản mô hình tốt nhất, nên số đo trên tập này có thể hơi đẹp hơn thực tế.</dd></div>
-        <div><dt>Tập giữ riêng</dt><dd>${ho ? `${fmtInt(ho.count)} ảnh (${fmtInt(ho.counts_by_source?.plantvillage)} PlantVillage, ${fmtInt(ho.counts_by_source?.plantdoc)} PlantDoc). ` : ""}Là bộ chẩn đoán có sẵn của bộ dữ liệu (legacy), không dùng để chọn mô hình, nhưng chưa nằm trong kiểm tra trùng ảnh. Dùng làm phép kiểm tra bổ sung ở chương 4.</dd></div>
+      <dl class="term-list mt-3">
+        <div><dt>Tập học</dt><dd><b>${fmtInt(trainTotal)} ảnh</b> (PlantVillage + PlantDoc), chia cho ${Object.keys(counts).length} client. Mô hình chỉ cập nhật trọng số trên tập này.</dd></div>
+        <div><dt>Tập kiểm tra</dt><dd><b>${fmtInt(val.plantvillage)}</b> ảnh PlantVillage + <b>${fmtInt(val.plantdoc)}</b> ảnh PlantDoc. Dùng trong lúc huấn luyện để chọn phiên bản mô hình tốt nhất, nên số đo trên tập này có thể hơi đẹp hơn thực tế.</dd></div>
+        <div><dt>Tập giữ riêng</dt><dd>${ho ? `<b>${fmtInt(ho.count)} ảnh</b> (${fmtInt(ho.counts_by_source?.plantvillage)} PlantVillage, ${fmtInt(ho.counts_by_source?.plantdoc)} PlantDoc). ` : ""}Là bộ chẩn đoán có sẵn của bộ dữ liệu (legacy), không dùng để chọn mô hình, nhưng chưa nằm trong kiểm tra trùng ảnh. Dùng làm phép kiểm tra bổ sung ở chương 4.</dd></div>
       </dl>
     </section>`;
 }
@@ -243,22 +242,31 @@ export async function mount() {
       const r = re?.pv_recall?.[id]?.[example.class];
       return r === undefined || r === null ? "—" : fmtPct(r, 1);
     };
-    const recalls = re
+    // Mô hình | ảnh nhóm này đã học | tỉ lệ nhận đúng: Local k học đúng phần của client k; FedAvg và Centralized học từ cả năm phần
+    const recallRows = re
       ? [
-          `Local ${holder} (giữ ${fmtNum(example.top_share_pct, 0)}% ảnh): ${recallOf(`local_${holder}`)}`,
-          `${others.map(([c]) => `Local ${clientNumber(c)}`).join(", ")}: ${others.map(([c]) => recallOf(`local_${clientNumber(c)}`)).join(" · ")}`,
-          `FedAvg: ${recallOf("fedavg")}`,
-          `Centralized: ${recallOf("centralized")}`,
-        ].join(" · ")
-      : "";
+          ...Object.entries(example.per_client).map(([client, count]) => [`Local ${clientNumber(client)}`, count, recallOf(`local_${clientNumber(client)}`), client === example.top_client]),
+          ["FedAvg", example.total, recallOf("fedavg"), false],
+          ["Centralized", example.total, recallOf("centralized"), false],
+        ]
+      : [];
+    const recallTable = recallRows.length ? `
+        <div tabindex="0" role="group" aria-label="Tỉ lệ nhận đúng nhóm này theo mô hình, cuộn được bằng phím mũi tên" class="table-responsive example-table mt-3">
+          <table class="data-table">
+            <thead><tr><th scope="col">Mô hình</th><th scope="col">Ảnh nhóm này đã học</th><th scope="col">Tỉ lệ nhận đúng</th></tr></thead>
+            <tbody>${recallRows.map(([name, count, recall, holds]) => `<tr${holds ? ' class="is-holder"' : ""}><th scope="row">${esc(name)}</th><td class="mono">${fmtInt(count)}</td><td class="mono">${recall}</td></tr>`).join("")}</tbody>
+          </table>
+        </div>` : "";
     exampleHtml = `
       <section class="viewer-example mt-4" aria-label="Ví dụ dữ liệu lệch giữa các client">
-        <div><p class="eyebrow">Ví dụ</p><h3 class="panel-title">${esc(formatDiseaseName(example.class))}</h3>
+        <div><p class="eyebrow">Ví dụ</p><h4 class="panel-title">${esc(formatDiseaseName(example.class))}</h4>
         <p class="panel-desc">Client ${holder} giữ <b>${fmtNum(example.top_share_pct, 0)}%</b> ảnh của nhóm này. Các client còn lại có ít hoặc không có ảnh của nhóm này.</p></div>
         <ul class="viewer-bars" aria-label="Số ảnh của nhóm này tại từng client">
           ${Object.entries(example.per_client).map(([client, count]) => `<li><span>Client ${clientNumber(client)}</span><span class="viewer-bar-track"><span data-style="--share:${example.total ? count / example.total : 0}"></span></span><b>${fmtInt(count)} ảnh</b></li>`).join("")}
         </ul>
-        <p class="panel-desc">Client ${holder}: ${fmtInt(holderCount)} ảnh; các client khác: ${fmtInt(othersTotal)} ảnh${zeroText}. ${recalls ? `Tỉ lệ nhận đúng nhóm này: ${recalls}.` : "Chưa có kết quả theo nhóm."} Đây là sự liên hệ với phân bố dữ liệu, chưa phải kiểm chứng nguyên nhân.</p>
+        <p class="panel-desc">Client ${holder}: ${fmtInt(holderCount)} ảnh; các client khác: ${fmtInt(othersTotal)} ảnh${zeroText}.${recallTable ? "" : " Chưa có kết quả theo nhóm."}</p>
+        ${recallTable}
+        ${recallTable ? '<p class="field-hint mt-2">Tỉ lệ nhận đúng trên ảnh kiểm tra PlantVillage của nhóm này. Đây là sự liên hệ với phân bố dữ liệu, chưa phải kiểm chứng nguyên nhân.</p>' : ""}
       </section>`;
   }
 
@@ -266,16 +274,15 @@ export async function mount() {
     ${datasetHtml(evidence, summary)}
     <section class="panel noniid-intro mt-4">
       <div>
-        <p class="eyebrow">2.2 · Dữ liệu lệch giữa các client (non-IID)</p>
-        <h3 class="panel-title">Số ảnh mỗi nhóm bệnh khác nhau giữa các client</h3>
+        ${sectionHead("2.2", "Dữ liệu lệch giữa các client (non-IID)", { lead: "Số ảnh mỗi nhóm bệnh khác nhau giữa các client" })}
         <p class="panel-desc">Dữ liệu non-IID là dữ liệu có phân bố khác nhau giữa các client: mỗi client có thể thiếu hẳn một số nhóm bệnh.</p>
       </div>
       ${shards ? `<div class="noniid-intro-stat"><strong>${fmtInt(shards.single_client_classes)}/${fmtInt(shards.classes_total)}</strong><span>nhóm có từ 90% ảnh trở lên ở một client</span></div>` : ""}
     </section>
     ${exampleHtml}
 
-    <section class="mt-4" aria-labelledby="clients-title">
-      <h3 class="panel-title" id="clients-title">Dữ liệu của từng client</h3>
+    <section class="mt-5" aria-labelledby="clients-title">
+      ${sectionHead("2.3", "Dữ liệu của từng client", { id: "clients-title" })}
       <p class="panel-desc">${Object.keys(evidence.shard_counts || {}).length} phân vùng giả lập từ cùng một bộ ảnh, kèm kết quả của mô hình học riêng trên phân vùng đó.</p>
       <div class="client-grid mt-3" aria-label="Các client">${clientCards(evidence, shards, byModel)}</div>
     </section>
@@ -286,7 +293,7 @@ export async function mount() {
       <div class="overview-detail-body">
       <div class="panel-header-flex">
         <div>
-          <h3 class="panel-title">Phân bố ảnh theo client</h3>
+          <h4 class="panel-title">Phân bố ảnh theo client</h4>
           <p class="panel-desc" id="heat-desc">Số ảnh của mỗi nhóm ở từng client. Ô càng đậm thì client đó giữ phần càng lớn của nhóm ấy.</p>
         </div>
         <div class="segmented" role="radiogroup" aria-label="Chọn bảng hiển thị">

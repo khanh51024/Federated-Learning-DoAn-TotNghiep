@@ -726,3 +726,17 @@ def test_appendix_toc_buttons_point_at_existing_sections_and_router_survives_ali
     assert "mounting.get(route.id)" in router, "mở lại trang lúc đang dựng không được dựng lần hai (gắn trùng sự kiện)"
     results = JS_BY_REL["pages/results.js"]
     assert "buildIsolated(\"errors-plantdoc\"" in results and "buildIsolated(\"errors-confusion\"" in results and "buildIsolated(\"errors-confident\"" in results, "ba phần của tab Phân tích lỗi phải tự bắt lỗi"
+
+
+def test_report_sections_use_numbered_headings_and_diagnosis_has_one_empty_message():
+    assert "export function sectionHead" in JS_BY_REL["core/dom.js"]
+    for rel, numbers in (("pages/overview.js", ["1.1", "1.2", "1.3", "1.4"]), ("pages/noniid.js", ["2.1", "2.2", "2.3"]),
+                         ("pages/results.js", ["4.1", "4.2", "4.4"]), ("pages/conclusion.js", ["5.1", "5.2", "5.3"])):
+        source = JS_BY_REL[rel]
+        for number in numbers:
+            assert f'sectionHead("{number}"' in source, f"{rel}: mục {number} phải dùng tiêu đề đánh số"
+    assert "sectionHead(`3.${no}`" in JS_BY_REL["pages/methods.js"] and "sectionHead(`${letter}.`" in JS_BY_REL["pages/appendix.js"]
+    assert not re.search(r'<p class="eyebrow">\d\.\d', ALL_JS), "số mục nằm trong tiêu đề, không còn nhãn eyebrow riêng"
+    assert '<span class="sec-no">4.3</span>' in HTML and '<span class="sec-no">D.</span>' in HTML
+    stage = HTML[HTML.index('id="selected-empty"'):]
+    assert stage[: stage.index("</div>")].count("Chưa chọn ảnh") == 0, "trang Chẩn đoán chỉ giữ một câu hướng dẫn khi chưa có ảnh (#diag-empty)"

@@ -1,7 +1,7 @@
 // Phụ lục kỹ thuật: kiểm chứng số liệu, nguồn gốc mô hình, hạng mục kỹ thuật; phần kiểm thử hệ thống trên máy chủ nằm trong
 // index.html và do training.js điều khiển. Dành cho người chấm và người vận hành, không phải nội dung báo cáo.
 import { getEvidence, getSummary } from "../core/store.js";
-import { MODEL_LABELS, byId, esc, fmtInt, fmtNum, fmtPct, modelPill, notify, prefersReducedMotion } from "../core/dom.js";
+import { MODEL_LABELS, byId, esc, fmtInt, fmtNum, fmtPct, modelPill, notify, prefersReducedMotion, sectionHead } from "../core/dom.js";
 import { mount as mountTraining } from "./training.js";
 
 // Mã nội bộ của API → câu tiếng Việt (giữ mã làm chú thích); mã lạ thì hiện nguyên văn.
@@ -117,17 +117,17 @@ function checklistHtml(cl, seed) {
     : `${research.length} việc nghiên cứu còn lại cần file mô hình gốc hoặc GPU` +
       (technicalOpen.length ? `; ${technicalOpen.length} hạng mục kỹ thuật cần xử lý.` : ".");
   return `
-    <div class="panel-header-flex">
+    <div class="panel-header-flex mt-4">
       <div>
-        <h3 class="panel-title">Việc nghiên cứu còn lại: ${research.length}</h3>
+        <h4 class="panel-title">Việc nghiên cứu còn lại: ${research.length}</h4>
         <p class="panel-desc">${esc(intro)}</p>
       </div>
     </div>
     ${research.length ? `<div class="todo-grid mt-4">${research.map(card).join("")}</div>` : ""}
     ${technicalOpen.length ? `
-    <h3 class="panel-title mt-4">Hạng mục kỹ thuật cần xử lý: ${technicalOpen.length}</h3>
+    <h4 class="panel-title mt-4">Hạng mục kỹ thuật cần xử lý: ${technicalOpen.length}</h4>
     <div class="todo-grid mt-3">${technicalOpen.map(card).join("")}</div>` : ""}
-    <h3 class="panel-title mt-4">Hạng mục kỹ thuật đã xong: ${done.length}/${technicalTotal}</h3>
+    <h4 class="panel-title mt-4">Hạng mục kỹ thuật đã xong: ${done.length}/${technicalTotal}</h4>
     <div class="progress-track mt-3" role="img" aria-label="${done.length} trên ${technicalTotal} hạng mục kỹ thuật đã xong"><div class="progress-fill fed-fill" data-style="transform:scaleX(${technicalTotal ? (done.length / technicalTotal).toFixed(3) : 0})"></div></div>
     <details class="fold mt-4">
       <summary>Các hạng mục kỹ thuật đã xong (${done.length})</summary>
@@ -257,8 +257,7 @@ function verificationHtml(summary) {
 function section(id, letter, title, intro, body) {
   return `
     <section class="panel appendix-section mt-4" id="${id}" aria-labelledby="${id}-title">
-      <p class="eyebrow">${letter}</p>
-      <h3 class="panel-title" id="${id}-title">${title}</h3>
+      ${sectionHead(`${letter}.`, title, { id: `${id}-title` })}
       <p class="panel-desc">${intro}</p>
       ${body}
     </section>`;

@@ -6,7 +6,7 @@ export const ROUTES = [
   {
     id: "gioi-thieu", step: 1, group: "Báo cáo", chapter: 1, label: "Giới thiệu",
     title: "Giới thiệu đề tài",
-    desc: "Bài toán, câu hỏi nghiên cứu và kết quả chính của đồ án học liên kết chẩn đoán bệnh lá cây",
+    desc: "",
     load: () => import("../pages/overview.js"),
   },
   {

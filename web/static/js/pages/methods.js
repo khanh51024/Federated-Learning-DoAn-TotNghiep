@@ -1,7 +1,7 @@
 // Chương 3 · Phương pháp: ba cách huấn luyện, thuật toán FedAvg, thiết lập thí nghiệm, cách đánh giá, hệ thống demo.
 // Chỉ dùng số có trong /api/demo/evidence; siêu tham số không có trong bộ số liệu đã công bố thì không ghi.
 import { getEvidence } from "../core/store.js";
-import { byId, esc, fmtInt, revealItems } from "../core/dom.js";
+import { byId, esc, fmtInt, revealItems, sectionHead } from "../core/dom.js";
 
 function pillarsHtml() {
   return `
@@ -91,8 +91,7 @@ export async function mount() {
   const evidence = await getEvidence().catch(error => ({ available: false, reason: error.message }));
   const section = (no, title, body) => `
     <section class="panel report-section mt-4" aria-labelledby="m-${no}">
-      <p class="eyebrow">3.${no}</p>
-      <h3 class="panel-title" id="m-${no}">${title}</h3>
+      ${sectionHead(`3.${no}`, title, { id: `m-${no}` })}
       ${body}
     </section>`;
   const unavailable = !evidence.available;

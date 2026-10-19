@@ -1,6 +1,6 @@
 // Chương 5 · Kết luận: trả lời câu hỏi nghiên cứu, hạn chế (nói thẳng, hiện sẵn), hướng phát triển.
 import { getEvidence, getSummary, modelsById } from "../core/store.js";
-import { byId, esc, fmtInt, fmtNum, fmtPct, revealItems } from "../core/dom.js";
+import { byId, esc, fmtInt, fmtNum, fmtPct, revealItems, sectionHead } from "../core/dom.js";
 
 const LOCALS = ["local_00", "local_01", "local_02", "local_03", "local_04"];
 
@@ -76,24 +76,29 @@ function answersHtml(evidence) {
   const central = m.centralized.metrics;
   const fed = m.fedavg.metrics;
   const bestLocalPv = Math.max(...LOCALS.map(id => m[id].metrics.plantvillage.top1_accuracy));
-  const gapFedCentral = (central.plantvillage.top1_accuracy - fed.plantvillage.top1_accuracy) * 100;
-  const fedOverLocal = (fed.plantvillage.top1_accuracy - bestLocalPv) * 100;
-  const domainFed = (fed.plantvillage.top1_accuracy - fed.plantdoc.top1_accuracy) * 100;
+  // hiệu số FedAvg trừ đối chứng, điểm phần trăm: dương là FedAvg cao hơn
+  const vsCentral = (fed.plantvillage.top1_accuracy - central.plantvillage.top1_accuracy) * 100;
+  const vsLocal = (fed.plantvillage.top1_accuracy - bestLocalPv) * 100;
+  const vsDomain = (fed.plantdoc.top1_accuracy - fed.plantvillage.top1_accuracy) * 100;
+  const signed = value => `${value >= 0 ? "+" : "−"}${fmtNum(Math.abs(value), 1)} điểm`;
   return `
     <div class="conclusion-grid mt-3">
       <article class="conclusion fedavg">
         <span class="conclusion-label">So với gom ảnh (Centralized)</span>
-        <b>${Math.abs(gapFedCentral) <= 0.5 ? "Gần ngang nhau" : `FedAvg ${gapFedCentral > 0 ? "thấp hơn" : "cao hơn"} ${fmtNum(Math.abs(gapFedCentral), 1)} điểm phần trăm`}</b>
+        <b>${signed(vsCentral)}</b>
+        <span class="conclusion-sub">FedAvg so với Centralized · điểm phần trăm · PlantVillage${Math.abs(vsCentral) <= 0.5 ? " · gần ngang nhau" : ""}</span>
         <p>Trên PlantVillage: FedAvg ${fmtPct(fed.plantvillage.top1_accuracy)}, Centralized ${fmtPct(central.plantvillage.top1_accuracy)}. Chênh lệch chỉ mang tính tham khảo vì điều kiện huấn luyện hai bên khác nhau.</p>
       </article>
       <article class="conclusion local">
         <span class="conclusion-label">So với học riêng (Local-only)</span>
-        <b>${fedOverLocal >= 0 ? "FedAvg cao hơn" : "FedAvg thấp hơn"} ${fmtNum(Math.abs(fedOverLocal), 1)} điểm phần trăm</b>
+        <b>${signed(vsLocal)}</b>
+        <span class="conclusion-sub">FedAvg so với Local-only tốt nhất · điểm phần trăm · PlantVillage</span>
         <p>So với mô hình học riêng tốt nhất trên PlantVillage. Mỗi client chỉ thấy một phần nhóm bệnh nên mô hình riêng không nhận ra nhóm chưa từng thấy (<a href="#du-lieu">chương 2</a>).</p>
       </article>
       <article class="conclusion warn">
         <span class="conclusion-label">Từ ảnh trong phòng sang ngoài đồng</span>
-        <b>FedAvg ${domainFed >= 0 ? "giảm" : "tăng"} ${fmtNum(Math.abs(domainFed), 1)} điểm phần trăm</b>
+        <b>${signed(vsDomain)}</b>
+        <span class="conclusion-sub">FedAvg trên PlantDoc so với PlantVillage · điểm phần trăm</span>
         <p>Từ PlantVillage (${fmtPct(fed.plantvillage.top1_accuracy)}) sang PlantDoc (${fmtPct(fed.plantdoc.top1_accuracy)}). Nguyên nhân chưa được kiểm chứng: có thể do ảnh khác kiểu, PlantDoc ít ảnh và chỉ phủ một phần nhóm, hoặc nhãn (<a href="#ket-qua">chương 4</a>).</p>
       </article>
     </div>`;
@@ -117,15 +122,13 @@ export async function mount() {
   const limits = [...base.slice(0, 2), ...(summary?.available ? evaluationLimits(summary) : []), ...base.slice(2)];
   root.innerHTML = `
     <section class="panel report-section" aria-labelledby="c-answers">
-      <p class="eyebrow">5.1 · Kết luận</p>
-      <h3 class="panel-title" id="c-answers">Câu trả lời cho ba câu hỏi nghiên cứu</h3>
+      ${sectionHead("5.1", "Kết luận", { id: "c-answers", lead: "Câu trả lời cho ba câu hỏi nghiên cứu" })}
       ${evidence?.available ? answersHtml(evidence) : `<div class="callout callout-warn mt-3" role="note"><b>Chưa có số liệu để kết luận.</b> ${esc(evidence?.reason || "")}</div>`}
       <p class="viewer-scope mt-3"><b class="scope-tag">Phạm vi</b> Kết quả từ một lần chạy với một cách chia lệch dữ liệu; tập kiểm tra cũng dùng để chọn mô hình, nên chưa phải độ chính xác ngoài thực địa.</p>
     </section>
 
     <section class="panel report-section mt-4" aria-labelledby="c-limits">
-      <p class="eyebrow">5.2 · Hạn chế</p>
-      <h3 class="panel-title" id="c-limits">Những gì nghiên cứu chưa làm được</h3>
+      ${sectionHead("5.2", "Hạn chế", { id: "c-limits", lead: "Những gì nghiên cứu chưa làm được" })}
       <div class="viewer-limits mt-3">
         <article><h4>Chưa đánh giá qua nhiều lần chạy</h4><p>Một kịch bản, một seed; các client là phân vùng giả lập.</p></article>
         <article><h4>Chưa có kiểm thử độc lập trong điều kiện thực tế</h4><p>Ảnh ngoài đồng hiện có chỉ phủ một phần nhóm lá; kết quả chưa đại diện cho triển khai thực tế.</p></article>
@@ -137,8 +140,7 @@ export async function mount() {
     </section>
 
     <section class="panel report-section mt-4" aria-labelledby="c-future">
-      <p class="eyebrow">5.3 · Hướng phát triển</p>
-      <h3 class="panel-title" id="c-future">Việc nên làm tiếp</h3>
+      ${sectionHead("5.3", "Hướng phát triển", { id: "c-future", lead: "Việc nên làm tiếp" })}
       <ul class="future-list mt-3">${FUTURE.map(([title, text]) => `<li><b>${esc(title)}.</b> ${esc(text)}</li>`).join("")}</ul>
       <p class="field-hint mt-3">Tình trạng các hạng mục kiểm thử và việc còn dở của dự án nằm ở <a href="#phu-luc">Phụ lục kỹ thuật</a>.</p>
     </section>`;
