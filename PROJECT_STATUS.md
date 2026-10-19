@@ -1,6 +1,6 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-15 02:50 · sinh tự bởi `scripts/update_status.py`
+> **Cập nhật lúc:** 2026-10-19 09:26 · sinh tự bởi `scripts/update_status.py`
 > **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
@@ -34,7 +34,7 @@
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
 | 9 | Test không ghi đè artifact đang track | ✅ XONG | test không tham chiếu artifacts/checkpoints/metrics (dùng tmp_path) |
 | 10 | Dependency khai báo một nơi (pyproject = requirements) | ✅ XONG | 17 dependency trùng giữa pyproject.toml và requirements.txt; ghim cũ nằm ở legacy/pyproject.toml |
-| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-15T02:49:59 (gồm test mạng, 56 file test) với mã nguồn có dấu vân tay d66bc1adb955; thay mã sau thời điểm này thì phải chạy lại |
+| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-19T09:26:07 (gồm test mạng, 58 file test) với mã nguồn có dấu vân tay 9b50d2d8a5d9; thay mã sau thời điểm này thì phải chạy lại |
 | 12 | Kiểm chứng provenance & checkpoint canonical | ⛔ BLOCKED | provenance=unverified; lỗi: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing'] |
 | 13 | Audit leakage theo từng run | ✅ XONG | release mixed_pv_pd_v3: train 37.238 / val 4.613 / calibration 4.225 rời nhau trên 5 khóa (giao nhau tổng = 0); 12 partition đều là tập con train; 46.076 ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train) |
 | 14 | Đánh giá PlantDoc theo từng lớp (từ số công bố) | ✅ XONG | PlantDoc phủ 13/38 lớp; 6 lớp recall<50% (136/269 ảnh); FedAvg tệ hơn Centralized ở 5/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5) |
@@ -50,11 +50,13 @@
 ### Việc đang BLOCKED — cần gì và mở khóa bằng lệnh nào
 
 **Kiểm chứng provenance & checkpoint canonical**
-- Cần: HAI file checkpoint thật: FedAvg best.pt của run canonical (oid sha256:bdfe01879aef693d…) và Centralized best — hiện chỉ là con trỏ Git-LFS / không có, repo không có remote nên không thể `git lfs pull`
+- Cần: HAI file checkpoint thật: FedAvg best.pt của run canonical (oid sha256:bdfe01879aef693d…) và Centralized best — best.pt trên máy này chỉ là con trỏ Git-LFS (object chưa tải về, không có trong .git/lfs/objects); thử `git lfs pull` trước, remote không còn giữ object thì phải tải lại từ Kaggle
 - Mở khóa:
 
 ```powershell
-# 1) tải hai file từ Kaggle, 2) đặt đúng vào slot canonical (đường mà provenance validator và registry đọc):
+# 0) thử kéo object LFS về (chỉ được nếu remote còn giữ):
+git lfs pull
+# 1) nếu vẫn thiếu: tải hai file từ Kaggle, 2) đặt đúng vào slot canonical (đường mà provenance validator và registry đọc):
 Copy-Item <fedavg_best.pt tải về> artifacts/checkpoints/fedavg_best.pt
 Copy-Item <centralized_best.pt tải về> artifacts/checkpoints/centralized_best.pt
 .\.venv\Scripts\python.exe scripts\update_status.py   # so state-hash với canonical_manifest
