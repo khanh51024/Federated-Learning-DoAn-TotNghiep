@@ -5,10 +5,13 @@ from __future__ import annotations
 import threading
 import time
 
+from src import registry as reg
 from web.network_demo import NetworkDemoManager
 
 
-def test_stop_cleans_server_and_five_clients_before_checkpoint():
+def test_stop_cleans_server_and_five_clients_before_checkpoint(monkeypatch, tmp_path):
+    # Thư mục phiên ghi vào tmp: không để lại phiên "cancelled" trong artifacts/web_runs/network_smoke thật.
+    monkeypatch.setattr(reg, "NETWORK_SMOKE_RUNS_DIR", str(tmp_path / "network_smoke"))
     manager = NetworkDemoManager()
     manager.prepare()
     failures: list[BaseException] = []

@@ -426,7 +426,9 @@ class AuditedFlowerFedAvg:
                     "round_in_progress": int(server_round),
                     "completed_round": len(self.audit_rounds),
                     "connected_clients": int(client_manager.num_available()),
-                    "accepted_clients": 0,
+                    # Số update hợp lệ của vòng ĐÃ XONG gần nhất (web hiển thị "x/5 update hợp lệ ở vòng cuối"):
+                    # đặt 0 ở đây làm giao diện báo sai "0/5" suốt vòng 2 dù vòng 1 nhận đủ 5.
+                    "accepted_clients": int(self.audit_rounds[-1]["accepted_clients"]) if self.audit_rounds else 0,
                     "rounds": self.audit_rounds,
                 })
                 configured = []

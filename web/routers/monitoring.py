@@ -72,9 +72,11 @@ def get_metrics(mode: str, source: str | None = Query(None)) -> Any:
             "centralized": "centralized_results",
             "federated": "fedavg_results",
         }.get(mode, "telemetry_history")
+        # Tên thư mục phải khớp nơi routers/training.py ghi: FedAvg mô phỏng ghi vào `fedavg_demo`, không phải `federated_demo`.
+        run_name = {"federated": "fedavg"}.get(mode, mode)
         candidates = [
-            reg.abs_path(reg.WEB_RUNS_DIR) / f"{mode}_demo" / "metrics" / f"{stem}.json",
-            reg.abs_path(reg.WEB_RUNS_DIR) / f"{mode}_full" / "metrics" / f"{stem}.json",
+            reg.abs_path(reg.WEB_RUNS_DIR) / f"{run_name}_demo" / "metrics" / f"{stem}.json",
+            reg.abs_path(reg.WEB_RUNS_DIR) / f"{run_name}_full" / "metrics" / f"{stem}.json",
             reg.abs_path(reg.DEMO_RUNS_DIR) / mode / "metrics" / f"{stem}.json",
         ]
         for target in candidates:
