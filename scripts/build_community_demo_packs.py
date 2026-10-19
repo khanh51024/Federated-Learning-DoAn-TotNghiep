@@ -14,11 +14,14 @@ import subprocess
 import tempfile
 import zipfile
 from collections import defaultdict
+import sys
 from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from src import registry as reg  # noqa: E402
 MANIFESTS = ROOT / "data/dataset_sources/mixed/pv_pd_v3/manifests"
-DEFAULT_OUT = ROOT / "artifacts/community_demo_packs"
+DEFAULT_OUT = reg.abs_path(reg.COMMUNITY_DEMO_PACKS_DIR)  # đường dẫn artifacts lấy từ src/registry.py (cổng no_hardcode)
 CLIENT_CLASSES = (
     "Tomato___Bacterial_spot",
     "Potato___Early_blight",

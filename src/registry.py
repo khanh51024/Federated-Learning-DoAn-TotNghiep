@@ -93,6 +93,7 @@ COMMUNITY_FEATURE_MODEL_ONNX = f"{COMMUNITY_FL_DIR}/feature_model.onnx"
 COMMUNITY_BASE_HEAD_NPZ = f"{COMMUNITY_FL_DIR}/base_head.npz"
 COMMUNITY_EVAL_FEATURES_NPZ = f"{COMMUNITY_FL_DIR}/eval_features.npz"
 COMMUNITY_STATE_DIR = f"{COMMUNITY_FL_DIR}/state"
+COMMUNITY_DEMO_PACKS_DIR = "artifacts/community_demo_packs"  # scripts/build_community_demo_packs.py: gói ảnh nhỏ cho client demo trên trình duyệt
 COMMUNITY_MODEL_ID = "demo_fedavg_v7"  # backbone đóng băng + head khởi điểm lấy từ model này (qua cổng web_visible)
 
 # ---------------------------------------------------------------------------
