@@ -7,8 +7,8 @@
 Hệ thống được tổ chức theo cấu trúc **Monorepo hoàn chỉnh**:
 - **`src/`**: Toàn bộ lõi AI / Machine Learning / Federated Learning chuẩn hóa (`model`, `data`, `centralized`, `federated`, `common`).
 - **`web/`**: Giao diện điều khiển, giám sát thời gian thực và suy luận song song (FastAPI Backend + giao diện sáng 6 bước theo trình tự bảo vệ đồ án).
-- **`tests/`**: Bộ kiểm thử toán học độc lập (`test_fedavg.py`, `test_model.py`, `test_parameters.py`, `test_partition.py`, `test_integration.py`).
-- **`configs/`**: Cấu hình YAML chuẩn hóa cho các kịch bản thực nghiệm (`centralized.yaml`, `federated.yaml`, `non_iid.yaml`).
+- **`tests/`**: Bộ kiểm thử toán học & độ toàn vẹn (`test_fedavg.py`, `test_model.py`, `test_parameters.py`, `test_partition.py`, `test_integration.py` và hàng chục file khác — `ls tests/`). Chạy toàn bộ: `python -m pytest -q`.
+- **`configs/`**: Cấu hình YAML cho phân hoạch dữ liệu (`partition_config.yaml`) — hiện là file duy nhất trong thư mục.
 - **`legacy/`**: Pipeline Kaggle/stage* cũ, notebook, config và test của chúng — chỉ để tra cứu/tái lập lịch sử, chạy riêng ([legacy/README.md](legacy/README.md)).
 - **`docs/`**: Hợp đồng model registry ([docs/MODEL_REGISTRY.md](docs/MODEL_REGISTRY.md)), Runbook vận hành ([docs/RUNBOOK.md](docs/RUNBOOK.md)), Giao thức thực nghiệm ([docs/EXPERIMENT_PROTOCOL.md](docs/EXPERIMENT_PROTOCOL.md)), Sơ đồ kiến trúc Mermaid ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)).
 
@@ -104,7 +104,7 @@ Server chỉ aggregate update khi client hợp lệ theo policy hiện tại, đ
 ```text
 Federated-Learning-DoAn-TotNghiep/
 ├── README.md                # Hướng dẫn toàn diện đồ án
-├── requirements.txt         # Pinned dependencies
+├── requirements.txt         # Sàn phiên bản tối thiểu (>=), không phải lock; legacy/requirements-train.lock là bản ghim của pipeline cũ
 ├── pyproject.toml           # Cấu hình project & tools
 ├── .env.example             # Biến môi trường mẫu
 │
@@ -114,35 +114,37 @@ Federated-Learning-DoAn-TotNghiep/
 │   │   └── __init__.py
 │   │
 │   ├── data/                # Nạp dữ liệu PlantVillage & Phân hoạch Dirichlet
-│   │   ├── plantvillage.py
-│   │   ├── split.py
-│   │   └── partition.py
+│   │   ├── plantvillage.py   # cùng split.py, partition.py, partitioner.py,
+│   │   └── …                 # dirichlet_split.py, leaf_groups.py, dataset.py, transforms.py, fedavg.py, metrics.py
 │   │
-│   ├── centralized/         # Baseline học tập trung & suy luận ảnh
+│   ├── centralized/         # Baseline học tập trung (train + evaluate; suy luận ảnh nằm ở web/services/model_service.py)
 │   │   ├── train.py
-│   │   ├── evaluate.py
-│   │   └── inference.py
+│   │   └── evaluate.py
 │   │
 │   ├── federated/           # Flower FedAvg, Telemetry & Weight Inspector
 │   │   ├── client_app.py    # Flower ClientApp & vòng đời huấn luyện cục bộ
 │   │   ├── server_app.py    # Flower ServerApp & FedAvg điều phối mạng
 │   │   ├── strategy.py      # Thuật toán FedAvg w_(t+1) = sum(n_k * w_k) / sum(n_k)
+│   │   ├── community.py     # Vòng FL cộng đồng qua web (không cần máy client riêng)
+│   │   ├── update_validator.py # Cổng kiểm update: từ chối NaN/inf/sai shape/dtype; norm vượt ngưỡng chỉ bị gắn cờ (loại hẳn khi chạy --reject-suspicious-updates)
 │   │   ├── telemetry.py     # Đo đạc Loss != Latency, RTT, train time
 │   │   ├── weight_inspector.py # Thống kê L2 norm, Update Norm ||Delta_k||_2
-│   │   └── faulty_client.py # Giả lập client lỗi/tấn công
+│   │   └── faulty_client.py # Giả lập client lỗi/tấn công (cùng network_probe.py)
 │   │
 │   └── common/              # Tiện ích dùng chung
 │       ├── metrics.py       # Macro-F1 & ma trận nhầm lẫn
+│       ├── checkpoint_io.py # Nạp .pt/.pth với weights_only=True (không mở pickle tùy ý)
 │       ├── logging.py       # Định dạng log chuẩn
 │       └── config.py        # YAML config loader
 │
 ├── web/                     # ỨNG DỤNG WEB QUAN SÁT & SUY LUẬN
 │   ├── app.py               # FastAPI: chỉ mount router
-│   ├── routers/             # monitoring.py, inference.py, training.py
+│   ├── routers/             # monitoring.py, inference.py, training.py, community_fl.py
 │   ├── services/model_service.py  # MỘT CỬA inference — chỉ mở cho model đã qua cổng web_visible của registry
 │   ├── state.py             # trạng thái background task + Flower demo
 │   └── static/              # Giao diện 6 bước (HTML/CSS/ES module, không bước build)
 │       ├── index.html       # 1 Tổng quan · 2 Dữ liệu phân tán · 3 Kết quả & so sánh · 4 Chẩn đoán · 5 Huấn luyện thử · 6 Bằng chứng
+│       ├── admin/           # Trang quản trị /quan-tri (admin.html + admin.js)
 │       ├── css/{style,pages}.css
 │       ├── js/app.js        # khởi động; js/core/ (router, store, api, charts, status, theme, motion, flnet, crosshair), js/pages/ (mỗi bước một file)
 │       ├── samples/demo/    # 19 ảnh mẫu có nhãn thật + catalog.json (scripts/build_demo_gallery.py)
@@ -154,24 +156,34 @@ Federated-Learning-DoAn-TotNghiep/
 │   ├── tests/               # pytest legacy/tests
 │   └── configs/ scripts/ *.ipynb release_manifest_v*.json
 │
-├── tests/                   # BỘ KIỂM THỬ TOÁN HỌC & ĐỘ TOÀN VẸN
+├── tests/                   # BỘ KIỂM THỬ TOÁN HỌC & ĐỘ TOÀN VẸN (liệt kê một phần — `ls tests/`)
 │   ├── test_fedavg.py       # Kiểm định trọng số toán học FedAvg
 │   ├── test_model.py        # Kiểm định MobileNetV3-Small & 38 lớp
 │   ├── test_parameters.py   # Kiểm định trích xuất, nạp & SHA-256 hash
 │   ├── test_partition.py    # Kiểm định phân hoạch Dirichlet & đói dữ liệu
-│   └── test_integration.py  # Kiểm thử tích hợp luồng 5 clients x 1 round
+│   ├── test_integration.py  # Kiểm thử tích hợp luồng 5 clients x 1 round
+│   ├── test_registry.py     # Hợp đồng registry: hash, cổng web_visible, trạng thái
+│   ├── test_deployment_policy.py # Chính sách CLI deployment: bắt buộc chọn --reject-suspicious-updates hoặc --observe-only (IP xa bị 503: xem test_training_auth.py)
+│   └── test_community_fl.py # Vòng FL cộng đồng & cổng num_examples
 │
 ├── configs/                 # CẤU HÌNH PHÂN HOẠCH DỮ LIỆU
 │   └── partition_config.yaml
 │
-├── artifacts/               # SẢN PHẨM THỰC NGHIỆM
-│   ├── checkpoints/         # centralized_best.pt, fedavg_best.pt
-│   └── metrics/             # centralized_results.json, fedavg_results.json, telemetry_history.json
+├── artifacts/               # SẢN PHẨM THỰC NGHIỆM (cây thật: `ls artifacts/`)
+│   ├── registry.json        # NGUỒN SỰ THẬT: mọi con số accuracy phải truy về đây
+│   ├── canonical_manifest.json # Manifest chuẩn của bản build registry
+│   ├── checkpoints/         # plantvillage_traced.pt, federated_network_global.pt, attack_matrix_{observe,reject}.pt, smoke/
+│   │                        # Hai slot canonical centralized_best.pt / fedavg_best.pt KHÔNG có trên máy dev này
+│   │                        # (registry ghi checkpoint_status=missing_on_this_machine, web_visible=false)
+│   ├── branch_demo/         # Bundle train ngoài repo đã kiểm hash — nguồn model web_visible thật sự
+│   └── metrics/             # centralized_results.json, fedavg_results.json, telemetry_history.json, network_flower_history*.json, …
 │
 └── docs/                    # BÁO CÁO & PHẢN BIỆN KHOA HỌC
     ├── EXPERIMENT_PROTOCOL.md # Giao thức thực nghiệm đóng băng
     ├── ARCHITECTURE.md      # Sơ đồ kiến trúc Mermaid (Centralized, Flower, Client, FedAvg)
     ├── MODEL_REGISTRY.md   # Hợp đồng nguồn sự thật (registry)
+    ├── COMMUNITY_FL.md      # FL cộng đồng + trang quản trị /quan-tri
+    ├── AWS_DEPLOYMENT_GUIDE.md # Triển khai EC2/uvicorn
     └── RUNBOOK.md          # Lệnh vận hành hiện hành
 ```
 

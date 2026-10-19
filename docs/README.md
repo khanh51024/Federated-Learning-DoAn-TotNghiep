@@ -21,4 +21,5 @@
 | [SERVER_DEPLOY_20261005.md](SERVER_DEPLOY_20261005.md) | Trạng thái triển khai server thật (datn.tranngochung.id.vn) |
 | [COMMUNITY_FL.md](COMMUNITY_FL.md) | Học liên kết cộng đồng: mỗi người vào web là một client (giao thức, phòng thủ, triển khai, bằng chứng đo) |
 | [UI_UX_REVIEW_2026-10-14.md](UI_UX_REVIEW_2026-10-14.md) | Review UI/UX và nội dung bản production: phát hiện có bằng chứng, luồng Client FL, bảng câu cần sửa, roadmap |
+| [REVIEW_TOAN_DIEN_2026-10-16.md](REVIEW_TOAN_DIEN_2026-10-16.md) | Review toàn diện 6 tầng (khoa học · file train · client · web backend · UI/UX · test/docs/deploy): P0 kèm trạng thái đã sửa/còn lại, điểm mạnh nên đưa vào slide, thứ tự việc còn lại |
 | [REFERENCES_IEEE.md](REFERENCES_IEEE.md) | Danh mục trích dẫn IEEE |

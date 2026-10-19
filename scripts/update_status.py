@@ -53,7 +53,7 @@ ALLOWED_DOCS = {
     "SERVER_DEPLOY_20261005.md", "REFERENCES_IEEE.md", "NEXT_TRAINING_PLAN.md",
     "UI_ACCEPTANCE_2026-10-12.md", "COMMUNITY_FL.md",
     "UI_TRIAL_2026-10-13.md", "UI_VIEWER_REVIEW_2026-10-13.md", "UI_COMPARISON_WIDE_SCREEN_2026-10-13.md",
-    "UI_UX_REVIEW_2026-10-14.md",
+    "UI_UX_REVIEW_2026-10-14.md", "REVIEW_TOAN_DIEN_2026-10-16.md",
 }
 # Số liệu từng xuất hiện trong tài liệu cũ và mâu thuẫn với artifact: không được quay lại docs hiện hành.
 FORBIDDEN_NUMBERS = ("97,12", "97.12", "90,44", "90.44")
@@ -359,10 +359,13 @@ def check_provenance(ctx: Ctx) -> Result:
         f"provenance={prov.get('status')}; lỗi: {prov.get('critical_issues')}",
         needs=(
             f"HAI file checkpoint thật: FedAvg best.pt của run canonical (oid sha256:{best[:16]}…) và Centralized best — "
-            "hiện chỉ là con trỏ Git-LFS / không có, repo không có remote nên không thể `git lfs pull`"
+            "best.pt trên máy này chỉ là con trỏ Git-LFS (object chưa tải về, không có trong .git/lfs/objects); "
+            "thử `git lfs pull` trước, remote không còn giữ object thì phải tải lại từ Kaggle"
         ),
         unlock=[
-            "# 1) tải hai file từ Kaggle, 2) đặt đúng vào slot canonical (đường mà provenance validator và registry đọc):",
+            "# 0) thử kéo object LFS về (chỉ được nếu remote còn giữ):",
+            "git lfs pull",
+            "# 1) nếu vẫn thiếu: tải hai file từ Kaggle, 2) đặt đúng vào slot canonical (đường mà provenance validator và registry đọc):",
             f"Copy-Item <fedavg_best.pt tải về> {reg.FEDAVG_BEST_PT}",
             f"Copy-Item <centralized_best.pt tải về> {reg.CENTRALIZED_BEST_PT}",
             ".\\.venv\\Scripts\\python.exe scripts\\update_status.py   # so state-hash với canonical_manifest",

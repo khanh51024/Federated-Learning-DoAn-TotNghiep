@@ -124,9 +124,11 @@ minh *tốt lên*. Con số chỉ là tín hiệu giám sát của hệ thống.
 
 ### Trang quản trị `/quan-tri`
 
-Cách dễ nhất để vận hành: mở `https://<máy chủ>/quan-tri` và đăng nhập bằng tài khoản `admin` + mật khẩu `COMMUNITY_ADMIN_TOKEN` (trình duyệt có thể lưu; có ô "Ghi nhớ trên máy này"; hoặc lưu link `/quan-tri#token=<mật khẩu>`). Trang không nằm trong sáu bước và không có
-liên kết từ menu công khai; quyền thật nằm ở token mà các API quản trị kiểm. Token chỉ được giữ trong `sessionStorage` của tab (mất khi
-đóng tab). Trang trả `Content-Security-Policy` không cho phép script/style inline và các tiêu đề `X-Frame-Options: DENY`,
+Cách dễ nhất để vận hành: mở `https://<máy chủ>/quan-tri` và đăng nhập bằng tài khoản `admin` + mật khẩu `COMMUNITY_ADMIN_TOKEN`. Trang không nằm trong sáu bước và không có
+liên kết từ menu công khai; quyền thật nằm ở token mà các API quản trị kiểm. Mặc định token chỉ được giữ trong `sessionStorage` của tab (mất khi
+đóng tab); ô "Ghi nhớ trên máy này" — **không** tick sẵn — mới ghi thêm vào `localStorage`, và "Đăng xuất" xóa cả hai. Link dạng
+`/quan-tri#token=<mật khẩu>` **đã bị gỡ** (mật khẩu trong URL lộ khi chia sẻ màn hình và lọt vào bookmark); trang vẫn xóa fragment đó
+để link cũ không để mật khẩu nằm lại trên thanh địa chỉ. Trang trả `Content-Security-Policy` không cho phép script/style inline và các tiêu đề `X-Frame-Options: DENY`,
 `X-Robots-Tag: noindex`, `Referrer-Policy: no-referrer`.
 
 Trang làm được: mở/đóng phiên (đóng khi vòng đang có người gửi thì phải bấm hai lần); chỉnh K, K tối thiểu, hạn vòng, ngưỡng cắt và các

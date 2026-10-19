@@ -240,7 +240,7 @@ echo Tat ca 5 client da duoc kich hoat!
    ```
 2. **Kịch bản Demo ấn tượng trước Hội đồng Thầy Cô**:
    - **Gửi link trực tiếp**: Thầy cô trong hội đồng có thể dùng điện thoại/laptop cá nhân mở link `http://<PUBLIC_IPV4_AWS>:8088` để xem trực tiếp hệ thống hoạt động thực tế trên Cloud.
-   - **Tab 1 (Dashboard Overview)**: Cho thấy hệ thống đang online, số round, cấu trúc mô hình MobileNetV3-Small (930K tham số).
+   - **Tab 1 (Dashboard Overview)**: Cho thấy hệ thống đang online, số round và mô hình MobileNetV3-Small 38 lớp. Toàn mô hình có **1.556.806** tham số (~6,28 MB fp32), trong đó backbone `features` = 927.008 (con số "930K" hay được nhắc là số của backbone, không phải của cả mô hình) và đầu `classifier` = 629.798. Tab 1 **không** in tổng số tham số — số tham số theo từng lớp xem ở Tab 5 (Weight Inspector).
    - **Tab 3 (Federated Training)**: Khi các Client hoàn thành từng round, biểu đồ Accuracy/Loss cập nhật tức thì.
    - **Tab 5 (Weight Inspector)**: Minh chứng tính toàn vẹn trọng số với SHA-256 hash và L2 update norm theo thời gian thực.
    - **Tab 6 (Inference Test)**: Thầy cô chụp một bức ảnh lá cây bị bệnh (táo, cà chua, khoai tây...) và upload lên web để xem model dự đoán lớp bệnh và độ tin cậy confidence trong vòng vài mili-giây.
