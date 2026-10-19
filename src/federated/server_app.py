@@ -646,7 +646,7 @@ class AuditedFlowerFedAvg:
 
 
 def start_flower_server(
-    server_address: str = "0.0.0.0:8089",
+    server_address: str = "127.0.0.1:8089",
     num_clients: int = 5,
     rounds: int = 5,
     local_epochs: int = 1,
@@ -823,17 +823,49 @@ def start_flower_server(
     return history
 
 
+LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
+
+
+def check_deployment_policy(args) -> list[str]:
+    """Deployment phải chọn TƯỜNG MINH một chính sách validator; trả về các cảnh báo không chặn.
+
+    Để trống cả hai cờ nghĩa là âm thầm trung bình cả cập nhật Byzantine — đó là trạng thái
+    không được phép tồn tại nữa. Tách khỏi khối __main__ để test khóa được hành vi này
+    mà không phải khởi động Flower server thật."""
+    if args.reject_suspicious_updates and args.observe_only:
+        raise ValueError("--reject-suspicious-updates và --observe-only loại trừ nhau.")
+    if not (args.reject_suspicious_updates or args.observe_only):
+        raise ValueError(
+            "deployment phải chọn hẳn một chính sách: --reject-suspicious-updates (an toàn, loại cập nhật dị thường) "
+            "hoặc --observe-only (ablation có chủ đích, vẫn trung bình nhưng ghi nhãn). "
+            "Để trống sẽ âm thầm chấp nhận update Byzantine vào FedAvg."
+        )
+    if args.observe_only and args.host not in LOOPBACK_HOSTS:
+        raise ValueError("--observe-only chỉ được chạy trên loopback: chế độ này cố ý để cập nhật dị thường đi vào trung bình.")
+    if args.max_update_norm is None:
+        return [
+            "chưa đặt --max-update-norm nên chuẩn cập nhật lớn bất thường sẽ không bao giờ bị đánh dấu. "
+            "Run khoa học phải truyền ngưỡng có dẫn chứng."
+        ]
+    return []
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Flower FedAvg Server")
     parser.add_argument("--mode", choices=["simulation", "deployment"], default="simulation")
     parser.add_argument("--rounds", type=int, default=5)
     parser.add_argument("--num-clients", type=int, default=5)
-    parser.add_argument("--host", type=str, default="0.0.0.0")
+    parser.add_argument("--host", type=str, default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8089)
     parser.add_argument("--local-epochs", type=int, default=1)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--require-real-clients", action="store_true")
     parser.add_argument("--reject-suspicious-updates", action="store_true")
+    parser.add_argument(
+        "--observe-only",
+        action="store_true",
+        help="Ablation có chủ đích: vẫn trung bình cập nhật dị thường, chỉ ghi nhãn suspicious. Phải chọn rõ một trong hai chính sách khi chạy deployment.",
+    )
     parser.add_argument("--max-update-norm", type=float, default=None)
     parser.add_argument("--evaluation-dataset-root", type=str, default=None, help="Optional held-out PlantVillage image root for server-side global validation/test only")
     parser.add_argument("--evaluation-partition-dir", type=str, default="data/partitions_stage2_scratch_v3/label100")
@@ -848,6 +880,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.mode == "deployment":
+        try:
+            for warning in check_deployment_policy(args):
+                print(f"[!] Cảnh báo: {warning}")
+        except ValueError as exc:
+            parser.error(str(exc))
         start_flower_server(
             server_address=f"{args.host}:{args.port}",
             num_clients=args.num_clients,

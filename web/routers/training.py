@@ -441,7 +441,7 @@ def _start_federated(background_tasks: BackgroundTasks, req: FederatedTrainReque
             "status": "started",
             "engine": "network",
             "message": (
-                f"Đang khởi động Flower server 0.0.0.0:{port} và 5 client 127.0.0.1:{port}; "
+                f"Đang khởi động Flower server 127.0.0.1:{port} và 5 client 127.0.0.1:{port}; "
                 f"chạy thử {req.rounds} vòng trên ảnh tổng hợp."
             ),
             "config": req.model_dump(),

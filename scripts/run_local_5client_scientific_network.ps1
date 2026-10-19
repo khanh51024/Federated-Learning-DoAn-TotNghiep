@@ -40,7 +40,7 @@ $serverArgs = @(
     "--metrics-file", "$Metrics",
     "--checkpoint-file", "$Checkpoint"
 )
-if ($RejectSuspicious) { $serverArgs += "--reject-suspicious-updates" }
+if ($RejectSuspicious) { $serverArgs += "--reject-suspicious-updates" } else { $serverArgs += "--observe-only" }
 
 $clientCommands = @()
 for ($cid = 0; $cid -lt 5; $cid++) {

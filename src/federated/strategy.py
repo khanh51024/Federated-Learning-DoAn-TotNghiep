@@ -138,4 +138,8 @@ def aggregate_fedavg(
         acc = acc / total_samples
         aggregated[key] = torch.from_numpy(acc).to(dtype=original_dtype)
 
+    # Cổng cuối ở MỨC HÀM: n_k là số CLIENT TỰ KHAI nên n_k ~ 1e308 vẫn tràn float64 thành inf dù mọi
+    # trọng số hữu hạn. Ngoài đời không đường nào tới được — Flower khóa n_k đúng bằng số dòng manifest
+    # (server_app.py:216, :521), cộng đồng kẹp n_cap (community.py:215) ⇒ giữ làm phòng thủ chiều sâu.
+    check_parameters_finite(aggregated)
     return aggregated

@@ -6,8 +6,12 @@ Nguyên tắc:
 - Mật khẩu là `COMMUNITY_ADMIN_TOKEN` (>= 12 ký tự), tài khoản là `COMMUNITY_ADMIN_USER` (mặc định "admin").
 - Một bộ đếm thất bại duy nhất (`LIMITER`): 5 lần sai / 10 phút / IP và 60 lần / 10 phút toàn cục, dùng chung cho mọi API
   quản trị để kẻ đoán mật khẩu không có nhiều lượt hơn khi đổi sang API khác.
-- Chế độ cục bộ: nếu `COMMUNITY_ADMIN_TOKEN` chưa được cấu hình (máy dev), các API huấn luyện KHÔNG bị khóa, đúng hành vi cũ.
+- Chế độ cục bộ: nếu `COMMUNITY_ADMIN_TOKEN` chưa được cấu hình (máy dev), các API huấn luyện chỉ mở cho
+  kết nối được nhìn thấy là từ chính máy này (`is_local_client`); request từ IP khác nhận 503 `admin_disabled`.
   Trên máy chủ công khai biến này luôn được đặt nên cả ba API huấn luyện đều đòi đăng nhập.
+- LƯU Ý khi chạy sau reverse proxy: `client_ip` đọc `request.client.host`, giá trị này chỉ đúng khi uvicorn
+  được bật `--proxy-headers` (deploy/cropfed-demo.service dùng `--proxy-headers --forwarded-allow-ips 127.0.0.1`).
+  Thiếu cờ đó thì mọi request đều hiện ra là IP của proxy (thường 127.0.0.1) và bị coi là cục bộ.
 """
 from __future__ import annotations
 
@@ -31,6 +35,14 @@ LIMITER = RateLimiter()
 
 def client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
+
+
+# "testclient" là host giả mà Starlette TestClient đặt; mọi request thật đều có IP định tuyến được.
+LOCAL_CLIENT_HOSTS = {"127.0.0.1", "::1", "localhost", "testclient"}
+
+
+def is_local_client(request: Request) -> bool:
+    return client_ip(request) in LOCAL_CLIENT_HOSTS
 
 
 def admin_user() -> str:
@@ -86,8 +98,15 @@ def require_admin(request: Request) -> None:
     """Dependency của FastAPI: chặn nếu chưa đăng nhập admin. Đặt `request.state.admin_user` để ghi nhật ký."""
     expected = configured_password()
     if expected is None:
-        request.state.admin_user = "local"
-        return
+        if is_local_client(request):
+            request.state.admin_user = "local"
+            return
+        raise _error(
+            503,
+            "admin_disabled",
+            "Chưa cấu hình COMMUNITY_ADMIN_TOKEN nên API huấn luyện chỉ mở cho kết nối từ chính máy này. "
+            "Hãy đặt mật khẩu quản trị trước khi cho truy cập từ xa.",
+        )
     ip = client_ip(request)
     if locked_out(LIMITER, ip):
         raise _error(429, "locked", "Đăng nhập quản trị sai quá nhiều lần. Hãy thử lại sau ít phút.")

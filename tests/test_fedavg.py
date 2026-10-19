@@ -114,3 +114,27 @@ def test_fedavg_rejects_shape_mismatch():
 
     with pytest.raises(ValueError):
         fedavg_weighted_average([w1, w2], [10, 10])
+
+
+def test_aggregate_rejects_overflow_from_a_self_declared_num_examples():
+    """Test ở MỨC HÀM, không phải đường tấn công đang mở: trọng số mọi client đều hữu hạn nhưng
+    n_k ~ 1e308 làm tích n_k * w_k tràn float64 ⇒ global model thành inf.
+    Ngoài đời không tới được (Flower khóa n_k theo manifest, cộng đồng kẹp n_cap) — cổng kiểm
+    giữ lại để người gọi aggregate_fedavg sau này không đưa model NaN/Inf vào vòng kế."""
+    huge = 10 ** 308
+    updates = [
+        {"client_id": 0, "num_examples": huge, "weights": {"w": torch.tensor([3.0], dtype=torch.float32)}},
+        {"client_id": 1, "num_examples": 5, "weights": {"w": torch.tensor([0.1], dtype=torch.float32)}},
+    ]
+    with pytest.raises(FloatingPointError, match="non-finite"):
+        aggregate_fedavg(updates)
+
+
+def test_aggregate_still_accepts_the_same_updates_with_an_honest_num_examples():
+    """Cùng trọng số đó, chỉ khác n_k hợp lệ ⇒ phải gộp được (cổng kiểm không chặn oan)."""
+    updates = [
+        {"client_id": 0, "num_examples": 100, "weights": {"w": torch.tensor([3.0], dtype=torch.float32)}},
+        {"client_id": 1, "num_examples": 300, "weights": {"w": torch.tensor([1.0], dtype=torch.float32)}},
+    ]
+    out = aggregate_fedavg(updates)
+    assert torch.allclose(out["w"], torch.tensor([1.5], dtype=torch.float32))

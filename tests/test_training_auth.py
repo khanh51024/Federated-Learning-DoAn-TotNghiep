@@ -223,3 +223,47 @@ def test_start_is_refused_with_503_when_the_server_has_too_little_free_memory(mo
 def test_memory_threshold_is_unknown_on_platforms_without_proc_meminfo(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(training_guard, "available_mb", lambda: None)
     training_guard.require_memory("network")  # không ném: không biết thì không chặn
+
+
+# ───────────────────────── chưa đặt mật khẩu: chỉ mở cho máy này ─────────────────────────
+@pytest.fixture()
+def remote_api(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    """TestClient giả lập một request đến TỪ IP BÊN NGOÀI (203.0.113.5 = dải TEST-NET-3)."""
+    monkeypatch.setattr(reg, "TRAINING_AUDIT_JSONL", str(tmp_path / "audit.jsonl"))
+    monkeypatch.setattr(training, "run_centralized_training", lambda **kwargs: {"test_metrics": {"accuracy": 0.5}})
+    admin_auth.LIMITER.reset()
+    CURRENT_TASK.update(status="idle", cancel_requested=False, live_progress=[], job_id=None)
+    yield TestClient(app, client=("203.0.113.5", 12345))
+    admin_auth.LIMITER.reset()
+    CURRENT_TASK.update(status="idle", cancel_requested=False, live_progress=[], job_id=None)
+
+
+def test_without_a_configured_password_a_remote_ip_gets_503_not_a_started_job(
+        monkeypatch: pytest.MonkeyPatch, remote_api: TestClient):
+    """Một cổng 0.0.0.0 quên đặt COMMUNITY_ADMIN_TOKEN không được mở API huấn luyện cho cả Internet."""
+    monkeypatch.delenv("COMMUNITY_ADMIN_TOKEN", raising=False)
+    response = remote_api.post("/api/centralized/train", json=START)
+    assert response.status_code == 503 and response.json()["detail"]["code"] == "admin_disabled"
+    assert remote_api.post("/api/train/stop", json={}).status_code == 503
+    assert CURRENT_TASK["status"] == "idle", "request bị từ chối không được làm đổi trạng thái tác vụ"
+
+
+def test_remote_admin_is_still_allowed_once_a_password_is_configured(
+        monkeypatch: pytest.MonkeyPatch, remote_api: TestClient):
+    """Siết chế độ cục bộ không được chặn quản trị hợp lệ từ xa khi đã đặt mật khẩu."""
+    monkeypatch.setenv("COMMUNITY_ADMIN_TOKEN", PASSWORD)
+    monkeypatch.delenv("COMMUNITY_ADMIN_USER", raising=False)
+    assert remote_api.post("/api/centralized/train", json=START).status_code == 401  # thiếu đăng nhập
+    assert remote_api.post("/api/centralized/train", json=START,
+                           headers=_basic("admin", PASSWORD)).status_code == 200
+
+
+def test_a_spoofed_forwarded_for_header_does_not_grant_local_access(
+        monkeypatch: pytest.MonkeyPatch, remote_api: TestClient):
+    """Người gửi tự đặt X-Forwarded-For: 127.0.0.1 không được coi là cục bộ.
+    GIỚI HẠN CỦA TEST: TestClient không chạy ProxyHeadersMiddleware của uvicorn, nên test này vẫn đạt
+    dù middleware có tin XFF — cái nó khóa thật là require_admin đọc request.client.host, không đọc header.
+    (Uvicorn chỉ tin XFF khi chạy --proxy-headers --forwarded-allow-ips 127.0.0.1 từ nginx loopback.)"""
+    monkeypatch.delenv("COMMUNITY_ADMIN_TOKEN", raising=False)
+    response = remote_api.post("/api/train/stop", json={}, headers={"X-Forwarded-For": "127.0.0.1"})
+    assert response.status_code == 503 and response.json()["detail"]["code"] == "admin_disabled"

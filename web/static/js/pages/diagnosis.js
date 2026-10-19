@@ -818,8 +818,22 @@ export async function mount() {
     }
   });
   const zone = byId("upload-dropzone");
-  ["dragenter", "dragover"].forEach(name => zone.addEventListener(name, () => zone.classList.add("is-dragover")));
-  ["dragleave", "drop", "dragend"].forEach(name => zone.addEventListener(name, () => zone.classList.remove("is-dragover")));
+  // Phải cancel dragover thì trình duyệt mới giao sự kiện drop cho zone; nếu không, kéo ảnh vào
+  // ngoài vùng sẽ làm trình duyệt điều hướng tới file:/// và dỡ cả ứng dụng đang chạy.
+  const cancelDrag = event => event.preventDefault();
+  ["dragenter", "dragover"].forEach(name => zone.addEventListener(name, event => {
+    cancelDrag(event);
+    zone.classList.add("is-dragover");
+  }));
+  ["dragleave", "dragend"].forEach(name => zone.addEventListener(name, () => zone.classList.remove("is-dragover")));
+  zone.addEventListener("drop", event => {
+    cancelDrag(event);
+    zone.classList.remove("is-dragover");
+    const file = event.dataTransfer?.files?.[0];
+    if (file) selectUpload(file);
+  });
+  document.addEventListener("dragover", cancelDrag);
+  document.addEventListener("drop", cancelDrag);
 
   $$("[data-mode]").forEach(button => button.addEventListener("click", () => setMode(button.dataset.mode)));
   byId("inference-fed-source").addEventListener("change", event => {

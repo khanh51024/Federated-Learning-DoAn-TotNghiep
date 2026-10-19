@@ -149,7 +149,7 @@ class NetworkDemoManager:
             "seed": seed,
             "reject_suspicious_updates": reject_suspicious_updates,
             "max_update_norm": max_update_norm,
-            "bind_address": f"0.0.0.0:{port}",
+            "bind_address": f"127.0.0.1:{port}",
             "connect_address": f"127.0.0.1:{port}",
             "partition_dir": str(PARTITION),
             "started_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -172,7 +172,7 @@ class NetworkDemoManager:
 
             server_args = [
                 "-m", "src.federated.server_app", "--mode", "deployment",
-                "--host", "0.0.0.0", "--port", str(port),
+                "--host", "127.0.0.1", "--port", str(port),
                 "--num-clients", "5", "--rounds", str(rounds),
                 "--local-epochs", str(local_epochs), "--seed", str(seed),
                 "--smoke", "--evaluation-partition-dir", str(PARTITION),
@@ -180,8 +180,7 @@ class NetworkDemoManager:
                 "--checkpoint-file", str(run_dir / "global.pt"),
                 "--progress-file", str(run_dir / "progress.json"),
             ]
-            if reject_suspicious_updates:
-                server_args.append("--reject-suspicious-updates")
+            server_args.append("--reject-suspicious-updates" if reject_suspicious_updates else "--observe-only")
             if max_update_norm is not None:
                 server_args.extend(["--max-update-norm", str(max_update_norm)])
             server = self._spawn("server", server_args, run_dir)

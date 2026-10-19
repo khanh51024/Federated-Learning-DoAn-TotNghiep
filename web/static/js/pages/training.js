@@ -253,8 +253,12 @@ export async function loadNetworkMetrics() {
       setText(summary, "Kiểm tra cuối trên tập ảnh giữ riêng: chưa thực hiện trong phiên này.");
       return;
     }
+    const runShape = [
+      Number.isFinite(Number(data.configured_rounds)) ? `${data.configured_rounds} vòng` : null,
+      Number.isFinite(Number(data.num_clients_required)) ? `${data.num_clients_required} client` : null,
+    ].filter(Boolean).join(", ");
     setText(runContext, data.historical_run
-      ? `Phiên chạy thử gần nhất đã kiểm: ${String(data.run_dir || "").split(/[\\/]/).pop()} · 2 vòng, 5 client; không phải phiên đang chạy.`
+      ? `Phiên chạy thử gần nhất đã kiểm: ${String(data.run_dir || "").split(/[\\/]/).pop()}${runShape ? ` · ${runShape}` : ""}; không phải phiên đang chạy.`
       : "Phiên Flower hiện tại · dữ liệu tổng hợp, không dùng làm kết quả khoa học.");
     const ms = (v, d = 2) => (v !== undefined && Number(v) >= 0 ? `${fmtNum(v, d)} ms` : "—");
     tbody.innerHTML = data.rounds.map(r => `
@@ -267,8 +271,13 @@ export async function loadNetworkMetrics() {
         <td>${ms(r.round_fit_elapsed_ms, 1)}</td><td>${ms(r.estimated_comm_overhead_ms, 1)}</td>
       </tr>`).join("");
     const tm = data.final_test_metrics;
+    // /api/federated/network-metrics gán scientific_valid=false cho mọi phiên smoke;
+    // chỉ được gọi số này là "tập ảnh giữ riêng" khi payload xác nhận phiên hợp lệ về mặt khoa học.
+    const isScientific = data.scientific_valid === true;
     setText(summary, tm
-      ? `Kiểm tra cuối trên tập ảnh giữ riêng — độ chính xác ${fmtNum(Number(tm.accuracy) * 100, 2)}% · loss ${formatDec(tm.loss)} · macro-F1 ${formatDec(tm.macro_f1)}`
+      ? (isScientific
+        ? `Kiểm tra cuối trên tập ảnh giữ riêng — độ chính xác ${fmtNum(Number(tm.accuracy) * 100, 2)}% · loss ${formatDec(tm.loss)} · macro-F1 ${formatDec(tm.macro_f1)}`
+        : `Chạy thử (smoke · 1 ảnh mỗi nhóm · dữ liệu tổng hợp) — không phải kết quả khoa học: độ chính xác ${fmtNum(Number(tm.accuracy) * 100, 2)}% · loss ${formatDec(tm.loss)} · macro-F1 ${formatDec(tm.macro_f1)}`)
       : "Kiểm tra cuối trên tập ảnh giữ riêng: chưa thực hiện (cần cấu hình thư mục ảnh đánh giá).");
     const clientRows = (data.audit_rounds || []).flatMap(round => (round.clients || []).map(client => ({ round: round.round, ...client })));
     clientBody.innerHTML = clientRows.length ? clientRows.map(row => `
