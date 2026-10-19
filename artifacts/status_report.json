@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)",
+  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 2 mục kỹ thuật chưa XONG)",
   "canonical_run_id": "20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62",
   "dataset_truth": {
     "source": "data/partitions_stage2_scratch_v3/suite.json",
@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-19T10:35:45",
+      "generated_at": "2026-10-19T15:03:12",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,13 +145,13 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-19T10:35:51",
+      "generated_at": "2026-10-19T15:03:18",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
-      "generated_at": "2026-10-19T10:42:02",
-      "code_fingerprint": "2e2601f3b8d5abc908be26a906754406f2fc6af0e734cf02286505bdca491817",
+      "generated_at": "2026-10-19T15:09:36",
+      "code_fingerprint": "223a2deab97f76b5df30599e7277a1e861414aa20abc7e6e0afe8ce9795959b0",
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
@@ -180,7 +180,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-19T10:35:49",
+      "generated_at": "2026-10-19T15:03:16",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
@@ -226,8 +226,8 @@
     {
       "id": "no_hardcode",
       "title": "Không hardcode đường dẫn artifact",
-      "status": "XONG",
-      "detail": "mọi đường dẫn artifacts/ trong src/web/scripts lấy từ src/registry.py (quét AST)",
+      "status": "CHƯA",
+      "detail": "1 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/build_community_demo_packs.py:21']",
       "unlock": []
     },
     {
@@ -269,7 +269,7 @@
       "id": "full_tests",
       "title": "Full tests pass trên mã nguồn hiện tại",
       "status": "XONG",
-      "detail": "technical_acceptance=pass lúc 2026-10-19T10:42:02 (gồm test mạng, 58 file test) với mã nguồn có dấu vân tay 2e2601f3b8d5; thay mã sau thời điểm này thì phải chạy lại",
+      "detail": "technical_acceptance=pass lúc 2026-10-19T15:09:36 (gồm test mạng, 60 file test) với mã nguồn có dấu vân tay 223a2deab97f; thay mã sau thời điểm này thì phải chạy lại",
       "unlock": []
     },
     {
@@ -339,7 +339,7 @@
       "id": "multiseed",
       "title": "Chạy multi-seed non-IID (seed 42/123/2026)",
       "status": "BLOCKED",
-      "detail": "chưa có multi-seed THẬT cho protocol đang công bố (mixed PV+PlantDoc, pretrained); chỉ có bản smoke trên ảnh tổng hợp",
+      "detail": "chưa có multi-seed THẬT cho protocol đang công bố (mixed PV+PlantDoc, pretrained); chỉ có bản smoke trên ảnh nhiễu ngẫu nhiên",
       "unlock": [
         "# train ngoài theo protocol mixed_pv_pd_v3 rồi nhập bundle: python scripts/import_branch_demo.py (docs/MODEL_REGISTRY.md)",
         "# LƯU Ý: scripts/run_real_multiseed_report.ps1 chạy protocol scratch PlantVillage CŨ, không thay được mục này"
@@ -357,8 +357,8 @@
     {
       "id": "release",
       "title": "Release sạch (mọi gate kỹ thuật XONG)",
-      "status": "XONG",
-      "detail": "mọi mục kỹ thuật XONG; trước khi nộp vẫn phải `git status` sạch và gắn tag",
+      "status": "CHƯA",
+      "detail": "còn mục kỹ thuật chưa XONG: ['no_hardcode']",
       "unlock": []
     }
   ],

@@ -2500,7 +2500,7 @@
       "expected_state_sha256": null,
       "checkpoint_status": "present",
       "preprocessing_id": null,
-      "dataset_id": "Ảnh tổng hợp (smoke Flower localhost)",
+      "dataset_id": "Ảnh nhiễu ngẫu nhiên (smoke Flower localhost, kiểm chứng hệ thống)",
       "protocol_id": "network_smoke_localhost",
       "validation_manifest_sha256": null,
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
@@ -2539,7 +2539,7 @@
       "expected_state_sha256": null,
       "checkpoint_status": "present",
       "preprocessing_id": null,
-      "dataset_id": "Ảnh tổng hợp (smoke Flower localhost)",
+      "dataset_id": "Ảnh nhiễu ngẫu nhiên (smoke Flower localhost, kiểm chứng hệ thống)",
       "protocol_id": "network_smoke_localhost",
       "validation_manifest_sha256": null,
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
@@ -2578,7 +2578,7 @@
       "expected_state_sha256": null,
       "checkpoint_status": "present",
       "preprocessing_id": null,
-      "dataset_id": "Ảnh tổng hợp (smoke Flower localhost)",
+      "dataset_id": "Ảnh nhiễu ngẫu nhiên (smoke Flower localhost, kiểm chứng hệ thống)",
       "protocol_id": "network_smoke_localhost",
       "validation_manifest_sha256": null,
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
@@ -2617,7 +2617,7 @@
       "expected_state_sha256": null,
       "checkpoint_status": "present",
       "preprocessing_id": null,
-      "dataset_id": "Ảnh tổng hợp (smoke Flower localhost)",
+      "dataset_id": "Ảnh nhiễu ngẫu nhiên (smoke Flower localhost, kiểm chứng hệ thống)",
       "protocol_id": "network_smoke_localhost",
       "validation_manifest_sha256": null,
       "taxonomy_sha256": "916d510df0d836b382c6daa553a2fde564f227f8d0d33989f8ce24520202de12",
@@ -2822,7 +2822,7 @@
     {
       "group_id": "report_experiments_smoke",
       "role": "quarantined",
-      "description": "Run report_experiments mode=smoke (dữ liệu tổng hợp, accuracy 0.0263) — cấm dùng trong luận văn",
+      "description": "Run report_experiments mode=smoke (ảnh nhiễu ngẫu nhiên, accuracy 0.0263) — cấm dùng trong luận văn",
       "paths": [
         "artifacts/report_experiments/20260930_144815/centralized/checkpoints/centralized_best.pt",
         "artifacts/report_experiments/20260930_144815/label01/checkpoints/fedavg_best.pt",
@@ -2952,7 +2952,7 @@
   },
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-19T10:35:45",
+      "generated_at": "2026-10-19T15:03:12",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -2964,13 +2964,13 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-19T10:35:51",
+      "generated_at": "2026-10-19T15:03:18",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
-      "generated_at": "2026-10-19T10:42:02",
-      "code_fingerprint": "2e2601f3b8d5abc908be26a906754406f2fc6af0e734cf02286505bdca491817",
+      "generated_at": "2026-10-19T15:09:36",
+      "code_fingerprint": "223a2deab97f76b5df30599e7277a1e861414aa20abc7e6e0afe8ce9795959b0",
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
@@ -2999,7 +2999,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-19T10:35:49",
+      "generated_at": "2026-10-19T15:03:16",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
