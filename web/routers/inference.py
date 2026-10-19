@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional
 from fastapi import File, HTTPException, Query, UploadFile
 from fastapi.routing import APIRouter
 from PIL import Image
+from starlette.concurrency import run_in_threadpool
 
 from web.demo_evidence import PROTOCOL_ID, load_evidence
 from web.services import evidence_service, model_service
@@ -175,13 +176,17 @@ def get_comparison_table(protocol_id: str = PROTOCOL_ID) -> Dict[str, Any]:
 
 @router.post("/api/inference/plantvillage")
 async def run_plantvillage_reference(file: UploadFile = File(...)) -> Dict[str, Any]:
-    """Standalone PlantVillage reference; independent from FedAvg comparison."""
+    """Standalone PlantVillage reference; independent from FedAvg comparison.
+
+    Hàm `async` nên thân nó chạy thẳng trên event loop: forward của torch phải đẩy sang threadpool,
+    nếu không một ảnh đang suy luận sẽ chặn cả `/api/status` mà giao diện đang poll.
+    (`/api/inference/all` và `/api/inference` là hàm đồng bộ nên FastAPI tự chạy trong threadpool.)"""
     contents = await file.read(MAX_UPLOAD_BYTES + 1)
     _reject_oversized(contents)
     try:
         with Image.open(io.BytesIO(contents)) as image:
             _reject_too_many_pixels(image.size)
-            return _predict("plantvillage_traced_reference", image)
+            return await run_in_threadpool(_predict, "plantvillage_traced_reference", image)
     except (OSError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=f"Ảnh hoặc model PlantVillage không hợp lệ: {exc}") from exc
 

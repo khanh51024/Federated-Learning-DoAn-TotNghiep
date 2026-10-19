@@ -618,20 +618,20 @@ function init() {
   confirmable($("btn-rollback"), "Bấm lần nữa để khôi phục", rollback);
   setInterval(tickClock, 1000);
 
-  // Link đánh dấu sẵn: /quan-tri#token=... Phần sau dấu # không bao giờ được gửi lên máy chủ; đọc xong xóa khỏi thanh địa chỉ.
+  // `#token=` không còn được nhận: mật khẩu nằm trong URL là thói quen xấu (lộ khi chia sẻ màn hình,
+  // lọt vào bookmark). Vẫn xóa fragment để link cũ ai đó đã lưu không để mật khẩu lại trên thanh địa chỉ.
   const linkParams = new URLSearchParams(location.hash.replace(/^#/, ""));
-  const fromLink = linkParams.get("token");
-  if (fromLink !== null) {
+  if (linkParams.has("token")) {
     try { history.replaceState(null, "", `${location.pathname}${location.search}`); } catch { /* bỏ qua */ }
   }
-  const stored = (fromLink || "").trim() ? { user: (linkParams.get("user") || DEFAULT_USER).trim(), password: fromLink.trim() } : loadToken();
+  const stored = loadToken();
   if (stored) {
     S.user = stored.user || DEFAULT_USER;
     S.token = stored.password;
     $("token-input").value = "";
     api("GET", "state").then(async state => {
       S.state = state;
-      saveToken(fromLink ? true : isRemembered() || $("remember-token").checked);
+      saveToken(isRemembered() || $("remember-token").checked);
       enterApp();
       await afterState({ firstTime: true });
       await loadHistory();
@@ -640,7 +640,7 @@ function init() {
     }).catch(error => {
       S.token = null;
       clearToken();
-      if (error?.status === 401) showLoginError(fromLink ? "Mật khẩu trong liên kết không đúng." : "Mật khẩu đã lưu không còn đúng. Hãy nhập lại.");
+      if (error?.status === 401) showLoginError("Mật khẩu đã lưu không còn đúng. Hãy nhập lại.");
     });
   }
 }

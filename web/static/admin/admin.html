@@ -56,7 +56,7 @@
     <!-- ĐĂNG NHẬP -->
     <section class="panel admin-login" id="login-panel" aria-labelledby="login-title">
       <h2 class="panel-title panel-title-sm" id="login-title">Đăng nhập quản trị</h2>
-      <p class="panel-desc">Đăng nhập bằng tài khoản và mật khẩu quản trị. Chỉ cần nhập một lần: bật “Ghi nhớ trên máy này” hoặc để trình duyệt lưu mật khẩu; hoặc lưu trang với địa chỉ <span class="code">…/quan-tri#token=&lt;mật khẩu&gt;</span> (phần sau dấu # không bao giờ được gửi lên máy chủ).</p>
+      <p class="panel-desc">Đăng nhập bằng tài khoản và mật khẩu quản trị. Chỉ cần nhập một lần trong tab này; bật “Ghi nhớ trên máy này” nếu muốn tab mới khỏi hỏi lại (bỏ chọn và bấm “Đăng xuất” khi dùng máy chung).</p>
       <form id="login-form" class="admin-login-form mt-3">
         <label class="sr-only" for="user-input">Tài khoản</label>
         <input type="text" id="user-input" name="username" class="input-field" value="admin" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Tài khoản" required>
@@ -64,7 +64,7 @@
         <input type="password" id="token-input" name="password" class="input-field" autocomplete="current-password" spellcheck="false" placeholder="Mật khẩu" required>
         <button type="submit" class="btn btn-primary" id="btn-login">Đăng nhập</button>
         <label class="check-label admin-remember" for="remember-token">
-          <input type="checkbox" id="remember-token" checked> Ghi nhớ trên máy này (bỏ chọn nếu dùng máy chung; bấm “Đăng xuất” để xóa)
+          <input type="checkbox" id="remember-token"> Ghi nhớ trên máy này (bỏ chọn nếu dùng máy chung; bấm “Đăng xuất” để xóa)
         </label>
       </form>
       <p class="field-error hidden" id="login-error" role="alert"></p>

@@ -68,6 +68,9 @@ def test_explain_returns_one_gradcam_overlay_per_model(client):
     body = client.post("/api/inference/all", files={"file": (name, data, "image/jpeg")}, params={"explain": "true"}).json()
     assert set(body["explain"]) == set(body["order"])
     for key, item in body["explain"].items():
+        # Router cố tình nuốt lỗi Grad-CAM thành {"error": ...} để một model hỏng không mất 7 kết quả
+        # dự đoán; không chặn ở đây thì test chỉ hỏng vì thiếu khóa, không cho biết nguyên nhân thật.
+        assert "error" not in item, f"{key}: {item['error']}"
         assert item["class"] == body["models"][key]["predicted_class"]
         assert item["image"].startswith("data:image/jpeg;base64,")
         with Image.open(io.BytesIO(base64.b64decode(item["image"].split(",", 1)[1]))) as image:

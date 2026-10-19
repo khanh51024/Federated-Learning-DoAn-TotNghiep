@@ -99,6 +99,8 @@ def admin_ui_checks(browser: Any, base: str, admin_token: str) -> None:
           page.locator("#admin-app").is_hidden() and "không đúng" in page.locator("#login-error").inner_text())
     page.fill("#user-input", "admin")
 
+    # "Ghi nhớ trên máy này" KHÔNG còn tick sẵn — phải bật tường minh thì bài kiểm ở dưới mới có nghĩa.
+    page.check("#remember-token")
     page.fill("#token-input", admin_token)
     page.click("#btn-login")
     page.wait_for_selector("#admin-app:not(.hidden)", timeout=30000)
@@ -178,7 +180,7 @@ def admin_ui_checks(browser: Any, base: str, admin_token: str) -> None:
     page.wait_for_selector("#admin-app:not(.hidden)", timeout=30000)
     check("trang quản trị: tải lại vẫn giữ đăng nhập trong tab", True)
 
-    # "Ghi nhớ trên máy này" (mặc định bật): tab mới của cùng trình duyệt vào thẳng, không hỏi token
+    # "Ghi nhớ trên máy này" (đã bật tường minh lúc đăng nhập): tab mới của cùng trình duyệt vào thẳng, không hỏi token
     second = context.new_page()
     second.goto(f"{base}/quan-tri", wait_until="load", timeout=60000)
     second.wait_for_selector("#admin-app:not(.hidden)", timeout=30000)
@@ -201,17 +203,18 @@ def admin_ui_checks(browser: Any, base: str, admin_token: str) -> None:
     page.click("#btn-logout")
     page.wait_for_selector("#login-panel:not(.hidden)", timeout=15000)
 
-    # link đánh dấu sẵn #token=...: vào thẳng, token bị xóa khỏi thanh địa chỉ
-    fresh = browser.new_context(viewport={"width": 1280, "height": 900}).new_page()
-    fresh.goto(f"{base}/quan-tri#token={admin_token}", wait_until="load", timeout=60000)
-    fresh.wait_for_selector("#admin-app:not(.hidden)", timeout=30000)
-    check("trang quản trị: link #token= vào thẳng và xóa token khỏi URL",
-          "token=" not in fresh.url and admin_token not in fresh.url, fresh.url)
-    wrong = browser.new_context(viewport={"width": 1280, "height": 900}).new_page()
-    wrong.goto(f"{base}/quan-tri#token=sai-token-sai-token-sai-token", wait_until="load", timeout=60000)
-    wrong.wait_for_selector("#login-error:not(.hidden)", timeout=30000)
-    check("trang quản trị: link có token sai hiện thông báo và quay về đăng nhập",
-          "không đúng" in wrong.locator("#login-error").inner_text() and wrong.locator("#login-panel").is_visible())
+    # #token= đã bị GỠ: link kiểu đó phải bị bỏ qua (không tự đăng nhập, không ghi mật khẩu vào bộ nhớ máy)
+    # nhưng fragment vẫn bị xóa để mật khẩu trong link cũ không nằm lại trên thanh địa chỉ.
+    stale = browser.new_context(viewport={"width": 1280, "height": 900}).new_page()
+    stale.goto(f"{base}/quan-tri#token={admin_token}", wait_until="load", timeout=60000)
+    stale.wait_for_selector("#login-panel:not(.hidden)", timeout=30000)
+    check("trang quản trị: link #token= không còn được nhận và không lưu mật khẩu",
+          stale.locator("#admin-app").is_hidden()
+          and "token=" not in stale.url and admin_token not in stale.url
+          and stale.evaluate("localStorage.getItem('cropfed.admin.token')") is None
+          and stale.evaluate("sessionStorage.getItem('cropfed.admin.token')") is None,
+          stale.url)
+    stale.close()
 
     narrow = browser.new_context(viewport={"width": 320, "height": 700}).new_page()
     narrow.goto(f"{base}/quan-tri", wait_until="load", timeout=60000)
@@ -251,6 +254,7 @@ def training_gate_checks(browser: Any, base: str, admin_token: str) -> None:
 
     login = context.new_page()  # cùng trình duyệt: đăng nhập ở tab khác với "Ghi nhớ trên máy này"
     login.goto(f"{base}/quan-tri", wait_until="load", timeout=60000)
+    login.check("#remember-token")  # không còn tick sẵn: tab bước 5 chỉ tự mở khóa khi bản ghi nhớ nằm trong localStorage
     login.fill("#token-input", admin_token)
     login.click("#btn-login")
     login.wait_for_selector("#admin-app:not(.hidden)", timeout=30000)
