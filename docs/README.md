@@ -23,4 +23,5 @@
 | [UI_UX_REVIEW_2026-10-14.md](UI_UX_REVIEW_2026-10-14.md) | Review UI/UX và nội dung bản production: phát hiện có bằng chứng, luồng Client FL, bảng câu cần sửa, roadmap |
 | [REVIEW_TOAN_DIEN_2026-10-16.md](REVIEW_TOAN_DIEN_2026-10-16.md) | Review toàn diện 6 tầng (khoa học · file train · client · web backend · UI/UX · test/docs/deploy): P0 kèm trạng thái đã sửa/còn lại, điểm mạnh nên đưa vào slide, thứ tự việc còn lại |
 | [REVIEW_WEB_2026-10-19.md](REVIEW_WEB_2026-10-19.md) | Review web: máy chủ có thật sự huấn luyện không (số đo), kiến trúc/stack, CSP, UI/UX và client cộng đồng (mục 7: tái cấu trúc thành web báo cáo) |
+| [CAU_HOI_BAO_VE_2026-10-19.md](CAU_HOI_BAO_VE_2026-10-19.md) | 52 câu hỏi chuẩn bị bảo vệ (lý thuyết FL, dữ liệu, huấn luyện, đánh giá, hạn chế, máy chủ, học liên kết cộng đồng) kèm gợi ý trả lời bám số liệu thật |
 | [REFERENCES_IEEE.md](REFERENCES_IEEE.md) | Danh mục trích dẫn IEEE |

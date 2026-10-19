@@ -1,7 +1,7 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-19 21:50 · sinh tự bởi `scripts/update_status.py`
-> **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)
+> **Cập nhật lúc:** 2026-10-19 22:28 · sinh tự bởi `scripts/update_status.py`
+> **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 2 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
 > con số nào trong repo phải truy được về `artifacts/registry.json`. Không sửa tay — chỉ khối Nhật ký cuối file.
@@ -20,7 +20,7 @@
 - Dataset cục bộ để tái lập: `data/partitions_stage2_scratch_v3` — split **38984/4400/10921** (5 clients, seed 42, protocol `stage2_scratch_clean_v3`)
 - Run Kaggle lịch sử: `20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62` — metrics CÓ, **checkpoint KHÔNG còn trên máy**
 
-## 3. Checklist nghiệm thu — XONG 19/22 · CHƯA 0 · BLOCKED 3
+## 3. Checklist nghiệm thu — XONG 17/22 · CHƯA 2 · BLOCKED 3
 
 | # | Hạng mục | Trạng thái | Bằng chứng (máy kiểm) |
 |---|---|---|---|
@@ -29,7 +29,7 @@
 | 3 | Một engine train (pipeline cũ gom vào legacy/) | ✅ XONG | engine duy nhất là src/; pipeline Kaggle/stage* nằm trong legacy/ (chạy riêng: pytest legacy/tests) |
 | 4 | Web tách router/service, inference đi một cửa | ✅ XONG | app.py chỉ mount router; inference chỉ đi qua web/services/model_service.py (cổng web_visible) |
 | 5 | Không hardcode đường dẫn artifact | ✅ XONG | mọi đường dẫn artifacts/ trong src/web/scripts lấy từ src/registry.py (quét AST) |
-| 6 | Dọn tài liệu mâu thuẫn | ✅ XONG | gốc repo chỉ còn README.md + PROJECT_STATUS.md; docs/ chỉ gồm tài liệu hiện hành |
+| 6 | Dọn tài liệu mâu thuẫn | ⬜ CHƯA | tài liệu ngoài danh mục: gốc=[] docs=['CAU_HOI_BAO_VE_2026-10-19.md'] |
 | 7 | Số liệu trong docs không mâu thuẫn artifact | ✅ XONG | không còn số liệu mâu thuẫn đã biết (97,12, 97.12...) và không ghi tĩnh kết quả test trong README/docs |
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
 | 9 | Test không ghi đè artifact đang track | ✅ XONG | test không tham chiếu artifacts/checkpoints/metrics (dùng tmp_path) |
@@ -45,7 +45,7 @@
 | 19 | Khoảng tin cậy theo cụm + McNemar + độ nhạy 'cùng lá' | ✅ XONG | khoảng tin cậy 95% bootstrap theo cụm (cảnh/nhóm lá) — val: PlantDoc Centralized 53.9% [44.2%; 63.1%], Centralized−FedAvg +6.7% [-3.7%; +18.0%], McNemar p=0.0414 / test: PlantDoc Centralized 63.4% [52.9%; 73.7%], Centralized−FedAvg +13.4% [+1.6%; +24.8%], McNemar p=0.00762 |
 | 20 | Chạy multi-seed non-IID (seed 42/123/2026) | ⛔ BLOCKED | chưa có multi-seed THẬT cho protocol đang công bố (mixed PV+PlantDoc, pretrained); chỉ có bản smoke trên ảnh nhiễu ngẫu nhiên |
 | 21 | Đồng bộ báo cáo & artifacts sau khi có run mới | ⛔ BLOCKED | phụ thuộc multi-seed thật |
-| 22 | Release sạch (mọi gate kỹ thuật XONG) | ✅ XONG | mọi mục kỹ thuật XONG; trước khi nộp vẫn phải `git status` sạch và gắn tag |
+| 22 | Release sạch (mọi gate kỹ thuật XONG) | ⬜ CHƯA | còn mục kỹ thuật chưa XONG: ['docs_clean'] |
 
 ### Việc đang BLOCKED — cần gì và mở khóa bằng lệnh nào
 
@@ -81,7 +81,8 @@ Copy-Item <centralized_best.pt tải về> artifacts/checkpoints/centralized_bes
 
 ### Việc làm được ngay (chưa BLOCKED)
 
-_(không còn mục kỹ thuật nào mở)_
+1. Dọn tài liệu mâu thuẫn — tài liệu ngoài danh mục: gốc=[] docs=['CAU_HOI_BAO_VE_2026-10-19.md']
+2. Release sạch (mọi gate kỹ thuật XONG) — còn mục kỹ thuật chưa XONG: ['docs_clean']
 
 ## 4. Kết quả chuẩn theo họ (không trộn lẫn)
 
