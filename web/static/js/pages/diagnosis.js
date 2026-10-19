@@ -356,7 +356,7 @@ function headlineHtml(trueClass) {
       </div>
       <p class="headline-meta">${verdictText}</p>
       ${truth}
-      <p class="field-hint">Xác suất là mức mô hình gán cho nhóm đã chọn, không phải xác suất đoán đúng; ảnh khác kiểu ảnh học có thể sai dù xác suất cao.</p>
+      <p class="field-hint">Độ tin cậy của mô hình cho nhóm đã chọn; ảnh thực tế có thể sai khác dù xác suất cao.</p>
     </div>`;
 }
 
@@ -793,17 +793,17 @@ function renderBrief(evidence, summary) {
     }
     const healthy = classes.filter(cls => /___healthy$/.test(cls)).length;
     setText(byId("brief-classes-title"), `${classes.length} nhóm, ${crops.size} loại cây`);
-    setText(byId("brief-classes-text"), `${classes.length - healthy} nhóm bệnh và ${healthy} nhóm lá khỏe. Mô hình luôn chọn một trong ${classes.length} nhóm này: cây hoặc bệnh ngoài danh sách vẫn bị xếp vào nhóm gần nhất, nên kết quả không còn ý nghĩa.`);
+    setText(byId("brief-classes-text"), `${classes.length - healthy} nhóm bệnh, ${healthy} nhóm lá khỏe. Cây hoặc bệnh ngoài danh mục vẫn bị xếp vào nhóm gần nhất, nên kết quả không còn ý nghĩa.`);
     setHtml(byId("brief-list-body"), [...crops.entries()].map(([crop, list]) =>
       `<p><b>${esc(crop)}</b>: ${list.map(cls => esc(diseaseOf(cls))).join("; ")}</p>`).join(""));
   }
   const fed = evidence?.available ? (evidence.models || []).find(m => m.model_id === "fedavg")?.metrics : null;
   if (fed) {
-    setText(byId("brief-crop-title"), `Nhận đúng loại cây: ${fmtPct(fed.plantvillage.crop_accuracy, 1)} ảnh trong phòng, ${fmtPct(fed.plantdoc.crop_accuracy, 1)} ảnh ngoài đồng`);
-    setText(byId("brief-crop-text"), `FedAvg trên tập kiểm tra. Kết quả hiện riêng loại cây và nhóm bệnh: đoán sai bệnh vẫn có thể đúng loại cây. Đúng nhóm bệnh thấp hơn: ${fmtPct(fed.plantvillage.top1_accuracy, 1)} (trong phòng), ${fmtPct(fed.plantdoc.top1_accuracy, 1)} (ngoài đồng).`);
+    setText(byId("brief-crop-title"), `Nhận đúng cây: ${fmtPct(fed.plantvillage.crop_accuracy, 1)} (trong phòng), ${fmtPct(fed.plantdoc.crop_accuracy, 1)} (ngoài đồng)`);
+    setText(byId("brief-crop-text"), `Đúng nhóm bệnh: ${fmtPct(fed.plantvillage.top1_accuracy, 1)} (trong phòng), ${fmtPct(fed.plantdoc.top1_accuracy, 1)} (ngoài đồng).`);
     const fullFrame = summary?.fullframe?.available ? summary.fullframe.splits?.val?.full_frame?.fedavg : null;
-    setText(byId("brief-own-title"), "Ảnh của bạn (ngoài bộ dữ liệu) dùng được");
-    setText(byId("brief-own-text"), `Tải ảnh một lá đã cắt; kết quả kém hơn ảnh mẫu${fullFrame !== null && fullFrame !== undefined ? `, và chỉ còn ${fmtPct(fullFrame, 1)} nếu đưa cả khung ảnh nhiều lá (PlantDoc, FedAvg)` : ""}. Đây chưa phải độ chính xác ngoài thực địa.`);
+    setText(byId("brief-own-title"), "Ảnh ngoài bộ dữ liệu");
+    setText(byId("brief-own-text"), `Nên dùng ảnh một lá chụp rõ${fullFrame !== null && fullFrame !== undefined ? ` (ảnh nhiều lá giảm còn khoảng ${fmtPct(fullFrame, 1)})` : ""}. Kết quả mang tính tham khảo.`);
   }
 }
 
