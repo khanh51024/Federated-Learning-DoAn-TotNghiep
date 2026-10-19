@@ -1,4 +1,4 @@
-// Sơ đồ mạng học liên kết dùng chung cho bước 1 (minh họa) và bước 5 (chạy theo trạng thái thật).
+// Sơ đồ mạng học liên kết dùng chung cho chương Giới thiệu (minh họa) và Phụ lục kỹ thuật (chạy theo trạng thái thật).
 // Hình học nằm trong hệ 640×360; dây là đường Bézier bậc hai vẽ bằng SVG tĩnh, còn mọi thứ CHUYỂN ĐỘNG là phần tử HTML
 // di chuyển bằng transform (animate phần tử con của SVG không chạy trên compositor). Dây và quỹ đạo chấm dùng cùng hằng số.
 import { esc } from "./dom.js";

@@ -44,7 +44,7 @@ WORKER_SPY = """
 """
 
 
-def open_page(browser: Any, base: str, route: str = "/#huan-luyen", width: int = 390, script: str | None = None):
+def open_page(browser: Any, base: str, route: str = "/#hoc-lien-ket", width: int = 390, script: str | None = None):
     context = base_e2e.new_ctx(browser, viewport={"width": width, "height": 900})
     page = context.new_page()
     errors: list[str] = []
@@ -99,7 +99,7 @@ def main() -> int:
             browser = pw.chromium.launch()
 
             # ── 1. Phiên đóng (mặc định) ──
-            context, page, errors = open_page(browser, base, "/?code=ABCDE-FGHJK#huan-luyen")
+            context, page, errors = open_page(browser, base, "/?code=ABCDE-FGHJK#hoc-lien-ket")
             page.wait_for_selector("#comm-main:not(.hidden)", timeout=30000)
             page.wait_for_selector("#comm-closed-note:not(.hidden)", timeout=15000)
             check("phiên đóng: câu giải thích nằm cạnh ô nhập mã, nhìn thấy được",
@@ -111,6 +111,15 @@ def main() -> int:
             check("liên kết ?code= khi đóng: thông báo khớp với nút bị khóa", True)
             overflow = page.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
             check("phiên đóng: 390 px không tràn ngang", overflow <= 1, f"lệch {overflow}px")
+            context.close()
+
+            # ── 1b. Địa chỉ cũ của sáu bước vẫn mở đúng trang (mã tham gia đã in có dạng /?code=…#huan-luyen) ──
+            context, page, errors = open_page(browser, base, "/?code=ABCDE-FGHJK#huan-luyen")
+            page.wait_for_selector("#page-hoc-lien-ket.active", timeout=30000)
+            check("địa chỉ cũ #huan-luyen mở trang Học liên kết và đổi sang #hoc-lien-ket",
+                  page.evaluate("location.hash") == "#hoc-lien-ket", page.evaluate("location.hash"))
+            page.wait_for_selector("#comm-main:not(.hidden)", timeout=30000)
+            check("địa chỉ cũ: mã trong liên kết vẫn được điền sẵn", page.locator("#comm-code").input_value().replace("-", "") == "ABCDEFGHJK")
             context.close()
 
             # ── 2. Trình duyệt thiếu OffscreenCanvas ──

@@ -143,9 +143,9 @@ Có dataset thì ba script sau chạy được (CPU, không cần GPU):
 .\.venv\Scripts\python.exe scripts\report_client_shards.py        # phân bố lớp theo client -> artifacts/client_shard_class_counts.json
 .\.venv\Scripts\python.exe scripts\evaluate_published_models.py --holdout   # ~6 phút: 7 model trên test giữ riêng 11.015 ảnh -> artifacts/holdout_eval_report.json (thêm --reuse: dùng lại logits đã lưu)
 .\.venv\Scripts\python.exe scripts\report_statistics.py         # khoảng tin cậy theo cụm, McNemar, độ nhạy 'cùng lá' (dùng logits đã lưu) -> artifacts/statistics_report.json
-.\.venv\Scripts\python.exe scripts\report_partition_schemes.py  # phân bố lớp của 12 cách chia (bước 2 của web) -> artifacts/partition_schemes_class_counts.json
+.\.venv\Scripts\python.exe scripts\report_partition_schemes.py  # phân bố lớp của 12 cách chia (chương 2 của web) -> artifacts/partition_schemes_class_counts.json
 .\.venv\Scripts\python.exe scripts\build_error_gallery.py       # thumbnail ảnh val bị đoán sai với độ tin cậy >= 0,9 -> web/static/samples/errors/
-.\.venv\Scripts\python.exe scripts\build_demo_gallery.py        # 19 ảnh mẫu của bước 4 -> web/static/samples/demo/
+.\.venv\Scripts\python.exe scripts\build_demo_gallery.py        # 19 ảnh mẫu của trang Chẩn đoán -> web/static/samples/demo/
 ```
 
 Dùng `--reuse` ở script thứ hai để phân tích lại từ logits đã lưu (`data/reeval/`) mà không chạy lại suy luận.

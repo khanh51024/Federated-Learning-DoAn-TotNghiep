@@ -25,7 +25,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "tmp" / "perf-audit"
-ROUTES = ["tong-quan", "non-iid", "ket-qua", "chan-doan", "huan-luyen", "bang-chung"]
+ROUTES = ["gioi-thieu", "du-lieu", "phuong-phap", "ket-qua", "ket-luan", "chan-doan", "hoc-lien-ket", "phu-luc"]
 PROFILES = {
     "mobile": {"width": 390, "height": 844, "cpu": 4,
                "net": {"offline": False, "latency": 150, "downloadThroughput": 1.6 * 1024 * 1024 / 8, "uploadThroughput": 750 * 1024 / 8}},

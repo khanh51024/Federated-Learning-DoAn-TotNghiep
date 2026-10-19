@@ -1,9 +1,9 @@
-// Bước 5 · Huấn luyện thử: chạy FedAvg qua Flower (5 client localhost) hoặc Centralized, theo dõi trực tiếp.
+// Phụ lục D · Kiểm thử hệ thống trên máy chủ: chạy FedAvg qua Flower (5 client localhost) hoặc Centralized, theo dõi trực tiếp.
+// Markup nằm trong #page-phu-luc (index.html); appendix.js gọi mount().
 import { getJson, postJson } from "../core/api.js";
 import { clearCredential, readCredential, storedAuthHeader } from "../core/admin-auth.js";
 import { currentTask, markTaskStarted, onStatus, pollStatus, setPollInterval } from "../core/status.js";
 import { beat, diagramHtml, pulse } from "../core/flnet.js";
-import { mount as mountCommunity } from "./community.js";
 import {
   applyStyleData, $$, byId, esc, fmtNum, formatApiError, notify, prefersReducedMotion, setBar, setClass, setDisabled, setDisplay, setHtml,
   setText, toggleHidden,
@@ -261,8 +261,8 @@ function renderTopology(task, network) {
   });
   stage.querySelectorAll(".fl-wire-lit[data-i]").forEach((el, index) => el.classList.toggle("is-on", index < connected));
 
-  // nhịp: chỉ khi một vòng thật vừa xong và bước 5 đang hiện (poll chậm có thể gộp hai vòng thành một nhịp)
-  const visible = byId("page-huan-luyen")?.classList.contains("active");
+  // nhịp: chỉ khi một vòng thật vừa xong và phụ lục đang hiện (poll chậm có thể gộp hai vòng thành một nhịp)
+  const visible = byId("page-phu-luc")?.classList.contains("active");
   if (topo.lastRound !== null && completed > topo.lastRound && visible && view.federated) {
     // Flower thật: đúng số client được chấp nhận ở vòng vừa xong (0 → không có gì để chạy về máy chủ, không nháy).
     // Engine trong tiến trình mô phỏng đủ năm shard mỗi vòng.
@@ -274,7 +274,7 @@ function renderTopology(task, network) {
     }
   }
   topo.lastRound = completed;
-  // poll nhanh khi đang chạy và đang xem bước 5: sơ đồ bám sát trạng thái thật
+  // poll nhanh khi đang chạy và đang xem phụ lục: sơ đồ bám sát trạng thái thật
   setPollInterval(running && visible ? 1500 : 8000);
 }
 
@@ -344,9 +344,9 @@ export async function loadNetworkMetrics() {
     const data = await getJson("/api/federated/network-metrics");
     if (!data.available || !Array.isArray(data.rounds) || data.rounds.length === 0) {
       setText(runContext, "Chưa có phiên chạy thử nào hoàn tất.");
-      tbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted">Chưa có dữ liệu từ phiên Flower thật.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Chưa có dữ liệu từ phiên Flower thật.</td></tr>';
       clientBody.innerHTML = '<tr><td colspan="11" class="text-center text-muted">Chưa có nhật ký từng client.</td></tr>';
-      setText(summary, "Kiểm tra cuối trên tập ảnh giữ riêng: chưa thực hiện trong phiên này.");
+      setText(summary, "Chưa có kiểm tra cuối cho phiên này.");
       return;
     }
     const runShape = [
@@ -361,8 +361,6 @@ export async function loadNetworkMetrics() {
       <tr>
         <td>${esc(r.round)}</td><td>${esc(r.accepted_clients ?? "—")}</td><td>${esc(r.suspicious_clients ?? "—")}</td><td>${esc(r.rejected_clients ?? "—")}</td>
         <td>${formatDec(r.mean_received_update_norm)}</td>
-        <td>${r.server_val_accuracy !== undefined ? `${fmtNum(Number(r.server_val_accuracy) * 100, 2)}%` : "—"}</td>
-        <td>${formatDec(r.server_val_loss)}</td><td>${formatDec(r.server_val_macro_f1)}</td>
         <td>${ms(r.mean_probe_rtt_ms)}</td><td>${ms(r.max_probe_rtt_ms)}</td>
         <td>${ms(r.round_fit_elapsed_ms, 1)}</td><td>${ms(r.estimated_comm_overhead_ms, 1)}</td>
       </tr>`).join("");
@@ -374,7 +372,7 @@ export async function loadNetworkMetrics() {
       ? (isScientific
         ? `Kiểm tra cuối trên tập ảnh giữ riêng — độ chính xác ${fmtNum(Number(tm.accuracy) * 100, 2)}% · loss ${formatDec(tm.loss)} · macro-F1 ${formatDec(tm.macro_f1)}`
         : `Chạy thử trên ảnh nhiễu ngẫu nhiên (1 ảnh mỗi nhóm) — không phải kết quả khoa học: độ chính xác ${fmtNum(Number(tm.accuracy) * 100, 2)}%${Number(tm.accuracy) <= 0.05 ? " ≈ mức đoán ngẫu nhiên 1/38, đúng như kỳ vọng" : ""} · loss ${formatDec(tm.loss)} · macro-F1 ${formatDec(tm.macro_f1)}`)
-      : "Kiểm tra cuối trên tập ảnh giữ riêng: chưa thực hiện (cần cấu hình thư mục ảnh đánh giá).");
+      : "Chưa có kiểm tra cuối (máy chủ demo không có thư mục ảnh đánh giá).");
     const clientRows = (data.audit_rounds || []).flatMap(round => (round.clients || []).map(client => ({ round: round.round, ...client })));
     clientBody.innerHTML = clientRows.length ? clientRows.map(row => `
       <tr>
@@ -388,9 +386,9 @@ export async function loadNetworkMetrics() {
         <td>${esc(row.status || "—")}</td><td>${esc(row.validation_reason || "—")}</td>
       </tr>`).join("") : '<tr><td colspan="11" class="text-center text-muted">Chưa có nhật ký từng client.</td></tr>';
   } catch (error) {
-    tbody.innerHTML = `<tr><td colspan="12" class="text-center text-muted">Không đọc được số liệu phiên chạy: ${esc(error.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted">Không đọc được số liệu phiên chạy: ${esc(error.message)}</td></tr>`;
     clientBody.innerHTML = `<tr><td colspan="11" class="text-center text-muted">${esc(error.message)}</td></tr>`;
-    setText(summary, `Kiểm tra cuối trên tập ảnh giữ riêng: không đọc được số liệu (${error.message})`);
+    setText(summary, `Không đọc được số liệu kiểm tra cuối (${error.message})`);
   }
 }
 
@@ -735,7 +733,5 @@ export async function mount() {
   window.addEventListener("storage", renderGate);
   onStatus(applyStatus);
   pollStatus(); // đồng bộ ngay trạng thái hiện tại (không đợi chu kỳ 4 giây)
-  // Khối "Tham gia từ máy của bạn" tự tải trạng thái của nó; lỗi ở đó không được làm hỏng phần chạy thử Flower.
-  mountCommunity().catch(error => notify("error", "Không khởi tạo được phần tham gia từ máy của bạn", formatApiError(error.body, error.message)));
   await loadNetworkMetrics();
 }

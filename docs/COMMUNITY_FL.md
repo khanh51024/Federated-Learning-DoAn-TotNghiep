@@ -1,6 +1,6 @@
 # Học liên kết cộng đồng: mỗi người vào web là một client
 
-Bước 5 của web có khối **“Tham gia từ máy của bạn”**. Người có mã tham gia mở trang, thêm ảnh lá của mình, chọn nhóm cho từng ảnh,
+Trang **Demo · Học liên kết** của web có khối **“Tham gia từ máy của bạn”**. Người có mã tham gia mở trang, thêm ảnh lá của mình, chọn nhóm cho từng ảnh,
 huấn luyện **ngay trong trình duyệt** và gửi trọng số về máy chủ. Máy chủ gộp theo vòng (FedAvg) khi đủ K người. Ảnh không rời máy.
 
 Tài liệu này mô tả phạm vi, giao thức, phòng thủ, cách vận hành và bằng chứng nghiên cứu đã đo. Đây là tính năng **thử nghiệm**:
@@ -30,7 +30,7 @@ Trình duyệt (mỗi người)                          Máy chủ (một tiế
 | Trạng thái, mã/token, vòng, lịch sử, khôi phục | `web/services/community_store.py` |
 | HTTP, hạn mức, quản trị | `web/routers/community_fl.py` |
 | Dự đoán bằng mô hình cộng đồng | `web/services/community_inference.py`, `POST /api/community/predict` |
-| Giao diện (khối bước 5, ô ở bước 4) | `web/static/js/pages/community.js`, `workers/community-worker.js`, `core/community-math.js` |
+| Giao diện (trang Demo · Học liên kết, ô ở trang Chẩn đoán) | `web/static/js/pages/community.js`, `workers/community-worker.js`, `core/community-math.js` |
 | Xuất ONNX, dựng đặc trưng giám sát | `scripts/export_community_feature_model.py`, `scripts/build_community_eval_features.py` |
 | Kiểm thử | `tests/test_community_fl.py`, `test_community_js.py`, `test_community_assets.py`, `scripts/e2e_community.py` |
 
@@ -124,7 +124,7 @@ minh *tốt lên*. Con số chỉ là tín hiệu giám sát của hệ thống.
 
 ### Trang quản trị `/quan-tri`
 
-Cách dễ nhất để vận hành: mở `https://<máy chủ>/quan-tri` và đăng nhập bằng tài khoản `admin` + mật khẩu `COMMUNITY_ADMIN_TOKEN`. Trang không nằm trong sáu bước và không có
+Cách dễ nhất để vận hành: mở `https://<máy chủ>/quan-tri` và đăng nhập bằng tài khoản `admin` + mật khẩu `COMMUNITY_ADMIN_TOKEN`. Trang không nằm trong menu của trang chính và không có
 liên kết từ menu công khai; quyền thật nằm ở token mà các API quản trị kiểm. Mặc định token chỉ được giữ trong `sessionStorage` của tab (mất khi
 đóng tab); ô "Ghi nhớ trên máy này" — **không** tick sẵn — mới ghi thêm vào `localStorage`, và "Đăng xuất" xóa cả hai. Link dạng
 `/quan-tri#token=<mật khẩu>` **đã bị gỡ** (mật khẩu trong URL lộ khi chia sẻ màn hình và lọt vào bookmark); trang vẫn xóa fragment đó
@@ -132,9 +132,9 @@ liên kết từ menu công khai; quyền thật nằm ở token mà các API qu
 `X-Robots-Tag: noindex`, `Referrer-Policy: no-referrer`.
 
 Trang làm được: mở/đóng phiên (đóng khi vòng đang có người gửi thì phải bấm hai lần); chỉnh K, K tối thiểu, hạn vòng, ngưỡng cắt và các
-cài đặt nâng cao (có kiểm giới hạn ngay trên biểu mẫu); tạo mã (hiện đúng một lần, kèm link tham gia `/?code=…#huan-luyen`, sao chép hoặc
+cài đặt nâng cao (có kiểm giới hạn ngay trên biểu mẫu); tạo mã (hiện đúng một lần, kèm link tham gia `/?code=…#hoc-lien-ket`, sao chép hoặc
 in danh sách); thu hồi mã; xem tiến độ vòng, các phiên bản và vòng đã gộp; gộp vòng ngay; khôi phục phiên bản; xem nhật ký. Người nhận link
-tham gia vào thẳng bước 5 với mã đã điền sẵn (mã được xóa khỏi thanh địa chỉ sau khi đọc).
+tham gia vào thẳng trang Học liên kết với mã đã điền sẵn (mã được xóa khỏi thanh địa chỉ sau khi đọc).
 
 Lưu ý: link chứa mã nên chỉ gửi riêng cho từng người; chuỗi truy vấn có thể nằm lại trong nhật ký truy cập của nginx. Nginx đã giới hạn
 `/api/community/admin/` ở 20 yêu cầu/phút, trang tự làm mới mỗi 10 giây (6 yêu cầu/phút). Muốn chắc hơn, giới hạn `/quan-tri` và

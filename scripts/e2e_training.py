@@ -1,4 +1,4 @@
-"""Kiểm thử đầu-cuối bước 5 (huấn luyện trên máy chủ) bằng trình duyệt thật: phiên Flower 5 client và Centralized.
+"""Kiểm thử đầu-cuối Phụ lục D (kiểm thử hệ thống trên máy chủ) bằng trình duyệt thật: phiên Flower 5 client và Centralized.
 
 Kiểm điều người xem phải thấy: khung "Bằng chứng máy đã tính thật" (6 tiến trình, chuỗi mã băm mô hình chung, mức đổi của tham số học
 được), bảng số liệu từng vòng có dòng thật, KPI đúng theo chế độ (Centralized không hiện client/RTT của phiên Flower trước), nút
@@ -50,7 +50,7 @@ def run_checks(base: str, outdir: Path | None) -> None:
         page = locked.new_page()
         posts: list[str] = []
         page.on("request", lambda r: posts.append(r.url) if r.method == "POST" and "/train" in r.url else None)
-        page.goto(f"{base}/#huan-luyen", wait_until="load", timeout=60000)
+        page.goto(f"{base}/#phu-luc", wait_until="load", timeout=60000)
         wait_js(page, "!document.getElementById('train-gate').classList.contains('hidden')", 30000)
         label = page.locator("#btn-train-start").inner_text()
         check("chưa đăng nhập: nút Bắt đầu đổi nhãn nhưng không bị vô hiệu hóa",
@@ -58,7 +58,7 @@ def run_checks(base: str, outdir: Path | None) -> None:
         page.click("#btn-train-start")
         page.wait_for_timeout(500)
         check("chưa đăng nhập: bấm nút không gửi yêu cầu huấn luyện", not posts, str(posts))
-        callout = page.locator("#page-huan-luyen .callout-warn", has_text="kiểm chứng hệ thống")
+        callout = page.locator("#page-phu-luc .callout-warn", has_text="kiểm chứng hệ thống")
         check("khung giới thiệu nói rõ kiểm chứng hệ thống, ảnh nhiễu ngẫu nhiên",
               callout.count() == 1 and "ảnh nhiễu ngẫu nhiên" in callout.first.inner_text())
         locked.close()
@@ -69,7 +69,7 @@ def run_checks(base: str, outdir: Path | None) -> None:
         page = context.new_page()
         console_errors: list[str] = []
         page.on("console", lambda m: console_errors.append(m.text[:160]) if m.type == "error" else None)
-        page.goto(f"{base}/#huan-luyen", wait_until="load", timeout=60000)
+        page.goto(f"{base}/#phu-luc", wait_until="load", timeout=60000)
         wait_js(page, "!document.getElementById('train-gate') || document.getElementById('train-gate').classList.contains('hidden')", 30000)
         check("đã đăng nhập: khung khóa ẩn, nút ghi 'Bắt đầu'", "Bắt đầu" in page.locator("#btn-train-start").inner_text()
               and "Đăng nhập" not in page.locator("#btn-train-start").inner_text())
@@ -83,7 +83,7 @@ def run_checks(base: str, outdir: Path | None) -> None:
         check("Flower: KPI client/RTT hiện, KPI Centralized ẩn",
               page.locator("#kpi-fed").is_visible() and page.locator("#kpi-cent").is_hidden())
         if outdir:
-            page.locator("#page-huan-luyen").screenshot(path=str(outdir / "flower-running.png"))
+            page.locator("#page-phu-luc").screenshot(path=str(outdir / "flower-running.png"))
         wait_js(page, "document.getElementById('train-live-badge').textContent.includes('Hoàn tất')", 240000)
         page.locator("details:has(#train-progress-table)").evaluate("el => { el.open = true; }")
         rows = page.locator("#train-progress-body tr")
@@ -102,7 +102,7 @@ def run_checks(base: str, outdir: Path | None) -> None:
         check("Flower: nút Bắt đầu trở lại bình thường", page.locator("#btn-train-start").is_enabled()
               and "Bắt đầu" in page.locator("#btn-train-start").inner_text())
         if outdir:
-            page.locator("#page-huan-luyen").screenshot(path=str(outdir / "flower-done.png"))
+            page.locator("#page-phu-luc").screenshot(path=str(outdir / "flower-done.png"))
 
         # 3) Centralized sau Flower: không được hiện client/RTT của phiên Flower trước.
         page.click("#train-mode-cent")
@@ -123,8 +123,8 @@ def run_checks(base: str, outdir: Path | None) -> None:
         message = page.locator("#train-progress-detail").inner_text()
         check("Centralized: thông báo không lấy độ chính xác làm tiêu điểm", "Acc" not in message and "%" not in message, message)
         if outdir:
-            page.locator("#page-huan-luyen").screenshot(path=str(outdir / "centralized-done.png"))
-        check("không có lỗi console ở bước 5", not console_errors, "; ".join(console_errors[:3]))
+            page.locator("#page-phu-luc").screenshot(path=str(outdir / "centralized-done.png"))
+        check("không có lỗi console ở phụ lục", not console_errors, "; ".join(console_errors[:3]))
         context.close()
         browser.close()
 

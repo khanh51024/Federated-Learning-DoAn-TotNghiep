@@ -42,7 +42,7 @@ def test_page_is_served_with_hardened_headers(client: TestClient):
     assert "unsafe-inline" not in csp and "unsafe-eval" not in csp
 
 
-def test_admin_page_is_not_one_of_the_six_public_steps_and_is_linked_only_from_the_training_gate():
+def test_admin_page_is_not_one_of_the_public_pages_and_is_linked_only_from_the_training_gate():
     index = (STATIC / "index.html").read_text(encoding="utf-8")
     gate = re.search(r'<div[^>]*id="train-gate".*?</div>', index, flags=re.S)
     assert gate and "/quan-tri" in gate.group(0), "khung cổng huấn luyện phải dẫn tới trang quản trị"

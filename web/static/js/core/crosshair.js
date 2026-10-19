@@ -1,4 +1,4 @@
-// Làm nổi HÀNG và CỘT của ô đang rê chuột (heatmap bước 2, ma trận nhầm lẫn bước 3) kèm tooltip nổi.
+// Làm nổi HÀNG và CỘT của ô đang rê chuột (heatmap ở chương Dữ liệu, ma trận nhầm lẫn ở chương Kết quả) kèm tooltip nổi.
 // Hai dải sáng + tooltip là phần tử tuyệt đối di chuyển bằng transform; không đụng style từng ô nên không layout/vẽ lại bảng.
 // An toàn khi bảng được vẽ lại bằng innerHTML: overlay được tạo lười ở lần rê chuột kế tiếp.
 

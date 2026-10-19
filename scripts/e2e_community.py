@@ -186,7 +186,7 @@ def admin_ui_checks(browser: Any, base: str, admin_token: str) -> None:
     check("trang quản trị: ghi chú chứa HTML hiện như văn bản, không chạy mã",
           page.evaluate("window.__xss") == 0 and page.locator("#codes-body img").count() == 0)
     link = page.locator("#codes-list li .code-link").first.inner_text()
-    check("trang quản trị: link tham gia có mã và trỏ bước 5", "?code=" in link and link.endswith("#huan-luyen"), link)
+    check("trang quản trị: link tham gia có mã và trỏ trang Học liên kết", "?code=" in link and link.endswith("#hoc-lien-ket"), link)
 
     # thu hồi một mã (nút hai bước)
     revoke = page.locator("#codes-body [data-revoke]").first
@@ -197,7 +197,7 @@ def admin_ui_checks(browser: Any, base: str, admin_token: str) -> None:
 
     # trang công khai điền sẵn mã từ link rồi xóa khỏi thanh địa chỉ
     public = new_ctx(browser, viewport={"width": 1280, "height": 900}).new_page()
-    public.goto(f"{base}/?code={shown[1]}#huan-luyen", wait_until="load", timeout=60000)
+    public.goto(f"{base}/?code={shown[1]}#hoc-lien-ket", wait_until="load", timeout=60000)
     public.wait_for_selector("#comm-code", timeout=30000)
     wait_js(public, "document.getElementById('comm-code').value.length > 0", timeout=15000)
     check("link tham gia: điền sẵn mã và xóa mã khỏi URL",
@@ -257,7 +257,7 @@ def admin_ui_checks(browser: Any, base: str, admin_token: str) -> None:
 
 
 def training_gate_checks(browser: Any, base: str, admin_token: str) -> None:
-    """Cổng huấn luyện: API trả 401/422 đúng, trang bước 5 khóa nút khi chưa đăng nhập và mở khi đã đăng nhập ở trang quản trị."""
+    """Cổng huấn luyện: API trả 401/422 đúng, trang Phụ lục khóa nút khi chưa đăng nhập và mở khi đã đăng nhập ở trang quản trị."""
     train = {"epochs": 2, "smoke": True, "seed": 1}
     check("huấn luyện: không đăng nhập bị 401 (Centralized)", http("POST", f"{base}/api/centralized/train", train)[0] == 401)
     check("huấn luyện: không đăng nhập bị 401 (Flower)", http("POST", f"{base}/api/federated/train", {"engine": "network"})[0] == 401)
@@ -272,23 +272,23 @@ def training_gate_checks(browser: Any, base: str, admin_token: str) -> None:
     context = new_ctx(browser, viewport={"width": 1280, "height": 900})
     page = context.new_page()
     page.on("request", lambda r: posts.append(r.url) if r.method == "POST" and "/train" in r.url else None)
-    page.goto(f"{base}/#huan-luyen", wait_until="load", timeout=60000)
+    page.goto(f"{base}/#phu-luc", wait_until="load", timeout=60000)
     page.wait_for_selector("#train-gate:not(.hidden)", timeout=30000)
-    check("bước 5: chưa đăng nhập thì hiện khung 'Cần quyền quản trị' kèm liên kết", page.locator("#train-gate a[href='/quan-tri']").count() == 1)
+    check("phụ lục D: chưa đăng nhập thì hiện khung 'Cần quyền quản trị' kèm liên kết", page.locator("#train-gate a[href='/quan-tri']").count() == 1)
     page.click("#btn-train-start")
     page.wait_for_timeout(600)
-    check("bước 5: bấm Bắt đầu khi chưa đăng nhập không gửi yêu cầu nào lên máy chủ", not posts, str(posts))
-    check("bước 5: trần số vòng/epoch từ máy chủ được áp lên ô nhập",
+    check("phụ lục D: bấm Bắt đầu khi chưa đăng nhập không gửi yêu cầu nào lên máy chủ", not posts, str(posts))
+    check("phụ lục D: trần số vòng/epoch từ máy chủ được áp lên ô nhập",
           int(page.locator("#cent-epochs").get_attribute("max")) <= status["training"]["limits"]["max_centralized_epochs"])
 
     login = context.new_page()  # cùng trình duyệt: đăng nhập ở tab khác với "Ghi nhớ trên máy này"
     login.goto(f"{base}/quan-tri", wait_until="load", timeout=60000)
-    login.check("#remember-token")  # không còn tick sẵn: tab bước 5 chỉ tự mở khóa khi bản ghi nhớ nằm trong localStorage
+    login.check("#remember-token")  # không còn tick sẵn: tab phụ lục chỉ tự mở khóa khi bản ghi nhớ nằm trong localStorage
     login.fill("#token-input", admin_token)
     login.click("#btn-login")
     login.wait_for_selector("#admin-app:not(.hidden)", timeout=30000)
     page.wait_for_selector("#train-gate", state="hidden", timeout=15000)
-    check("bước 5: đăng nhập ở tab quản trị thì khung khóa tự biến mất (không cần tải lại)", True)
+    check("phụ lục D: đăng nhập ở tab quản trị thì khung khóa tự biến mất (không cần tải lại)", True)
     login.close()
     context.close()
 
@@ -351,7 +351,7 @@ def main() -> int:
                   try { new PerformanceObserver(l => l.getEntries().forEach(e => window.__longTasks.push(e.duration)))
                         .observe({ entryTypes: ['longtask'] }); } catch (e) {}
                 """)
-                page.goto(f"{base}/#huan-luyen")
+                page.goto(f"{base}/#hoc-lien-ket")
                 page.wait_for_selector("#comm-main:not(.hidden)", timeout=30000)
                 pages.append((context, page, console_errors))
 
@@ -444,7 +444,7 @@ def main() -> int:
             # ── bố cục 320 px không tràn ngang ──
             narrow = new_ctx(browser, viewport={"width": 320, "height": 700})
             small = narrow.new_page()
-            small.goto(f"{base}/#huan-luyen")
+            small.goto(f"{base}/#hoc-lien-ket")
             small.wait_for_selector("#comm-main:not(.hidden)", timeout=30000)
             overflow = small.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
             check("320 px: không tràn ngang", overflow <= 1, f"lệch {overflow}px")

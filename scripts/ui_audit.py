@@ -31,8 +31,8 @@ OUT_DIR = ROOT / "tmp" / "ui-audit"
 AXE_VERSION = "4.10.2"
 AXE_FILE = ROOT / "tmp" / "axe-core" / "axe.min.js"
 
-ROUTES = ["tong-quan", "non-iid", "ket-qua", "chan-doan", "huan-luyen", "bang-chung"]
-SUBTABS = ["summary", "holdout", "plantdoc", "confusion", "errors", "calibration"]
+ROUTES = ["gioi-thieu", "du-lieu", "phuong-phap", "ket-qua", "ket-luan", "chan-doan", "hoc-lien-ket", "phu-luc"]
+SUBTABS = ["summary", "holdout", "errors", "calibration"]
 VIEWPORTS = [320, 390, 768, 1280, 1440, 1920]
 QUICK_VIEWPORTS = [390, 1440]
 SNAPSHOT_APIS = ["/api/compare", "/api/evidence/summary", "/api/evidence/details", "/api/evidence/partitions", "/api/demo/evidence"]
@@ -131,7 +131,7 @@ def run_axe(page: Any, axe_source: str) -> list[dict[str, Any]]:
 
 
 def keyboard_journey(browser: Any, base: str) -> dict[str, Any]:
-    """Hành trình chính chỉ bằng bàn phím: Tab tới một ảnh mẫu ở bước 4, Enter, thấy kết quả; chuyển bước bằng phím; focus không mất."""
+    """Hành trình chính chỉ bằng bàn phím: Tab tới một ảnh mẫu ở trang Chẩn đoán, Enter, thấy kết quả; chuyển bước bằng phím; focus không mất."""
     context = browser.new_context(viewport={"width": 1280, "height": 900}, bypass_csp=True)
     page = context.new_page()
     out: dict[str, Any] = {"state": "ban-phim", "ok": False, "notes": []}
@@ -161,7 +161,7 @@ def keyboard_journey(browser: Any, base: str) -> dict[str, Any]:
             page.keyboard.press("Tab")
             if page.evaluate("document.activeElement && document.activeElement.id === 'step-next'"):
                 page.keyboard.press("Enter")
-                page.wait_for_selector("#page-huan-luyen.active", timeout=15000)
+                page.wait_for_selector("#page-hoc-lien-ket.active", timeout=15000)
                 moved = True
                 break
         out["notes"].append(f"chuyển bước bằng phím: {'được' if moved else 'KHÔNG'}")

@@ -178,7 +178,7 @@ async def serve_index(request: Request):
 
 
 ADMIN_PAGE = Path(__file__).resolve().parent / "static" / "admin" / "admin.html"
-# Trang quản trị học liên kết cộng đồng: tệp tĩnh riêng, KHÔNG nằm trong sáu bước và không có liên kết từ menu công khai.
+# Trang quản trị học liên kết cộng đồng: tệp tĩnh riêng, KHÔNG nằm trong menu của trang chính và không có liên kết từ menu công khai.
 # Quyền thật nằm ở token quản trị mà các API /api/community/admin/* kiểm; các tiêu đề dưới đây chỉ làm trang khó bị nhúng/lập chỉ mục.
 ADMIN_PAGE_HEADERS = {
     "Cache-Control": "no-store",

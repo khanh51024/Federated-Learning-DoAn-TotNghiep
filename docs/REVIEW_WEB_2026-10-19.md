@@ -118,3 +118,18 @@ Playwright; xem extra `e2e` trong `pyproject.toml`):
 - Gộp bớt trọng số phông để giảm số tệp tải đầu; thêm `// @ts-check` + JSDoc cho khoảng 6.500 dòng JS.
 - Safari cũ (trước 16) có thể không có `'wasm-unsafe-eval'` nếu Worker kế thừa chính sách của trang: huấn luyện cộng đồng sẽ lỗi ở đó.
   Chưa thử trên iPhone thật. Lùi bằng `CROPFED_CSP_MODE=report`.
+
+## 7. Tái cấu trúc thành web báo cáo (cùng ngày, sau đợt review)
+
+Vấn đề: sáu bước trộn nội dung báo cáo, demo và kiểm chứng vận hành. Cùng một ba số độ chính xác xuất hiện khoảng 7 lần trên 3 trang, lời lưu ý
+về tập giữ riêng khoảng 9 lần, và các khái niệm "tập kiểm tra", "tập giữ riêng" không được định nghĩa ở đâu.
+
+Cấu trúc mới (chi tiết ở [WEB_DEMO_GD1_GD2.md](WEB_DEMO_GD1_GD2.md)):
+
+- **Báo cáo, năm chương**: Giới thiệu, Dữ liệu, Phương pháp (trang mới), Kết quả, Kết luận (trang mới, nhận phần hạn chế và 3 thẻ kết luận).
+- **Demo, hai trang**: Chẩn đoán ảnh, Học liên kết (khối client cộng đồng tách khỏi trang huấn luyện máy chủ).
+- **Phụ lục kỹ thuật** (chỉ vào từ chân trang): kiểm chứng số liệu, nguồn gốc mô hình (SHA-256, cột "Chấm lại"), hạng mục kỹ thuật, kiểm thử Flower/Centralized trên máy chủ, Weight Inspector, thiết bị.
+- Quy tắc "mỗi số một nhà": số tổng hợp chỉ ở Giới thiệu (tóm tắt) và Kết quả (đầy đủ); tập kiểm tra/tập giữ riêng chỉ định nghĩa ở Dữ liệu; mã băm, chấm lại, trùng ảnh, danh mục kỹ thuật chỉ ở Phụ lục.
+- Nội dung chính hiện sẵn: biểu đồ và bảng bảy mô hình, năm thẻ client, danh sách hạn chế đầy đủ; chỉ bảng dài và mục thống kê phụ còn gấp. Chương Kết quả còn bốn tab (trước đây sáu).
+- Địa chỉ cũ (`#tong-quan`, `#non-iid`, `#huan-luyen`, `#bang-chung`) được router đổi sang địa chỉ mới; mã tham gia đã in vẫn dùng được.
+- Sửa kèm: bảng nhật ký vòng của phụ lục không còn cột độ chính xác/loss/Macro-F1 (chạy trên ảnh nhiễu); câu "Tổng N ảnh:" bị gãy ở thẻ tập giữ riêng; tiêu đề thẻ trùng ảnh nhất quán; bảng bảy mô hình luôn mở (trước đây chỉ tự mở sau khi vào tab PlantDoc).

@@ -1,4 +1,4 @@
-// Bước 5 · "Tham gia từ máy của bạn": học liên kết thật. Máy này là một client: ảnh được xử lý và học ngay trong trình duyệt
+// Demo · Học liên kết ("Tham gia từ máy của bạn"): học liên kết thật. Máy này là một client: ảnh được xử lý và học ngay trong trình duyệt
 // (Web Worker + onnxruntime-web), chỉ lớp cuối của mô hình (~156 KB) được gửi lên máy chủ. Giao thức: docs/COMMUNITY_FL.md.
 import { getJson, postJson } from "../core/api.js";
 import { decodeHead, encodeHead } from "../core/community-math.js";
@@ -56,7 +56,7 @@ function clearSession() {
 }
 
 const auth = () => ({ Authorization: `Bearer ${S.token}` });
-const pageActive = () => !!byId("page-huan-luyen")?.classList.contains("active");
+const pageActive = () => !!byId("page-hoc-lien-ket")?.classList.contains("active");
 
 // ───────── Hiển thị ─────────
 function setBadge(text, kind) {
@@ -138,7 +138,7 @@ function cachedModel() {
   try { return localStorage.getItem(MODEL_CACHED_KEY) === "1"; } catch { return false; }
 }
 
-/** Kiểm khả năng trình duyệt ngay khi mở bước 5 (trước khi người dùng nhập mã). */
+/** Kiểm khả năng trình duyệt ngay khi mở trang Học liên kết (trước khi người dùng nhập mã). */
 function supportProblem() {
   const missing = [];
   if (typeof Worker === "undefined") missing.push("tiến trình nền (Web Worker)");
@@ -888,7 +888,7 @@ export async function mount() {
   });
   byId("btn-comm-train").addEventListener("click", trainLocal);
   byId("btn-comm-submit").addEventListener("click", submitUpdate);
-  // Link tham gia từ trang quản trị có dạng /?code=XXXXX-XXXXX#huan-luyen: điền sẵn mã rồi xóa khỏi thanh địa chỉ để mã
+  // Link tham gia từ trang quản trị có dạng /?code=XXXXX-XXXXX#hoc-lien-ket: điền sẵn mã rồi xóa khỏi thanh địa chỉ để mã
   // không nằm lại trong lịch sử trình duyệt.
   const params = new URLSearchParams(location.search);
   const preset = params.get("code");

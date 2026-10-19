@@ -1,4 +1,4 @@
-"""Quét vi phạm CSP của trang chính: mở đủ 6 bước, mọi tab con, mọi mục gấp, chẩn đoán một ảnh mẫu, nền tối, bằng Chromium/Firefox/WebKit.
+"""Quét vi phạm CSP của trang chính: mở đủ 8 trang (5 chương, 2 demo, phụ lục), mọi tab con, mọi mục gấp, chẩn đoán một ảnh mẫu, nền tối, bằng Chromium/Firefox/WebKit.
 
 Máy chủ thử chạy với CSP ở chế độ `enforce` (mặc định). Một vi phạm nghĩa là có thứ thật sự bị chặn.
 Chạy:  python scripts/csp_sweep.py [--browser chromium|firefox|webkit|all] [--base-url https://máy-chủ-đang-chạy]
@@ -20,7 +20,7 @@ sys.path.insert(0, str(ROOT))
 
 from scripts.e2e_community import ADMIN, CSP_VIOLATIONS, SECRET, free_port, http, new_ctx, wait_for  # noqa: E402
 
-ROUTES = ["tong-quan", "non-iid", "ket-qua", "chan-doan", "huan-luyen", "bang-chung"]
+ROUTES = ["gioi-thieu", "du-lieu", "phuong-phap", "ket-qua", "ket-luan", "chan-doan", "hoc-lien-ket", "phu-luc"]
 
 
 def sweep(browser_type: Any, base: str, label: str) -> list[str]:
@@ -53,7 +53,7 @@ def sweep(browser_type: Any, base: str, label: str) -> list[str]:
         page.goto(f"{base}/#chan-doan", wait_until="networkidle", timeout=90000)
         page.locator("#gallery-grid .gallery-item").first.click()
         page.wait_for_timeout(3500)
-        page.goto(f"{base}/#tong-quan", wait_until="networkidle")
+        page.goto(f"{base}/#gioi-thieu", wait_until="networkidle")
         theme = page.locator("#btn-theme")
         if theme.count():
             theme.first.click()

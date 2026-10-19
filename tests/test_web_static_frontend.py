@@ -1,4 +1,4 @@
-"""Hợp đồng giao diện web tĩnh (6 bước): ID/route khớp, module import được, tài nguyên tự host, header cache, quy ước hiệu năng.
+"""Hợp đồng giao diện web tĩnh (báo cáo 5 chương, 2 trang demo, phụ lục): ID/route khớp, module import được, tài nguyên tự host, header cache, quy ước hiệu năng.
 
 Không cần trình duyệt: kiểm bằng phân tích văn bản và TestClient. Chạy nhanh, không cần dataset.
 """
@@ -22,7 +22,10 @@ CSS = "\n".join((STATIC / "css" / name).read_text(encoding="utf-8") for name in 
 JS_FILES = sorted(p for p in JS_DIR.rglob("*.js"))
 JS_BY_REL = {p.relative_to(JS_DIR).as_posix(): p.read_text(encoding="utf-8") for p in JS_FILES}
 ALL_JS = "\n".join(JS_BY_REL.values())
-ROUTE_IDS = ["tong-quan", "non-iid", "ket-qua", "chan-doan", "huan-luyen", "bang-chung"]
+ROUTE_IDS = ["gioi-thieu", "du-lieu", "phuong-phap", "ket-qua", "ket-luan", "chan-doan", "hoc-lien-ket", "phu-luc"]
+NAV_ROUTE_IDS = ROUTE_IDS[:-1]  # phụ lục không nằm trên thanh menu (vào từ chân trang)
+# địa chỉ cũ (sáu bước) phải còn mở được: mã tham gia đã in có dạng /?code=…#huan-luyen
+OLD_ROUTE_ALIASES = {"tong-quan": "gioi-thieu", "non-iid": "du-lieu", "huan-luyen": "hoc-lien-ket", "bang-chung": "ket-luan"}
 
 
 @pytest.fixture(scope="module")
@@ -42,13 +45,17 @@ def test_every_literal_element_id_used_by_js_exists():
     assert not missing, f"JS tham chiếu id không có trong index.html hoặc template: {missing}"
 
 
-def test_six_routes_match_nav_sections_and_page_modules():
+def test_routes_match_nav_sections_and_page_modules():
     router = JS_BY_REL["core/router.js"]
     routes = re.findall(r'id:\s*"([\w-]+)",\s*step:\s*(\d+)', router)
     assert [r for r, _ in routes] == ROUTE_IDS
-    assert [int(n) for _, n in routes] == [1, 2, 3, 4, 5, 6]
+    assert [int(n) for _, n in routes] == list(range(1, len(ROUTE_IDS) + 1))
     nav = re.findall(r'class="nav-item"\s+href="#([\w-]+)"\s+data-route="([\w-]+)"', HTML)
-    assert [a for a, _ in nav] == ROUTE_IDS and all(a == b for a, b in nav)
+    assert [a for a, _ in nav] == NAV_ROUTE_IDS and all(a == b for a, b in nav)
+    assert 'id: "phu-luc", step: 8, group: "Phụ lục", inNav: false' in router, "phụ lục là trang duy nhất ngoài thanh menu"
+    assert 'href="#phu-luc"' in HTML, "phụ lục phải có liên kết ở chân trang"
+    for old, new in OLD_ROUTE_ALIASES.items():
+        assert f'"{old}": "{new}"' in router, f"thiếu alias cho địa chỉ cũ #{old}"
     for route in ROUTE_IDS:
         assert re.search(rf'<section id="page-{route}" class="tab-pane[^"]*" data-route="{route}"', HTML), route
     for module in re.findall(r'import\("\.\./pages/([\w-]+\.js)"\)', router):
@@ -192,7 +199,8 @@ def test_visible_copy_has_no_banned_terms():
 
 def test_nav_labels_match_route_labels():
     router = JS_BY_REL["core/router.js"]
-    labels = re.findall(r'label:\s*"([^"]+)"', router)
+    lines = re.findall(r'id:\s*"[\w-]+",\s*step:[^\n]*', router)
+    labels = [re.search(r'label:\s*"([^"]+)"', line).group(1) for line in lines if "inNav: false" not in line]
     nav = re.findall(r'<span class="nav-label">([^<]+)</span>', HTML)
     assert [label.replace("&", "&amp;") for label in labels] == nav, (labels, nav)
 
@@ -202,7 +210,7 @@ def test_nav_labels_match_route_labels():
 def test_top_navigation_replaces_sidebar():
     header = re.search(r'<header class="app-topbar" id="app-topbar">.*?</header>', HTML, flags=re.S)
     assert header, "thiếu header.app-topbar#app-topbar"
-    assert 'class="nav-menu"' in header.group(0) and header.group(0).count('class="nav-item"') == 6
+    assert 'class="nav-menu"' in header.group(0) and header.group(0).count('class="nav-item"') == len(NAV_ROUTE_IDS)
     for gone in ('class="sidebar"', "mobile-nav-toggle", "present-steps", "app-sidebar", "mobile-topbar"):
         assert gone not in HTML, f"UI cũ còn sót: {gone}"
     app = JS_BY_REL["app.js"]
@@ -393,13 +401,15 @@ def _outside_details(source: str) -> str:
 def test_honest_caveats_are_visible_outside_collapsed_sections():
     overview = _outside_details(JS_BY_REL["pages/overview.js"])
     results = _outside_details(JS_BY_REL["pages/results.js"])
-    for label, text in (("bước 1", overview), ("bước 3", results)):
+    conclusion = _outside_details(JS_BY_REL["pages/conclusion.js"])
+    for label, text in (("chương 1", overview), ("chương 4", results), ("chương 5", conclusion)):
         flat = " ".join(text.split())
         for phrase in ("chọn mô hình", "một lần chạy", "chưa phải độ chính xác ngoài thực địa"):
             assert phrase in flat, f"{label}: thiếu lời cảnh báo hiển thị ngoài phần gập: “{phrase}”"
-    full = " ".join(JS_BY_REL["pages/overview.js"].split())
-    assert "bộ chẩn đoán có sẵn của bộ dữ liệu (legacy)" in full and "chưa nằm trong kiểm tra trùng ảnh" in full, "tập giữ riêng phải được gọi đúng là bộ chẩn đoán legacy"
-    assert 'class="trust-chip ok" href="#ket-qua"' not in full, "chip tập giữ riêng không được xanh 'đạt' khi chưa qua kiểm tra trùng ảnh"
+    data = " ".join(JS_BY_REL["pages/noniid.js"].split())
+    assert "bộ chẩn đoán có sẵn của bộ dữ liệu (legacy)" in data and "chưa nằm trong kiểm tra trùng ảnh" in data, "chương Dữ liệu là nơi định nghĩa tập giữ riêng: phải gọi đúng là bộ chẩn đoán legacy"
+    appendix = " ".join(JS_BY_REL["pages/appendix.js"].split())
+    assert 'class="trust-chip warn" href="#ket-qua"' in appendix, "chip tập giữ riêng phải là 'warn' (không xanh 'đạt') khi chưa qua kiểm tra trùng ảnh"
 
 
 def test_hero_replay_survives_pane_switches_and_live_diagram_is_state_driven():
@@ -426,7 +436,7 @@ def test_segmented_and_cam_markup_are_accessible():
 
 def test_fullframe_limitation_numbers_come_from_the_api_not_the_source():
     """Con số "ảnh cả khung làm mô hình kém đi" lấy từ summary.fullframe; không được gõ cứng trong JS."""
-    source = JS_BY_REL["pages/evidence.js"]
+    source = JS_BY_REL["pages/conclusion.js"]
     assert "summary?.fullframe" in source and "ff.splits" in source
     block = source[source.index("const ff = summary?.fullframe"):]
     block = block[: block.index('out.push(["So sánh Centralized')]
@@ -541,8 +551,8 @@ def test_scrollable_regions_are_keyboard_focusable_and_rows_use_real_buttons():
 def test_step_nav_is_hidden_until_the_page_is_mounted_to_avoid_layout_shift():
     router = JS_BY_REL["core/router.js"]
     show = router[router.index("async function show("):]
-    assert show.index('classList.add("is-pending")') < show.index("await mod.mount")
-    assert show.index('classList.remove("is-pending")') > show.index("await mod.mount")
+    assert show.index('classList.add("is-pending")') < show.index("await pending")
+    assert show.index('classList.remove("is-pending")') > show.index("await pending")
     assert re.search(r"\.step-nav\.is-pending\s*\{\s*visibility:\s*hidden", CSS), "visibility giữ chỗ nên không gây layout"
 
 
@@ -596,9 +606,11 @@ def test_server_side_training_is_framed_as_system_verification_on_noise_images()
     """Máy chủ demo không có ảnh lá nên học trên nhiễu; giao diện không được gọi đó là "ảnh tổng hợp" hay phô độ chính xác."""
     for name, text in [("index.html", HTML), *JS_BY_REL.items()]:
         assert "ảnh tổng hợp" not in text and "dữ liệu tổng hợp" not in text, name
-    callout = HTML[HTML.index('<div class="callout callout-warn mt-4" role="note">'):]
+    appendix = HTML[HTML.index('id="page-phu-luc"'):]
+    callout = appendix[appendix.index('<div class="callout callout-warn mt-4" role="note">'):]
     callout = callout[: callout.index("</div>")]
-    assert "kiểm chứng hệ thống" in callout and "ảnh nhiễu ngẫu nhiên" in callout and "bước 3" in callout
+    assert "kiểm chứng hệ thống" in callout and "ảnh nhiễu ngẫu nhiên" in callout and "chương 4" in callout
+    assert 'id="page-hoc-lien-ket"' in HTML and "Flower" not in HTML[HTML.index('id="page-hoc-lien-ket"'):HTML.index('id="page-phu-luc"')], "trang Học liên kết không được trộn với kiểm thử Flower"
 
 
 def test_training_tables_have_matching_column_counts_and_no_accuracy_columns():
@@ -651,7 +663,8 @@ def test_main_page_has_no_inline_script_or_style_so_csp_can_stay_strict():
 # ───────── UI/UX: bảng mở sẵn trên màn rộng, vùng chạm, thứ tự ô tải ảnh, client cộng đồng ─────────
 def test_wide_screens_open_the_full_tables_by_default():
     assert "export function openOnWide" in JS_BY_REL["core/dom.js"] and "WIDE_QUERY" in JS_BY_REL["core/dom.js"]
-    assert 'openOnWide(byId("result-full-table"))' in JS_BY_REL["pages/results.js"] and 'id="result-full-table"' in JS_BY_REL["pages/results.js"]
+    results = JS_BY_REL["pages/results.js"]
+    assert 'id="result-full-table"' in results and "<details" not in results[results.index('id="result-full-table"') - 40:results.index('id="result-full-table"')], "bảng bảy mô hình là nội dung chính của chương Kết quả: hiện sẵn, không gập"
     assert 'openOnWide(byId("diag-model-details"))' in JS_BY_REL["pages/diagnosis.js"]
     assert 'matchMedia(NARROW_QUERY)' in JS_BY_REL["pages/diagnosis.js"], "một nguồn cho điểm gãy 1100 px"
 
@@ -675,7 +688,7 @@ def test_step4_puts_the_upload_zone_before_the_gallery_with_pointer_specific_wor
 
 
 def test_community_client_has_vietnamese_picker_group_first_labelling_and_stable_stepper():
-    comm = HTML[HTML.index('id="comm-panel"'):HTML.index('id="page-huan-luyen"') + 12000]
+    comm = HTML[HTML.index('id="comm-panel"'):HTML.index('id="page-phu-luc"')]
     assert 'id="comm-dropzone"' in comm and re.search(r'<input type="file" id="comm-files"[^>]*class="file-input"', comm)
     assert "Nhóm cho các ảnh sắp thêm" in comm and "Chọn sau cho từng ảnh" in comm
     source = JS_BY_REL["pages/community.js"]
@@ -700,3 +713,16 @@ def test_history_table_collapses_to_cards_on_narrow_screens_without_losing_table
     for label in ("Vòng", "Người", "Ảnh", "Kết quả", "Độ chính xác giám sát"):
         assert f'data-label="{label}"' in source
     assert ".stack-sm td::before { content: attr(data-label)" in CSS
+
+
+def test_appendix_toc_buttons_point_at_existing_sections_and_router_survives_alias_and_double_mount():
+    appendix = JS_BY_REL["pages/appendix.js"]
+    targets = re.findall(r'data-scroll="([\w-]+)"', appendix)
+    assert len(targets) == 5
+    known = _known_ids() | set(re.findall(r'section\("([\w-]+)"', appendix))  # id do hàm section() ghép vào template
+    assert [t for t in targets if t not in known] == [], "mục lục phụ lục trỏ tới id không có"
+    router = JS_BY_REL["core/router.js"]
+    assert "Object.hasOwn(ALIASES" in router, "alias tra bằng khóa riêng của bảng (không dính khóa prototype)"
+    assert "mounting.get(route.id)" in router, "mở lại trang lúc đang dựng không được dựng lần hai (gắn trùng sự kiện)"
+    results = JS_BY_REL["pages/results.js"]
+    assert "buildIsolated(\"errors-plantdoc\"" in results and "buildIsolated(\"errors-confusion\"" in results and "buildIsolated(\"errors-confident\"" in results, "ba phần của tab Phân tích lỗi phải tự bắt lỗi"

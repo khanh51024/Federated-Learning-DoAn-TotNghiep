@@ -649,7 +649,7 @@ def _matrix(value: Any, size: int, total: int) -> Optional[List[List[int]]]:
 
 
 def details(evidence: Dict[str, Any]) -> Dict[str, Any]:
-    """Ma trận nhầm lẫn (val + test giữ riêng) và thư viện ảnh "sai mà tự tin" cho bước 3. Báo cáo hỏng => available: false."""
+    """Ma trận nhầm lẫn (val + test giữ riêng) và thư viện ảnh "sai mà tự tin" cho chương Kết quả. Báo cáo hỏng => available: false."""
     return _guard("chi tiết (ma trận nhầm lẫn / ảnh lỗi)", lambda: _details(evidence))
 
 

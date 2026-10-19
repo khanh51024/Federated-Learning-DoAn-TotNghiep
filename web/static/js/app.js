@@ -1,4 +1,4 @@
-// Điểm khởi động: thanh 6 bước ở đầu trang, poll trạng thái server.
+// Điểm khởi động: thanh menu Báo cáo / Demo ở đầu trang, poll trạng thái server.
 // Mọi trang nằm trong js/pages/*.js và được tải lười khi mở lần đầu.
 import { byId } from "./core/dom.js";
 import "./core/motion.js";
@@ -42,7 +42,7 @@ function initGroupArrowKeys() {
 }
 
 // Thả ảnh ra ngoài vùng thả sẽ làm trình duyệt mở tệp (file:///…) và dỡ cả ứng dụng. Vì cancel `drop` ở đây cũng hủy cách xử lý mặc định
-// của <input type=file>, mọi vùng thả (bước 4, bước 5) phải tự đọc `dataTransfer.files`.
+// của <input type=file>, mọi vùng thả (trang Chẩn đoán, trang Học liên kết) phải tự đọc `dataTransfer.files`.
 function initDropGuard() {
   const cancel = event => event.preventDefault();
   document.addEventListener("dragover", cancel);

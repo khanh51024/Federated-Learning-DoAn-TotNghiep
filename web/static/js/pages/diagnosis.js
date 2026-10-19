@@ -1,4 +1,4 @@
-// Bước 4 · Chẩn đoán: một ảnh, bảy mô hình, đúng/sai và lý do (ảnh train của lớp đó trong shard).
+// Demo · Chẩn đoán ảnh: một ảnh, bảy mô hình, đúng/sai và lý do (ảnh train của lớp đó trong shard).
 import { getEvidence, getGallery, getModels, getSummary } from "../core/store.js";
 import { ApiError, isAbort, postForm } from "../core/api.js";
 import {
@@ -172,7 +172,7 @@ function itemMeta(item) {
   const stats = verified
     ? `<p class="field-hint">Trên ${fmtInt(item.class_val_count)} ảnh kiểm tra ${item.source === "plantdoc" ? "PlantDoc" : "PlantVillage"} của nhóm này,
       FedAvg nhận đúng ${fmtPctValue(item.recall_fedavg_pct, 0)}, Centralized ${fmtPctValue(item.recall_centralized_pct, 0)}.</p>`
-    : '<p class="field-hint">Chưa có số liệu đã kiểm hash để xếp độ khó cho ảnh này.</p>';
+    : '<p class="field-hint">Chưa có số liệu để xếp mức nhận đúng cho ảnh này.</p>';
   return `
     <div class="meta-chips">
       ${level}
@@ -774,7 +774,7 @@ export async function mount() {
   state.showStats = evidence?.available === true && gallery.validation_membership?.status === "verified";
   openOnWide(byId("diag-model-details")); // màn rộng: bảng dự đoán từng mô hình mở sẵn (in ấn vẫn khôi phục đúng nhờ beforeprint)
   if (!state.showStats) {
-    // không có số đã kiểm hash để xếp độ khó: ẩn các bộ lọc theo độ khó
+    // không có số liệu để xếp mức nhận đúng: ẩn các bộ lọc theo độ khó
     $$("#gallery-filters [data-filter='easy'], #gallery-filters [data-filter='medium'], #gallery-filters [data-filter='hard']")
       .forEach(chip => chip.classList.add("hidden"));
     const note = byId("gallery-note");

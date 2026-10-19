@@ -6,7 +6,7 @@
 
 Hệ thống được tổ chức theo cấu trúc **Monorepo hoàn chỉnh**:
 - **`src/`**: Toàn bộ lõi AI / Machine Learning / Federated Learning chuẩn hóa (`model`, `data`, `centralized`, `federated`, `common`).
-- **`web/`**: Giao diện điều khiển, giám sát thời gian thực và suy luận song song (FastAPI Backend + giao diện sáng 6 bước theo trình tự bảo vệ đồ án).
+- **`web/`**: Giao diện điều khiển, giám sát thời gian thực và suy luận song song (FastAPI Backend + giao diện sáng dạng báo cáo: 5 chương, 2 trang demo, phụ lục kỹ thuật).
 - **`tests/`**: Bộ kiểm thử toán học & độ toàn vẹn (`test_fedavg.py`, `test_model.py`, `test_parameters.py`, `test_partition.py`, `test_integration.py` và hàng chục file khác — `ls tests/`). Chạy toàn bộ: `python -m pytest -q`.
 - **`configs/`**: Cấu hình YAML cho phân hoạch dữ liệu (`partition_config.yaml`) — hiện là file duy nhất trong thư mục.
 - **`legacy/`**: Pipeline Kaggle/stage* cũ, notebook, config và test của chúng — chỉ để tra cứu/tái lập lịch sử, chạy riêng ([legacy/README.md](legacy/README.md)).
@@ -55,13 +55,17 @@ python -m src.federated.server_app --smoke --rounds 2 --num-clients 5
 ```powershell
 python -m uvicorn web.app:app --host 0.0.0.0 --port 8088
 ```
-Truy cập trình duyệt tại: **`http://localhost:8088`** để xem 6 bước trình bày (chi tiết trong [docs/WEB_DEMO_GD1_GD2.md](docs/WEB_DEMO_GD1_GD2.md)):
-1. **Tổng quan**: đề tài, cách FedAvg hoạt động, ba cách huấn luyện và kết quả chính.
-2. **Dữ liệu phân tán**: mỗi client giữ phần nào của 38 nhóm; 12 cách chia dữ liệu.
-3. **Kết quả & so sánh**: bảng 7 mô hình, tập giữ riêng và khoảng tin cậy, ma trận nhầm lẫn, độ tin cậy xác suất.
-4. **Chẩn đoán bệnh lá**: một ảnh qua cả 7 mô hình, đúng/sai và lý do, Grad-CAM.
-5. **Huấn luyện thử**: chạy Flower 5 client trên máy này để xem quy trình FedAvg từng vòng.
-6. **Bằng chứng & hạn chế**: những gì đã kiểm chứng, hạn chế và việc còn lại.
+Truy cập trình duyệt tại: **`http://localhost:8088`** để xem báo cáo (5 chương), hai trang demo và phụ lục (chi tiết trong [docs/WEB_DEMO_GD1_GD2.md](docs/WEB_DEMO_GD1_GD2.md)):
+Báo cáo (đọc theo thứ tự):
+1. **Giới thiệu**: bài toán, ba câu hỏi nghiên cứu, kết quả chính.
+2. **Dữ liệu**: hai nguồn ảnh, tập học/kiểm tra/giữ riêng, mỗi client giữ phần nào của 38 nhóm; 12 cách chia dữ liệu.
+3. **Phương pháp**: ba cách huấn luyện, thuật toán FedAvg, thiết lập thí nghiệm, cách đánh giá.
+4. **Kết quả**: bảng 7 mô hình, tập giữ riêng và khoảng tin cậy, phân tích lỗi, độ tin cậy xác suất.
+5. **Kết luận**: trả lời câu hỏi nghiên cứu, hạn chế, hướng phát triển.
+
+Demo: **Chẩn đoán ảnh** (một ảnh qua cả 7 mô hình, đúng/sai và lý do, Grad-CAM) và **Học liên kết** (tham gia như một client thật từ trình duyệt).
+
+**Phụ lục kỹ thuật** (liên kết ở chân trang): kiểm chứng số liệu, mã băm mô hình, và chạy thử Flower 5 client trên máy này để kiểm chứng hệ thống.
 
 ---
 
@@ -142,8 +146,8 @@ Federated-Learning-DoAn-TotNghiep/
 │   ├── routers/             # monitoring.py, inference.py, training.py, community_fl.py
 │   ├── services/model_service.py  # MỘT CỬA inference — chỉ mở cho model đã qua cổng web_visible của registry
 │   ├── state.py             # trạng thái background task + Flower demo
-│   └── static/              # Giao diện 6 bước (HTML/CSS/ES module, không bước build)
-│       ├── index.html       # 1 Tổng quan · 2 Dữ liệu phân tán · 3 Kết quả & so sánh · 4 Chẩn đoán · 5 Huấn luyện thử · 6 Bằng chứng
+│   └── static/              # Giao diện báo cáo + demo (HTML/CSS/ES module, không bước build)
+│       ├── index.html       # Báo cáo 5 chương · Demo (Chẩn đoán, Học liên kết) · Phụ lục kỹ thuật
 │       ├── admin/           # Trang quản trị /quan-tri (admin.html + admin.js)
 │       ├── css/{style,pages}.css
 │       ├── js/app.js        # khởi động; js/core/ (router, store, api, charts, status, theme, motion, flnet, crosshair), js/pages/ (mỗi bước một file)

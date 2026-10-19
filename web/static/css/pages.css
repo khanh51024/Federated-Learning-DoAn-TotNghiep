@@ -244,7 +244,6 @@ a { color: var(--accent-sky); }
 .hero-question { font-size: var(--fs-lg); font-weight: 600; line-height: 1.4; max-width: 62ch; }
 .hero-note { margin-top: var(--space-3); font-size: var(--fs-sm); color: var(--text-secondary); }
 
-.pillar-metrics dt small { color: var(--text-muted); font-size: var(--fs-xs); }
 
 .pillar-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); margin-top: var(--space-4); }
 .pillar {
@@ -267,15 +266,7 @@ a { color: var(--accent-sky); }
 .pillar-fedavg .pillar-tag { color: var(--accent-emerald); }
 .pillar-local .pillar-tag { color: var(--accent-amber); }
 .pillar-desc { margin: var(--space-2) 0 var(--space-3); font-size: var(--fs-sm); color: var(--text-secondary); line-height: 1.6; flex: 1; }
-.pillar-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
-.pillar-metrics dt { font-size: var(--fs-xs); color: var(--text-muted); }
-.metric-big { font-variant-numeric: tabular-nums; font-size: var(--fs-2xl); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
-.pillar-centralized .metric-big { color: var(--accent-sky); }
-.pillar-fedavg .metric-big { color: var(--accent-emerald); }
-.pillar-local .metric-big { color: var(--accent-amber); font-size: var(--fs-lg); }
 .pillar-foot { margin-top: var(--space-3); font-size: var(--fs-xs); color: var(--text-muted); }
-.pillar-test { margin-top: var(--space-2); font-size: var(--fs-sm); color: var(--text-secondary); }
-.pillar-test b { font-variant-numeric: tabular-nums; color: var(--text-primary); }
 
 .conclusion-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
 .conclusion {
@@ -341,12 +332,12 @@ a { color: var(--accent-sky); }
 .overview-leaf strong { display: block; color: var(--text-primary); font-size: var(--fs-sm); margin: 3px 0; }
 .overview-leaf small { display: block; color: var(--text-secondary); font-size: var(--fs-xs); }
 .overview-leaf a { display: inline-block; margin-top: 8px; font-weight: 600; }
-body[data-route="tong-quan"] .top-header { align-items: center; margin-bottom: var(--space-3); }
-body[data-route="tong-quan"] .page-title { font-size: 20px; }
-body[data-route="tong-quan"] .top-header .eyebrow { margin-bottom: 0; }
+body[data-route="gioi-thieu"] .top-header { align-items: center; margin-bottom: var(--space-3); }
+body[data-route="gioi-thieu"] .page-title { font-size: 20px; }
+body[data-route="gioi-thieu"] .top-header .eyebrow { margin-bottom: 0; }
 
 @media (max-width: 1100px) {
-  body[data-route="tong-quan"] .top-header { align-items: flex-start; }
+  body[data-route="gioi-thieu"] .top-header { align-items: flex-start; }
   .overview-hero, .overview-hero.has-sample { grid-template-columns: minmax(0, 1fr) minmax(180px, 0.6fr); }
   .overview-hero.has-sample .fl-diagram { grid-column: 1 / -1; max-width: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; column-gap: 24px; padding-top: 12px; border-top: 1px solid var(--line-emerald); }
   .overview-hero.has-sample .overview-process-label { grid-column: 2; grid-row: 1; align-self: end; }
@@ -361,8 +352,8 @@ body[data-route="tong-quan"] .top-header .eyebrow { margin-bottom: 0; }
   .overview-leaf figcaption { width: auto; min-width: 0; }
   .overview-hero .fl-diagram, .overview-hero.has-sample .fl-diagram { display: block; }
   .overview-hero .fl-figure { max-width: 440px; margin: 0 auto; }
-  body[data-route="tong-quan"] .page-title { font-size: 20px; }
-  body[data-route="tong-quan"] .top-header { align-items: flex-start; }
+  body[data-route="gioi-thieu"] .page-title { font-size: 20px; }
+  body[data-route="gioi-thieu"] .top-header { align-items: flex-start; }
 }
 
 /* Nội dung chính để đọc nhanh; dữ liệu và phương pháp chi tiết mở theo yêu cầu. */
@@ -410,7 +401,6 @@ body[data-route="tong-quan"] .top-header .eyebrow { margin-bottom: 0; }
 .overview-headline-compare { display: flex; flex-direction: column; justify-content: center; }
 .overview-headline-compare span { color: var(--text-secondary); font-size: var(--fs-sm); }
 .overview-headline-compare strong { font-size: clamp(20px, 2vw, 28px); font-variant-numeric: tabular-nums; line-height: 1.3; }
-.overview-chart-panel { margin-top: var(--space-4); }
 .overview-section-heading { display: flex; align-items: end; justify-content: space-between; gap: var(--space-3); }
 .scope-tag {
   display: inline-block;
@@ -1501,3 +1491,83 @@ details > summary { min-height: 24px; }
   input[type="checkbox"] { width: 22px; height: 22px; }
 }
 .hidden { display: none; }
+
+/* ───────────── Trang báo cáo: mục đánh số, câu hỏi, mục lục, công thức ───────────── */
+.report-section > .eyebrow,
+.appendix-section > .eyebrow { margin-bottom: var(--space-1); }
+.report-section p + p { margin-top: var(--space-2); }
+.report-sub { min-width: 0; }
+.question-list,
+.method-steps { display: grid; gap: var(--space-3); padding-left: 1.4em; max-width: 72ch; }
+.question-list li,
+.method-steps li { line-height: 1.6; padding-left: var(--space-1); }
+.question-list b,
+.method-steps b { color: var(--text-primary); }
+.system-list,
+.future-list { display: grid; gap: var(--space-3); padding-left: 1.2em; max-width: 72ch; list-style: disc; }
+.system-list li,
+.future-list li { line-height: 1.6; }
+
+.toc-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+.toc-card {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  line-height: 1.55;
+  text-decoration: none;
+  transition: border-color var(--dur-hover) ease, transform var(--dur-hover) ease;
+}
+.toc-card b { color: var(--text-primary); font-size: var(--fs-md); }
+.toc-no { font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent-emerald-strong); }
+.toc-card.is-demo { border-left: 4px solid var(--accent-emerald); }
+.toc-card:focus-visible { outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .toc-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+}
+
+.source-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.source-card { padding: var(--space-4); border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-sunken); }
+.source-card h4 { font-size: var(--fs-md); margin-bottom: var(--space-1); }
+.source-card p { color: var(--text-secondary); font-size: var(--fs-sm); line-height: 1.6; }
+
+.formula {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-sunken);
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.term-list { display: grid; gap: var(--space-3); max-width: 78ch; }
+.term-list > div { display: grid; grid-template-columns: minmax(150px, 0.32fr) minmax(0, 1fr); gap: var(--space-4); padding-bottom: var(--space-3); border-bottom: 1px solid var(--border-color); }
+.term-list > div:last-child { border-bottom: 0; padding-bottom: 0; }
+.term-list dt { font-weight: 600; }
+.term-list dd { color: var(--text-secondary); line-height: 1.6; }
+
+.appendix-section { scroll-margin-top: calc(var(--topbar-h) + 64px); }
+.appendix-section:focus { outline: none; }
+@media (min-width: 1101px) {
+  .appendix-toc { position: sticky; top: calc(var(--topbar-h) + var(--space-2)); z-index: 5; padding: var(--space-2) 0; background: var(--bg-base); }
+}
+
+@media (max-width: 1100px) {
+  .toc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .toc-grid,
+  .source-grid { grid-template-columns: minmax(0, 1fr); }
+  .term-list > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); }
+}
+.report-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); align-items: start; }
+@media (max-width: 1100px) {
+  .report-pair { grid-template-columns: minmax(0, 1fr); }
+}

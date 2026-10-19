@@ -1,4 +1,4 @@
-// Thông tin đăng nhập quản trị, dùng chung giữa trang /quan-tri và các nút Bắt đầu/Dừng huấn luyện ở bước 5.
+// Thông tin đăng nhập quản trị, dùng chung giữa trang /quan-tri và các nút Bắt đầu/Dừng huấn luyện ở Phụ lục kỹ thuật.
 //
 // Lưu ở sessionStorage của tab; khi người dùng chọn "Ghi nhớ trên máy này" còn một bản trong localStorage (cùng khóa) nên tab
 // khác của cùng trình duyệt dùng lại được. Quyền thật do máy chủ kiểm bằng tiêu đề Authorization; đây chỉ là nơi giữ mật khẩu.

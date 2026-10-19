@@ -115,7 +115,7 @@ function confirmable(button, label, action) {
 }
 
 // ───────── Đăng nhập ─────────
-// Lưu/đọc/xóa thông tin đăng nhập: core/admin-auth.js (dùng chung với các nút huấn luyện ở bước 5).
+// Lưu/đọc/xóa thông tin đăng nhập: core/admin-auth.js (dùng chung với các nút huấn luyện ở Phụ lục kỹ thuật của trang chính).
 const saveToken = remember => storeCredential(S.user, S.token, remember);
 const loadToken = readCredential;
 const clearToken = clearCredential;
@@ -238,7 +238,7 @@ function renderSession() {
   top.textContent = open ? "Phiên đang mở" : "Phiên đang đóng";
   top.className = `status-badge ${open ? "success" : "is-neutral"}`;
   text("session-note", open
-    ? "Người có mã có thể vào bước 5 của trang chính và tham gia."
+    ? "Người có mã có thể vào trang Học liên kết của trang chính và tham gia."
     : "Phiên đang đóng: không ai vào được cho tới khi bạn mở.");
   const toggle = $("btn-toggle-session");
   toggle.textContent = open ? "Đóng phiên" : "Mở phiên";
@@ -520,7 +520,7 @@ async function savePolicy(event) {
 }
 
 function joinLink(code) {
-  return `${location.origin}/?code=${encodeURIComponent(code)}#huan-luyen`;
+  return `${location.origin}/?code=${encodeURIComponent(code)}#hoc-lien-ket`;
 }
 
 async function createCodes(event) {

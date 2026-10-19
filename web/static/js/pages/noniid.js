@@ -1,8 +1,8 @@
-// Bước 2 · Dữ liệu phân tán (non-IID): heatmap 38 lớp × 5 client và vì sao Local-only không nhận ra bệnh chưa từng thấy.
+// Chương 2 · Dữ liệu: bộ ảnh, cách chia tập, rồi phân bố non-IID (heatmap 38 nhóm × 5 client) và vì sao Local-only không nhận ra bệnh chưa từng thấy.
 import { getEvidence, getPartitions, getSummary, modelsById } from "../core/store.js";
 import { attachCrosshair } from "../core/crosshair.js";
 import {
-  byId, cropOf, diseaseOf, esc, fmtInt, fmtNum, fmtPct, fmtPctValue, formatDiseaseName, revealItems,
+  byId, cropOf, diseaseOf, esc, fmtInt, fmtNum, fmtPct, formatDiseaseName, revealItems,
 } from "../core/dom.js";
 
 const LOCALS = ["local_00", "local_01", "local_02", "local_03", "local_04"];
@@ -188,11 +188,41 @@ async function mountExplorer() {
   render();
 }
 
+/** Bộ dữ liệu và ba tập ảnh: nơi DUY NHẤT trên web định nghĩa tập kiểm tra và tập giữ riêng (các trang khác chỉ nhắc tên). */
+function datasetHtml(evidence, summary) {
+  const counts = evidence.shard_counts || {};
+  const trainTotal = Object.values(counts).reduce((a, b) => a + b, 0);
+  const val = evidence.validation_counts || {};
+  const classCount = evidence.classes?.length || summary?.shards?.classes_total;
+  const ho = summary?.holdout?.available ? summary.holdout : null;
+  return `
+    <section class="panel report-section" aria-labelledby="dataset-title">
+      <p class="eyebrow">2.1 · Bộ dữ liệu</p>
+      <h3 class="panel-title" id="dataset-title">Hai nguồn ảnh, ${classCount ? `${fmtInt(classCount)} nhóm lá khỏe/bệnh` : "nhiều nhóm lá khỏe/bệnh"}</h3>
+      <div class="source-grid mt-3">
+        <article class="source-card">
+          <h4>PlantVillage</h4>
+          <p>Ảnh một chiếc lá chụp trong phòng, nền đơn giản. Là phần lớn dữ liệu học và kiểm tra.</p>
+        </article>
+        <article class="source-card">
+          <h4>PlantDoc</h4>
+          <p>Ảnh lá ngoài đồng, nền phức tạp, ít ảnh hơn và chỉ phủ một phần các nhóm. Dùng để xem mô hình có giữ được độ chính xác khi ảnh khác kiểu.</p>
+        </article>
+      </div>
+      <h4 class="subhead mt-4">Ba tập ảnh và mục đích của từng tập</h4>
+      <dl class="fact-grid mt-3">
+        <div><dt>Tập học</dt><dd>${fmtInt(trainTotal)} ảnh (PlantVillage + PlantDoc), chia cho ${Object.keys(counts).length} client. Mô hình chỉ cập nhật trọng số trên tập này.</dd></div>
+        <div><dt>Tập kiểm tra</dt><dd>${fmtInt(val.plantvillage)} ảnh PlantVillage + ${fmtInt(val.plantdoc)} ảnh PlantDoc. Dùng trong lúc huấn luyện để chọn phiên bản mô hình tốt nhất, nên số đo trên tập này có thể hơi đẹp hơn thực tế.</dd></div>
+        <div><dt>Tập giữ riêng</dt><dd>${ho ? `${fmtInt(ho.count)} ảnh (${fmtInt(ho.counts_by_source?.plantvillage)} PlantVillage, ${fmtInt(ho.counts_by_source?.plantdoc)} PlantDoc). ` : ""}Là bộ chẩn đoán có sẵn của bộ dữ liệu (legacy), không dùng để chọn mô hình, nhưng chưa nằm trong kiểm tra trùng ảnh. Dùng làm phép kiểm tra bổ sung ở chương 4.</dd></div>
+      </dl>
+    </section>`;
+}
+
 export async function mount() {
   const root = byId("noniid-root");
   const [evidence, summary] = await Promise.all([getEvidence(), getSummary().catch(() => null)]);
   if (!evidence.available) {
-    root.innerHTML = `<div class="callout callout-error" role="alert"><b>Chưa có bộ số liệu đã kiểm hash.</b> ${esc(evidence.reason || "")}</div>`;
+    root.innerHTML = `<div class="callout callout-error" role="alert"><b>Chưa có số liệu để hiển thị.</b> ${esc(evidence.reason || "")}</div>`;
     return;
   }
   const shards = summary?.shards?.available ? summary.shards : null;
@@ -228,14 +258,15 @@ export async function mount() {
         <ul class="viewer-bars" aria-label="Số ảnh của nhóm này tại từng client">
           ${Object.entries(example.per_client).map(([client, count]) => `<li><span>Client ${clientNumber(client)}</span><span class="viewer-bar-track"><span data-style="--share:${example.total ? count / example.total : 0}"></span></span><b>${fmtInt(count)} ảnh</b></li>`).join("")}
         </ul>
-        <details class="fold"><summary>Đối chiếu với kết quả học riêng</summary><p class="panel-desc mt-2">Client ${holder}: ${fmtInt(holderCount)} ảnh; các client khác: ${fmtInt(othersTotal)} ảnh${zeroText}. ${recalls ? `Tỉ lệ nhận đúng nhóm này: ${recalls}.` : "Chưa có kết quả theo nhóm."} Đây là sự liên hệ với phân bố dữ liệu, chưa phải kiểm chứng nguyên nhân.</p></details>
+        <p class="panel-desc">Client ${holder}: ${fmtInt(holderCount)} ảnh; các client khác: ${fmtInt(othersTotal)} ảnh${zeroText}. ${recalls ? `Tỉ lệ nhận đúng nhóm này: ${recalls}.` : "Chưa có kết quả theo nhóm."} Đây là sự liên hệ với phân bố dữ liệu, chưa phải kiểm chứng nguyên nhân.</p>
       </section>`;
   }
 
   root.innerHTML = `
-    <section class="panel noniid-intro">
+    ${datasetHtml(evidence, summary)}
+    <section class="panel noniid-intro mt-4">
       <div>
-        <p class="eyebrow">Khái niệm: non-IID</p>
+        <p class="eyebrow">2.2 · Dữ liệu lệch giữa các client (non-IID)</p>
         <h3 class="panel-title">Số ảnh mỗi nhóm bệnh khác nhau giữa các client</h3>
         <p class="panel-desc">Dữ liệu non-IID là dữ liệu có phân bố khác nhau giữa các client: mỗi client có thể thiếu hẳn một số nhóm bệnh.</p>
       </div>
@@ -243,9 +274,11 @@ export async function mount() {
     </section>
     ${exampleHtml}
 
-    <details class="overview-detail mt-4"><summary><span><strong>Xem dữ liệu và mô hình của từng client</strong><small>${Object.keys(evidence.shard_counts || {}).length} phân vùng giả lập</small></span></summary>
-      <div class="overview-detail-body"><section class="client-grid" aria-label="Các client">${clientCards(evidence, shards, byModel)}</section></div>
-    </details>
+    <section class="mt-4" aria-labelledby="clients-title">
+      <h3 class="panel-title" id="clients-title">Dữ liệu của từng client</h3>
+      <p class="panel-desc">${Object.keys(evidence.shard_counts || {}).length} phân vùng giả lập từ cùng một bộ ảnh, kèm kết quả của mô hình học riêng trên phân vùng đó.</p>
+      <div class="client-grid mt-3" aria-label="Các client">${clientCards(evidence, shards, byModel)}</div>
+    </section>
 
     ${shards ? `
     <details class="overview-detail mt-4">
@@ -282,10 +315,7 @@ export async function mount() {
       <div class="mt-3" id="scheme-explorer-body"><div class="skeleton skeleton-block"></div></div>
     </details>
 
-    <section class="cta-row mt-4">
-      <a class="btn btn-primary" href="#ket-qua">Xem kết quả chi tiết →</a>
-      <a class="btn btn-secondary" href="#chan-doan">Tự thử trên một ảnh →</a>
-    </section>`;
+    `;
 
   revealItems(root.querySelectorAll(".client-tile"), { stagger: 50 });
 

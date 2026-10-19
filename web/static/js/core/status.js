@@ -25,7 +25,7 @@ export function onStatus(fn) {
   return () => listeners.delete(fn);
 }
 
-/** Nhịp poll (ms). Bước 5 hạ xuống ~1,5 s khi có phiên chạy để sơ đồ bám sát trạng thái thật; trả về 4 s khi xong. */
+/** Nhịp poll (ms). Phụ lục kỹ thuật hạ xuống ~1,5 s khi có phiên chạy để sơ đồ bám sát trạng thái thật; trả về 4 s khi xong. */
 export function setPollInterval(ms) {
   pollMs = Number.isFinite(ms) && ms >= 1000 ? ms : POLL_DEFAULT_MS;
 }
@@ -84,7 +84,7 @@ function renderHeader(data) {
 
   const task = data.task || { status: "idle", message: "Sẵn sàng" };
   const badge = byId("task-badge");
-  // Phiên bị dừng vẫn được giữ trong /api/status để bước Huấn luyện xem lại,
+  // Phiên bị dừng vẫn được giữ trong /api/status để Phụ lục kỹ thuật xem lại,
   // nhưng thanh trạng thái chung chỉ cần báo hệ thống đã sẵn sàng chạy phiên mới.
   setText(badge, task.status === "cancelled" ? "Sẵn sàng" : (task.message || "Sẵn sàng"));
   let cls = "status-badge";

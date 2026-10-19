@@ -265,6 +265,7 @@ button {
 .mt-2 { margin-top: var(--space-2); }
 .mt-3 { margin-top: var(--space-3); }
 .mt-4 { margin-top: var(--space-4); }
+.mt-5 { margin-top: var(--space-5); }
 
 .btn-stack {
   display: flex;
@@ -367,7 +368,7 @@ button {
 .nav-menu[data-fade="start"] { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 28px), transparent); }
 .nav-menu[data-fade="both"] { -webkit-mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
 /* canh giữa an toàn: khi tràn thì bắt đầu từ mép trái (không cắt mất bước đầu) */
-.nav-menu > .nav-item:first-of-type { margin-left: auto; }
+.nav-menu > .nav-indicator + .nav-group { margin-left: auto; }
 .nav-menu > .nav-item:last-of-type { margin-right: auto; }
 
 .nav-indicator {
@@ -431,6 +432,19 @@ button {
   background: var(--accent-emerald);
   border-color: var(--accent-emerald);
   color: var(--text-on-accent);
+}
+
+/* nhãn nhóm "Báo cáo" / "Demo" trong thanh trên cùng: chữ nhỏ, không phải liên kết */
+.nav-group {
+  flex: none;
+  align-self: center;
+  padding: 0 var(--space-2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .nav-sep {
@@ -527,6 +541,10 @@ button {
   color: var(--text-muted);
 }
 
+.footer-links { display: flex; gap: var(--space-4); }
+.footer-links a { color: var(--text-secondary); text-decoration: underline; text-underline-offset: 3px; }
+.footer-links a:hover { color: var(--text-primary); }
+
 .top-header {
   display: flex;
   justify-content: space-between;
@@ -550,11 +568,13 @@ button {
 }
 .page-desc:empty { display: none; }
 
+/* trang báo cáo không cần huy hiệu trạng thái hệ thống; chỉ Demo và Phụ lục dùng */
+body[data-group="report"] .header-actions { display: none; }
+
 .panel-desc,
 .viewer-scope,
 .field-hint { max-width: 72ch; } /* 55–85 ký tự mỗi dòng để đọc thoải mái */
 
-.nav-item[data-route="chan-doan"] .nav-label { font-weight: 600; }
 
 /* ───────────── 4. THÀNH PHẦN ───────────── */
 /* badge trạng thái */
@@ -1222,6 +1242,7 @@ input[type="checkbox"] {
 @media (max-width: 1180px) {
   .nav-sep { display: none; }
   .nav-item { padding: 0 8px; }
+  .nav-group { padding: 0 4px; }
 }
 
 @media (max-width: 1100px) {
