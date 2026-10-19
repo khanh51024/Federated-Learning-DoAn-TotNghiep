@@ -15,3 +15,24 @@ Chỉ dùng bản wasm, `numThreads = 1` nên KHÔNG cần header COOP/COEP. Ba 
 `-threaded.wasm` cùng thư mục. Nâng cấp: `npm pack onnxruntime-web@<phiên bản>`, chép đúng ba tệp trên từ `package/dist/`, rồi chạy
 `tests/test_community_js.py` (khớp ONNX) và `scripts/e2e_community.py`. Phải xuất lại ONNX nếu opset mới không nhận file cũ.
 
+## Biểu tượng thương hiệu (Lucide `boxes`)
+
+Không có tệp nào trong thư mục này: hình học được chép **y nguyên** vào HTML ở bốn chỗ —
+`<link rel="icon">` (data URI) và `<svg class="brand-svg">` trong `web/static/index.html` và `web/static/admin/admin.html`.
+
+| Mục | Giá trị |
+|---|---|
+| Bộ icon | Lucide (`lucide-static`) |
+| Phiên bản đã lấy | 1.59.0 |
+| Tên biểu tượng | `boxes` — ba hộp xếp chồng, ẩn dụ nhiều gói trọng số gom về một mô hình |
+| Tệp gốc | `lucide-static@1.59.0/icons/boxes.svg` (`https://cdn.jsdelivr.net/npm/lucide-static@1.59.0/icons/boxes.svg`) |
+| Giấy phép | ISC |
+
+Giữ nguyên `viewBox="0 0 24 24"`, `stroke-width="2"`, `stroke-linecap/linejoin="round"` và `stroke="currentColor"`
+để CSS (`.brand-svg`) đổi màu theo nền sáng/tối. Data URI của favicon thì phải tô cứng `stroke='%23047857'`
+vì favicon không thừa hưởng `currentColor`.
+
+Nâng cấp/đổi biểu tượng: tải `icons/<tên>.svg` của phiên bản muốn dùng, chép 12 phần tử `<path>` vào cả bốn chỗ trên
+(HTML nội tuyến dùng `"` — dấu `<`/`>` và `"` trong favicon phải đổi thành `%3C`/`%3E` và `'`), rồi cập nhật số phiên bản ở đây
+và trong chú thích `favicon:` của hai file HTML. Kiểm lại bằng cách mở `#chuan-b` hoặc xem favicon ở 16 px.
+

@@ -2,9 +2,9 @@
 import { getEvidence, getGallery, getModels, getSummary } from "../core/store.js";
 import { ApiError, isAbort, postForm } from "../core/api.js";
 import {
-  $$, MODEL_LABELS, MODEL_ORDER, byId, cropOf, esc, fmtInt, fmtNum, fmtPct, fmtPctValue, formatApiError,
+  $$, MODEL_LABELS, MODEL_ORDER, NARROW_QUERY, byId, cropOf, esc, fmtInt, fmtNum, fmtPct, fmtPctValue, formatApiError,
   formatDiseaseName, modelPill, notify, pillarOf, prefersReducedMotion, revealItems, setBar, setDisabled, setHtml,
-  setText, toggleHidden,
+  openOnWide, setText, toggleHidden,
 } from "../core/dom.js";
 
 const LOCAL_SOURCES = ["local_00", "local_01", "local_02", "local_03", "local_04"];
@@ -12,6 +12,9 @@ const ALL_SOURCES = ["fedavg", ...LOCAL_SOURCES];
 const LEVEL_LABEL = { very_easy: "Nhận đúng rất cao", easy: "Nhận đúng cao", medium: "Nhận đúng trung bình", hard: "Nhận đúng thấp", very_hard: "Nhận đúng rất thấp" };
 // Nhãn theo tỉ lệ nhận đúng của nhóm bệnh (recall lớp ở FedAvg), không phải độ khó của riêng ảnh
 const levelText = item => LEVEL_LABEL[item.difficulty_key] || item.difficulty;
+// Thẻ ảnh mẫu rộng ~88 px trên điện thoại: nhãn đầy đủ ("Nhận đúng trung bình") xuống 3 dòng. Thẻ dùng bản ngắn (mức nhận đúng đã được giải thích ở chú thích dưới thư viện ảnh); bản đầy đủ nằm ở aria-label và title.
+const LEVEL_SHORT = { very_easy: "Rất cao", easy: "Cao", medium: "Vừa", hard: "Thấp", very_hard: "Rất thấp" };
+const levelShort = item => LEVEL_SHORT[item.difficulty_key] || levelText(item);
 
 // Giới hạn dung lượng ảnh tải lên: phải khớp MAX_UPLOAD_BYTES trong web/routers/inference.py (có test kiểm hai số này).
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -77,14 +80,14 @@ function renderGallery() {
   }
   grid.innerHTML = items.map(item => {
     const id = Number(item.id);
-    const level = state.showStats ? `<span class="level level-${esc(item.difficulty_key)}">${esc(levelText(item))}</span>` : "";
+    const level = state.showStats ? `<span class="level level-${esc(item.difficulty_key)}" title="${esc(levelText(item))}">${esc(levelShort(item))}</span>` : "";
     const levelLabel = state.showStats ? `, ${esc(levelText(item))}` : "";
     return `
     <button type="button" class="gallery-item${state.item?.id === item.id ? " is-selected" : ""}" data-id="${id}"
       aria-pressed="${state.item?.id === item.id}"
       aria-label="Ảnh mẫu ${id}: ${esc(formatDiseaseName(item.label))}${levelLabel}${item.field_photo ? ", ảnh ngoài đồng" : ""}">
       <img src="/static/samples/demo/${esc(item.thumb)}" alt="" loading="lazy" width="88" height="88">
-      <span class="gallery-cap">${esc(formatDiseaseName(item.label))}</span>
+      <span class="gallery-cap" title="${esc(formatDiseaseName(item.label))}">${esc(formatDiseaseName(item.label))}</span>
       <span class="gallery-src">${item.source === "plantdoc" ? "PlantDoc · ngoài đồng" : "PlantVillage"}</span>
       ${level}
     </button>`;
@@ -278,7 +281,7 @@ function rowHtml(modelId, expanded = false) {
   return `<th scope="row"><button type="button" class="row-toggle" aria-expanded="${expanded}" aria-controls="detail-${modelId}">${modelPill(modelId)}<span class="row-sub">${phase}</span><span class="sr-only">Xem top 3 xác suất</span></button></th>
     <td class="cell-pred">
       <b>${esc(formatDiseaseName(result.predicted_class))}</b>${uncertain}
-      <div class="conf"><div class="conf-track"><span class="conf-fill ${pillarOf(modelId)}" style="transform:scaleX(0)" data-pct="${result.confidence_pct}"></span></div><span class="mono">${fmtNum(result.confidence_pct, 1)}%</span></div>
+      <div class="conf"><div class="conf-track"><span class="conf-fill ${pillarOf(modelId)}" data-pct="${result.confidence_pct}"></span></div><span class="mono">${fmtNum(result.confidence_pct, 1)}%</span></div>
       ${result.calibrated ? `<span class="conf-cal" title="Đã hiệu chuẩn bằng temperature scaling, T = ${fmtNum(result.calibrated.temperature, 2)} (học trên tập calibration riêng)">hiệu chuẩn <b class="mono">${fmtNum(result.calibrated.confidence_pct, 1)}%</b></span>` : ""}
     </td>
     <td>${verdictHtml}</td>
@@ -537,7 +540,7 @@ function startRun(models) {
   byId("diag-empty").classList.add("hidden");
   byId("diag-result").classList.remove("hidden");
   // trên màn hình hẹp, kết quả nằm dưới khung chọn ảnh: cuộn tới để người dùng thấy ngay
-  if (window.matchMedia("(max-width: 1100px)").matches) {
+  if (window.matchMedia(NARROW_QUERY).matches) {
     byId("diag-result").scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
   }
   byId("diag-summary").innerHTML = '<p class="summary-big"><span class="skeleton skeleton-line"></span></p>';
@@ -769,6 +772,7 @@ export async function mount() {
   state.shards = summary?.shards?.available ? summary.shards : null;
   state.gallery = gallery.items || [];
   state.showStats = evidence?.available === true && gallery.validation_membership?.status === "verified";
+  openOnWide(byId("diag-model-details")); // màn rộng: bảng dự đoán từng mô hình mở sẵn (in ấn vẫn khôi phục đúng nhờ beforeprint)
   if (!state.showStats) {
     // không có số đã kiểm hash để xếp độ khó: ẩn các bộ lọc theo độ khó
     $$("#gallery-filters [data-filter='easy'], #gallery-filters [data-filter='medium'], #gallery-filters [data-filter='hard']")
@@ -832,8 +836,6 @@ export async function mount() {
     const file = event.dataTransfer?.files?.[0];
     if (file) selectUpload(file);
   });
-  document.addEventListener("dragover", cancelDrag);
-  document.addEventListener("drop", cancelDrag);
 
   $$("[data-mode]").forEach(button => button.addEventListener("click", () => setMode(button.dataset.mode)));
   byId("inference-fed-source").addEventListener("change", event => {

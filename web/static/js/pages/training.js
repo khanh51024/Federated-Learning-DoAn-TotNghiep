@@ -5,36 +5,44 @@ import { currentTask, markTaskStarted, onStatus, pollStatus, setPollInterval } f
 import { beat, diagramHtml, pulse } from "../core/flnet.js";
 import { mount as mountCommunity } from "./community.js";
 import {
-  $$, byId, esc, fmtNum, formatApiError, notify, prefersReducedMotion, setBar, setClass, setDisabled, setDisplay, setHtml,
+  applyStyleData, $$, byId, esc, fmtNum, formatApiError, notify, prefersReducedMotion, setBar, setClass, setDisabled, setDisplay, setHtml,
   setText, toggleHidden,
 } from "../core/dom.js";
 
 const SPINNER = '<svg class="svg-icon icon-sm spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
 const PLAY = '<svg class="svg-icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+const LOCK = '<svg class="svg-icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
 const STOP = '<svg class="svg-icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>';
 
-const state = { mode: "federated", layerLoaded: false };
+const state = { mode: "federated", layerLoaded: false, starting: false };
 // Chính sách huấn luyện của máy chủ (từ /api/status): có cần đăng nhập quản trị không và các trần tham số.
 const policy = { requiresAdmin: false, limits: {} };
 const FORM_MAX = { rounds: 50, localEpochs: 10, centralizedEpochs: 50 }; // trần của biểu mẫu khi máy chủ chưa nêu trần
 const topo = { lastRound: null }; // số vòng đã hoàn tất ở lần poll trước (null: chưa biết, không chạy nhịp khi mới mở trang)
+const last = { network: {} }; // lần poll gần nhất: để đổi chế độ không phải đợi chu kỳ poll sau
 
+// Ba loại bảng: Flower thật (network), FedAvg mô phỏng trong tiến trình web (simulation), Centralized.
+// Không có cột "độ chính xác": phần chạy trên máy chủ dùng ảnh nhiễu ngẫu nhiên nên nó đứng yên ở 1/38 và không mang thông tin.
+const COLS = { network: 7, simulation: 5, centralized: 5 };
 const HEAD = {
-  federated: "<tr><th>Vòng</th><th>Độ chính xác (mô hình chung)</th><th>Sai số (loss)</th><th>Macro-F1</th><th>Thời gian gộp</th><th>Thời gian cả vòng</th><th>Trạng thái</th></tr>",
-  centralized: "<tr><th>Epoch</th><th>Chính xác (học)</th><th>Loss (học)</th><th>Chính xác (kiểm tra)</th><th>Loss (kiểm tra)</th><th>Macro-F1</th><th>Thời gian</th><th>Trạng thái</th></tr>",
+  network: "<tr><th>Vòng</th><th>Client hợp lệ / đáng ngờ / bị loại</th><th>Client học lâu nhất</th><th>Ảnh mỗi client</th><th>Tham số học được đổi</th><th>Mã băm mô hình chung</th><th>Trạng thái</th></tr>",
+  simulation: "<tr><th>Vòng</th><th>Loss mô hình chung</th><th>Thời gian gộp</th><th>Thời gian cả vòng</th><th>Trạng thái</th></tr>",
+  centralized: "<tr><th>Epoch</th><th>Loss (học)</th><th>Loss (kiểm tra)</th><th>Thời gian</th><th>Trạng thái</th></tr>",
 };
-
-const EMPTY_ROW = {
-  federated: '<tr><td colspan="7" class="text-center text-muted">Chưa có phiên đang theo dõi. Bấm "Bắt đầu" để chạy; nhật ký chi tiết từng client nằm ở mục bên dưới.</td></tr>',
-  centralized: '<tr><td colspan="8" class="text-center text-muted">Chưa có tiến trình huấn luyện. Bấm "Bắt đầu" để theo dõi.</td></tr>',
+const EMPTY_TEXT = {
+  network: 'Chưa có phiên đang theo dõi. Bấm "Bắt đầu" để chạy; nhật ký chi tiết từng client nằm ở mục bên dưới.',
+  simulation: 'Chưa có phiên đang theo dõi. Bấm "Bắt đầu" để chạy.',
+  centralized: 'Chưa có tiến trình huấn luyện. Bấm "Bắt đầu" để theo dõi.',
 };
+const emptyRow = (kind, text) => `<tr><td colspan="${COLS[kind]}" class="text-center text-muted">${text}</td></tr>`;
 
-function formatAcc(val) {
-  if (val === undefined || val === null) return "—";
-  const num = Number(val);
-  if (Number.isNaN(num)) return "—";
-  return `${fmtNum(num <= 1.0 && num > 0 ? num * 100 : num, 2)}%`;
+/** Số rất nhỏ (0,0028) vẫn đọc được: giữ `digits` chữ số có nghĩa thay vì làm tròn về 0. */
+function fmtSig(value, digits = 3) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "—";
+  return n === 0 ? "0" : n.toLocaleString("vi-VN", { maximumSignificantDigits: digits });
 }
+const shortHash = value => (typeof value === "string" && value.length >= 12 ? value.slice(0, 12) : "—");
 const formatDec = (val, digits = 4) => (val === undefined || val === null || Number.isNaN(Number(val)) ? "—" : fmtNum(Number(val), digits));
 
 // ───────── Bảng tiến trình ─────────
@@ -45,9 +53,50 @@ function kindOfTask(task) {
   return null;
 }
 
+/** Loại bảng của một tác vụ: network (Flower thật) | simulation (trong tiến trình web) | centralized. */
+function tableKind(task) {
+  const kind = kindOfTask(task);
+  if (kind === "centralized") return "centralized";
+  if (kind === "federated") return task?.type === "federated-network" ? "network" : "simulation";
+  return null;
+}
+
+/** Loại bảng theo lựa chọn hiện tại của người dùng (khi chưa có tác vụ đang chạy). */
+function modeKind() {
+  if (state.mode === "centralized") return "centralized";
+  return byId("fl-engine")?.value === "simulation" ? "simulation" : "network";
+}
+
+/** Các dòng của bảng: Flower lấy từ progress.json của máy chủ (live_progress luôn rỗng ở engine này). */
+function rowsFor(kind, task, network) {
+  if (kind !== "network") return task?.live_progress || [];
+  const rows = Array.isArray(network.rounds_brief) ? [...network.rounds_brief] : [];
+  const inProgress = Number(network.round_in_progress || 0);
+  if (task?.status === "running" && inProgress > rows.length) rows.push({ round: inProgress, _live: true });
+  return rows;
+}
+
 function signature(history, isLive, task) {
   const first = task?.live_progress?.[0];
   return JSON.stringify({ history, isLive, status: task?.status ?? null, total: first ? (first.total_epochs ?? first.total_rounds ?? null) : null });
+}
+
+function networkRowHtml(item, label, cls) {
+  const clients = Array.isArray(item.clients) ? item.clients : [];
+  const times = clients.map(c => Number(c.local_train_time_s)).filter(Number.isFinite);
+  const examples = clients.map(c => Number(c.num_examples)).filter(Number.isFinite);
+  const relative = clients.map(c => Number(c.learnable_update_relative)).filter(Number.isFinite);
+  const meanRelative = relative.length ? relative.reduce((a, b) => a + b, 0) / relative.length : null;
+  const norm = item.mean_received_learnable_update_norm;
+  const learned = norm === null || norm === undefined ? "—" : `${fmtSig(norm)} (${fmtSig(meanRelative === null ? 0 : meanRelative * 100)}% của ‖W‖)`;
+  return `
+    <td class="fw-600">Vòng ${esc(item.round)}</td>
+    <td>${item._live ? "—" : `${esc(item.accepted_clients ?? "—")} / ${esc(item.suspicious_clients ?? 0)} / ${esc(item.rejected_clients ?? 0)}`}</td>
+    <td class="text-muted">${times.length ? `${fmtNum(Math.max(...times), 1)} s` : "—"}</td>
+    <td>${examples.length ? `${Math.min(...examples)}–${Math.max(...examples)}` : "—"}</td>
+    <td class="text-sky">${item._live ? "—" : learned}</td>
+    <td><span class="hash-chip" title="${esc(item.global_model_hash || "")}">${item._live ? "—" : shortHash(item.global_model_hash)}</span></td>
+    <td class="${cls}">● ${label}</td>`;
 }
 
 function renderProgress(kind, history, isLive, task, network = {}) {
@@ -62,11 +111,11 @@ function renderProgress(kind, history, isLive, task, network = {}) {
   }
   const first = task?.live_progress?.[0];
   if (isLive) {
-    // Engine Flower thật (federated-network) không ghi live_progress: lấy số vòng đã xong từ network_processes, tổng vòng từ ô cấu hình.
-    const fromNetwork = kind === "federated" && task?.type === "federated-network";
+    // Flower thật không ghi live_progress: số vòng đã xong lấy từ progress.json (network.round_completed), tổng vòng từ cấu hình tác vụ.
+    const fromNetwork = kind === "network";
     const done = fromNetwork ? Number(network.round_completed || 0) : history.length;
     const total = (kind === "centralized" ? first?.total_epochs : first?.total_rounds)
-      || (fromNetwork ? Number(byId("fl-rounds")?.value) || "?" : "?");
+      || (fromNetwork ? Number(task?.config?.rounds) || Number(byId("fl-rounds")?.value) || "?" : "?");
     setClass(badge, "status-badge running");
     setHtml(badge, `<span class="live-dot pulse"></span> ${kind === "centralized" ? `Đang huấn luyện (${history.length}/${esc(total)} epoch)` : `Đang giao tiếp (đã xong ${done}/${esc(total)} vòng)`}`);
   } else if (task?.status === "cancelled") {
@@ -84,43 +133,87 @@ function renderProgress(kind, history, isLive, task, network = {}) {
   body.dataset.sig = sig;
   if (!history || history.length === 0) {
     body.innerHTML = isLive
-      ? `<tr><td colspan="8" class="text-center text-muted">Đang chạy — chờ kết quả ${kind === "centralized" ? "epoch" : "vòng"} đầu tiên…</td></tr>`
-      : EMPTY_ROW[kind];
+      ? emptyRow(kind, `Đang chạy — chờ kết quả ${kind === "centralized" ? "epoch" : "vòng"} đầu tiên…`)
+      : emptyRow(kind, EMPTY_TEXT[kind]);
     return;
   }
   const frag = document.createDocumentFragment();
   history.forEach((item, idx) => {
     const tr = document.createElement("tr");
     const isLast = idx === history.length - 1;
-    const done = item.status === "completed" || !isLive || !isLast;
+    const done = !item._live && (item.status === "completed" || item.status === undefined || !isLive || !isLast);
     const cancelled = isLast && task?.status === "cancelled";
-    let label = kind === "federated" ? "Đã tổng hợp" : "Đạt";
+    const federated = kind !== "centralized";
+    let label = federated ? "Đã gộp" : "Đã xong";
     let cls = "text-emerald";
     if (cancelled) { label = "Đã dừng"; cls = "text-rose"; }
-    else if (!done) { label = kind === "federated" ? "Đang tổng hợp" : "Đang chạy"; cls = "text-amber"; }
-    if (kind === "federated") {
+    else if (!done) { label = federated ? "Đang học" : "Đang chạy"; cls = "text-amber"; }
+    if (kind === "network") {
+      tr.innerHTML = networkRowHtml(item, label, cls);
+    } else if (kind === "simulation") {
       tr.innerHTML = `
         <td class="fw-600">Vòng ${esc(item.round)}</td>
-        <td class="text-emerald fw-600">${formatAcc(item.global_accuracy)}</td>
         <td class="text-sky">${formatDec(item.global_loss)}</td>
-        <td>${formatDec(item.global_macro_f1)}</td>
         <td class="text-purple">${item.aggregation_time_ms !== undefined ? `${fmtNum(item.aggregation_time_ms, 1)} ms` : "—"}</td>
         <td class="text-muted">${item.round_duration_s !== undefined ? `${fmtNum(item.round_duration_s, 1)} s` : "—"}</td>
         <td class="${cls}">● ${label}</td>`;
     } else {
       tr.innerHTML = `
         <td class="fw-600">Epoch ${esc(item.epoch)}</td>
-        <td class="text-sky">${formatAcc(item.train_accuracy)}</td>
-        <td>${formatDec(item.train_loss)}</td>
-        <td class="text-emerald fw-600">${formatAcc(item.val_accuracy)}</td>
+        <td class="text-sky">${formatDec(item.train_loss)}</td>
         <td>${formatDec(item.val_loss)}</td>
-        <td>${formatDec(item.val_macro_f1)}</td>
         <td class="text-muted">${item.epoch_time_s !== undefined ? `${fmtNum(item.epoch_time_s, 1)} s` : "—"}</td>
         <td class="${cls}">● ${label}</td>`;
     }
     frag.appendChild(tr);
   });
   body.replaceChildren(frag);
+}
+
+/** Khung "Bằng chứng máy đã tính thật" của phiên Flower: tiến trình, vòng đã gộp, chuỗi mã băm mô hình chung. */
+function renderProof(network) {
+  const box = byId("train-proof");
+  const processes = Array.isArray(network.processes) ? network.processes : [];
+  const rounds = Array.isArray(network.rounds_brief) ? network.rounds_brief : [];
+  if (!processes.length && !rounds.length) {
+    toggleHidden(box, true);
+    return;
+  }
+  toggleHidden(box, false);
+  const running = processes.filter(p => p.running).length;
+  const codes = [...new Set(processes.filter(p => !p.running).map(p => p.exit_code))].join(", ");
+  setText(byId("proof-procs"), !processes.length ? "—" : running ? `${running}/${processes.length} đang chạy` : `${processes.length}/${processes.length} đã thoát (mã ${codes})`);
+  setText(byId("proof-rounds"), String(rounds.length));
+  const lastRound = rounds[rounds.length - 1];
+  const hashEl = byId("proof-hash");
+  setText(hashEl, lastRound ? `${String(lastRound.global_model_hash || "").slice(0, 16)}…` : "—");
+  if (hashEl) hashEl.title = lastRound?.global_model_hash || "";
+  const chained = rounds.length > 1 && rounds.every((r, i) => i === 0 || r.parent_model_hash === rounds[i - 1].global_model_hash);
+  const relative = (lastRound?.clients || []).map(c => Number(c.learnable_update_relative)).filter(Number.isFinite);
+  const meanRelative = relative.length ? relative.reduce((a, b) => a + b, 0) / relative.length : null;
+  const parts = [];
+  if (rounds.length > 1) parts.push(chained ? `Chuỗi mã băm khớp qua ${rounds.length} vòng: mô hình chung của vòng trước chính là mô hình cha của vòng sau.` : "Cảnh báo: chuỗi mã băm giữa các vòng không khớp.");
+  if (meanRelative !== null) parts.push(`Tham số học được chỉ đổi ${fmtSig(meanRelative * 100)}% so với trọng số cha — đúng kỳ vọng khi ảnh là nhiễu ngẫu nhiên; chuẩn cập nhật lớn hơn trong nhật ký chủ yếu là bộ đệm BatchNorm trôi.`);
+  setText(byId("proof-note"), parts.join(" "));
+}
+
+/** KPI và sơ đồ theo chế độ: Centralized không có client/RTT, nên không hiện số của phiên Flower trước. */
+function renderViews(task, network) {
+  const running = task?.status === "running";
+  const kind = running ? (tableKind(task) ?? modeKind()) : modeKind();
+  const centralized = kind === "centralized";
+  toggleHidden(byId("topology"), centralized);
+  toggleHidden(byId("kpi-fed"), kind !== "network");
+  toggleHidden(byId("kpi-cent"), !centralized);
+  if (kind === "network") renderProof(network || {});
+  else toggleHidden(byId("train-proof"), true);
+  if (centralized) {
+    const rows = tableKind(task) === "centralized" ? (task.live_progress || []) : [];
+    const total = rows[0]?.total_epochs;
+    setText(byId("dash-epochs"), rows.length ? `${rows.length}${total ? ` / ${total}` : ""}` : "—");
+    const lastRow = rows[rows.length - 1];
+    setText(byId("dash-epoch-time"), lastRow?.epoch_time_s !== undefined ? `${fmtNum(lastRow.epoch_time_s, 1)} s` : "—");
+  }
 }
 
 /** Client "đang kết nối" theo trạng thái máy chủ: chỉ tính khi tác vụ hiện tại là học liên kết (tránh số cũ của phiên Flower trước). */
@@ -158,6 +251,7 @@ function renderTopology(task, network) {
   else if (finished) sub = "đã hoàn tất";
   else if (serverUp) sub = "đang chờ client";
   setText(byId("topo-server-sub"), sub);
+  byId("topology").dataset.phase = sub === "chưa chạy" ? "idle" : "active"; // CSS thu gọn sơ đồ khi chưa có phiên
 
   stage.querySelectorAll(".fl-client").forEach((el, index) => {
     const on = index < connected;
@@ -188,7 +282,9 @@ function renderTopology(task, network) {
 function applyStatus(data, { task, network, finished, stale }) {
   if (data?.training) applyPolicy(data.training);
   if (stale) return; // poll đầu tiên sau khi bấm Bắt đầu có thể còn trả tác vụ cũ: không vẽ lại trạng thái cũ
+  last.network = network;
   const kind = kindOfTask(task);
+  const kindOfTable = tableKind(task);
   const running = task.status === "running";
   const start = byId("btn-train-start");
   const stop = byId("btn-train-stop");
@@ -196,6 +292,7 @@ function applyStatus(data, { task, network, finished, stale }) {
   setText(byId("dash-clients"), `${clientView(task, network).connected} / 5`);
   setText(byId("dash-rtt"), Number.isFinite(network.mean_probe_rtt_ms) ? `${fmtNum(network.mean_probe_rtt_ms, 2)} ms (localhost)` : "—");
   renderTopology(task, network);
+  renderViews(task, network);
 
   const pct = Math.max(5, Math.min(100, task.progress || 5));
   if (running) {
@@ -209,15 +306,12 @@ function applyStatus(data, { task, network, finished, stale }) {
     setText(byId("train-progress-label"), `Tiến trình: ${pct}%`);
     setText(byId("train-progress-detail"), task.message || "Đang tính toán…");
     setText(byId("train-monitor-desc"), kind === "centralized" ? "Huấn luyện Centralized đang chạy." : "Máy chủ và năm client đang chạy trên localhost.");
-    if (kind && task.live_progress) renderProgress(kind, task.live_progress, true, task, network);
+    if (kindOfTable) renderProgress(kindOfTable, rowsFor(kindOfTable, task, network), true, task, network);
     byId("train-progress-fill").classList.toggle("fed-fill", kind !== "centralized");
     return;
   }
 
-  if (start.disabled) {
-    setDisabled(start, false);
-    setHtml(start, `${PLAY} Bắt đầu`);
-  }
+  renderStartIdle();
   setDisplay(stop, "none");
   if (task.status === "completed") {
     setBar(byId("train-progress-fill"), 100);
@@ -231,9 +325,11 @@ function applyStatus(data, { task, network, finished, stale }) {
     setText(byId("train-progress-label"), "Tiến trình: thất bại");
     setText(byId("train-progress-detail"), task.message || "Tác vụ báo lỗi.");
   }
-  if (finished) {
-    loadNetworkMetrics();
-    if (kind && task.live_progress) renderProgress(kind, task.live_progress, false, task, network);
+  if (finished) loadNetworkMetrics();
+  // Bảng hiển thị phiên gần nhất cùng loại với chế độ đang chọn (kể cả khi vừa mở lại trang sau khi phiên đã xong).
+  if (kindOfTable && (finished || kindOfTable === modeKind())) {
+    const rows = rowsFor(kindOfTable, task, network);
+    if (finished || rows.length) renderProgress(kindOfTable, rows, false, task, network);
   }
 }
 
@@ -249,7 +345,7 @@ export async function loadNetworkMetrics() {
     if (!data.available || !Array.isArray(data.rounds) || data.rounds.length === 0) {
       setText(runContext, "Chưa có phiên chạy thử nào hoàn tất.");
       tbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted">Chưa có dữ liệu từ phiên Flower thật.</td></tr>';
-      clientBody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">Chưa có nhật ký từng client.</td></tr>';
+      clientBody.innerHTML = '<tr><td colspan="11" class="text-center text-muted">Chưa có nhật ký từng client.</td></tr>';
       setText(summary, "Kiểm tra cuối trên tập ảnh giữ riêng: chưa thực hiện trong phiên này.");
       return;
     }
@@ -259,7 +355,7 @@ export async function loadNetworkMetrics() {
     ].filter(Boolean).join(", ");
     setText(runContext, data.historical_run
       ? `Phiên chạy thử gần nhất đã kiểm: ${String(data.run_dir || "").split(/[\\/]/).pop()}${runShape ? ` · ${runShape}` : ""}; không phải phiên đang chạy.`
-      : "Phiên Flower hiện tại · dữ liệu tổng hợp, không dùng làm kết quả khoa học.");
+      : "Phiên Flower hiện tại · ảnh nhiễu ngẫu nhiên, chỉ để kiểm chứng hệ thống, không dùng làm kết quả khoa học.");
     const ms = (v, d = 2) => (v !== undefined && Number(v) >= 0 ? `${fmtNum(v, d)} ms` : "—");
     tbody.innerHTML = data.rounds.map(r => `
       <tr>
@@ -277,7 +373,7 @@ export async function loadNetworkMetrics() {
     setText(summary, tm
       ? (isScientific
         ? `Kiểm tra cuối trên tập ảnh giữ riêng — độ chính xác ${fmtNum(Number(tm.accuracy) * 100, 2)}% · loss ${formatDec(tm.loss)} · macro-F1 ${formatDec(tm.macro_f1)}`
-        : `Chạy thử (smoke · 1 ảnh mỗi nhóm · dữ liệu tổng hợp) — không phải kết quả khoa học: độ chính xác ${fmtNum(Number(tm.accuracy) * 100, 2)}% · loss ${formatDec(tm.loss)} · macro-F1 ${formatDec(tm.macro_f1)}`)
+        : `Chạy thử trên ảnh nhiễu ngẫu nhiên (1 ảnh mỗi nhóm) — không phải kết quả khoa học: độ chính xác ${fmtNum(Number(tm.accuracy) * 100, 2)}%${Number(tm.accuracy) <= 0.05 ? " ≈ mức đoán ngẫu nhiên 1/38, đúng như kỳ vọng" : ""} · loss ${formatDec(tm.loss)} · macro-F1 ${formatDec(tm.macro_f1)}`)
       : "Kiểm tra cuối trên tập ảnh giữ riêng: chưa thực hiện (cần cấu hình thư mục ảnh đánh giá).");
     const clientRows = (data.audit_rounds || []).flatMap(round => (round.clients || []).map(client => ({ round: round.round, ...client })));
     clientBody.innerHTML = clientRows.length ? clientRows.map(row => `
@@ -285,14 +381,15 @@ export async function loadNetworkMetrics() {
         <td>${esc(row.round)}</td><td>Client ${esc(row.client_id)}</td>
         <td>${ms(row.probe_rtt_ms)}</td>
         <td>${row.local_train_time_s !== undefined ? `${fmtNum(row.local_train_time_s, 3)} s` : "—"}</td>
-        <td>${esc(row.data_mode || "—")}</td><td>${row.training_seed !== undefined ? esc(row.training_seed) : "—"}</td>
+        <td>${row.data_mode === "synthetic" ? "ảnh nhiễu ngẫu nhiên" : esc(row.data_mode || "—")}</td><td>${row.training_seed !== undefined ? esc(row.training_seed) : "—"}</td>
         <td title="${esc(row.partition_config_sha256 || "")}">${esc(row.partition_id || "—")}</td>
         <td>${formatDec(row.received_update_norm)}</td>
+        <td>${row.received_learnable_update_norm === undefined || row.received_learnable_update_norm === null ? "—" : `${fmtSig(row.received_learnable_update_norm)} (${fmtSig(Number(row.learnable_update_relative) * 100)}%)`}</td>
         <td>${esc(row.status || "—")}</td><td>${esc(row.validation_reason || "—")}</td>
-      </tr>`).join("") : '<tr><td colspan="10" class="text-center text-muted">Chưa có nhật ký từng client.</td></tr>';
+      </tr>`).join("") : '<tr><td colspan="11" class="text-center text-muted">Chưa có nhật ký từng client.</td></tr>';
   } catch (error) {
     tbody.innerHTML = `<tr><td colspan="12" class="text-center text-muted">Không đọc được số liệu phiên chạy: ${esc(error.message)}</td></tr>`;
-    clientBody.innerHTML = `<tr><td colspan="10" class="text-center text-muted">${esc(error.message)}</td></tr>`;
+    clientBody.innerHTML = `<tr><td colspan="11" class="text-center text-muted">${esc(error.message)}</td></tr>`;
     setText(summary, `Kiểm tra cuối trên tập ảnh giữ riêng: không đọc được số liệu (${error.message})`);
   }
 }
@@ -374,11 +471,23 @@ function syncEngine() {
     set("fl-epochs", { min: "1", max: String(Math.min(FORM_MAX.localEpochs, policy.limits.max_local_epochs || FORM_MAX.localEpochs)), disabled: false });
     setText(byId("fl-engine-help"), "Simulation chạy các client trong cùng process; không dùng để chứng minh độ trễ mạng thật.");
   }
+  if (byId("train-progress-head")) refreshIdleView();
 }
 
 // ───────── Quyền thao tác và trần tham số ─────────
 function renderGate() {
   toggleHidden(byId("train-gate"), !(policy.requiresAdmin && !readCredential()));
+  renderStartIdle();
+}
+
+/** Nút Bắt đầu khi không có tác vụ chạy: bị khóa quyền thì đổi nhãn/kiểu nhưng KHÔNG vô hiệu hóa (bấm vẫn dẫn tới khung đăng nhập). */
+function renderStartIdle() {
+  const start = byId("btn-train-start");
+  if (!start || state.starting || currentTask()?.status === "running") return;
+  const locked = policy.requiresAdmin && !readCredential();
+  setDisabled(start, false);
+  setClass(start, locked ? "btn btn-secondary" : "btn btn-primary");
+  setHtml(start, locked ? `${LOCK} Đăng nhập để bắt đầu` : `${PLAY} Bắt đầu`);
 }
 
 function applyPolicy(training) {
@@ -430,14 +539,21 @@ function setTrainMode(mode) {
   // tùy chọn của FedAvg không áp dụng cho Centralized
   const advanced = byId("fl-engine").closest("details");
   if (advanced) toggleHidden(advanced, mode !== "federated");
-  const kind = mode;
+  refreshIdleView();
+}
+
+/** Đổi chế độ/engine khi chưa có tác vụ chạy: đặt lại tiêu đề bảng và KPI theo lựa chọn, không đợi chu kỳ poll sau. */
+function refreshIdleView() {
+  const kind = modeKind();
   const head = byId("train-progress-head");
-  if (head.dataset.kind !== kind && !(currentTask()?.status === "running")) {
+  if (head && head.dataset.kind !== kind && !(currentTask()?.status === "running")) {
     head.innerHTML = HEAD[kind];
     head.dataset.kind = kind;
-    byId("train-progress-body").innerHTML = EMPTY_ROW[kind];
-    delete byId("train-progress-body").dataset.sig;
+    const body = byId("train-progress-body");
+    body.innerHTML = emptyRow(kind, EMPTY_TEXT[kind]);
+    delete body.dataset.sig;
   }
+  renderViews(currentTask(), last.network);
 }
 
 // ───────── Kiểm tra biểu mẫu trước khi gửi ─────────
@@ -503,9 +619,8 @@ function validateTrainForm() {
 }
 
 function resetAfterFailedStart() {
-  const start = byId("btn-train-start");
-  setDisabled(start, false);
-  setHtml(start, `${PLAY} Bắt đầu`);
+  state.starting = false;
+  renderStartIdle();
   setDisplay(byId("btn-train-stop"), "none");
   toggleHidden(byId("train-progress-box"), true);
 }
@@ -516,6 +631,7 @@ async function start() {
   const federated = state.mode === "federated";
   if (!ensureAdmin()) return;
   if (!validateTrainForm()) return;
+  state.starting = true; // một lần poll chen giữa lúc đang POST không được bật lại nút
   button.disabled = true;
   setHtml(button, `${SPINNER} ${federated ? "Đang điều phối FedAvg…" : "Đang huấn luyện…"}`);
   // Nút Dừng chỉ dùng được khi máy chủ đã nhận tác vụ: bấm sớm hơn sẽ bị báo "không có tác vụ để dừng"
@@ -527,11 +643,15 @@ async function start() {
   setBar(byId("train-progress-fill"), 5);
   setText(byId("train-progress-label"), "Tiến trình: 5%");
   setText(byId("train-progress-detail"), federated ? "Đang khởi tạo 5 trạm client…" : "Đang khởi tạo mô hình…");
+  // Huy hiệu của phiên trước ("✓ Hoàn tất") không được còn nguyên khi phiên mới vừa bấm Bắt đầu.
+  setClass(byId("train-live-badge"), "status-badge running");
+  setHtml(byId("train-live-badge"), '<span class="live-dot pulse"></span> Đang khởi động…');
   const body = byId("train-progress-body");
+  const tableKindNow = modeKind();
   delete body.dataset.sig;
-  body.innerHTML = `<tr><td colspan="8" class="text-center text-muted">${federated ? "Đang phân phối trọng số khởi tạo toàn cục tới 5 client…" : "Đang khởi tạo kiến trúc mạng và phân bổ batch…"}</td></tr>`;
-  byId("train-progress-head").innerHTML = HEAD[state.mode];
-  byId("train-progress-head").dataset.kind = state.mode;
+  body.innerHTML = emptyRow(tableKindNow, federated ? "Đang phân phối trọng số khởi tạo toàn cục tới 5 client…" : "Đang khởi tạo kiến trúc mạng và phân bổ batch…");
+  byId("train-progress-head").innerHTML = HEAD[tableKindNow];
+  byId("train-progress-head").dataset.kind = tableKindNow;
 
   const num = id => parseInt(byId(id).value, 10);
   try {
@@ -565,6 +685,7 @@ async function start() {
     setHtml(stop, `${STOP} Dừng tiến trình`);
     notify("info", `Đã bắt đầu huấn luyện ${federated ? "FedAvg" : "Centralized"}`, data.message || "");
     await pollStatus();
+    state.starting = false;
   } catch (error) {
     if (!handleAuthFailure(error)) {
       notify("error", `Không bắt đầu được huấn luyện ${federated ? "FedAvg" : "Centralized"}`, error.message);
@@ -595,6 +716,7 @@ async function stopTraining() {
 
 export async function mount() {
   byId("topology").innerHTML = diagramHtml({ variant: "live", serverLabel: "Máy chủ", serverSub: "chưa chạy" });
+  applyStyleData(byId("topology"));
   $$("[data-train-mode]").forEach(button => button.addEventListener("click", () => setTrainMode(button.dataset.trainMode)));
   byId("fl-engine").addEventListener("change", syncEngine);
   byId("btn-train-start").addEventListener("click", start);

@@ -5,7 +5,7 @@ import { beat, diagramHtml, geometry, pulse } from "../core/flnet.js";
 import { cancelWithin, followPointer, onMotionPrefChange, play } from "../core/motion.js";
 import { onRouteChange } from "../core/router.js";
 import {
-  MODEL_LABELS, MODEL_ORDER, byId, esc, fmtInt, fmtNum, fmtPct, formatDiseaseName, prefersReducedMotion, revealItems, setMetric, withAlpha,
+  applyStyleData, MODEL_LABELS, MODEL_ORDER, byId, esc, fmtInt, fmtNum, fmtPct, formatDiseaseName, prefersReducedMotion, revealItems, setMetric, withAlpha,
 } from "../core/dom.js";
 
 const LOCALS = ["local_00", "local_01", "local_02", "local_03", "local_04"];
@@ -154,6 +154,7 @@ export function onShow() {
 export async function mount() {
   const root = byId("overview-root");
   root.innerHTML = `${heroHtml()}<div id="overview-body"><div class="skeleton skeleton-block mt-4"></div></div>`;
+  applyStyleData(root); // vị trí các nút sơ đồ do --x/--y; đo hình học ngay bên dưới nên không đợi MutationObserver
   initHero();
   playHero();
   heroFresh = true;
@@ -196,7 +197,7 @@ export async function mount() {
       <div class="overview-headline-compare"><span>Local-only</span><strong>${range(pvLocals)}</strong><small>Mỗi client học riêng</small></div>
     </section>
 
-    <p class="viewer-scope mt-3">Kết quả từ một lần chạy; tập kiểm tra đã tham gia quá trình chọn mô hình. Các cách học chưa được huấn luyện cùng điều kiện; đây chưa phải độ chính xác ngoài thực địa. Xem thêm các giới hạn ở bước 6.</p>
+    <p class="viewer-scope mt-3"><b class="scope-tag">Phạm vi</b> Kết quả từ một lần chạy; tập kiểm tra đã tham gia quá trình chọn mô hình, các cách học chưa huấn luyện cùng điều kiện — chưa phải độ chính xác ngoài thực địa. Xem thêm các giới hạn ở bước 6.</p>
 
     <section class="conclusion-grid mt-4" aria-label="Ba điều rút ra từ kết quả">
       <article class="conclusion fedavg">

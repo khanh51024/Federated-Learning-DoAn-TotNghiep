@@ -76,13 +76,13 @@ function heatmapTable(shards, pvRecall, view) {
         const count = row.per_client[c];
         return r === undefined || r === null
           ? `<td class="heat-cell is-empty" title="Không có ảnh kiểm tra của nhóm này">—</td>`
-          : `<td class="heat-cell heat-recall${r < 0.5 ? " is-low" : ""}" style="--p:${r}" title="Local ${clientNumber(c)}: nhận đúng ${fmtPct(r, 1)} · client này có ${fmtInt(count)} ảnh của nhóm này">${fmtNum(r * 100, 0)}</td>`;
+          : `<td class="heat-cell heat-recall${r < 0.5 ? " is-low" : ""}" data-style="--p:${r}" title="Local ${clientNumber(c)}: nhận đúng ${fmtPct(r, 1)} · client này có ${fmtInt(count)} ảnh của nhóm này">${fmtNum(r * 100, 0)}</td>`;
       }).join("");
       const globals = ["fedavg", "centralized"].map(id => {
         const r = pvRecall?.[id]?.[row.class];
         return r === undefined || r === null
           ? `<td class="heat-cell is-empty">—</td>`
-          : `<td class="heat-cell heat-recall${r < 0.5 ? " is-low" : ""} col-global" style="--p:${r}" title="${id === "fedavg" ? "FedAvg" : "Centralized"}: nhận đúng ${fmtPct(r, 1)}">${fmtNum(r * 100, 0)}</td>`;
+          : `<td class="heat-cell heat-recall${r < 0.5 ? " is-low" : ""} col-global" data-style="--p:${r}" title="${id === "fedavg" ? "FedAvg" : "Centralized"}: nhận đúng ${fmtPct(r, 1)}">${fmtNum(r * 100, 0)}</td>`;
       }).join("");
       cells = recallCells + globals;
     } else {
@@ -90,7 +90,7 @@ function heatmapTable(shards, pvRecall, view) {
         const n = row.per_client[c];
         const share = row.total ? n / row.total : 0;
         const cls = n === 0 ? "is-zero" : share >= 0.9 ? "is-dominant" : "";
-        return `<td class="heat-cell heat-count ${cls}" style="--p:${share.toFixed(3)}" title="Client ${clientNumber(c)} có ${fmtInt(n)}/${fmtInt(row.total)} ảnh nhóm ${esc(formatDiseaseName(row.class))} (${fmtNum(share * 100, 1)}%)">${fmtInt(n)}</td>`;
+        return `<td class="heat-cell heat-count ${cls}" data-style="--p:${share.toFixed(3)}" title="Client ${clientNumber(c)} có ${fmtInt(n)}/${fmtInt(row.total)} ảnh nhóm ${esc(formatDiseaseName(row.class))} (${fmtNum(share * 100, 1)}%)">${fmtInt(n)}</td>`;
       }).join("");
       const concentration = row.top_share_pct !== null && row.top_share_pct >= 90
         ? `<span class="pill-flag" title="Hơn 90% ảnh của nhóm này nằm ở một client">${fmtNum(row.top_share_pct, 0)}% ở client ${clientNumber(row.top_client)}</span>` : "";
@@ -129,7 +129,7 @@ function schemeSummary(scheme) {
     const d = scheme.clients[c];
     return `<li class="scheme-client">
         <b>Client ${clientNumber(c)}</b>
-        <span class="scheme-bar"><span style="transform:scaleX(${(d.n_k / total).toFixed(3)})"></span></span>
+        <span class="scheme-bar"><span data-style="transform:scaleX(${(d.n_k / total).toFixed(3)})"></span></span>
         <span class="mono">${fmtInt(d.n_k)} ảnh</span>
         <span>${fmtInt(d.classes_with_images)}/38 nhóm</span>
         <span>PlantDoc ${fmtPct(d.plantdoc_share, 1)}</span>
@@ -226,7 +226,7 @@ export async function mount() {
         <div><p class="eyebrow">Ví dụ</p><h3 class="panel-title">${esc(formatDiseaseName(example.class))}</h3>
         <p class="panel-desc">Client ${holder} giữ <b>${fmtNum(example.top_share_pct, 0)}%</b> ảnh của nhóm này. Các client còn lại có ít hoặc không có ảnh của nhóm này.</p></div>
         <ul class="viewer-bars" aria-label="Số ảnh của nhóm này tại từng client">
-          ${Object.entries(example.per_client).map(([client, count]) => `<li><span>Client ${clientNumber(client)}</span><span class="viewer-bar-track"><span style="--share:${example.total ? count / example.total : 0}"></span></span><b>${fmtInt(count)} ảnh</b></li>`).join("")}
+          ${Object.entries(example.per_client).map(([client, count]) => `<li><span>Client ${clientNumber(client)}</span><span class="viewer-bar-track"><span data-style="--share:${example.total ? count / example.total : 0}"></span></span><b>${fmtInt(count)} ảnh</b></li>`).join("")}
         </ul>
         <details class="fold"><summary>Đối chiếu với kết quả học riêng</summary><p class="panel-desc mt-2">Client ${holder}: ${fmtInt(holderCount)} ảnh; các client khác: ${fmtInt(othersTotal)} ảnh${zeroText}. ${recalls ? `Tỉ lệ nhận đúng nhóm này: ${recalls}.` : "Chưa có kết quả theo nhóm."} Đây là sự liên hệ với phân bố dữ liệu, chưa phải kiểm chứng nguyên nhân.</p></details>
       </section>`;

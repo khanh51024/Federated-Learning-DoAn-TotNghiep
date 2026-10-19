@@ -7,6 +7,15 @@ export function esc(value) {
   return String(value ?? "").replace(/[&<>"']/g, ch => HTML_ESCAPES[ch]);
 }
 
+// Một nguồn cho điểm gãy bố cục (khớp CSS: @media (max-width: 1100px) chuyển sang một cột).
+export const NARROW_QUERY = "(max-width: 1100px)";
+export const WIDE_QUERY = "(min-width: 1101px)";
+
+/** Mở sẵn một mục gấp khi màn đủ rộng để bảng không chiếm hết khung (máy chiếu/laptop); điện thoại vẫn gấp. Chỉ chạy một lần khi dựng. */
+export function openOnWide(details) {
+  if (details && window.matchMedia?.(WIDE_QUERY).matches) details.open = true;
+}
+
 export const $ = (selector, root = document) => root.querySelector(selector);
 export const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
 export const byId = id => document.getElementById(id);
@@ -210,3 +219,38 @@ export function modelPill(modelId, label) {
 export function clientIdOfModel(modelId) {
   return modelId.startsWith("local_") ? modelId.replace("local_", "client_") : null;
 }
+
+// ───────── data-style: thay cho thuộc tính style nội tuyến (CSP style-src 'self' chặn nó trong HTML do innerHTML dựng) ─────────
+// Template ghi `data-style="--p:0.4"` hoặc `data-style="transform:scaleX(0.3)"`; ở đây đổi thành CSSOM (CSP cho phép).
+// Chỉ nhận biến CSS (--tên) và transform, giá trị chỉ gồm số/%/ngoặc/dấu phẩy: dữ liệu từ server không thể chèn thuộc tính tùy ý.
+const STYLE_PROP = /^(--[\w-]+|transform)$/;
+const STYLE_VALUE = /^[-\w.%()\s,]+$/;
+
+export function applyStyleData(root = document) {
+  const nodes = root.querySelectorAll ? Array.from(root.querySelectorAll("[data-style]")) : [];
+  if (root.nodeType === 1 && root.hasAttribute("data-style")) nodes.unshift(root);
+  for (const el of nodes) {
+    for (const part of el.dataset.style.split(";")) {
+      const colon = part.indexOf(":");
+      if (colon < 0) continue;
+      const prop = part.slice(0, colon).trim();
+      const value = part.slice(colon + 1).trim();
+      if (STYLE_PROP.test(prop) && STYLE_VALUE.test(value)) el.style.setProperty(prop, value);
+    }
+    el.removeAttribute("data-style");
+  }
+}
+
+let styleObserver = null;
+/** Áp data-style cho mọi nút được thêm vào trang (chạy ở microtask, trước lần vẽ kế tiếp nên không nháy). Nơi đọc style NGAY sau khi chèn phải gọi applyStyleData trực tiếp. */
+export function watchStyleData() {
+  if (styleObserver || typeof MutationObserver === "undefined" || !document.documentElement) return;
+  styleObserver = new MutationObserver(records => {
+    for (const record of records) {
+      for (const node of record.addedNodes) if (node.nodeType === 1) applyStyleData(node);
+    }
+  });
+  styleObserver.observe(document.documentElement, { childList: true, subtree: true });
+  applyStyleData(document);
+}
+watchStyleData();

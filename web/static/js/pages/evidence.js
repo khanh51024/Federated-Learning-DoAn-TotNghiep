@@ -8,7 +8,7 @@ function baseLimits(seed) {
     ["Chưa có kiểm thử thực địa độc lập", "PlantVillage là ảnh chụp trong phòng; PlantDoc là ảnh ngoài đồng nhưng chỉ phủ một phần các nhóm và không có lá khỏe. Cả tập kiểm tra lẫn tập giữ riêng đều lấy từ cùng bộ dữ liệu."],
     ["Chỉ nhận ảnh một chiếc lá đã cắt", "Mô hình không tự tìm lá trong ảnh toàn cây; ảnh khác kiểu sẽ cho kết quả kém dù xác suất dự đoán hiển thị vẫn cao."],
     ["Xác suất dự đoán chỉ được hiệu chuẩn một phần", "Web hiện cả xác suất gốc và xác suất đã hiệu chuẩn. Việc hiệu chuẩn học trên ảnh chủ yếu là PlantVillage nên với ảnh ngoài đồng mô hình vẫn gán xác suất cao hơn độ chính xác thực (xem bước 3, tab \"Đánh giá độ tin cậy dự đoán\")."],
-    ["Phần huấn luyện thử chỉ để minh họa", "Phiên Flower dùng ảnh tổng hợp, hai vòng, trên cùng một máy: chứng minh quy trình FedAvg chạy được, không phải kết quả khoa học hay độ trễ mạng thật."],
+    ["Huấn luyện trên máy chủ ở bước 5 chỉ để kiểm chứng hệ thống", "Phiên Flower (hai vòng) và Centralized trên máy chủ dùng ảnh nhiễu ngẫu nhiên, trên cùng một máy: chứng minh các tiến trình thật trao đổi trọng số và FedAvg gộp đúng, không phải kết quả khoa học hay độ trễ mạng thật."],
     ["Chưa thử nghiệm client lỗi hay bị tấn công", "Cơ chế kiểm tra bản cập nhật có sẵn và chạy được ở bước 5, nhưng chưa có thí nghiệm đo độ chính xác nên chưa kết luận được."],
     ["Năm client của phiên Flower là giả lập", "Năm client là năm phần của cùng một bộ dữ liệu, không phải năm nông hộ thật."],
     ["Học liên kết cộng đồng chỉ là thử nghiệm", "Người tham gia chỉ học lớp cuối trên đặc trưng của backbone đóng băng, với ảnh và nhãn tự gán (chưa có chuyên gia kiểm). Máy chủ chấm bằng tập đã dùng để chọn mô hình gốc nên con số chỉ là tín hiệu theo dõi; khi mỗi người chỉ có vài nhóm thì mô hình dễ kém đi và máy chủ sẽ từ chối vòng đó. Mô hình cộng đồng không nằm trong bảng bảy mô hình đã kiểm hash."],
@@ -138,7 +138,7 @@ function checklistHtml(cl, seed) {
     <h3 class="panel-title mt-4">Hạng mục kỹ thuật cần xử lý: ${technicalOpen.length}</h3>
     <div class="todo-grid mt-3">${technicalOpen.map(card).join("")}</div>` : ""}
     <h3 class="panel-title mt-4">Hạng mục kỹ thuật đã xong: ${done.length}/${technicalTotal}</h3>
-    <div class="progress-track mt-3" role="img" aria-label="${done.length} trên ${technicalTotal} hạng mục kỹ thuật đã xong"><div class="progress-fill fed-fill" style="transform:scaleX(${technicalTotal ? (done.length / technicalTotal).toFixed(3) : 0})"></div></div>
+    <div class="progress-track mt-3" role="img" aria-label="${done.length} trên ${technicalTotal} hạng mục kỹ thuật đã xong"><div class="progress-fill fed-fill" data-style="transform:scaleX(${technicalTotal ? (done.length / technicalTotal).toFixed(3) : 0})"></div></div>
     <details class="fold mt-4">
       <summary>Các hạng mục kỹ thuật đã xong (${done.length})</summary>
       <ul class="done-list">${done.map(i => `<li><span class="verdict ok">✓</span><div><b>${esc(i.title)}</b><span>${esc(i.detail)}</span></div></li>`).join("")}</ul>

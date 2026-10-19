@@ -130,7 +130,7 @@ function renderStatus() {
   renderControls(); // gồm lý do nút khóa và thanh cột mốc: không để khoảng trống giữa lúc vừa tham gia và lúc có thông tin vòng
   if (!S.classOptions && Array.isArray(st.classes)) {
     S.classOptions = st.classes.map(name => `<option value="${esc(name)}">${esc(formatDiseaseName(name))}</option>`).join("");
-    byId("comm-bulk-label").innerHTML = `<option value="">Nhóm áp dụng hàng loạt…</option>${S.classOptions}`;
+    byId("comm-bulk-label").innerHTML = `<option value="">Chọn sau cho từng ảnh</option>${S.classOptions}`;
   }
 }
 
@@ -168,25 +168,50 @@ function tickClock() {
   setText(byId("comm-kpi-left"), clock((S.deadlineAt - performance.now()) / 1000));
 }
 
+/** Chuỗi <option> của ô chọn nhóm: dựng một lần cho mỗi bộ nhóm (38 nhóm × tối đa 300 ảnh = 11.400 phần tử nếu dựng lại mỗi lần). */
+function groupOptionsHtml() {
+  const classes = S.status?.classes || [];
+  if (S.groupOptionsFor !== classes) {
+    S.groupOptionsFor = classes;
+    S.groupOptionsHtml = `<option value="">— Chọn nhóm —</option>${classes.map(name => `<option value="${esc(name)}">${esc(formatDiseaseName(name))}</option>`).join("")}`;
+  }
+  return S.groupOptionsHtml;
+}
+
+function itemNode(item) {
+  const li = document.createElement("li");
+  li.className = "comm-item";
+  li.dataset.key = String(item.key);
+  li.innerHTML = `
+    <img class="comm-thumb" src="${esc(item.url)}" alt="" width="56" height="56" loading="lazy" decoding="async">
+    <div class="comm-item-body">
+      <div class="comm-item-head">
+        <span class="comm-item-name" title="${esc(item.file.name)}">${esc(item.file.name)}</span>
+        <span class="comm-item-tools">
+          <span class="comm-item-state${item.state === "error" ? " is-error" : ""}" data-state="${item.key}">${esc(itemStateText(item))}</span>
+          <button type="button" class="btn btn-ghost btn-sm" data-remove="${item.key}" aria-label="Bỏ ảnh ${esc(item.file.name)}">Bỏ</button>
+        </span>
+      </div>
+      <select class="input-field" data-label="${item.key}" aria-label="Nhóm của ảnh ${esc(item.file.name)}">${groupOptionsHtml()}</select>
+    </div>`;
+  return li;
+}
+
+/** Đồng bộ danh sách với S.items: chỉ thêm nút mới / bỏ nút thừa / cập nhật nhóm, nên ô đang focus không bị mất khi gán hàng loạt. */
 function renderItems() {
   const list = byId("comm-items");
-  const classes = S.status?.classes || [];
-  list.innerHTML = S.items.map(item => `
-    <li class="comm-item" data-key="${item.key}">
-      <img class="comm-thumb" src="${esc(item.url)}" alt="" width="56" height="56" loading="lazy" decoding="async">
-      <div class="comm-item-body">
-        <div class="comm-item-head">
-          <span class="comm-item-name" title="${esc(item.file.name)}">${esc(item.file.name)}</span>
-          <span class="comm-item-tools">
-            <span class="comm-item-state${item.state === "error" ? " is-error" : ""}" data-state="${item.key}">${esc(itemStateText(item))}</span>
-            <button type="button" class="btn btn-ghost btn-sm" data-remove="${item.key}" aria-label="Bỏ ảnh ${esc(item.file.name)}">Bỏ</button>
-          </span>
-        </div>
-        <select class="input-field" data-label="${item.key}" aria-label="Nhóm của ảnh ${esc(item.file.name)}">
-          <option value="">— Chọn nhóm —</option>${classes.map(name => `<option value="${esc(name)}"${name === item.label ? " selected" : ""}>${esc(formatDiseaseName(name))}</option>`).join("")}
-        </select>
-      </div>
-    </li>`).join("");
+  const have = new Map(Array.from(list.children).map(li => [li.dataset.key, li]));
+  const wanted = new Set(S.items.map(item => String(item.key)));
+  for (const [key, li] of have) if (!wanted.has(key)) li.remove();
+  for (const item of S.items) {
+    let li = have.get(String(item.key));
+    if (!li) {
+      li = itemNode(item);
+      list.appendChild(li);
+    }
+    const select = li.querySelector("select[data-label]");
+    if (select.value !== item.label) select.value = item.label;
+  }
   renderCounts();
 }
 
@@ -223,6 +248,7 @@ function renderControls() {
     && !S.round?.already_submitted;
   setDisabled(byId("btn-comm-submit"), !canSubmit);
   setDisabled(byId("comm-files"), busy);
+  byId("comm-dropzone")?.classList.toggle("is-disabled", busy);
   setDisabled(byId("btn-comm-bulk"), busy);
   setDisabled(byId("btn-comm-clear"), busy);
   document.querySelectorAll("#comm-items select, #comm-items [data-remove]").forEach(el => setDisabled(el, busy));
@@ -502,9 +528,9 @@ async function loadHistory() {
       let outcome = "Đã hủy";
       if (row.status === "aggregated") outcome = `<span class="text-emerald fw-600">Đã nhận → phiên bản ${esc(row.version)}</span>`;
       else if (row.status === "rejected") outcome = `<span class="text-rose">Bị từ chối: ${esc((row.messages || []).join("; "))}</span>`;
-      return `<tr>
-        <td class="fw-600">#${esc(row.round_id)}</td><td>${esc(row.clients)}</td><td>${esc(row.examples)}</td><td>${outcome}</td>
-        <td class="mono">${row.metrics ? `${pct(before)} → ${pct(after)}` : "—"}</td></tr>`;
+      return `<tr role="row">
+        <td role="cell" data-label="Vòng" class="fw-600">#${esc(row.round_id)}</td><td role="cell" data-label="Người">${esc(row.clients)}</td><td role="cell" data-label="Ảnh">${esc(row.examples)}</td><td role="cell" data-label="Kết quả">${outcome}</td>
+        <td role="cell" data-label="Độ chính xác giám sát" class="mono">${row.metrics ? `${pct(before)} → ${pct(after)}` : "—"}</td></tr>`;
     }).join("");
   } catch (error) {
     body.innerHTML = `<tr><td colspan="5" class="text-center text-muted">${esc(errorText(error))}</td></tr>`;
@@ -589,14 +615,18 @@ async function join(event) {
 // ───────── Ảnh ─────────
 function addFiles(fileList) {
   const max = S.config?.max_images ?? S.status?.config?.max_images ?? 300;
+  const group = byId("comm-bulk-label").value; // chọn nhóm TRƯỚC: ảnh thêm vào được gán sẵn, vẫn sửa được từng ảnh
   const rejected = [];
+  let added = 0;
   for (const file of Array.from(fileList)) {
     if (!file.type.startsWith("image/")) { rejected.push(`${file.name}: không phải ảnh`); continue; }
     if (file.size > MAX_FILE_BYTES) { rejected.push(`${file.name}: lớn hơn ${MAX_FILE_BYTES / 1048576} MB`); continue; }
     if (S.items.some(item => item.file.name === file.name && item.file.size === file.size && item.file.lastModified === file.lastModified)) continue;
     if (S.items.length >= max) { rejected.push(`${file.name}: vượt ${max} ảnh`); continue; }
-    S.items.push({ key: S.nextKey++, file, url: URL.createObjectURL(file), label: "", state: "new", hasFeature: false });
+    S.items.push({ key: S.nextKey++, file, url: URL.createObjectURL(file), label: group, state: "new", hasFeature: false });
+    added += 1;
   }
+  if (group && added) notify("info", "Đã gán nhóm cho ảnh mới", `${formatDiseaseName(group)}: ${added} ảnh. Đổi ở từng ảnh nếu có ảnh thuộc nhóm khác.`);
   if (rejected.length) notify("warning", "Có ảnh bị bỏ qua", rejected.slice(0, 5).join("; "));
   invalidateTrained();
   renderItems();
@@ -812,18 +842,32 @@ export async function mount() {
   byId("btn-comm-leave").addEventListener("click", event => {
     const button = event.currentTarget;
     if (!leaveTimer) {
-      setText(button, "Bấm lần nữa để rời (mã dùng một lần sẽ không vào lại được)");
-      leaveTimer = setTimeout(() => { leaveTimer = 0; setText(button, "Rời phiên"); }, 6000);
+      setText(button, "Bấm lần nữa để rời");
+      toggleHidden(byId("comm-leave-hint"), false);
+      leaveTimer = setTimeout(() => { leaveTimer = 0; setText(button, "Rời phiên"); toggleHidden(byId("comm-leave-hint"), true); }, 6000);
       return;
     }
     clearTimeout(leaveTimer);
     leaveTimer = 0;
     setText(button, "Rời phiên");
+    toggleHidden(byId("comm-leave-hint"), true);
     clearItems();
     signOut("");
     loadStatus();
   });
   byId("comm-files").addEventListener("change", event => { addFiles(event.currentTarget.files); event.currentTarget.value = ""; });
+  // Kéo thả vào vùng chọn ảnh. `drop` bị app.js chặn mặc định (initDropGuard) nên phải tự đọc dataTransfer.files.
+  const dropzone = byId("comm-dropzone");
+  ["dragenter", "dragover"].forEach(name => dropzone.addEventListener(name, event => {
+    event.preventDefault();
+    if (!byId("comm-files").disabled) dropzone.classList.add("is-dragover");
+  }));
+  ["dragleave", "dragend"].forEach(name => dropzone.addEventListener(name, () => dropzone.classList.remove("is-dragover")));
+  dropzone.addEventListener("drop", event => {
+    event.preventDefault();
+    dropzone.classList.remove("is-dragover");
+    if (!byId("comm-files").disabled && event.dataTransfer?.files?.length) addFiles(event.dataTransfer.files);
+  });
   byId("btn-comm-clear").addEventListener("click", clearItems);
   byId("btn-comm-bulk").addEventListener("click", () => {
     const label = byId("comm-bulk-label").value;

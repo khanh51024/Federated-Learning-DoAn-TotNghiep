@@ -48,7 +48,7 @@ export function diagramHtml({ count = 5, labels = [], variant = "hero", serverLa
         <svg viewBox="0 0 ${VIEW.w} ${VIEW.h}" preserveAspectRatio="none"><path d="M${g.modelWire.p0.x} ${g.modelWire.p0.y} L${g.modelWire.p1.x} ${g.modelWire.p1.y}"/></svg>
       </div>`;
   const clients = g.clients.map((c, i) => `
-      <div class="fl-node fl-client" data-client="${i}" style="--x:${c.x};--y:${c.y}">
+      <div class="fl-node fl-client" data-client="${i}" data-style="--x:${c.x};--y:${c.y}">
         <div class="fl-node-card"><span class="fl-node-head"><span class="topo-dot" aria-hidden="true"></span><b>${clientLabel(labels[i] || `Client ${String(i).padStart(2, "0")}`)}</b></span><small class="fl-node-sub">giữ ảnh riêng</small></div>
       </div>`).join("");
   const dots = variant === "hero"
@@ -59,13 +59,13 @@ export function diagramHtml({ count = 5, labels = [], variant = "hero", serverLa
       <svg class="fl-wires" viewBox="0 0 ${VIEW.w} ${VIEW.h}" preserveAspectRatio="none" aria-hidden="true">${dim}</svg>
       ${lit}${variant === "hero" ? modelLit : ""}
       ${clients}
-      <div class="fl-node fl-server" id="${variant === "live" ? "topo-server" : "fl-server"}" style="--x:${g.server.x};--y:${g.server.y}">
+      <div class="fl-node fl-server" id="${variant === "live" ? "topo-server" : "fl-server"}" data-style="--x:${g.server.x};--y:${g.server.y}">
         <div class="fl-node-card"><b>${esc(serverLabel)}</b>${variant === "live"
           ? `<small class="fl-state" id="topo-server-sub">${esc(serverSub)}</small>`
           : `<small class="fl-node-sub">${esc(serverSub)}</small>`}<span class="topo-ring" aria-hidden="true"></span></div>
       </div>
       ${variant === "hero" ? `
-      <div class="fl-node fl-model" style="--x:${g.model.x};--y:${g.model.y}">
+      <div class="fl-node fl-model" data-style="--x:${g.model.x};--y:${g.model.y}">
         <div class="fl-node-card"><b>${esc(modelLabel)}</b><small class="fl-node-sub">gửi lại cho mọi client</small></div>
       </div>` : ""}
       <div class="fl-dots" aria-hidden="true">${dots}</div>

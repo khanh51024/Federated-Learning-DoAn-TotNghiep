@@ -45,6 +45,35 @@ def free_port() -> int:
         return sock.getsockname()[1]
 
 
+
+def wait_js(page: Any, expression: str, timeout: float = 15000) -> None:
+    """Chờ một biểu thức JS đúng bằng cách thăm dò từ Python.
+
+    `wait_for_function` chạy eval TRONG trang nên bị CSP (không có 'unsafe-eval') chặn; `page.evaluate` đi qua CDP nên không bị."""
+    deadline = time.time() + timeout / 1000
+    while time.time() < deadline:
+        if page.evaluate(f"() => Boolean({expression})"):
+            return
+        time.sleep(0.15)
+    raise TimeoutError(f"wait_js hết {timeout:.0f} ms: {expression[:120]}")
+
+
+CSP_VIOLATIONS: list[str] = []
+CSP_PROBE = """
+  document.addEventListener('securitypolicyviolation', e => {
+    if (window.__cspReport) window.__cspReport(
+      `${e.violatedDirective} ${e.blockedURI} ${e.sourceFile || ''}:${e.lineNumber || 0} ${(e.sample || '').slice(0, 40)}`);
+  });
+"""
+
+
+def new_ctx(browser: Any, **kwargs: Any) -> Any:
+    """Mọi context của e2e đi qua đây để ghi lại vi phạm CSP (nếu có) vào CSP_VIOLATIONS."""
+    context = browser.new_context(**kwargs)
+    context.expose_function("__cspReport", lambda message: CSP_VIOLATIONS.append(message))  # Playwright cần hàm Python thật, không nhận phương thức dựng sẵn
+    context.add_init_script(CSP_PROBE)
+    return context
+
 def http(method: str, url: str, payload: Any = None, token: str | None = None, timeout: float = 60) -> tuple[int, Any]:
     data = json.dumps(payload).encode() if payload is not None else None
     request = urllib.request.Request(url, data=data, method=method)
@@ -76,7 +105,7 @@ def wait_for(predicate, timeout: float, interval: float = 0.5, what: str = "đi�
 
 def admin_ui_checks(browser: Any, base: str, admin_token: str) -> None:
     """Trang /quan-tri bằng trình duyệt thật: đăng nhập, mở/đóng phiên, cấu hình, tạo mã (kể cả ghi chú chứa mã độc), thu hồi."""
-    context = browser.new_context(viewport={"width": 1280, "height": 900})
+    context = new_ctx(browser, viewport={"width": 1280, "height": 900})
     page = context.new_page()
     problems: list[str] = []
     # Chromium ghi log cho mọi phản hồi 4xx; lần nhập sai token ở dưới là CÓ CHỦ ĐÍCH nên chỉ bỏ qua đúng dòng 401 đó.
@@ -94,7 +123,7 @@ def admin_ui_checks(browser: Any, base: str, admin_token: str) -> None:
     page.fill("#user-input", "nguoi-la")
     page.fill("#token-input", admin_token)
     page.click("#btn-login")
-    page.wait_for_timeout(2000)  # (wait_for_function bị CSP của trang chặn vì dùng eval)
+    page.wait_for_timeout(2000)  # (wait_js thay wait_for_function vì cái sau dùng eval nên bị CSP chặn)
     check("trang quản trị: đúng mật khẩu nhưng sai tài khoản vẫn bị từ chối",
           page.locator("#admin-app").is_hidden() and "không đúng" in page.locator("#login-error").inner_text())
     page.fill("#user-input", "admin")
@@ -104,7 +133,7 @@ def admin_ui_checks(browser: Any, base: str, admin_token: str) -> None:
     page.fill("#token-input", admin_token)
     page.click("#btn-login")
     page.wait_for_selector("#admin-app:not(.hidden)", timeout=30000)
-    page.wait_for_function("document.getElementById('kpi-version').textContent.trim().startsWith('v')", timeout=15000)
+    wait_js(page, "document.getElementById('kpi-version').textContent.trim().startsWith('v')", timeout=15000)
     check("trang quản trị: đăng nhập đúng token, thấy phiên bản và vòng",
           page.locator("#kpi-version").inner_text().startswith("v") and page.locator("#session-badge").inner_text() in ("Đang mở", "Đang đóng"),
           f"{page.locator('#kpi-version').inner_text()} / {page.locator('#session-badge').inner_text()}")
@@ -153,7 +182,7 @@ def admin_ui_checks(browser: Any, base: str, admin_token: str) -> None:
     check("trang quản trị: tạo mã và hiển thị đúng 2 mã", len(shown) == 2 and all(len(c.replace("-", "")) == 10 for c in shown), str(shown))
     first_join = http("POST", f"{base}/api/community/join", {"code": shown[0]})
     check("trang quản trị: mã vừa tạo dùng được để vào phiên", first_join[0] == 200)
-    page.wait_for_function("document.getElementById('codes-body').textContent.includes('onerror')", timeout=30000)
+    wait_js(page, "document.getElementById('codes-body').textContent.includes('onerror')", timeout=30000)
     check("trang quản trị: ghi chú chứa HTML hiện như văn bản, không chạy mã",
           page.evaluate("window.__xss") == 0 and page.locator("#codes-body img").count() == 0)
     link = page.locator("#codes-list li .code-link").first.inner_text()
@@ -167,10 +196,10 @@ def admin_ui_checks(browser: Any, base: str, admin_token: str) -> None:
     check("trang quản trị: thu hồi mã", any(c["revoked"] for c in state()["codes"]))
 
     # trang công khai điền sẵn mã từ link rồi xóa khỏi thanh địa chỉ
-    public = browser.new_context(viewport={"width": 1280, "height": 900}).new_page()
+    public = new_ctx(browser, viewport={"width": 1280, "height": 900}).new_page()
     public.goto(f"{base}/?code={shown[1]}#huan-luyen", wait_until="load", timeout=60000)
     public.wait_for_selector("#comm-code", timeout=30000)
-    public.wait_for_function("document.getElementById('comm-code').value.length > 0", timeout=15000)
+    wait_js(public, "document.getElementById('comm-code').value.length > 0", timeout=15000)
     check("link tham gia: điền sẵn mã và xóa mã khỏi URL",
           public.locator("#comm-code").input_value().replace("-", "") == shown[1].replace("-", "") and "code=" not in public.url,
           public.url)
@@ -205,7 +234,7 @@ def admin_ui_checks(browser: Any, base: str, admin_token: str) -> None:
 
     # #token= đã bị GỠ: link kiểu đó phải bị bỏ qua (không tự đăng nhập, không ghi mật khẩu vào bộ nhớ máy)
     # nhưng fragment vẫn bị xóa để mật khẩu trong link cũ không nằm lại trên thanh địa chỉ.
-    stale = browser.new_context(viewport={"width": 1280, "height": 900}).new_page()
+    stale = new_ctx(browser, viewport={"width": 1280, "height": 900}).new_page()
     stale.goto(f"{base}/quan-tri#token={admin_token}", wait_until="load", timeout=60000)
     stale.wait_for_selector("#login-panel:not(.hidden)", timeout=30000)
     check("trang quản trị: link #token= không còn được nhận và không lưu mật khẩu",
@@ -216,7 +245,7 @@ def admin_ui_checks(browser: Any, base: str, admin_token: str) -> None:
           stale.url)
     stale.close()
 
-    narrow = browser.new_context(viewport={"width": 320, "height": 700}).new_page()
+    narrow = new_ctx(browser, viewport={"width": 320, "height": 700}).new_page()
     narrow.goto(f"{base}/quan-tri", wait_until="load", timeout=60000)
     narrow.fill("#token-input", admin_token)
     narrow.click("#btn-login")
@@ -240,7 +269,7 @@ def training_gate_checks(browser: Any, base: str, admin_token: str) -> None:
           and status["training"]["limits"]["max_rounds"] >= 1, json.dumps(status["training"]["limits"]))
 
     posts: list[str] = []
-    context = browser.new_context(viewport={"width": 1280, "height": 900})
+    context = new_ctx(browser, viewport={"width": 1280, "height": 900})
     page = context.new_page()
     page.on("request", lambda r: posts.append(r.url) if r.method == "POST" and "/train" in r.url else None)
     page.goto(f"{base}/#huan-luyen", wait_until="load", timeout=60000)
@@ -309,7 +338,7 @@ def main() -> int:
             browser = pw.chromium.launch()
             pages = []
             for index in range(3):
-                context = browser.new_context(viewport={"width": 1280, "height": 900})
+                context = new_ctx(browser, viewport={"width": 1280, "height": 900})
                 page = context.new_page()
                 console_errors: list[str] = []
                 page.on("console", lambda m, bag=console_errors: bag.append(m.text) if m.type == "error" else None)
@@ -336,12 +365,24 @@ def main() -> int:
 
             for index, (context, page, _errors) in enumerate(pages):
                 files = [str(path) for path, _label in groups[index]]
+                if index == 0:
+                    # Chọn nhóm TRƯỚC khi thêm ảnh: mọi ảnh thêm vào phải được gán sẵn nhóm đó (rồi vẫn sửa được từng ảnh bên dưới)
+                    page.select_option("#comm-bulk-label", value=groups[0][0][1])
                 page.set_input_files("#comm-files", files)
                 page.wait_for_selector("select[data-label]", timeout=15000)
+                if index == 0:
+                    values = page.eval_on_selector_all("select[data-label]", "els => els.map(e => e.value)")
+                    check("chọn nhóm trước: mọi ảnh thêm vào được gán sẵn nhóm đó",
+                          len(values) == len(files) and set(values) == {groups[0][0][1]}, str(values[:3]))
+                    page.select_option("#comm-bulk-label", value="")
+                zone = page.locator("#comm-dropzone")
+                if index == 0:
+                    check("ô thêm ảnh bằng tiếng Việt (không còn 'Choose Files')",
+                          "Thêm ảnh lá" in zone.inner_text() and "Choose" not in zone.inner_text())
                 selects = page.locator("select[data-label]")
                 for position, (_path, label) in enumerate(groups[index]):
                     selects.nth(position).select_option(value=label)
-                page.wait_for_function("!document.getElementById('btn-comm-train').disabled", timeout=15000)
+                wait_js(page, "!document.getElementById('btn-comm-train').disabled", timeout=15000)
 
             for _context, page, _errors in pages:
                 page.evaluate("window.__longTasks.length = 0")  # chỉ đo từ lúc bấm huấn luyện (bỏ phần nạp trang)
@@ -365,7 +406,7 @@ def main() -> int:
             _, history = http("GET", f"{base}/api/community/history")
             check("vòng 1 gộp thành phiên bản 1", history["current_version"] == 1 and history["totals"]["accepted"] == 1, json.dumps(history["totals"]))
             for _context, page, _errors in pages:
-                page.wait_for_function("document.getElementById('comm-kpi-version').textContent.trim() === 'v1'", timeout=60000)
+                wait_js(page, "document.getElementById('comm-kpi-version').textContent.trim() === 'v1'", timeout=60000)
             check("cả ba trình duyệt cùng thấy phiên bản mới v1", True)
 
             v0, v1 = history["versions"][0]["metrics"]["accuracy"], history["versions"][1]["metrics"]["accuracy"]
@@ -401,7 +442,7 @@ def main() -> int:
             check("không có lỗi console trong ba trang", all(not e for _, _, e in pages), "; ".join(sum((e for _, _, e in pages), []))[:200])
 
             # ── bố cục 320 px không tràn ngang ──
-            narrow = browser.new_context(viewport={"width": 320, "height": 700})
+            narrow = new_ctx(browser, viewport={"width": 320, "height": 700})
             small = narrow.new_page()
             small.goto(f"{base}/#huan-luyen")
             small.wait_for_selector("#comm-main:not(.hidden)", timeout=30000)
@@ -436,6 +477,7 @@ def main() -> int:
         except subprocess.TimeoutExpired:
             server.kill()
 
+    check("không có vi phạm CSP trong mọi trang đã mở", not CSP_VIOLATIONS, "; ".join(CSP_VIOLATIONS[:3]))
     failed = [c for c in CHECKS if not c[1]]
     print(f"\n{len(CHECKS) - len(failed)}/{len(CHECKS)} kiểm tra đạt")
     if failed:

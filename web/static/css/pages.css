@@ -57,15 +57,20 @@ a { color: var(--accent-sky); }
 }
 .panel-fold > summary::-webkit-details-marker,
 .fold > summary::-webkit-details-marker { display: none; }
-.panel-fold > summary::before,
+/* QUY TẮC MỞ/GẤP (một ngôn ngữ cho cả ứng dụng):
+   - Mục cấp khối (cả một phần nội dung): thẻ viền với dấu "+/−" bên phải = .overview-detail và .panel-fold.
+   - Mục phụ nằm TRONG một khối: thanh xám với dấu "▸" = .fold.
+   Không dùng kiểu thứ ba. */
 .fold > summary::before {
   content: "▸";
   color: var(--text-muted);
   transition: transform var(--dur-1) ease;
   display: inline-block;
 }
-.panel-fold[open] > summary::before,
 .fold[open] > summary::before { transform: rotate(90deg); }
+.panel-fold > summary { justify-content: space-between; }
+.panel-fold > summary::after { content: "+"; color: var(--accent-emerald); font-size: 22px; line-height: 1; }
+.panel-fold[open] > summary::after { content: "−"; }
 .fold-body { margin-top: var(--space-3); }
 .fold {
   border: 1px solid var(--border-color);
@@ -407,6 +412,17 @@ body[data-route="tong-quan"] .top-header .eyebrow { margin-bottom: 0; }
 .overview-headline-compare strong { font-size: clamp(20px, 2vw, 28px); font-variant-numeric: tabular-nums; line-height: 1.3; }
 .overview-chart-panel { margin-top: var(--space-4); }
 .overview-section-heading { display: flex; align-items: end; justify-content: space-between; gap: var(--space-3); }
+.scope-tag {
+  display: inline-block;
+  margin-right: var(--space-2);
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line-amber);
+  background: var(--tint-amber);
+  color: var(--accent-amber);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
 .overview-section-heading .eyebrow { margin-bottom: 2px; }
 .overview-chart-unit { color: var(--text-muted); font-size: var(--fs-xs); white-space: nowrap; }
 .overview-detail {
@@ -684,10 +700,12 @@ body[data-route="tong-quan"] .top-header .eyebrow { margin-bottom: 0; }
   font: inherit;
   transition: transform var(--dur-2) var(--ease), border-color var(--dur-1) ease;
 }
-.gallery-item:hover { transform: translateY(-2px); border-color: var(--accent-sky); }
 .gallery-item.is-selected { border-color: var(--accent-emerald); box-shadow: 0 0 0 2px var(--accent-emerald) inset; }
 .gallery-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius-sm); background: var(--bg-sunken); }
-.gallery-cap { font-size: var(--fs-xs); font-weight: 600; line-height: 1.3; min-height: 2.6em; }
+.gallery-cap {
+  font-size: var(--fs-xs); font-weight: 600; line-height: 1.3; min-height: 2.6em;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; /* tên đầy đủ nằm ở title */
+}
 .gallery-src { font-size: 11px; color: var(--text-muted); }
 
 .level {
@@ -699,7 +717,7 @@ body[data-route="tong-quan"] .top-header .eyebrow { margin-bottom: 0; }
   white-space: nowrap;
 }
 /* nhãn độ khó nằm dưới tên bệnh, không đè lên ảnh; cho phép xuống dòng vì thẻ chỉ rộng ~88 px trên điện thoại */
-.gallery-item .level { align-self: flex-start; white-space: normal; line-height: 1.25; text-align: left; box-shadow: var(--shadow-1); }
+.gallery-item .level { align-self: flex-start; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.25; text-align: left; box-shadow: var(--shadow-1); }
 .level-very_easy,
 .level-easy { background: var(--tint-emerald); color: var(--accent-emerald-strong); border: 1px solid var(--line-emerald); }
 .level-medium { background: var(--tint-sky); color: var(--accent-sky); border: 1px solid var(--line-sky); }
@@ -745,7 +763,7 @@ body[data-route="tong-quan"] .top-header .eyebrow { margin-bottom: 0; }
 .row-toggle { display: flex; flex-direction: column; align-items: flex-start; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .conf { display: flex; align-items: center; gap: var(--space-2); margin-top: 6px; }
 .conf-track { flex: 1; height: 8px; border-radius: 999px; background: var(--bg-sunken); overflow: hidden; }
-.conf-fill { display: block; width: 100%; height: 100%; border-radius: 999px; transform-origin: left center; transition: transform 400ms var(--ease); will-change: transform; background: var(--chart-1); }
+.conf-fill { display: block; width: 100%; height: 100%; border-radius: 999px; transform: scaleX(0); transform-origin: left center; transition: transform 400ms var(--ease); will-change: transform; background: var(--chart-1); }
 .conf-fill.centralized { background: var(--chart-2); }
 .conf-fill.local { background: var(--chart-4); }
 .verdict { font-weight: 700; font-size: var(--fs-sm); white-space: nowrap; }
@@ -1066,6 +1084,25 @@ body[data-route="tong-quan"] .top-header .eyebrow { margin-bottom: 0; }
 /* Sơ đồ theo dõi là hình 16:9 co theo bề rộng: ở màn rộng nó cao quá một màn hình và đẩy bảng tiến trình xuống dưới.
    Giới hạn bề rộng (hình vẫn co theo tỉ lệ) và căn giữa trong khung theo dõi. */
 .fl-live .fl-stage { max-width: 820px; margin-inline: auto; }
+/* Chưa có phiên nào: sơ đồ nhỏ lại thay vì chiếm ~500 px trống. Bộ chọn thuộc tính nên không vướng quy tắc "trạng thái không đổi kích thước". */
+.fl-live[data-phase="idle"] .fl-stage { max-width: 420px; }
+
+/* Khung bằng chứng tính toán của phiên Flower (bước 5) */
+.proof-panel {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  padding: var(--space-3) var(--space-4);
+}
+.hash-chip {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+  overflow-wrap: anywhere;
+}
 
 .fl-wires,
 .fl-wire-lit {
@@ -1270,6 +1307,7 @@ body[data-route="tong-quan"] .top-header .eyebrow { margin-bottom: 0; }
 /* ───────── Phản hồi khi rê chuột (chỉ chuột thật; chỉ transform/opacity/màu nên không layout và chạy trên compositor) ─────────
    Thẻ nhấc 2 px; bóng đổ nằm ở ::after và chỉ đổi opacity (animate box-shadow thì phải vẽ lại mỗi khung). */
 @media (hover: hover) and (pointer: fine) {
+  .gallery-item:hover { transform: translateY(-2px); border-color: var(--accent-sky); }
   .pillar,
   .conclusion,
   .viewer-model,
@@ -1411,12 +1449,36 @@ body[data-route="tong-quan"] .top-header .eyebrow { margin-bottom: 0; }
 .comm-step-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--border-strong); background: transparent; }
 .comm-steps li.is-done { color: var(--text-primary); border-top-color: var(--accent-emerald); }
 .comm-steps li.is-done .comm-step-dot { border-color: var(--accent-emerald); background: var(--accent-emerald); }
-.comm-steps li.is-current { color: var(--text-primary); font-weight: 600; border-top-color: var(--accent-sky); }
+.comm-steps li.is-current { color: var(--text-primary); border-top-color: var(--accent-sky); }
 .comm-steps li.is-current .comm-step-dot { border-color: var(--accent-sky); }
 .comm-steps li.is-warn { color: var(--accent-amber); border-top-color: var(--accent-amber); }
 .comm-steps li.is-warn .comm-step-dot { border-color: var(--accent-amber); background: var(--accent-amber); }
 .comm-reason:empty { display: none; }
-@media (max-width: 480px) { .comm-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* Bốn cột mốc luôn nằm một hàng: chữ ngắn, không xuống dòng, chấm xếp trên nhãn khi hẹp */
+.comm-steps li { white-space: nowrap; }
+@media (max-width: 480px) {
+  .comm-steps li { flex-direction: column; align-items: flex-start; gap: 4px; font-size: 11px; }
+}
+
+.comm-joined-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.comm-bulk-text { flex: 1 0 100%; font-size: var(--fs-sm); font-weight: 600; color: var(--text-secondary); }
+.comm-dropzone { padding: var(--space-3) var(--space-4); }
+.comm-dropzone .upload-text { margin: 0; }
+.upload-zone.is-disabled { opacity: 0.5; cursor: not-allowed; }
+.upload-zone.is-disabled .file-input { pointer-events: none; }
+
+/* Ảnh đã thêm: hai cột ở màn rộng (ô chọn nhóm không còn kéo dài ~1.200 px) */
+.comm-items { grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); }
+
+/* Bảng "Các vòng gần đây" dạng thẻ ở màn hẹp: mỗi hàng một thẻ, nhãn cột lấy từ data-label (role=row/cell giữ ngữ nghĩa bảng cho trình đọc màn hình) */
+@media (max-width: 480px) {
+  .stack-sm thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .stack-sm, .stack-sm tbody, .stack-sm tr { display: block; }
+  .stack-sm tr { padding: var(--space-2) 0; border-bottom: 1px solid var(--border-color); }
+  .stack-sm td { display: flex; justify-content: space-between; gap: var(--space-3); padding: 4px 0; border: 0; text-align: right; }
+  .stack-sm td::before { content: attr(data-label); flex: none; color: var(--text-muted); font-weight: 600; text-align: left; }
+  .stack-sm td:not([data-label])::before { content: none; }
+}
 
 /* WCAG 2.2 AA (2.5.8): vùng chạm tối thiểu 24 px. Liên kết trong câu chỉ nới vùng bấm (padding-block không đổi chiều cao dòng). */
 details > summary { min-height: 24px; }
@@ -1427,4 +1489,15 @@ details > summary { min-height: 24px; }
 
 /* pages.css nạp sau style.css, nên `display` của component (vd. .segmented) thắng `.hidden` bên style.css.
    Nhắc lại ở cuối tệp cuối cùng để `.hidden` luôn ẩn; `style.display` do JS đặt (nút Dừng) vẫn thắng lớp này. */
+/* Chữ theo loại con trỏ (ô tải ảnh): chuột thấy "kéo thả", màn cảm ứng thấy "chạm để chọn hoặc chụp". */
+.only-coarse { display: none; }
+@media (pointer: coarse) {
+  .only-fine { display: none; }
+  .only-coarse { display: inline; }
+  /* Vùng chạm tối thiểu ~40 px (WCAG 2.2 đòi 24 px, khuyến nghị 44 px). Chỉ dùng min-height/min-width, selector thường (không dính trạng thái). */
+  .btn-sm, .segmented-option, .chip, .copy-btn, .row-toggle, .check-label { min-height: 40px; }
+  .copy-btn { min-width: 40px; }
+  details > summary { min-height: 44px; }
+  input[type="checkbox"] { width: 22px; height: 22px; }
+}
 .hidden { display: none; }

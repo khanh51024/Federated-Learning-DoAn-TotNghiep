@@ -4,7 +4,7 @@ import { attachCrosshair } from "../core/crosshair.js";
 import { lineDraw, makeChartWhenVisible, pillarColors } from "../core/charts.js";
 import { play } from "../core/motion.js";
 import {
-  $$, MODEL_LABELS, MODEL_ORDER, byId, diseaseOf, cropOf, esc, fmtInt, fmtNum, fmtPct, fmtPctValue,
+  applyStyleData, openOnWide, $$, MODEL_LABELS, MODEL_ORDER, byId, diseaseOf, cropOf, esc, fmtInt, fmtNum, fmtPct, fmtPctValue,
   formatDiseaseName, modelPill, notify, pillarOf, withAlpha,
 } from "../core/dom.js";
 
@@ -106,10 +106,10 @@ function buildSummary() {
       </details>
       <div class="viewer-comparison mt-3" id="result-key-comparison"></div>
       <p class="viewer-takeaway mt-3" id="result-takeaway" aria-live="polite"></p>
-      <p class="viewer-scope mt-2">Một kịch bản, một lần chạy; tập này cũng dùng để chọn mô hình. Điều kiện huấn luyện khác nhau; đây chưa phải độ chính xác ngoài thực địa.</p>
+      <p class="viewer-scope mt-2"><b class="scope-tag">Phạm vi</b> Một kịch bản, một lần chạy; tập này cũng dùng để chọn mô hình, nên chưa phải độ chính xác ngoài thực địa. <a href="#bang-chung">Xem giới hạn ở bước 6</a></p>
     </section>
 
-    <details class="overview-detail mt-4">
+    <details class="overview-detail mt-4" id="result-full-table">
       <summary><span><strong>Bảng đầy đủ của 7 mô hình</strong><small>Độ chính xác, Macro-F1 và kết quả chấm lại</small></span></summary>
       <div class="overview-detail-body">
       <p class="panel-desc">PlantVillage ${fmtInt(evidence.validation_counts.plantvillage)} ảnh (cùng kiểu với ảnh học) và PlantDoc ${fmtInt(evidence.validation_counts.plantdoc)} ảnh (ảnh ngoài đồng). Số đậm là cao nhất mỗi cột.</p>
@@ -194,13 +194,13 @@ function buildSummary() {
 // ───────── Tab 2: PlantDoc theo lớp ─────────
 function recallBar(value, pillar) {
   const pct = Math.max(0, Math.min(100, (value || 0) * 100));
-  return `<div class="recall-bar" title="${fmtPct(value, 1)}"><span class="recall-track"><span class="recall-fill ${pillar}" style="--s:${(pct / 100).toFixed(3)}"></span></span><span class="recall-num mono">${fmtNum(pct, 0)}</span></div>`;
+  return `<div class="recall-bar" title="${fmtPct(value, 1)}"><span class="recall-track"><span class="recall-fill ${pillar}" data-style="--s:${(pct / 100).toFixed(3)}"></span></span><span class="recall-num mono">${fmtNum(pct, 0)}</span></div>`;
 }
 
 function breakdownBar(label, pillar, block) {
   const total = block.count || 1;
   const e = block.error_breakdown || {};
-  const seg = (n, cls, name) => `<span class="seg ${cls}" style="--w:${((n / total) * 100).toFixed(2)}%" title="${esc(name)}: ${fmtInt(n)} ảnh"><i>${n >= total * 0.08 ? fmtInt(n) : ""}</i></span>`;
+  const seg = (n, cls, name) => `<span class="seg ${cls}" data-style="--w:${((n / total) * 100).toFixed(2)}%" title="${esc(name)}: ${fmtInt(n)} ảnh"><i>${n >= total * 0.08 ? fmtInt(n) : ""}</i></span>`;
   return `
     <div class="breakdown">
       <div class="breakdown-head">${modelPill(pillar === "centralized" ? "centralized" : "fedavg", label)}
@@ -266,6 +266,8 @@ function buildPlantdoc() {
         ${confusions.map(c => `<li><span>${esc(formatDiseaseName(c.target))}</span><span class="arrow">→</span><span>${esc(formatDiseaseName(c.predicted))}</span><b class="mono">${fmtInt(c.count)} ảnh</b></li>`).join("")}
       </ol>
     </section>` : ""}`;
+  applyStyleData(root); // riseBars đọc --s ngay bên dưới nên không đợi MutationObserver
+  openOnWide(byId("result-full-table"));
   riseBars(root);
 }
 
@@ -544,7 +546,7 @@ function confusionHtml(matrix, classes) {
       const share = rowTotals[i] ? n / rowTotals[i] : 0;
       const cls = i === j ? "cm-diag" : n > 0 ? "cm-off" : "cm-zero";
       const title = `Thật: ${formatDiseaseName(classes[i])} → Đoán: ${formatDiseaseName(classes[j])}: ${fmtInt(n)} ảnh (${fmtNum(share * 100, 1)}%)`;
-      return `<td class="cm-cell ${cls}" style="--p:${Math.sqrt(share).toFixed(3)}" title="${esc(title)}">${n > 0 ? fmtInt(n) : ""}</td>`;
+      return `<td class="cm-cell ${cls}" data-style="--p:${Math.sqrt(share).toFixed(3)}" title="${esc(title)}">${n > 0 ? fmtInt(n) : ""}</td>`;
     }).join("");
     return `<tr><th scope="row" class="cm-row"><span class="cm-n">${i + 1}</span> ${esc(formatDiseaseName(classes[i]))}</th>${cells}</tr>`;
   }).join("");

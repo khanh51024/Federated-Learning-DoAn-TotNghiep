@@ -131,21 +131,37 @@ def test_chart_library_is_vendored_and_pinned():
     assert re.search(r'src="/static/vendor/chart\.umd\.js\?v=4\.4\.1"', HTML)
 
 
-def test_fonts_are_cacheable_but_app_assets_stay_no_store(client: TestClient):
+def test_fonts_are_cacheable_and_app_assets_revalidate_with_etag(client: TestClient):
     font = client.get("/static/fonts/be-vietnam-pro-400-vietnamese.woff2")
     assert font.status_code == 200
     assert font.headers["content-type"] == "font/woff2"
     assert "max-age=86400" in font.headers["cache-control"]
+    # Trình duyệt hỏi lại sau một ngày và nhận 304: vẫn phải giữ max-age (bản cũ làm 304 rơi vào no-store)
+    revalidated = client.get("/static/fonts/be-vietnam-pro-400-vietnamese.woff2", headers={"If-None-Match": font.headers["etag"]})
+    assert revalidated.status_code == 304 and "max-age=86400" in revalidated.headers["cache-control"]
 
     for path in ("/static/css/style.css", "/static/css/pages.css", "/static/js/app.js", "/static/js/core/router.js",
                  "/static/js/pages/diagnosis.js", "/static/js/toast.js", "/"):
         response = client.get(path)
         assert response.status_code == 200, path
-        assert "no-store" in response.headers["cache-control"], path
+        cache = response.headers["cache-control"]
+        assert cache == "no-cache" and "no-store" not in cache, f"{path}: phải luôn hỏi lại nhưng được nhận 304"
+        assert response.headers.get("etag"), path
+        again = client.get(path, headers={"If-None-Match": response.headers["etag"]})
+        assert again.status_code == 304, f"{path}: không trả 304 khi chưa đổi"
 
     missing = client.get("/static/fonts/does-not-exist.woff2")
     assert missing.status_code == 404
     assert "max-age" not in missing.headers.get("cache-control", ""), "404 không được bị cache một ngày"
+
+
+def test_cache_control_policy_is_a_pure_function_of_path_and_status():
+    from web.app import cache_control_for
+
+    assert cache_control_for("/static/fonts/a.woff2", 200) == cache_control_for("/static/vendor/chart.umd.js", 304) == "public, max-age=86400"
+    assert cache_control_for("/static/fonts/a.woff2", 404) == "no-cache"
+    assert cache_control_for("/static/js/app.js", 200) == "no-cache" and cache_control_for("/", 304) == "no-cache"
+    assert cache_control_for("/api/status", 200) is None
 
 
 BANNED_VISIBLE_TERMS = {
@@ -573,3 +589,114 @@ def test_hover_effects_are_pointer_gated_compositor_only_and_charts_build_when_v
     results = JS_BY_REL["pages/results.js"]
     assert "makeChartWhenVisible" in results and "makeChart(" not in results.replace("makeChartWhenVisible(", "")
     assert "createImageBitmap" in JS_BY_REL["pages/diagnosis.js"], "ảnh lớn phải được thu nhỏ ngoài luồng chính"
+
+
+# ───────── Bước 5: kiểm chứng hệ thống, không đo độ chính xác ─────────
+def test_server_side_training_is_framed_as_system_verification_on_noise_images():
+    """Máy chủ demo không có ảnh lá nên học trên nhiễu; giao diện không được gọi đó là "ảnh tổng hợp" hay phô độ chính xác."""
+    for name, text in [("index.html", HTML), *JS_BY_REL.items()]:
+        assert "ảnh tổng hợp" not in text and "dữ liệu tổng hợp" not in text, name
+    callout = HTML[HTML.index('<div class="callout callout-warn mt-4" role="note">'):]
+    callout = callout[: callout.index("</div>")]
+    assert "kiểm chứng hệ thống" in callout and "ảnh nhiễu ngẫu nhiên" in callout and "bước 3" in callout
+
+
+def test_training_tables_have_matching_column_counts_and_no_accuracy_columns():
+    source = JS_BY_REL["pages/training.js"]
+    cols = dict(re.findall(r"(\w+): (\d+)", re.search(r"const COLS = \{([^}]*)\}", source).group(1)))
+    head = source[source.index("const HEAD = {"):source.index("const EMPTY_TEXT")]
+    for kind, count in cols.items():
+        row = re.search(rf"{kind}: \"(<tr>.*?</tr>)\"", head).group(1)
+        assert row.count("<th>") == int(count), f"{kind}: tiêu đề bảng lệch COLS"
+        assert "Chính xác" not in row and "Macro-F1" not in row, kind
+    assert 'colspan="8"' not in source, "colspan phải sinh từ COLS bằng emptyRow()"
+
+
+def test_locked_start_button_is_relabelled_but_never_disabled():
+    source = JS_BY_REL["pages/training.js"]
+    idle = source[source.index("function renderStartIdle()"):source.index("function applyPolicy")]
+    assert "Đăng nhập để bắt đầu" in idle and "setDisabled(start, false)" in idle
+    assert "setDisabled(start, true)" not in idle, "e2e cần bấm được nút khi bị khóa để thấy khung đăng nhập"
+    assert "renderStartIdle();" in source[source.index("function renderGate()"):source.index("function renderStartIdle()")]
+
+
+def test_step5_has_compute_proof_and_centralized_specific_kpis():
+    for element in ("train-proof", "kpi-fed", "kpi-cent", "dash-epochs", "proof-hash"):
+        assert f'id="{element}"' in HTML, element
+    source = JS_BY_REL["pages/training.js"]
+    assert "rounds_brief" in source and "processes" in source and "learnable_update_relative" in source
+
+
+def test_router_ignores_stale_renders_after_every_await():
+    router = JS_BY_REL["core/router.js"]
+    show = router[router.index("async function show("):router.index("/** Dải bước cuộn ngang")]
+    assert "const stale = () => mine !== token" in show
+    assert show.index("if (stale()) return;") < show.index("await mod.onShow(pane)"), "không chạy onShow của trang đã rời"
+    tail = show[show.index("mounted.delete(route.id)"):]
+    assert "if (!stale()) notify(" in tail, "lỗi của lượt dựng cũ không được báo"
+    assert tail.index("if (stale()) return;") < tail.index('classList.remove("is-pending")') < tail.index("for (const fn of listeners)")
+
+
+def test_main_page_has_no_inline_script_or_style_so_csp_can_stay_strict():
+    assert not re.search(r"<script(?![^>]*\bsrc=)[^>]*>", HTML), "script nội tuyến buộc CSP phải có unsafe-inline hoặc hash"
+    assert "<style" not in HTML and not re.search(r"\sstyle\s*=", HTML)
+    assert HTML.index('<script src="/static/js/theme-boot.js') < HTML.index("<link rel=\"stylesheet\""), "nền sáng/tối phải đặt trước lần vẽ đầu"
+    for rel, text in JS_BY_REL.items():
+        assert not re.search(r'\sstyle="', text), f"{rel}: dựng style=\"\" trong template bị CSP style-src 'self' chặn; dùng data-style"
+    dom = JS_BY_REL["core/dom.js"]
+    assert "export function applyStyleData" in dom and "\nwatchStyleData();" in dom
+    assert "STYLE_PROP" in dom and "STYLE_VALUE" in dom, "data-style chỉ được nhận biến CSS/transform với giá trị an toàn"
+
+
+# ───────── UI/UX: bảng mở sẵn trên màn rộng, vùng chạm, thứ tự ô tải ảnh, client cộng đồng ─────────
+def test_wide_screens_open_the_full_tables_by_default():
+    assert "export function openOnWide" in JS_BY_REL["core/dom.js"] and "WIDE_QUERY" in JS_BY_REL["core/dom.js"]
+    assert 'openOnWide(byId("result-full-table"))' in JS_BY_REL["pages/results.js"] and 'id="result-full-table"' in JS_BY_REL["pages/results.js"]
+    assert 'openOnWide(byId("diag-model-details"))' in JS_BY_REL["pages/diagnosis.js"]
+    assert 'matchMedia(NARROW_QUERY)' in JS_BY_REL["pages/diagnosis.js"], "một nguồn cho điểm gãy 1100 px"
+
+
+def test_touch_targets_are_enlarged_only_for_coarse_pointers_and_hover_lift_only_for_mouse():
+    block = CSS[CSS.index("@media (pointer: coarse) {"):]
+    block = block[: block.index("\n}\n")]
+    for selector in (".btn-sm", ".segmented-option", ".chip", ".copy-btn", "details > summary"):
+        assert selector in block, selector
+    assert all(int(px) >= 40 for px in re.findall(r"min-(?:height|width): (\d+)px", block))
+    fine = CSS[CSS.index("@media (hover: hover) and (pointer: fine) {"):]
+    assert ".gallery-item:hover" in fine[: fine.index("@media (prefers-reduced-motion")], "nâng thẻ khi rê chuột chỉ cho con trỏ chuột (chạm xong thẻ không bị kẹt ở vị trí nâng)"
+    assert not re.search(r"^\.gallery-item:hover", CSS, flags=re.M)
+
+
+def test_step4_puts_the_upload_zone_before_the_gallery_with_pointer_specific_wording():
+    step = HTML[HTML.index('id="page-chan-doan"'):]
+    assert step.index('id="upload-dropzone"') < step.index('id="gallery-grid"'), "điện thoại: ô tải ảnh của chính người dùng phải ở trên 19 ảnh mẫu"
+    zone = step[step.index('id="upload-dropzone"'):step.index('id="gallery-filters"')]
+    assert "only-fine" in zone and "only-coarse" in zone and "tối đa 10 MB" in zone
+
+
+def test_community_client_has_vietnamese_picker_group_first_labelling_and_stable_stepper():
+    comm = HTML[HTML.index('id="comm-panel"'):HTML.index('id="page-huan-luyen"') + 12000]
+    assert 'id="comm-dropzone"' in comm and re.search(r'<input type="file" id="comm-files"[^>]*class="file-input"', comm)
+    assert "Nhóm cho các ảnh sắp thêm" in comm and "Chọn sau cho từng ảnh" in comm
+    source = JS_BY_REL["pages/community.js"]
+    assert "label: group" in source, "ảnh thêm vào mang nhóm đã chọn trước"
+    assert "innerHTML = S.items.map" not in source, "không dựng lại cả danh sách mỗi lần (mất focus; 300 ảnh × 39 option)"
+    assert 'addEventListener("drop"' in source and "dataTransfer" in source
+    for step in ("joined", "trained", "sent", "merged"):
+        assert f'data-step="{step}"' in comm
+    assert "@media (max-width: 480px) { .comm-steps { grid-template-columns: repeat(2" not in CSS, "bốn cột mốc phải luôn một hàng"
+    assert "comm-joined-head" in comm and "comm-leave-hint" in comm
+
+
+def test_page_wide_drop_guard_lives_in_app_js_not_in_one_page():
+    assert "function initDropGuard" in JS_BY_REL["app.js"] and "initDropGuard();" in JS_BY_REL["app.js"]
+    assert 'document.addEventListener("drop"' in JS_BY_REL["app.js"]
+    assert 'document.addEventListener("drop"' not in JS_BY_REL["pages/diagnosis.js"]
+
+
+def test_history_table_collapses_to_cards_on_narrow_screens_without_losing_table_semantics():
+    assert 'class="data-table wrap-head stack-sm" role="table"' in HTML
+    source = JS_BY_REL["pages/community.js"]
+    for label in ("Vòng", "Người", "Ảnh", "Kết quả", "Độ chính xác giám sát"):
+        assert f'data-label="{label}"' in source
+    assert ".stack-sm td::before { content: attr(data-label)" in CSS

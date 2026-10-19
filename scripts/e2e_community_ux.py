@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from scripts import e2e_community as base_e2e  # noqa: E402
-from scripts.e2e_community import ADMIN, CHECKS, SECRET, check, free_port, http, wait_for  # noqa: E402
+from scripts.e2e_community import ADMIN, CHECKS, CSP_PROBE, SECRET, check, free_port, http, wait_for, wait_js  # noqa: E402
 from src import registry as reg  # noqa: E402
 
 for stream in (sys.stdout, sys.stderr):
@@ -45,7 +45,7 @@ WORKER_SPY = """
 
 
 def open_page(browser: Any, base: str, route: str = "/#huan-luyen", width: int = 390, script: str | None = None):
-    context = browser.new_context(viewport={"width": width, "height": 900})
+    context = base_e2e.new_ctx(browser, viewport={"width": width, "height": 900})
     page = context.new_page()
     errors: list[str] = []
     page.on("pageerror", lambda e: errors.append(str(e)))
@@ -57,7 +57,7 @@ def open_page(browser: Any, base: str, route: str = "/#huan-luyen", width: int =
 
 def add_labeled_images(page: Any, samples: list[tuple[Path, str]]) -> None:
     page.set_input_files("#comm-files", [str(path) for path, _label in samples])
-    page.wait_for_function(f"document.querySelectorAll('select[data-label]').length >= {len(samples)}", timeout=15000)
+    wait_js(page, f"document.querySelectorAll('select[data-label]').length >= {len(samples)}", timeout=15000)
     selects = page.locator("select[data-label]")
     for position, (_path, label) in enumerate(samples):
         selects.nth(position).select_option(value=label)
@@ -107,7 +107,7 @@ def main() -> int:
             check("phiên đóng: có khối 'Cách tham gia' 4 bước", page.locator("#comm-howto li").count() == 4 and page.locator("#comm-howto").is_visible())
             check("phiên đóng: nút Tham gia khóa, mã vẫn được điền sẵn",
                   page.locator("#btn-comm-join").is_disabled() and page.locator("#comm-code").input_value().replace("-", "") == "ABCDEFGHJK")
-            page.wait_for_function("document.body.innerText.includes('Phiên đang đóng; nút Tham gia sẽ bật')", timeout=15000)
+            wait_js(page, "document.body.innerText.includes('Phiên đang đóng; nút Tham gia sẽ bật')", timeout=15000)
             check("liên kết ?code= khi đóng: thông báo khớp với nút bị khóa", True)
             overflow = page.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
             check("phiên đóng: 390 px không tràn ngang", overflow <= 1, f"lệch {overflow}px")
@@ -132,11 +132,11 @@ def main() -> int:
             page.fill("#comm-code", codes[0])
             page.click("#btn-comm-join")
             page.wait_for_selector("#comm-work-box:not(.hidden)", timeout=30000)
-            page.wait_for_function("document.getElementById('comm-flow-note').innerText.trim().length > 0", timeout=15000)
+            wait_js(page, "document.getElementById('comm-flow-note').innerText.trim().length > 0", timeout=15000)
             check("thanh cột mốc: 'Đã tham gia' xong, bước kế tiếp được nêu",
                   page.locator("#comm-steps li[data-step=joined].is-done").count() == 1
                   and "Bước tiếp theo" in text(page, "#comm-flow-note"), text(page, "#comm-flow-note"))
-            page.wait_for_function("document.getElementById('comm-train-reason').innerText.includes('ít nhất')", timeout=15000)
+            wait_js(page, "document.getElementById('comm-train-reason').innerText.includes('ít nhất')", timeout=15000)
             check("nút Huấn luyện khóa có lý do (chưa đủ ảnh)",
                   page.locator("#btn-comm-train").is_disabled() and "ít nhất 5 ảnh" in text(page, "#comm-train-reason"),
                   text(page, "#comm-train-reason"))
@@ -145,7 +145,7 @@ def main() -> int:
                   text(page, "#comm-submit-reason"))
 
             add_labeled_images(page, groups[0])
-            page.wait_for_function("!document.getElementById('btn-comm-train').disabled", timeout=15000)
+            wait_js(page, "!document.getElementById('btn-comm-train').disabled", timeout=15000)
             check("đủ ảnh có nhóm: dòng lý do biến mất", text(page, "#comm-train-reason") == "")
             page.click("#btn-comm-train")
             page.wait_for_selector("#comm-local-result:not(.hidden)", timeout=240000)
@@ -156,7 +156,7 @@ def main() -> int:
             check("đổi nhóm sau huấn luyện: khung 'Huấn luyện xong' cũ được ẩn, nút Gửi có lý do",
                   page.locator("#comm-local-result").is_hidden() and "huấn luyện" in text(page, "#comm-submit-reason"))
             add_labeled_images(page, groups[0])  # chọn lại đúng nhóm (cùng ảnh bị bỏ qua vì trùng; nhóm đặt lại ở dưới)
-            page.wait_for_function("!document.getElementById('btn-comm-train').disabled", timeout=15000)
+            wait_js(page, "!document.getElementById('btn-comm-train').disabled", timeout=15000)
             page.click("#btn-comm-train")
             page.wait_for_selector("#comm-local-result:not(.hidden)", timeout=240000)
 
@@ -168,7 +168,7 @@ def main() -> int:
             page.route("**/api/community/update", drop_response)
             page.click("#btn-comm-submit")
             page.wait_for_selector("#comm-submit-result:not(.hidden)", timeout=60000)
-            page.wait_for_function("document.getElementById('comm-submit-result').innerText.length > 0", timeout=15000)
+            wait_js(page, "document.getElementById('comm-submit-result').innerText.length > 0", timeout=15000)
             lost = text(page, "#comm-submit-result")
             check("mất phản hồi: báo 'đã nhận', không báo 'không nhận'",
                   "đã nhận cập nhật của bạn" in lost and "không nhận cập nhật" not in lost, lost[:140])
@@ -178,7 +178,7 @@ def main() -> int:
             # ── 5. Tải lại trang sau khi đã gửi: nút khóa phải nói lý do ──
             page.reload(wait_until="load")
             page.wait_for_selector("#comm-work-box:not(.hidden)", timeout=30000)
-            page.wait_for_function("document.getElementById('comm-kpi-round').textContent.trim().startsWith('#')", timeout=30000)
+            wait_js(page, "document.getElementById('comm-kpi-round').textContent.trim().startsWith('#')", timeout=30000)
             add_labeled_images(page, groups[0])
             page.wait_for_timeout(500)
             reason = text(page, "#comm-train-reason")
@@ -195,7 +195,7 @@ def main() -> int:
                 other_page.click("#btn-comm-join")
                 other_page.wait_for_selector("#comm-work-box:not(.hidden)", timeout=30000)
                 add_labeled_images(other_page, groups[index])
-                other_page.wait_for_function("!document.getElementById('btn-comm-train').disabled", timeout=15000)
+                wait_js(other_page, "!document.getElementById('btn-comm-train').disabled", timeout=15000)
                 other_page.click("#btn-comm-train")
                 other_page.wait_for_selector("#comm-local-result:not(.hidden)", timeout=240000)
                 others.append((other_context, other_page))
@@ -206,17 +206,17 @@ def main() -> int:
             check("người gửi cuối: thấy kết quả gộp ngay trong phản hồi", "đã gộp" in merged_text, merged_text[:140])
             others[-1][1].wait_for_selector("#comm-steps li[data-step=merged].is-done", timeout=30000)
             check("người gửi cuối: cột mốc 'Đã gộp' bật", True)
-            page.wait_for_function(
+            wait_js(page, 
                 "document.getElementById('comm-flow-note').innerText.includes('đã góp vào phiên bản')", timeout=120000)
             check("người gửi từ trước (đã tải lại trang): được báo cập nhật của mình nằm trong phiên bản mới",
                   page.locator("#comm-steps li[data-step=merged].is-done").count() == 1, text(page, "#comm-flow-note"))
 
             # ── 7. Vòng 2: tiến trình xử lý ảnh bị đặt lại → huấn luyện lại thành công, không phải xóa ảnh ──
-            page.wait_for_function(
+            wait_js(page, 
                 "document.getElementById('comm-kpi-round').textContent.trim() === '#2'", timeout=60000)
             page.wait_for_timeout(500)
             add_labeled_images(page, groups[0])
-            page.wait_for_function("!document.getElementById('btn-comm-train').disabled", timeout=30000)
+            wait_js(page, "!document.getElementById('btn-comm-train').disabled", timeout=30000)
             page.click("#btn-comm-train")
             page.wait_for_selector("#comm-local-result:not(.hidden)", timeout=240000)
             check("vòng 2: huấn luyện lần đầu thành công", "Huấn luyện xong" in text(page, "#comm-local-result"))
@@ -227,7 +227,7 @@ def main() -> int:
             # đánh dấu khung kết quả cũ: lần huấn luyện mới ghi đè nội dung nên dấu này biến mất khi có kết quả mới
             page.evaluate("document.getElementById('comm-local-result').innerHTML = '<b>DAU-CU</b>'")
             page.click("#btn-comm-train")
-            page.wait_for_function(
+            wait_js(page, 
                 "(() => { const el = document.getElementById('comm-local-result'); "
                 "return !el.classList.contains('hidden') && !el.innerText.includes('DAU-CU'); })()", timeout=240000)
             check("worker bị đặt lại: huấn luyện lại thành công mà không phải xóa ảnh",
@@ -237,7 +237,7 @@ def main() -> int:
             page.route("**/api/community/update", lambda route: route.fulfill(
                 status=429, content_type="text/html", body="<html><body>Too Many Requests</body></html>"))
             page.click("#btn-comm-submit")
-            page.wait_for_function("document.getElementById('comm-submit-result').innerText.includes('giới hạn tần suất')", timeout=60000)
+            wait_js(page, "document.getElementById('comm-submit-result').innerText.includes('giới hạn tần suất')", timeout=60000)
             check("429: báo giới hạn tần suất và nói rõ cập nhật chưa được gửi",
                   "chưa được gửi" in text(page, "#comm-submit-result"), text(page, "#comm-submit-result")[:140])
             page.unroute("**/api/community/update")
