@@ -1,8 +1,8 @@
 """Bounded localhost Flower smoke session owned by the web process.
 
 The session uses the legacy scratch PlantVillage partition contract with
-synthetic images. Its metrics are engineering telemetry, never published
-PlantVillage/PlantDoc validation results.
+random-noise images (no image folder is configured for the web demo). Its metrics
+are engineering telemetry, never published PlantVillage/PlantDoc validation results.
 """
 
 from __future__ import annotations
@@ -25,6 +25,30 @@ from src import registry as reg
 ROOT = Path(__file__).resolve().parents[1]
 PARTITION = ROOT / "data/partitions_stage2_scratch_v3/label01"
 
+_ROUND_KEYS = (
+    "round", "accepted_clients", "suspicious_clients", "rejected_clients", "round_fit_elapsed_ms",
+    "mean_probe_rtt_ms", "parent_model_hash", "global_model_hash", "mean_received_learnable_update_norm",
+)
+_CLIENT_KEYS = (
+    "client_id", "num_examples", "local_train_time_s", "received_learnable_update_norm",
+    "learnable_update_relative", "status", "data_mode",
+)
+
+
+def _brief_rounds(rounds: Any) -> list[dict[str, Any]]:
+    """Rút gọn audit_rounds của server Flower thành thứ giao diện cần để chứng minh máy đã tính thật."""
+    brief: list[dict[str, Any]] = []
+    for record in rounds if isinstance(rounds, list) else []:
+        if not isinstance(record, dict):
+            continue
+        row = {key: record.get(key) for key in _ROUND_KEYS}
+        row["clients"] = [
+            {key: client.get(key) for key in _CLIENT_KEYS}
+            for client in record.get("clients", []) if isinstance(client, dict)
+        ]
+        brief.append(row)
+    return brief
+
 
 class NetworkDemoManager:
     def __init__(self) -> None:
@@ -33,7 +57,19 @@ class NetworkDemoManager:
         self._processes: dict[str, subprocess.Popen[bytes]] = {}
         self._logs: list[Any] = []
         self._running = False
+        self._final_exit_codes: dict[str, int | None] = {}
         self.run_dir: Path | None = None
+
+    def detach_run(self) -> None:
+        """Bỏ liên kết với phiên Flower đã xong để các tác vụ khác không hiển thị RTT/số client của phiên cũ.
+
+        Không đụng gì khi đang chạy. Cố ý KHÔNG đặt run_dir = None trong `_close()`: sau khi dừng, bài kiểm
+        và trang vẫn cần đọc phiên vừa rồi."""
+        with self._lock:
+            if self._running:
+                return
+            self.run_dir = None
+            self._final_exit_codes = {}
 
     def prepare(self) -> None:
         """Reset cancellation before the API schedules the background task."""
@@ -46,6 +82,8 @@ class NetworkDemoManager:
         with self._lock:
             processes = {name: process.poll() for name, process in self._processes.items()}
             run_dir = self.run_dir
+            active = self._running
+            final_codes = dict(self._final_exit_codes)
         progress = None
         if run_dir is not None:
             progress_path = run_dir / "progress.json"
@@ -54,8 +92,16 @@ class NetworkDemoManager:
                     progress = json.loads(progress_path.read_text(encoding="utf-8"))
                 except (OSError, ValueError):
                     pass
+        rows = processes or final_codes  # sau khi phiên đóng, _processes rỗng: dùng mã thoát đã chụp lúc đóng
         return {
             "run_dir": str(run_dir) if run_dir else None,
+            "active": active,
+            "processes": [
+                {"name": name, "running": exit_code is None, "exit_code": exit_code}
+                for name, exit_code in sorted(rows.items())
+            ],
+            "rounds_brief": _brief_rounds(progress.get("rounds") if progress else None),
+            "parent_model_hash": progress.get("parent_model_hash") if progress else None,
             "server_running": processes.get("server") is None and "server" in processes,
             "client_processes_running": sum(
                 exit_code is None for name, exit_code in processes.items() if name.startswith("client_")
@@ -96,6 +142,7 @@ class NetworkDemoManager:
             stream.close()
         self._logs.clear()
         with self._lock:
+            self._final_exit_codes = {name: process.returncode for name, process in self._processes.items()}
             self._processes.clear()
             self._running = False
 
@@ -133,6 +180,7 @@ class NetworkDemoManager:
                 raise RuntimeError("A Flower demo is already running")
             self._running = True
             self._processes.clear()
+            self._final_exit_codes = {}
         run_dir = reg.abs_path(reg.NETWORK_SMOKE_RUNS_DIR) / (
             datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "_" + uuid.uuid4().hex[:8]
         )

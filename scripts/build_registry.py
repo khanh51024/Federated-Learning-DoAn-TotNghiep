@@ -641,7 +641,7 @@ FAMILY_DEFAULTS: dict[str, dict[str, str]] = {
     reg.FAMILY_NETWORK_DEMO: {
         "pipeline": reg.PIPELINE_SRC,
         "role": reg.ROLE_TECHNICAL_DEMO,
-        "dataset_id": "Ảnh tổng hợp (smoke Flower localhost)",
+        "dataset_id": "Ảnh nhiễu ngẫu nhiên (smoke Flower localhost, kiểm chứng hệ thống)",
     },
     reg.FAMILY_REFERENCE: {
         "pipeline": reg.PIPELINE_EXTERNAL,
@@ -836,7 +836,7 @@ def build_artifact_catalog(models: list[dict[str, Any]]) -> tuple[list[dict[str,
                 smoke_runs[run_dir] = plan.get("mode") == "smoke"
             if smoke_runs[run_dir]:
                 add("report_experiments_smoke", reg.ROLE_QUARANTINED,
-                    "Run report_experiments mode=smoke (dữ liệu tổng hợp, accuracy 0.0263) — cấm dùng trong luận văn", rel)
+                    "Run report_experiments mode=smoke (ảnh nhiễu ngẫu nhiên, accuracy 0.0263) — cấm dùng trong luận văn", rel)
             else:
                 add("report_experiments_real", reg.ROLE_TECHNICAL_DEMO,
                     "Run report_experiments mode=real CHƯA promote — chỉ là bằng chứng sau khi qua scripts/promote_verified_run.py", rel)

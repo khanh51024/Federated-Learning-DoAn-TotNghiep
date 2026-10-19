@@ -42,7 +42,7 @@ from .client_app import PlantVillageClient
 from .network_probe import ProbeServer
 from .strategy import aggregate_fedavg
 from .telemetry import ServerRoundTelemetry, TelemetryManager
-from .update_validator import validate_client_update
+from .update_validator import learnable_update_stats, validate_client_update
 
 
 def expected_client_contract(partition_dir: str | Path, count: int) -> Dict[int, Dict[str, Any]]:
@@ -390,12 +390,16 @@ class AuditedFlowerFedAvg:
         from flwr.common import FitIns, ndarrays_to_parameters, parameters_to_ndarrays
         from flwr.server.strategy import FedAvg
 
-        model_keys = list(create_model(num_classes=38, pretrained=False).state_dict().keys())
+        _key_model = create_model(num_classes=38, pretrained=False)
+        model_keys = list(_key_model.state_dict().keys())
+        # Khóa THAM SỐ HỌC ĐƯỢC (không gồm bộ đệm BatchNorm): dùng để đo mức học thật, tách khỏi chuẩn update cũ.
+        learnable_keys = frozenset(name for name, _ in _key_model.named_parameters())
 
         class _AuditedFedAvg(FedAvg):
             def __init__(self) -> None:
                 self._parent_by_round: Dict[int, Dict[str, np.ndarray]] = {}
                 self._fit_started_at: Dict[int, float] = {}
+                self._parent_hash_by_round: Dict[int, str] = {}
                 self.audit_rounds: List[Dict[str, Any]] = []
                 self.final_parameters: Any = initial_parameters
                 super().__init__(
@@ -420,6 +424,7 @@ class AuditedFlowerFedAvg:
                 self._parent_by_round[int(server_round)] = parent
                 self._fit_started_at[int(server_round)] = time.perf_counter()
                 parent_hash = compute_model_hash(parent)
+                self._parent_hash_by_round[int(server_round)] = parent_hash
 
                 pairs = super().configure_fit(server_round, parameters, client_manager)
                 self._write_progress({
@@ -429,6 +434,7 @@ class AuditedFlowerFedAvg:
                     # Số update hợp lệ của vòng ĐÃ XONG gần nhất (web hiển thị "x/5 update hợp lệ ở vòng cuối"):
                     # đặt 0 ở đây làm giao diện báo sai "0/5" suốt vòng 2 dù vòng 1 nhận đủ 5.
                     "accepted_clients": int(self.audit_rounds[-1]["accepted_clients"]) if self.audit_rounds else 0,
+                    "parent_model_hash": parent_hash,
                     "rounds": self.audit_rounds,
                 })
                 configured = []
@@ -457,6 +463,7 @@ class AuditedFlowerFedAvg:
                 suspicious_count = 0
                 rejected_count = 0
                 received_norms: List[float] = []
+                learnable_norms: List[float] = []
                 local_train_times: List[float] = []
                 client_records: List[Dict[str, Any]] = []
 
@@ -478,6 +485,11 @@ class AuditedFlowerFedAvg:
                     )
                     fit_res.metrics["server_validation_reason"] = validation.reason
                     received_norms.append(float(validation.received_update_norm))
+                    learnable = (
+                        learnable_update_stats(parent, client_weights, learnable_keys) if validation.structure_ok else None
+                    )
+                    if learnable is not None:
+                        learnable_norms.append(float(learnable["norm"]))
                     local_train_time_s = float(fit_res.metrics.get("local_train_time_s", 0.0))
                     local_train_times.append(local_train_time_s)
                     probe_rtt_ms = float(fit_res.metrics.get("probe_rtt_ms", -1.0))
@@ -501,6 +513,9 @@ class AuditedFlowerFedAvg:
                         "partition_config_sha256": partition_config_sha256,
                         "client_manifest_sha256": client_manifest_sha256,
                         "received_update_norm": float(validation.received_update_norm),
+                        # Chỉ tham số học được (không gồm BatchNorm running_mean/var): đo mô hình có THỰC SỰ học hay không.
+                        "received_learnable_update_norm": float(learnable["norm"]) if learnable else None,
+                        "learnable_update_relative": float(learnable["relative"]) if learnable else None,
                         "validation_reason": validation.reason,
                         "status": "ok",
                     }
@@ -578,6 +593,7 @@ class AuditedFlowerFedAvg:
                 aggregated_parameters = ndarrays_to_parameters([
                     averaged[k].detach().cpu().numpy() for k in model_keys
                 ])
+                global_model_hash = compute_model_hash({k: averaged[k].detach().cpu().numpy() for k in model_keys})
                 metrics: Dict[str, Any] = {}
 
                 server_eval_metrics: Optional[Dict[str, Any]] = None
@@ -612,6 +628,7 @@ class AuditedFlowerFedAvg:
                         "suspicious_clients": int(suspicious_count),
                         "rejected_clients": int(rejected_count),
                         "mean_received_update_norm": float(np.mean(received_norms)) if received_norms else 0.0,
+                        "mean_received_learnable_update_norm": float(np.mean(learnable_norms)) if learnable_norms else 0.0,
                         "mean_probe_rtt_ms": float(np.mean(valid_rtts)) if valid_rtts else -1.0,
                         "max_probe_rtt_ms": float(np.max(valid_rtts)) if valid_rtts else -1.0,
                         "round_fit_elapsed_ms": float(elapsed_ms),
@@ -625,6 +642,10 @@ class AuditedFlowerFedAvg:
                     {
                         "round": int(server_round),
                         "clients": client_records,
+                        # Chuỗi băm: global_model_hash của vòng r phải bằng parent_model_hash của vòng r+1.
+                        "parent_model_hash": self._parent_hash_by_round.get(int(server_round)),
+                        "global_model_hash": global_model_hash,
+                        "mean_received_learnable_update_norm": float(np.mean(learnable_norms)) if learnable_norms else None,
                         "accepted_clients": int(len(accepted_results)),
                         "suspicious_clients": int(suspicious_count),
                         "rejected_clients": int(rejected_count),
@@ -778,6 +799,7 @@ def start_flower_server(
             f"F1={final_test_metrics['macro_f1']:.4f}, Loss={final_test_metrics['loss']:.4f}"
         )
 
+    final_model_hash = compute_model_hash(get_parameters(final_model))
     if checkpoint_file:
         checkpoint_path = Path(checkpoint_file)
         checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
@@ -789,7 +811,7 @@ def start_flower_server(
                 "num_clients": int(num_clients),
                 "local_epochs": int(local_epochs),
                 "seed": int(seed),
-                "model_hash": compute_model_hash(get_parameters(final_model)),
+                "model_hash": final_model_hash,
                 "test_metrics": final_test_metrics,
             },
             checkpoint_path,
@@ -811,6 +833,7 @@ def start_flower_server(
             "require_real_evaluation": bool(require_real_evaluation),
             "final_test_metrics": final_test_metrics,
             "checkpoint_file": saved_checkpoint,
+            "final_model_hash": final_model_hash,
             "audit_rounds": strategy.audit_rounds,
             "metrics_distributed_fit": getattr(history, "metrics_distributed_fit", {}),
             "losses_distributed": getattr(history, "losses_distributed", []),

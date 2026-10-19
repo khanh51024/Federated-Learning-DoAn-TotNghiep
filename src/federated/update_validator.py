@@ -7,7 +7,7 @@ recomputes integrity and anomaly signals from the actual received payload.
 from __future__ import annotations
 
 from dataclasses import dataclass, asdict
-from typing import Dict, Any
+from typing import Any, Dict, Iterable
 
 import numpy as np
 import torch
@@ -56,6 +56,42 @@ def compute_update_norm(
             diff = child.float() - parent.float()
             delta_sq += float(torch.sum(diff * diff).item())
     return float(np.sqrt(delta_sq))
+
+
+def compute_subset_update_norm(
+    parent_weights: Dict[str, TensorLike],
+    client_weights: Dict[str, TensorLike],
+    keys: Iterable[str],
+) -> float:
+    """||W_client - W_parent||_2 chỉ trên các khóa `keys` (bỏ qua tensor không phải số thực).
+
+    `compute_update_norm` cộng cả bộ đệm BatchNorm (running_mean/running_var) nên khi ảnh vào mô hình chúng tự trôi
+    dù trọng số học không đổi. Hàm này cho phép đo riêng phần THAM SỐ HỌC ĐƯỢC mà không đổi ngữ nghĩa của hàm cũ."""
+    delta_sq = 0.0
+    for key in keys:
+        if key not in parent_weights or key not in client_weights:
+            raise ValueError(f"Missing parameter key '{key}'")
+        parent = _to_tensor(parent_weights[key])
+        child = _to_tensor(client_weights[key])
+        if parent.shape != child.shape:
+            raise ValueError(f"Shape mismatch for '{key}': {tuple(child.shape)} != {tuple(parent.shape)}")
+        if parent.is_floating_point() or child.is_floating_point():
+            diff = child.float() - parent.float()
+            delta_sq += float(torch.sum(diff * diff).item())
+    return float(np.sqrt(delta_sq))
+
+
+def learnable_update_stats(
+    parent_weights: Dict[str, TensorLike],
+    client_weights: Dict[str, TensorLike],
+    learnable_keys: Iterable[str],
+) -> Dict[str, float]:
+    """Mức thay đổi của tham số học được: {"norm": ||ΔW||, "parent_norm": ||W||, "relative": ||ΔW|| / ||W||}."""
+    keys = list(learnable_keys)
+    norm = compute_subset_update_norm(parent_weights, client_weights, keys)
+    zero = {k: np.zeros_like(np.asarray(_to_tensor(parent_weights[k]))) for k in keys}
+    parent_norm = compute_subset_update_norm(zero, parent_weights, keys)
+    return {"norm": norm, "parent_norm": parent_norm, "relative": norm / parent_norm if parent_norm > 0 else 0.0}
 
 
 def validate_client_update(

@@ -30,7 +30,8 @@ def get_system_status() -> Dict[str, Any]:
     dev_name = torch.cuda.get_device_name(0) if cuda_avail else "CPU"
 
     traced_ready = model_service.is_web_visible("plantvillage_traced_reference")
-    flower_active = NETWORK_DEMO.snapshot()["server_running"]
+    network_snapshot = NETWORK_DEMO.snapshot()  # một lần: snapshot đọc progress.json từ đĩa
+    flower_active = network_snapshot["server_running"]
 
     return {
         "server_status": "online",
@@ -39,7 +40,7 @@ def get_system_status() -> Dict[str, Any]:
         "flower_server_active": flower_active,
         "flower_daemon_status": "Port 8089 (Listening)" if flower_active else "Port 8089 (Idle / Standby)",
         "task": CURRENT_TASK,
-        "network_processes": NETWORK_DEMO.snapshot(),
+        "network_processes": network_snapshot,
         "canonical_run": {
             "run_id": None,
             "scientific_valid": False,

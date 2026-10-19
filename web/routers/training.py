@@ -200,9 +200,11 @@ def _run_centralized_bg(epochs: int, smoke: bool, dataset_root: Optional[str], s
         CURRENT_TASK["live_progress"].append(step_data)
         ep = step_data.get("epoch", 1)
         CURRENT_TASK["progress"] = int((ep / max(epochs, 1)) * 100)
-        val_acc = step_data.get("val_accuracy", 0.0)
-        val_acc_pct = val_acc * 100.0 if val_acc <= 1.0 else val_acc
-        CURRENT_TASK["message"] = f"Centralized: Epoch {ep}/{epochs} - Val Acc: {val_acc_pct:.2f}%"
+        # Không đưa độ chính xác lên đầu thông báo: trên ảnh nhiễu ngẫu nhiên nó đứng yên ở 1/38 và không mang thông tin.
+        CURRENT_TASK["message"] = (
+            f"Centralized: epoch {ep}/{epochs} · loss học {float(step_data.get('train_loss', 0.0)):.4f}"
+            f" · {float(step_data.get('epoch_time_s', 0.0)):.1f} s"
+        )
 
     try:
         output_dir = reg.abs_path(reg.WEB_RUNS_DIR) / ("centralized_demo" if smoke else "centralized_full")
@@ -225,9 +227,10 @@ def _run_centralized_bg(epochs: int, smoke: bool, dataset_root: Optional[str], s
         else:
             CURRENT_TASK["progress"] = 100
             CURRENT_TASK["status"] = "completed"
-            acc = res.get("test_metrics", {}).get("accuracy", 0.0)
-            acc_pct = acc * 100.0 if acc <= 1.0 else acc
-            CURRENT_TASK["message"] = f"Centralized ({mode_text}) hoàn tất {epochs}/{epochs} epochs! Test Acc: {acc_pct:.2f}%"
+            CURRENT_TASK["message"] = (
+                f"Centralized ({mode_text}) xong {epochs}/{epochs} epoch: máy chủ đã tính thật; "
+                "ảnh nhiễu ngẫu nhiên nên không đo độ chính xác."
+            )
     except Exception as e:
         if CURRENT_TASK.get("cancel_requested"):
             CURRENT_TASK["status"] = "cancelled"
@@ -263,6 +266,7 @@ def _start_centralized(background_tasks: BackgroundTasks, req: CentralizedTrainR
     _cap("max_centralized_epochs", req.epochs, "Số epoch")
     training_guard.require_memory("inprocess")
 
+    NETWORK_DEMO.detach_run()  # không để RTT/số client của phiên Flower cũ hiện sang tác vụ này
     CURRENT_TASK["config"] = req.model_dump()
     _mark_task_running(
         "Centralized", "centralized",
@@ -289,9 +293,10 @@ def _run_federated_bg(rounds: int, local_epochs: int, partition_dir: str, smoke:
         CURRENT_TASK["live_progress"].append(step_data)
         r = step_data.get("round", 1)
         CURRENT_TASK["progress"] = int((r / max(rounds, 1)) * 100)
-        g_acc = step_data.get("global_accuracy", 0.0)
-        g_acc_pct = g_acc if g_acc > 1.0 else g_acc * 100.0
-        CURRENT_TASK["message"] = f"FedAvg: Vòng {r}/{rounds} - Global Acc: {g_acc_pct:.2f}%"
+        CURRENT_TASK["message"] = (
+            f"FedAvg mô phỏng: vòng {r}/{rounds} · loss {float(step_data.get('global_loss', 0.0)):.4f}"
+            f" · {float(step_data.get('round_duration_s', 0.0)):.1f} s"
+        )
 
     try:
         output_dir = reg.abs_path(reg.WEB_RUNS_DIR) / ("fedavg_demo" if smoke else "fedavg_full")
@@ -316,9 +321,9 @@ def _run_federated_bg(rounds: int, local_epochs: int, partition_dir: str, smoke:
         else:
             CURRENT_TASK["progress"] = 100
             CURRENT_TASK["status"] = "completed"
-            acc = res.get("best_accuracy", 0.0)
-            acc_pct = acc if acc > 1.0 else acc * 100.0
-            CURRENT_TASK["message"] = f"FedAvg ({mode_text}) hoàn tất {rounds}/{rounds} rounds! Best Acc: {acc_pct:.2f}%"
+            CURRENT_TASK["message"] = (
+                f"FedAvg mô phỏng ({mode_text}) xong {rounds}/{rounds} vòng: kiểm chứng quy trình, không đo độ chính xác."
+            )
     except Exception as e:
         if CURRENT_TASK.get("cancel_requested"):
             CURRENT_TASK["status"] = "cancelled"
@@ -336,7 +341,8 @@ def _run_federated_network_bg(
 ):
     """Launch and monitor one Flower server plus five owned client processes."""
     def update(snapshot: Dict[str, Any]) -> None:
-        CURRENT_TASK["network_processes"] = snapshot
+        # rounds_brief đã có ở /api/status (khóa network_processes cấp cao nhất): không nhân đôi trong task.
+        CURRENT_TASK["network_processes"] = {key: value for key, value in snapshot.items() if key != "rounds_brief"}
         completed = int(snapshot["round_completed"])
         CURRENT_TASK["progress"] = min(99, int(completed / max(rounds, 1) * 100))
         CURRENT_TASK["message"] = (
@@ -357,7 +363,7 @@ def _run_federated_network_bg(
         )
         CURRENT_TASK["progress"] = 100
         CURRENT_TASK["status"] = "completed"
-        CURRENT_TASK["message"] = f"Chạy thử Flower hoàn tất {rounds} vòng với 5 client; đây là demo kỹ thuật trên ảnh tổng hợp."
+        CURRENT_TASK["message"] = f"Chạy thử Flower hoàn tất {rounds} vòng với 5 client: kiểm chứng hệ thống trên ảnh nhiễu ngẫu nhiên, không đo độ chính xác."
         CURRENT_TASK["network_history_available"] = True
         CURRENT_TASK["run_dir"] = result["run_dir"]
     except Exception as e:
@@ -409,7 +415,7 @@ def _start_federated(background_tasks: BackgroundTasks, req: FederatedTrainReque
         if not 1024 <= port <= 65534:
             raise HTTPException(status_code=400, detail="Port phải nằm trong khoảng 1024..65534")
         if not req.smoke or req.require_real_clients or req.require_real_evaluation or req.dataset_root:
-            raise HTTPException(status_code=400, detail="Chế độ ảnh thật cần release mixed pv_pd_v3 và manifest; hiện web chỉ cho chạy thử Flower trên ảnh tổng hợp.")
+            raise HTTPException(status_code=400, detail="Chế độ ảnh thật cần release mixed pv_pd_v3 và manifest; hiện web chỉ cho chạy thử Flower trên ảnh nhiễu ngẫu nhiên để kiểm chứng hệ thống.")
         if req.num_clients != 5:
             raise HTTPException(status_code=400, detail="Demo Flower yêu cầu đúng 5 client")
         if abs(req.alpha - 0.1) > 1e-9:
@@ -442,7 +448,7 @@ def _start_federated(background_tasks: BackgroundTasks, req: FederatedTrainReque
             "engine": "network",
             "message": (
                 f"Đang khởi động Flower server 127.0.0.1:{port} và 5 client 127.0.0.1:{port}; "
-                f"chạy thử {req.rounds} vòng trên ảnh tổng hợp."
+                f"chạy thử {req.rounds} vòng trên ảnh nhiễu ngẫu nhiên (kiểm chứng hệ thống)."
             ),
             "config": req.model_dump(),
         }
@@ -457,7 +463,7 @@ def _start_federated(background_tasks: BackgroundTasks, req: FederatedTrainReque
     if matched_key is None:
         raise HTTPException(status_code=400, detail="Simulation chỉ hỗ trợ alpha=0.1, 1.0 hoặc 100.0")
     if req.dataset_root:
-        raise HTTPException(status_code=400, detail="Simulation web chỉ dùng smoke tổng hợp; dataset_root ảnh thật chưa khả dụng")
+        raise HTTPException(status_code=400, detail="Simulation web chỉ chạy thử với ảnh nhiễu ngẫu nhiên; dataset_root ảnh thật chưa khả dụng")
     _cap("max_rounds", req.rounds, "Số vòng")
     _cap("max_local_epochs", req.local_epochs, "Epoch cục bộ")
     training_guard.require_memory("inprocess")
@@ -468,6 +474,7 @@ def _start_federated(background_tasks: BackgroundTasks, req: FederatedTrainReque
             detail=f"Thư mục phân hoạch cho alpha={req.alpha} không tồn tại: {part_dir}"
         )
 
+    NETWORK_DEMO.detach_run()
     CURRENT_TASK["config"] = req.model_dump()
     _mark_task_running(
         "Federated", "federated",

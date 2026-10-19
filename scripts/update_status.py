@@ -53,7 +53,7 @@ ALLOWED_DOCS = {
     "SERVER_DEPLOY_20261005.md", "REFERENCES_IEEE.md", "NEXT_TRAINING_PLAN.md",
     "UI_ACCEPTANCE_2026-10-12.md", "COMMUNITY_FL.md",
     "UI_TRIAL_2026-10-13.md", "UI_VIEWER_REVIEW_2026-10-13.md", "UI_COMPARISON_WIDE_SCREEN_2026-10-13.md",
-    "UI_UX_REVIEW_2026-10-14.md", "REVIEW_TOAN_DIEN_2026-10-16.md",
+    "UI_UX_REVIEW_2026-10-14.md", "REVIEW_TOAN_DIEN_2026-10-16.md", "REVIEW_WEB_2026-10-19.md",
 }
 # Số liệu từng xuất hiện trong tài liệu cũ và mâu thuẫn với artifact: không được quay lại docs hiện hành.
 FORBIDDEN_NUMBERS = ("97,12", "97.12", "90,44", "90.44")
@@ -570,7 +570,7 @@ def check_multiseed(ctx: Ctx) -> Result:
         return Result(DONE, "multiseed_real_summary.json hợp lệ (mean ± std, 3 seed)")
     return Result(
         BLOCKED,
-        "chưa có multi-seed THẬT cho protocol đang công bố (mixed PV+PlantDoc, pretrained); chỉ có bản smoke trên ảnh tổng hợp",
+        "chưa có multi-seed THẬT cho protocol đang công bố (mixed PV+PlantDoc, pretrained); chỉ có bản smoke trên ảnh nhiễu ngẫu nhiên",
         needs=("GPU (Kaggle/Colab): train lại 7 mô hình × 3 seed với CÙNG optimizer và ngân sách (~10 GPU-giờ mỗi seed); "
                "máy này CPU, không train. Xem docs/EXPERIMENT_PROTOCOL.md mục 'Khi nào cần train lại'"),
         unlock=[

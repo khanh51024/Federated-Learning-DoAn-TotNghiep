@@ -135,3 +135,26 @@ def test_simulation_marks_running_before_the_background_task_and_stop_is_idle_sa
     for task in background.tasks:
         task.func(*task.args, **task.kwargs)
     assert CURRENT_TASK["status"] == "cancelled"
+
+
+def test_task_messages_do_not_headline_a_meaningless_accuracy():
+    """Trên ảnh nhiễu ngẫu nhiên độ chính xác đứng ở 1/38; thông báo hiển thị cho người dùng không được lấy nó làm tiêu điểm."""
+    from pathlib import Path
+
+    source = (Path(__file__).resolve().parents[1] / "web/routers/training.py").read_text(encoding="utf-8")
+    for banned in ("Val Acc", "Global Acc", "Test Acc", "Best Acc", "ảnh tổng hợp"):
+        assert banned not in source, banned
+
+
+def test_starting_a_non_network_task_detaches_the_previous_flower_session(tmp_path):
+    """Chạy Centralized sau một phiên Flower không được hiện RTT/số client của phiên cũ."""
+    from web.state import NETWORK_DEMO
+
+    _reset_task()
+    NETWORK_DEMO.run_dir = tmp_path
+    try:
+        trigger_centralized_train(BackgroundTasks(), CentralizedTrainRequest(epochs=1))
+        assert NETWORK_DEMO.run_dir is None
+    finally:
+        _reset_task()
+        NETWORK_DEMO.run_dir = None
