@@ -2,7 +2,7 @@
 import { getEvidence, getGallery, getModels, getSummary } from "../core/store.js";
 import { ApiError, isAbort, postForm } from "../core/api.js";
 import {
-  $$, MODEL_LABELS, MODEL_ORDER, NARROW_QUERY, byId, cropOf, esc, fmtInt, fmtNum, fmtPct, fmtPctValue, formatApiError,
+  $$, MODEL_LABELS, MODEL_ORDER, NARROW_QUERY, byId, cropOf, diseaseOf, esc, fmtInt, fmtNum, fmtPct, fmtPctValue, formatApiError,
   formatDiseaseName, modelPill, notify, pillarOf, prefersReducedMotion, revealItems, setBar, setDisabled, setHtml,
   openOnWide, setText, toggleHidden,
 } from "../core/dom.js";
@@ -319,6 +319,18 @@ function renderTable(modelIds, { animateIds = [] } = {}) {
 }
 
 /** Kết quả chính (UI-03): mô hình học liên kết đứng đầu với nhãn dự đoán, đúng/sai và độ tin cậy; các mô hình còn lại chỉ là đối chiếu. */
+/** Số mô hình (trong các mô hình đang hiển thị) trùng với mô hình chính về loại cây và về nhóm bệnh. */
+function agreement(refId) {
+  const ref = state.rows.get(refId);
+  const rows = plannedModels().map(id => state.rows.get(id)).filter(r => r && !r.error);
+  const refCrop = cropOf(ref.predicted_class);
+  return {
+    total: rows.length,
+    sameCrop: rows.filter(r => cropOf(r.predicted_class) === refCrop).length,
+    sameClass: rows.filter(r => r.predicted_class === ref.predicted_class).length,
+  };
+}
+
 function headlineHtml(trueClass) {
   const ref = state.mode === "quick" && state.quickModel ? state.quickModel : "fedavg";
   const result = state.rows.get(ref);
@@ -329,16 +341,22 @@ function headlineHtml(trueClass) {
     : v === "wrong-disease" ? '<span class="verdict mid">✕ Sai bệnh (đúng loại cây)</span>'
       : v === "wrong" ? '<span class="verdict bad">✕ Sai cả loại cây</span>'
         : '<span class="verdict none">chưa biết nhãn thật nên chưa chấm</span>';
-  const calibrated = result.calibrated ? ` · sau hiệu chuẩn <b class="mono">${fmtNum(result.calibrated.confidence_pct, 1)}%</b>` : "";
+  const calibrated = result.calibrated ? `sau hiệu chuẩn ${fmtNum(result.calibrated.confidence_pct, 1)}%` : "chưa hiệu chuẩn";
   const uncertain = result.is_uncertain ? ' <span class="pill-flag" title="Xác suất cao nhất dưới 50% hoặc hai nhóm đầu quá sát nhau">không chắc</span>' : "";
+  const agree = agreement(ref);
+  const agreeText = count => (agree.total > 1 ? `${count}/${agree.total} mô hình đồng ý` : "chỉ một mô hình");
   const truth = trueClass && v !== "correct"
     ? `<p class="headline-truth">Nhãn thật: <b>${esc(formatDiseaseName(trueClass))}</b></p>` : "";
   return `<div class="diag-headline ${tone}">
-      <p class="summary-line">Kết quả chính · ${esc(MODEL_LABELS[ref])}${ref === "fedavg" ? " (học liên kết)" : ""}</p>
-      <p class="headline-name">${esc(formatDiseaseName(result.predicted_class))}${uncertain}</p>
-      <p class="headline-meta">${verdictText} · xác suất dự đoán <b class="mono">${fmtNum(result.confidence_pct, 1)}%</b>${calibrated}</p>
+      <p class="summary-line">Kết quả chính, mô hình ${esc(MODEL_LABELS[ref])}${ref === "fedavg" ? " (học liên kết)" : ""}</p>
+      <div class="verdict-grid">
+        <div class="vg-cell"><span class="vg-label">Loại cây</span><b class="vg-value">${esc(cropOf(result.predicted_class))}</b><span class="vg-sub">${agreeText(agree.sameCrop)}</span></div>
+        <div class="vg-cell"><span class="vg-label">Nhóm</span><b class="vg-value headline-name">${esc(diseaseOf(result.predicted_class))}${uncertain}</b><span class="vg-sub">${agreeText(agree.sameClass)}</span></div>
+        <div class="vg-cell"><span class="vg-label">Xác suất dự đoán</span><b class="vg-value mono">${fmtNum(result.confidence_pct, 1)}%</b><span class="vg-sub">${calibrated}</span></div>
+      </div>
+      <p class="headline-meta">${verdictText}</p>
       ${truth}
-      <p class="field-hint">Xác suất dự đoán là mức mô hình gán cho nhóm đã chọn, không phải xác suất dự đoán đúng; ảnh khác kiểu ảnh học có thể sai dù xác suất cao.</p>
+      <p class="field-hint">Xác suất là mức mô hình gán cho nhóm đã chọn, không phải xác suất đoán đúng; ảnh khác kiểu ảnh học có thể sai dù xác suất cao.</p>
     </div>`;
 }
 
@@ -353,7 +371,8 @@ function summarize(modelIds) {
     return;
   }
   const pre = state.item
-    ? `<p class="summary-line">Ảnh mẫu #${Number(state.item.id)} · <b>${esc(formatDiseaseName(state.item.label))}</b>${state.showStats ? ` · ${esc(levelText(state.item))}` : ""}</p>` : "";
+    ? `<p class="summary-line">Ảnh mẫu #${Number(state.item.id)}, <b>${esc(formatDiseaseName(state.item.label))}</b>${state.showStats ? `, ${esc(levelText(state.item))}` : ""}</p>`
+    : '<p class="summary-line">Ảnh của bạn (ngoài bộ dữ liệu): kết quả chỉ để tham khảo.</p>';
 
   if (trueClass) {
     const ok = results.filter(([id, r]) => verdict(r, trueClass) === "correct");
@@ -380,7 +399,7 @@ function summarize(modelIds) {
     const ranked = [...tally.entries()].sort((a, b) => b[1] - a[1]);
     box.innerHTML = `${pre}${headlineHtml(null)}
       <p class="summary-big">Đối chiếu, các mô hình dự đoán: ${ranked.map(([c, n]) => `<b>${esc(formatDiseaseName(c))}</b> (${n}/${results.length})`).join(" · ")}</p>
-      <p class="field-hint">Chưa biết nhãn thật nên chưa chấm đúng/sai. Mở “Tùy chọn nâng cao”, chọn “Nhãn thật” nếu biết để đối chiếu kết quả.</p>${timingHtml()}`;
+      <p class="field-hint">Chưa biết nhãn thật nên chưa chấm đúng/sai. Nếu biết nhãn thật, chọn ở ô “Nhãn thật” phía trên để đối chiếu.</p>${timingHtml()}`;
     toggleHidden(explain, true);
     explain.innerHTML = "";
   }
@@ -762,6 +781,32 @@ function rerender() {
   else run();
 }
 
+/** Dải "Mô hình nhận được gì": số nhóm/loại cây từ danh sách nhóm; độ chính xác từ số liệu đã kiểm hash. */
+function renderBrief(evidence, summary) {
+  const classes = state.classes;
+  if (classes.length) {
+    const crops = new Map();
+    for (const cls of classes) {
+      const crop = cropOf(cls);
+      if (!crops.has(crop)) crops.set(crop, []);
+      crops.get(crop).push(cls);
+    }
+    const healthy = classes.filter(cls => /___healthy$/.test(cls)).length;
+    setText(byId("brief-classes-title"), `${classes.length} nhóm, ${crops.size} loại cây`);
+    setText(byId("brief-classes-text"), `${classes.length - healthy} nhóm bệnh và ${healthy} nhóm lá khỏe. Mô hình luôn chọn một trong ${classes.length} nhóm này: cây hoặc bệnh ngoài danh sách vẫn bị xếp vào nhóm gần nhất, nên kết quả không còn ý nghĩa.`);
+    setHtml(byId("brief-list-body"), [...crops.entries()].map(([crop, list]) =>
+      `<p><b>${esc(crop)}</b>: ${list.map(cls => esc(diseaseOf(cls))).join("; ")}</p>`).join(""));
+  }
+  const fed = evidence?.available ? (evidence.models || []).find(m => m.model_id === "fedavg")?.metrics : null;
+  if (fed) {
+    setText(byId("brief-crop-title"), `Nhận đúng loại cây: ${fmtPct(fed.plantvillage.crop_accuracy, 1)} ảnh trong phòng, ${fmtPct(fed.plantdoc.crop_accuracy, 1)} ảnh ngoài đồng`);
+    setText(byId("brief-crop-text"), `FedAvg trên tập kiểm tra. Kết quả hiện riêng loại cây và nhóm bệnh: đoán sai bệnh vẫn có thể đúng loại cây. Đúng nhóm bệnh thấp hơn: ${fmtPct(fed.plantvillage.top1_accuracy, 1)} (trong phòng), ${fmtPct(fed.plantdoc.top1_accuracy, 1)} (ngoài đồng).`);
+    const fullFrame = summary?.fullframe?.available ? summary.fullframe.splits?.val?.full_frame?.fedavg : null;
+    setText(byId("brief-own-title"), "Ảnh của bạn (ngoài bộ dữ liệu) dùng được");
+    setText(byId("brief-own-text"), `Tải ảnh một lá đã cắt; kết quả kém hơn ảnh mẫu${fullFrame !== null && fullFrame !== undefined ? `, và chỉ còn ${fmtPct(fullFrame, 1)} nếu đưa cả khung ảnh nhiều lá (PlantDoc, FedAvg)` : ""}. Đây chưa phải độ chính xác ngoài thực địa.`);
+  }
+}
+
 export async function mount() {
   const [evidence, summary, gallery] = await Promise.all([
     getEvidence().catch(() => null),
@@ -772,6 +817,7 @@ export async function mount() {
   state.shards = summary?.shards?.available ? summary.shards : null;
   state.gallery = gallery.items || [];
   state.showStats = evidence?.available === true && gallery.validation_membership?.status === "verified";
+  renderBrief(evidence, summary);
   openOnWide(byId("diag-model-details")); // màn rộng: bảng dự đoán từng mô hình mở sẵn (in ấn vẫn khôi phục đúng nhờ beforeprint)
   if (!state.showStats) {
     // không có số liệu để xếp mức nhận đúng: ẩn các bộ lọc theo độ khó

@@ -15,7 +15,7 @@ graph TD
         S1 -->|Tập hợp 54.305 ảnh| T1["Huấn luyện MobileNetV3"]
     end
 
-    subgraph Federated ["Mô hình Học Liên Hợp (Federated Learning)"]
+    subgraph Federated ["Mô hình Học Liên Kết (Federated Learning)"]
         F1["Nông trại 1 (Local Data)"] -.->|Chỉ gửi Update Trọng số & n_k| S2[("Flower Server (FedAvg)")]
         F2["Nông trại 2 (Local Data)"] -.->|Chỉ gửi Update Trọng số & n_k| S2
         F3["Nông trại 3 (Local Data)"] -.->|Chỉ gửi Update Trọng số & n_k| S2

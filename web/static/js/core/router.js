@@ -41,7 +41,7 @@ export const ROUTES = [
   },
   {
     id: "hoc-lien-ket", step: 7, group: "Demo", label: "Học liên kết",
-    title: "Tham gia học liên kết từ trình duyệt",
+    title: "Tham gia học liên kết (federated learning) từ trình duyệt",
     desc: "Góp ảnh lá của bạn vào một vòng học liên kết thật, ngay trong trình duyệt",
     load: () => import("../pages/community.js"),
   },

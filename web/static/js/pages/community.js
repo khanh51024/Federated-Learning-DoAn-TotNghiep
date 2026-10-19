@@ -127,6 +127,7 @@ function renderStatus() {
   const config = st.config || {};
   setText(byId("comm-limit-note"), `Tối thiểu ${config.min_images ?? 5} ảnh, tối đa ${config.max_images ?? 300} ảnh mỗi lần.`);
   renderMetricNote();
+  renderSession();
   renderControls(); // gồm lý do nút khóa và thanh cột mốc: không để khoảng trống giữa lúc vừa tham gia và lúc có thông tin vòng
   if (!S.classOptions && Array.isArray(st.classes)) {
     S.classOptions = st.classes.map(name => `<option value="${esc(name)}">${esc(formatDiseaseName(name))}</option>`).join("");
@@ -150,6 +151,25 @@ function supportProblem() {
     : "";
 }
 
+/** Thẻ "Phiên hiện tại": vòng, đã gửi/cần, thời gian còn lại, phiên bản; lấy từ /api/community/status nên hiện cả trước khi tham gia. */
+function renderSession() {
+  const st = S.status;
+  const box = byId("comm-session");
+  const round = st?.round;
+  toggleHidden(box, !(st?.enabled !== false && st?.open && round));
+  if (!round) return;
+  setText(byId("comm-sess-round"), `#${round.round_id}`);
+  setText(byId("comm-sess-people"), `${round.received} / ${round.k_target}`);
+  setText(byId("comm-sess-version"), `v${st.version}`);
+  S.sessionDeadlineAt = performance.now() + (round.seconds_left || 0) * 1000;
+  tickSession();
+}
+
+function tickSession() {
+  if (S.sessionDeadlineAt === undefined || byId("comm-session")?.classList.contains("hidden")) return;
+  setText(byId("comm-sess-left"), clock((S.sessionDeadlineAt - performance.now()) / 1000));
+}
+
 function renderRound() {
   const round = S.round;
   if (!round) {
@@ -164,6 +184,7 @@ function renderRound() {
 }
 
 function tickClock() {
+  tickSession();
   if (!S.round) return;
   setText(byId("comm-kpi-left"), clock((S.deadlineAt - performance.now()) / 1000));
 }
