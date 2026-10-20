@@ -52,6 +52,15 @@ class FederatedTrainRequest(BaseModel):
     seed: int = Field(default=42, ge=0, le=2_147_483_647, description="Seed cho model init/DataLoader để tái lập experiment")
 
 
+def _session_brief(run_dir: Path) -> Dict[str, Any]:
+    """Trạng thái và thời điểm của phiên (từ session.json), để Phụ lục D và trang Flower hiện cùng một nguồn."""
+    try:
+        session = json.loads((run_dir / "session.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return {key: session.get(key) for key in ("status", "started_at_utc", "finished_at_utc", "error")}
+
+
 @router.get("/api/federated/network-metrics")
 def get_federated_network_metrics() -> Dict[str, Any]:
     """Return persisted metrics from the real Flower network server path."""
@@ -104,6 +113,8 @@ def get_federated_network_metrics() -> Dict[str, Any]:
         "require_real_evaluation": payload.get("require_real_evaluation", False),
         "final_test_metrics": payload.get("final_test_metrics"),
         "checkpoint_file": payload.get("checkpoint_file"),
+        "final_model_hash": payload.get("final_model_hash"),
+        "session": _session_brief(current_run),
         "rounds": rounds,
         "audit_rounds": payload.get("audit_rounds", []),
     }

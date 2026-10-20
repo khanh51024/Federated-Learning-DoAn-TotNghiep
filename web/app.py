@@ -27,6 +27,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from web.routers import community_fl as _community_router
+from web.routers import flower as _flower_router
 from web.routers import inference as _inference_router
 from web.routers import monitoring as _monitoring_router
 from web.routers import training as _training_router
@@ -203,6 +204,7 @@ app.include_router(_monitoring_router.router)
 app.include_router(_inference_router.router)
 app.include_router(_training_router.router)
 app.include_router(_community_router.router)
+app.include_router(_flower_router.router)
 
 # Mount thư mục static assets
 app.mount("/static", _STATIC_FILES, name="static")

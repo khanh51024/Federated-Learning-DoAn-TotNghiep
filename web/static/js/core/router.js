@@ -46,7 +46,13 @@ export const ROUTES = [
     load: () => import("../pages/community.js"),
   },
   {
-    id: "phu-luc", step: 8, group: "Phụ lục", inNav: false, label: "Phụ lục kỹ thuật",
+    id: "flower", step: 8, group: "Demo", label: "Flower",
+    title: "Flower có đang chạy thật không?",
+    desc: "Bằng chứng một phiên Flower thật: 5 client kết nối, các vòng gộp đủ cập nhật, mã băm khớp đến checkpoint",
+    load: () => import("../pages/flower.js"),
+  },
+  {
+    id: "phu-luc", step: 9, group: "Phụ lục", inNav: false, label: "Phụ lục kỹ thuật",
     title: "Phụ lục kỹ thuật",
     desc: "Kiểm chứng số liệu, nguồn gốc mô hình và kiểm thử hệ thống học phân tán trên máy chủ",
     load: () => import("../pages/appendix.js"),

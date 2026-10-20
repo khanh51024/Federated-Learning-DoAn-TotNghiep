@@ -22,7 +22,7 @@ CSS = "\n".join((STATIC / "css" / name).read_text(encoding="utf-8") for name in 
 JS_FILES = sorted(p for p in JS_DIR.rglob("*.js"))
 JS_BY_REL = {p.relative_to(JS_DIR).as_posix(): p.read_text(encoding="utf-8") for p in JS_FILES}
 ALL_JS = "\n".join(JS_BY_REL.values())
-ROUTE_IDS = ["gioi-thieu", "du-lieu", "phuong-phap", "ket-qua", "ket-luan", "chan-doan", "hoc-lien-ket", "phu-luc"]
+ROUTE_IDS = ["gioi-thieu", "du-lieu", "phuong-phap", "ket-qua", "ket-luan", "chan-doan", "hoc-lien-ket", "flower", "phu-luc"]
 NAV_ROUTE_IDS = ROUTE_IDS[:-1]  # phụ lục không nằm trên thanh menu (vào từ chân trang)
 # địa chỉ cũ (sáu bước) phải còn mở được: mã tham gia đã in có dạng /?code=…#huan-luyen
 OLD_ROUTE_ALIASES = {"tong-quan": "gioi-thieu", "non-iid": "du-lieu", "huan-luyen": "hoc-lien-ket", "bang-chung": "ket-luan"}
@@ -52,7 +52,7 @@ def test_routes_match_nav_sections_and_page_modules():
     assert [int(n) for _, n in routes] == list(range(1, len(ROUTE_IDS) + 1))
     nav = re.findall(r'class="nav-item"\s+href="#([\w-]+)"\s+data-route="([\w-]+)"', HTML)
     assert [a for a, _ in nav] == NAV_ROUTE_IDS and all(a == b for a, b in nav)
-    assert 'id: "phu-luc", step: 8, group: "Phụ lục", inNav: false' in router, "phụ lục là trang duy nhất ngoài thanh menu"
+    assert 'id: "phu-luc", step: 9, group: "Phụ lục", inNav: false' in router, "phụ lục là trang duy nhất ngoài thanh menu"
     assert 'href="#phu-luc"' in HTML, "phụ lục phải có liên kết ở chân trang"
     for old, new in OLD_ROUTE_ALIASES.items():
         assert f'"{old}": "{new}"' in router, f"thiếu alias cho địa chỉ cũ #{old}"

@@ -92,6 +92,9 @@
         <a class="nav-item" href="#hoc-lien-ket" data-route="hoc-lien-ket">
           <span class="nav-label">Học phân tán</span>
         </a>
+        <a class="nav-item" href="#flower" data-route="flower">
+          <span class="nav-label">Flower</span>
+        </a>
       </nav>
 
       <div class="topbar-actions">
@@ -549,6 +552,11 @@
         </section>
       </section>
 
+      <!-- DEMO 3: FLOWER CÓ CHẠY THẬT KHÔNG (chỉ đọc bằng chứng của phiên đã chạy) -->
+      <section id="page-flower" class="tab-pane" data-route="flower">
+        <div id="flower-root"><div class="skeleton skeleton-block"></div><div class="skeleton skeleton-block mt-4"></div></div>
+      </section>
+
       <!-- PHỤ LỤC KỸ THUẬT (không nằm trên thanh menu; vào từ chân trang) -->
       <section id="page-phu-luc" class="tab-pane" data-route="phu-luc">
         <div id="appendix-root">
@@ -563,7 +571,7 @@
           <b>Phần chạy trên máy chủ dưới đây dùng để kiểm chứng hệ thống học phân tán, không để đo độ chính xác.</b>
           Máy chủ demo không có bộ ảnh lá nên mô hình học trên ảnh nhiễu ngẫu nhiên; độ chính xác đứng ở mức đoán ngẫu nhiên (1/38) là đúng kỳ vọng.
           Điều được chứng minh là phần tính toán thật: với Flower, 6 tiến trình Python (1 máy chủ, 5 client) trao đổi trọng số qua gRPC và mỗi vòng sinh ra một mô hình chung có mã băm mới.
-          Độ chính xác của đồ án xem ở chương 4; học thật từ ảnh lá: trang <a href="#hoc-lien-ket">Học phân tán</a>.
+          Độ chính xác của đồ án xem ở chương 4; học thật từ ảnh lá: trang <a href="#hoc-lien-ket">Học phân tán</a>; kết luận Flower có chạy thật không: trang <a href="#flower">Flower</a>.
         </p></div>
 
         <div class="train-layout mt-4">

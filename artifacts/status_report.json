@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-20T10:01:29",
+      "generated_at": "2026-10-20T10:41:30",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,7 +145,7 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-20T10:01:31",
+      "generated_at": "2026-10-20T10:41:32",
       "overall": "not_ready",
       "source": "artifacts/pre_demo_check.json"
     },
@@ -180,16 +180,16 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-20T10:01:34",
+      "generated_at": "2026-10-20T10:41:35",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
     },
     "checkpoint_catalog": {
       "status": "complete",
-      "total_pt_files": 61,
+      "total_pt_files": 62,
       "in_models": 15,
-      "in_groups": 46,
+      "in_groups": 47,
       "unclassified": [],
       "source": "quét đĩa (scripts/build_registry.py)"
     }
@@ -199,7 +199,7 @@
       "id": "registry",
       "title": "Registry v2 + danh mục mọi checkpoint trên đĩa",
       "status": "XONG",
-      "detail": "schema v2; 18 model; 61 file .pt đều có tên (15 trong model, 46 trong nhóm)",
+      "detail": "schema v2; 18 model; 62 file .pt đều có tên (15 trong model, 47 trong nhóm)",
       "unlock": []
     },
     {

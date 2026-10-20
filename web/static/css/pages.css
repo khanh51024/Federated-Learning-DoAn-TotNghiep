@@ -1759,6 +1759,19 @@ body[data-group="demo"] .page-title { letter-spacing: -0.01em; }
 .vg-sub { color: var(--text-secondary); font-size: var(--fs-sm); }
 #diag-empty { padding: var(--space-6) var(--space-4); }
 
+/* Trang Flower: kết luận lớn và danh sách các điều đã kiểm (có chữ và dấu, màu chỉ là phụ) */
+.flower-verdict { margin: 2px 0 var(--space-2); font-size: var(--fs-xl); font-weight: 700; }
+.flower-checks { display: grid; gap: var(--space-2); margin: var(--space-2) 0 0; padding: 0; list-style: none; }
+.flower-check { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--border-color); border-left: 4px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-surface); }
+.flower-check.is-ok { border-left-color: var(--accent-emerald); }
+.flower-check.is-bad { border-left-color: var(--accent-rose); }
+.flower-mark { flex: 0 0 1.5em; font-weight: 700; text-align: center; }
+.flower-check.is-ok .flower-mark { color: var(--accent-emerald-strong); }
+.flower-check.is-bad .flower-mark { color: var(--accent-rose); }
+.flower-check + .flower-check { margin-top: 0; }
+#flower-root .data-table th, #flower-root .data-table td { vertical-align: middle; }
+.flower-detail { display: block; margin-top: 2px; color: var(--text-secondary); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+
 /* Trọng số và độ trễ của học phân tán (trang Học phân tán và trang quản trị dùng chung) */
 .comm-weights { min-width: 0; }
 .cw-block + .cw-block { margin-top: var(--space-5); }
