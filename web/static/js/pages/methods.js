@@ -80,7 +80,7 @@ function metricsHtml() {
 function systemHtml() {
   return `
     <ul class="system-list mt-3">
-      <li><b>Chẩn đoán ảnh.</b> Máy chủ chạy bảy mô hình đã huấn luyện trên cùng một ảnh và hiện kết quả cạnh nhau, kèm vùng ảnh mô hình dựa vào (Grad-CAM).</li>
+      <li><b>Chẩn đoán ảnh.</b> Ba cách nhận diện ngang hàng chạy trên cùng một ảnh: Local only (năm client), mô hình PlantVillage ngoài (đã đánh giá lại) và mô hình cộng đồng (phiên bản mới nhất); bảy mô hình của đồ án (kèm Centralized, FedAvg) nằm sau nút tổng hợp, có vùng ảnh mô hình dựa vào (Grad-CAM).</li>
       <li><b>Học phân tán từ trình duyệt.</b> Mỗi người tham gia là một client thật: trình duyệt tính đặc trưng ảnh bằng mạng nền đóng băng của FedAvg, huấn luyện lớp phân loại cuối (khoảng 39 nghìn tham số) và chỉ gửi trọng số lớp đó (khoảng 156 KB) lên máy chủ. Máy chủ kiểm tra rồi gộp theo FedAvg qua từng vòng.</li>
       <li><b>Kiểm thử hệ thống.</b> Phiên Flower với năm tiến trình client trên máy chủ chỉ để kiểm chứng điều phối và phép gộp, không đo độ chính xác. Xem <a href="#phu-luc">Phụ lục kỹ thuật</a>.</li>
     </ul>`;

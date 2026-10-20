@@ -8,8 +8,9 @@ Mô-đun này thuần số học (numpy), không biết gì về HTTP hay SQLite
 - gộp FedAvg bằng `aggregate_fedavg` có sẵn (trọng số theo số ảnh, có trần);
 - chấm head ứng viên trên tập đặc trưng giám sát và quyết định chấp nhận (cổng không-thoái-lui).
 
-Tập giám sát (đặc trưng của ảnh validation) cũng đã được dùng để chọn mô hình gốc, nên con số của nó chỉ là tín hiệu giám sát
-của hệ thống, KHÔNG phải số liệu khoa học và không được trộn với số công bố của bundle.
+Tập giám sát (đặc trưng của ảnh validation) cũng đã được dùng để chọn mô hình gốc, nên con số của nó chỉ để theo dõi từng vòng
+và không được trộn với số công bố của bundle. Số đo mức báo cáo lấy từ thí nghiệm mô phỏng trên test giữ riêng
+(`scripts/simulate_community.py`, `src/federated/community_sim.py`).
 """
 from __future__ import annotations
 

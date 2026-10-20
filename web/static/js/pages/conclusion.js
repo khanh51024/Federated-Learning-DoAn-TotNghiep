@@ -12,7 +12,7 @@ function baseLimits(seed) {
     ["Xác suất dự đoán chỉ được hiệu chuẩn một phần", "Web hiện cả xác suất gốc và xác suất đã hiệu chuẩn. Việc hiệu chuẩn học trên ảnh chủ yếu là PlantVillage nên với ảnh ngoài đồng mô hình vẫn gán xác suất cao hơn độ chính xác thực (xem chương 4, mục 4.4)."],
     ["Chưa thử nghiệm client lỗi hay bị tấn công", "Máy chủ có cơ chế kiểm tra bản cập nhật (chạy thử ở Phụ lục kỹ thuật), nhưng chưa có thí nghiệm đo độ chính xác nên chưa kết luận được."],
     ["Năm client là giả lập", "Năm client là năm phần của cùng một bộ dữ liệu, không phải năm nông hộ thật; không có độ trễ mạng hay thiết bị khác nhau."],
-    ["Học phân tán cộng đồng chỉ là thử nghiệm", "Người tham gia chỉ học lớp cuối trên đặc trưng của backbone đóng băng, với ảnh và nhãn tự gán (chưa có chuyên gia kiểm). Máy chủ chấm bằng tập đã dùng để chọn mô hình gốc nên con số chỉ là tín hiệu theo dõi; khi mỗi người chỉ có vài nhóm thì mô hình dễ kém đi và máy chủ sẽ từ chối vòng đó. Mô hình cộng đồng không nằm trong bảy mô hình ở chương 4."],
+    ["Học phân tán cộng đồng có giới hạn đã đo", "Người tham gia chỉ học lớp cuối trên đặc trưng của backbone đóng băng, với ảnh và nhãn tự gán (chưa có chuyên gia kiểm). Thí nghiệm mô phỏng ở mục 4.5 cho thấy mức tăng khiêm tốn (khoảng 1 đến 2 điểm phần trăm khi dữ liệu người tham gia đủ đa dạng), gần như không tăng với ảnh ngoài đồng, và vòng có ít người mà mỗi người chỉ có một nhóm bệnh thì dễ bị cổng chất lượng từ chối. Người thật chưa được thử ở quy mô lớn."],
     ["Riêng tư chưa tuyệt đối", "Học phân tán chỉ giữ ảnh gốc không rời client; trọng số vẫn có thể làm lộ thông tin. Muốn bảo đảm mạnh hơn cần thêm kỹ thuật như differential privacy hoặc secure aggregation."],
   ];
 }

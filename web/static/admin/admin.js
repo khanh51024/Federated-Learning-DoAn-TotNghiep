@@ -1,6 +1,7 @@
 // Trang quản trị học phân tán cộng đồng. Mọi quyền nằm ở token quản trị mà máy chủ kiểm; trang này chỉ là giao diện cho
 // các API /api/community/admin/*. Token chỉ giữ trong sessionStorage của tab; mã vừa tạo chỉ giữ trong bộ nhớ.
 import { getJson, postJson } from "/static/js/core/api.js";
+import { renderWeightsInto } from "/static/js/core/comm-weights.js";
 import { esc, fmtNum, formatApiError } from "/static/js/core/dom.js";
 import {
   DEFAULT_USER, authHeader, clearCredential, isRemembered, readCredential, storeCredential,
@@ -191,7 +192,7 @@ async function loadState() {
 
 async function loadHistory() {
   try {
-    S.history = await getJson("/api/community/history?limit=15", { timeoutMs: 15000 });
+    S.history = await getJson("/api/community/history?limit=20", { timeoutMs: 15000 });
   } catch {
     /* lịch sử là phần phụ: giữ bản cũ nếu lỗi */
   }
@@ -267,7 +268,7 @@ function renderSession() {
     text("kpi-accuracy", pct(latest.metrics.accuracy));
     text("metric-note", latest.version === 0
       ? "Chưa có vòng nào được nhận: mô hình hiện hành là FedAvg v7 gốc."
-      : `Mô hình gốc FedAvg v7: ${pct(base?.metrics?.accuracy)}. Tính trên tập validation đã dùng để chọn mô hình gốc — chỉ là tín hiệu theo dõi.`);
+      : `Mô hình gốc FedAvg v7: ${pct(base?.metrics?.accuracy)}. Tính trên tập validation đã dùng để chọn mô hình gốc nên chỉ để theo dõi từng vòng; số đo mức báo cáo là mô phỏng ở chương 4.`);
   }
   const select = $("rollback-version");
   const wanted = versions.map(v => String(v.version));
@@ -314,6 +315,7 @@ function renderCodesTable() {
 }
 
 function renderVersions() {
+  renderWeightsInto($("weights-body"), S.history);
   const versions = S.history?.versions || [];
   $("versions-body").innerHTML = versions.length
     ? versions.slice().reverse().map(v => `<tr>

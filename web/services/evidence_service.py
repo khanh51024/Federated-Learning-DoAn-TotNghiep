@@ -126,6 +126,65 @@ def _bins(block: Dict[str, Any]) -> List[Dict[str, Any]]:
     ]
 
 
+def _plantvillage_reference(evidence: Dict[str, Any]) -> Dict[str, Any]:
+    """Báo cáo đánh giá lại mô hình PlantVillage ngoài (không huấn luyện lại). Tách khỏi bảy mô hình đã kiểm hash: không có trong
+    `MODEL_ORDER`, nên thiếu hay lệch báo cáo này không làm các mục tái đánh giá / test giữ riêng bị giữ lại."""
+    report = _load_json(reg.PLANTVILLAGE_EVAL_JSON)
+    if report is None:
+        return _withheld(f"chưa có {reg.PLANTVILLAGE_EVAL_JSON} — chạy scripts/evaluate_plantvillage_reference.py (cần dataset)")
+    problems = _identity_problems(report, evidence)
+    if (report.get("model") or {}).get("checkpoint_sha256") != reg.PLANTVILLAGE_TRACED_SHA256:
+        problems.append("SHA-256 checkpoint trong báo cáo không khớp mô hình PlantVillage đã ghim")
+    if problems:
+        return _withheld("báo cáo PlantVillage không khớp: " + "; ".join(problems))
+
+    def split(block: Dict[str, Any]) -> Dict[str, Any]:
+        by = block.get("by_source") or {}
+        calibration = block.get("calibration") or {}
+        keep = ("count", "top1_accuracy", "macro_f1_supported", "crop_accuracy", "top1_ci95")
+        return {
+            "by_source": {src: {k: by[src].get(k) for k in keep} for src in by},
+            "ece": {src: (calibration.get(src) or {}).get("ece_raw") for src in ("overall", "plantvillage", "plantdoc")},
+            "temperature": block.get("temperature_fitted_on_calibration"),
+        }
+
+    return {
+        "available": True,
+        "model": report.get("model"),
+        "leakage": report.get("leakage"),
+        "preprocessing_chosen": report.get("preprocessing_chosen"),
+        "preprocessing_comparison_on_val": report.get("preprocessing_comparison_on_val"),
+        "validation": split(report.get("validation") or {}),
+        "holdout": split(report.get("holdout") or {}),
+        "vs_fedavg_on_holdout": report.get("vs_fedavg_on_holdout"),
+        "evidence": report.get("evidence"),
+    }
+
+
+def _community_simulation(evidence: Dict[str, Any]) -> Dict[str, Any]:
+    """Kết quả thí nghiệm mô phỏng học phân tán cộng đồng (scripts/simulate_community.py), đã rút gọn cho giao diện."""
+    report = _load_json(reg.COMMUNITY_SIMULATION_JSON)
+    if report is None:
+        return _withheld(f"chưa có {reg.COMMUNITY_SIMULATION_JSON} — chạy scripts/simulate_community.py")
+    runs = []
+    for key, run in (report.get("runs") or {}).items():
+        runs.append({
+            "key": key, "scenario": run["scenario"], "k": run["k"], "gate": run["gate"], "seeds": run["seeds"], "rounds": run["rounds"],
+            "final_delta_mean_points": run["final_delta_mean_points"], "final_delta_points": run["final_delta_points"],
+            "final_std": run["final_std"], "accepted_round_share": run["accepted_round_share"], "clipped_share": run["clipped_share"],
+            "mean_update_norm": run["mean_update_norm"],
+            "mean_curve": {m: run["mean_curve"][m] for m in ("accuracy", "macro_recall", "plantdoc_accuracy")},
+        })
+    if not runs:
+        return _withheld("báo cáo mô phỏng không có lần chạy nào")
+    return {
+        "available": True, "evidence": report.get("evidence"), "policy": report.get("policy"), "local_config": report.get("local_config"),
+        "seeds": report.get("seeds"), "rounds": report.get("rounds"), "scenarios": report.get("scenarios"),
+        "base_test": report.get("base_test"), "pool": report.get("pool"), "test": report.get("test"), "caveat": report.get("caveat"),
+        "runs": runs,
+    }
+
+
 def _published_by_id(evidence: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     return {m["model_id"]: m for m in evidence.get("models", [])}
 
@@ -788,7 +847,7 @@ def summary(evidence: Dict[str, Any]) -> Dict[str, Any]:
             "reason": reason,
             "identity": None,
             "checklist": _guard("checklist", lambda: _checklist(redact=True)),
-            **{name: _withheld(reason) for name in ("reeval", "plantdoc", "domain_gap", "leakage", "shards", "holdout", "statistics", "fullframe")},
+            **{name: _withheld(reason) for name in ("reeval", "plantdoc", "domain_gap", "leakage", "shards", "holdout", "statistics", "fullframe", "plantvillage_reference", "community_simulation")},
         }
     return {
         "available": True,
@@ -801,5 +860,7 @@ def summary(evidence: Dict[str, Any]) -> Dict[str, Any]:
         "holdout": _guard("test giữ riêng", lambda: _holdout(evidence)),
         "statistics": _guard("thống kê", lambda: _statistics(evidence)),
         "fullframe": _guard("ảnh nguyên khung", lambda: _fullframe(evidence)),
+        "plantvillage_reference": _guard("PlantVillage tham chiếu", lambda: _plantvillage_reference(evidence)),
+        "community_simulation": _guard("mô phỏng cộng đồng", lambda: _community_simulation(evidence)),
         "checklist": _guard("checklist", _checklist),
     }

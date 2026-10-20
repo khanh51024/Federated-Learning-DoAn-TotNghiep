@@ -3,6 +3,7 @@ import { getDetails, getEvidence, getSummary, modelsById } from "../core/store.j
 import { attachCrosshair } from "../core/crosshair.js";
 import { barRise, lineDraw, makeChartWhenVisible, pillarColors } from "../core/charts.js";
 import { play } from "../core/motion.js";
+import { chartHtml } from "../core/comm-weights.js";
 import {
   applyStyleData, $$, MODEL_LABELS, MODEL_ORDER, byId, diseaseOf, cropOf, esc, fmtInt, fmtNum, fmtPct,
   formatDiseaseName, modelPill, notify, pillarOf, sectionHead, withAlpha,
@@ -719,8 +720,115 @@ async function buildErrorAnalysis() {
   ]);
 }
 
+// ───────── Tab 5: Ba cách nhận diện ─────────
+const SCENARIO_LABEL = {
+  iid: "Ảnh bất kỳ (IID)", three_groups: "Mỗi người 3 nhóm bệnh", one_group: "Mỗi người 1 nhóm bệnh", plantdoc_only: "Chỉ ảnh ngoài đồng (PlantDoc)",
+};
+const signed = (value, digits = 2) => (value === null || value === undefined ? "—" : `${value > 0 ? "+" : value < 0 ? "−" : ""}${fmtNum(Math.abs(value), digits)}`);
+
+function pvSplitRow(label, block) {
+  if (!block) return "";
+  const ci = block.top1_ci95;
+  return `<tr><th scope="row">${esc(label)}</th><td class="mono">${fmtInt(block.count)}</td>
+    <td class="mono"><b>${fmtPct(block.top1_accuracy, 1)}</b>${ci && ci.low !== null ? `<span class="row-sub">${fmtPct(ci.low, 1)} đến ${fmtPct(ci.high, 1)}</span>` : ""}</td>
+    <td class="mono">${fmtNum(block.macro_f1_supported, 3)}</td><td class="mono">${fmtPct(block.crop_accuracy, 1)}</td></tr>`;
+}
+
+function pvSection(pv) {
+  if (!pv?.available) return `<section class="report-sub mt-5">${sectionHead("4.5.2", "PlantVillage", { tag: "h4" })}${notReady()}</section>`;
+  const h = pv.holdout.by_source;
+  const v = pv.validation.by_source;
+  const cmp = pv.vs_fedavg_on_holdout || {};
+  const pre = pv.preprocessing_comparison_on_val || {};
+  const line = (src, name) => {
+    const c = cmp[src];
+    if (!c) return "";
+    return `<tr><th scope="row">${name}</th><td class="mono">${fmtInt(c.count)}</td><td class="mono">${fmtPct(c.plantvillage_model_top1, 1)}</td>
+      <td class="mono">${fmtPct(c.fedavg_top1, 1)}</td><td class="mono">${c.mcnemar.a_right_b_wrong} / ${c.mcnemar.a_wrong_b_right}</td>
+      <td class="mono">${c.mcnemar.p_value < 0.001 ? "&lt; 0,001" : fmtNum(c.mcnemar.p_value, 3)}</td></tr>`;
+  };
+  return `<section class="report-sub mt-5" aria-labelledby="three-pv">
+    ${sectionHead("4.5.2", "PlantVillage: mô hình ngoài, đánh giá lại, không huấn luyện lại", { id: "three-pv", tag: "h4" })}
+    <p class="section-lead">Mô hình là <b>${esc(pv.model.origin)}</b> (${esc(pv.model.architecture)}), học trên ${esc(pv.model.training_data)}. Đồ án không huấn luyện lại mà chấm nó trên đúng các tập kiểm tra đã kiểm hash của release (nhiệt độ học trên tập hiệu chuẩn).</p>
+    <div tabindex="0" role="group" aria-label="Bảng đánh giá mô hình PlantVillage, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
+      <table class="data-table wrap-head"><thead><tr><th scope="col">Tập</th><th scope="col">Số ảnh</th><th scope="col">Top-1 (khoảng tin cậy 95%)</th><th scope="col">Macro-F1</th><th scope="col">Đúng loại cây</th></tr></thead>
+      <tbody>${pvSplitRow("PlantDoc, test giữ riêng", h.plantdoc)}${pvSplitRow("PlantVillage, test giữ riêng", h.plantvillage)}${pvSplitRow("PlantDoc, validation", v.plantdoc)}${pvSplitRow("PlantVillage, validation", v.plantvillage)}</tbody></table></div>
+    <div class="callout callout-warn mt-3" role="note"><b>Con số PlantVillage không dùng để so sánh.</b> ${esc(pv.leakage?.note || "")}
+      Ở PlantDoc, nơi so sánh được, mô hình này kém xa FedAvg v7.</div>
+    <h5 class="subhead mt-4">So với FedAvg v7 trên cùng ảnh test giữ riêng (kiểm định McNemar chính xác)</h5>
+    <div tabindex="0" role="group" aria-label="Bảng so sánh với FedAvg" class="table-responsive mt-2">
+      <table class="data-table wrap-head"><thead><tr><th scope="col">Nguồn ảnh</th><th scope="col">Số ảnh</th><th scope="col">PlantVillage</th><th scope="col">FedAvg v7</th><th scope="col">Chỉ PV đúng / chỉ FedAvg đúng</th><th scope="col">p</th></tr></thead>
+      <tbody>${line("plantdoc", "PlantDoc (ảnh ngoài đồng)")}${line("plantvillage", "PlantVillage (ảnh trong phòng)")}</tbody></table></div>
+    <p class="field-hint mt-2">Tiền xử lý đúng của tác giả (mean = std = 0,5) cho Top-1 validation ${fmtPct(pre.hf_half_256_224?.val_top1, 1)}; chuẩn hóa ImageNet chỉ ${fmtPct(pre.imagenet_256_224?.val_top1, 1)}, nên web dùng cách của tác giả.
+      ECE trên PlantDoc ${fmtNum(pv.holdout.ece?.plantdoc, 3)}: mô hình quá tự tin khi ảnh ngoài đồng. Nhiệt độ T = ${fmtNum(pv.holdout.temperature, 2)} làm ECE chung xấu đi (${fmtNum(pv.holdout.ece?.overall, 3)} khi dùng xác suất thô), nên web hiện xác suất thô.</p>
+  </section>`;
+}
+
+function simTable(sim) {
+  const rows = sim.runs.filter(r => r.gate).sort((a, b) => a.scenario.localeCompare(b.scenario) || a.k - b.k);
+  const order = ["iid", "three_groups", "one_group", "plantdoc_only"];
+  const body = order.flatMap(sc => rows.filter(r => r.scenario === sc)).map(r => `<tr>
+      <th scope="row">${esc(SCENARIO_LABEL[r.scenario])}</th><td class="mono">${r.k}</td>
+      <td class="mono"><b>${signed(r.final_delta_mean_points.accuracy)}</b><span class="row-sub">±${fmtNum(r.final_std.accuracy * 100, 2)}</span></td>
+      <td class="mono">${signed(r.final_delta_mean_points.macro_recall)}</td>
+      <td class="mono">${signed(r.final_delta_mean_points.plantdoc_accuracy)}</td>
+      <td class="mono">${fmtPct(r.accepted_round_share, 0)}</td><td class="mono">${fmtPct(r.clipped_share, 0)}</td></tr>`).join("");
+  return `<div tabindex="0" role="group" aria-label="Bảng kết quả mô phỏng cộng đồng, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
+    <table class="data-table wrap-head"><thead><tr><th scope="col">Người tham gia</th><th scope="col">K</th><th scope="col">Chính xác (điểm %, ±độ lệch giữa seed)</th>
+      <th scope="col">Macro-recall</th><th scope="col">PlantDoc</th><th scope="col">Vòng được nhận</th><th scope="col">Cập nhật bị cắt</th></tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+function simSection(sim) {
+  if (!sim?.available) return `<section class="report-sub mt-5">${sectionHead("4.5.3", "Cộng đồng", { tag: "h4" })}${notReady()}</section>`;
+  const base = sim.base_test;
+  const noGate = sim.runs.filter(r => !r.gate);
+  const gateOf = r => sim.runs.find(g => g.gate && g.scenario === r.scenario && g.k === r.k);
+  const control = noGate.map(r => {
+    const g = gateOf(r);
+    return `<li>${esc(SCENARIO_LABEL[r.scenario])}, K = ${r.k}: PlantDoc ${signed(r.final_delta_mean_points.plantdoc_accuracy)} điểm khi <b>không</b> có cổng, ${g ? `${signed(g.final_delta_mean_points.plantdoc_accuracy)} khi có cổng` : ""}; chính xác ${signed(r.final_delta_mean_points.accuracy)} và ${g ? signed(g.final_delta_mean_points.accuracy) : "—"}.</li>`;
+  }).join("");
+  const options = sim.runs.filter(r => r.gate).map(r => `<option value="${esc(r.key)}">${esc(SCENARIO_LABEL[r.scenario])}, K = ${r.k}</option>`).join("");
+  return `<section class="report-sub mt-5" aria-labelledby="three-comm">
+    ${sectionHead("4.5.3", "Cộng đồng: thí nghiệm mô phỏng học phân tán", { id: "three-comm", tag: "h4" })}
+    <p class="section-lead">${esc(sim.pool.images.toLocaleString("vi-VN"))} ảnh của kho hiệu chuẩn (không giao train và validation) chia cho K người mô phỏng, mỗi người ${sim.local_config.images_per_user[0]} đến ${sim.local_config.images_per_user[1]} ảnh,
+      học lớp cuối ${sim.local_config.epochs} epoch bằng đúng thuật toán của trình duyệt, máy chủ kiểm, cắt chuẩn, gộp FedAvg và qua cổng chất lượng như bản chạy thật. ${sim.rounds} vòng, ${sim.seeds.length} seed.
+      Số đo trên <b>test giữ riêng ${fmtInt(sim.test.images)} ảnh</b>; mô hình gốc FedAvg v7: chính xác ${fmtPct(base.accuracy, 2)}, macro-recall ${fmtPct(base.macro_recall, 2)}, PlantDoc ${fmtPct(base.plantdoc_accuracy, 1)} (${fmtInt(base.plantdoc_count)} ảnh).</p>
+    ${simTable(sim)}
+    <div class="form-group mt-3"><label for="sim-run">Thay đổi theo vòng cho</label><select id="sim-run" class="input-field">${options}</select></div>
+    <div id="sim-chart" class="mt-2"></div>
+    <h5 class="subhead mt-4">Cổng chất lượng có tác dụng gì (đối chứng K = 10)</h5>
+    <ul class="local-why">${control}</ul>
+    <div class="callout mt-3" role="note"><b>Cách đọc.</b> Dữ liệu người tham gia đủ đa dạng thì mô hình chung nhích lên khoảng 1 đến 2 điểm phần trăm; khi mỗi người chỉ có một nhóm bệnh thì cần K lớn hơn;
+      với ảnh ngoài đồng (PlantDoc) hầu như không tăng vì phần trích đặc trưng bị đóng băng. ${esc(sim.caveat || "")}</div>
+  </section>`;
+}
+
+function buildThree() {
+  const root = byId("result-three");
+  const summary = ctx.summary;
+  root.innerHTML = `${sectionHead("4.5", "Ba cách nhận diện ngang hàng", { lead: "Trang Chẩn đoán ảnh chạy cả ba cách trên cùng một ảnh. Đều là cách chính của đồ án, đều dùng bản mô hình mới nhất; phần này ghi số đo của từng cách." })}
+    <section class="report-sub mt-4" aria-labelledby="three-local">
+      ${sectionHead("4.5.1", "Local only", { id: "three-local", tag: "h4" })}
+      <p class="section-lead">Năm client tự huấn luyện, không chia sẻ trọng số; số đo đầy đủ ở mục 4.1 và 4.2. Mỗi client chỉ nhận đúng các nhóm bệnh nó từng thấy.</p>
+    </section>
+    ${pvSection(summary?.plantvillage_reference)}
+    ${simSection(summary?.community_simulation)}`;
+  const sim = summary?.community_simulation;
+  const select = byId("sim-run");
+  if (!sim?.available || !select) return;
+  const draw = () => {
+    const run = sim.runs.find(r => r.key === select.value);
+    const versions = run.mean_curve.accuracy.map((_, i) => ({
+      version: i, metrics: { accuracy: run.mean_curve.accuracy[i], macro_recall: run.mean_curve.macro_recall[i], plantdoc_accuracy: run.mean_curve.plantdoc_accuracy[i] },
+    }));
+    byId("sim-chart").innerHTML = chartHtml(versions);
+  };
+  select.addEventListener("change", draw);
+  draw();
+}
+
 const BUILDERS = {
-  summary: buildSummary, holdout: buildHoldout, errors: buildErrorAnalysis, calibration: buildCalibration,
+  summary: buildSummary, holdout: buildHoldout, errors: buildErrorAnalysis, calibration: buildCalibration, three: buildThree,
 };
 const building = new Map();
 

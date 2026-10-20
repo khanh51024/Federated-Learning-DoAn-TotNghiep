@@ -1,6 +1,8 @@
 // Demo · Học phân tán ("Tham gia từ máy của bạn"): học phân tán thật. Máy này là một client: ảnh được xử lý và học ngay trong trình duyệt
 // (Web Worker + onnxruntime-web), chỉ lớp cuối của mô hình (~156 KB) được gửi lên máy chủ. Giao thức: docs/COMMUNITY_FL.md.
 import { getJson, postJson } from "../core/api.js";
+import { renderWeightsInto } from "../core/comm-weights.js";
+import { getSummary } from "../core/store.js";
 import { decodeHead, encodeHead } from "../core/community-math.js";
 import {
   byId, esc, fmtInt, fmtNum, fmtPct, formatDiseaseName, notify, setBar, setDisabled, setHtml, setText, toggleHidden,
@@ -88,7 +90,7 @@ function renderMetricNote() {
   setText(byId("comm-metric-note"),
     `Phiên bản ${status.version}: độ chính xác giám sát ${pct(status.metrics.accuracy)}` +
     (status.version > 0 ? ` (mô hình gốc FedAvg v7: ${pct(base)})` : " (mô hình gốc FedAvg v7)") +
-    `, trên ${fmtInt(status.metrics.count)} ảnh đã dùng để chọn mô hình gốc — chỉ là tín hiệu theo dõi.`);
+    `, trên ${fmtInt(status.metrics.count)} ảnh validation (đã dùng để chọn mô hình gốc) nên chỉ để theo dõi từng vòng; số đo mức báo cáo là mô phỏng ở chương 4.`);
 }
 
 function renderStatus() {
@@ -481,7 +483,7 @@ async function extractFeatures(items) {
     ["extract_done"],
     event => {
       const item = byKey.get(event.key);
-      if (event.type === "feature" && item) { item.state = "ready"; item.hasFeature = true; }
+      if (event.type === "feature" && item) { item.state = "ready"; item.hasFeature = true; item.extractMs = Number(event.ms) || 0; }
       if (event.type === "feature_error" && item) { item.state = "error"; item.error = "Không đọc được ảnh"; item.hasFeature = false; }
       if (event.type === "feature" || event.type === "feature_error") {
         setProgress("Đang trích đặc trưng từ ảnh của bạn", `${event.index} / ${total}`, event.index / total);
@@ -536,8 +538,9 @@ async function loadStatus() {
 async function loadHistory() {
   const body = byId("comm-history-body");
   try {
-    const data = await getJson("/api/community/history?limit=8", { timeoutMs: 15000 });
-    const rows = data.rounds || [];
+    const data = await getJson("/api/community/history?limit=20", { timeoutMs: 15000 });
+    renderWeightsInto(byId("comm-weights-body"), data);
+    const rows = (data.rounds || []).slice(0, 8);
     reconcileSubmission(rows);
     if (rows.length === 0) {
       body.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Chưa có vòng nào hoàn tất.</td></tr>';
@@ -555,6 +558,7 @@ async function loadHistory() {
     }).join("");
   } catch (error) {
     body.innerHTML = `<tr><td colspan="5" class="text-center text-muted">${esc(errorText(error))}</td></tr>`;
+    byId("comm-weights-body").innerHTML = `<p class="field-hint">Chưa có dữ liệu: ${esc(errorText(error))}</p>`;
   }
 }
 
@@ -580,7 +584,9 @@ async function refreshRound() {
   if (!S.token) return false;
   const seq = ++S.roundSeq;
   try {
+    const started = performance.now();
     const data = await getJson(`/api/community/round?have=${encodeURIComponent(S.headSha || "")}`, { headers: auth(), timeoutMs: 20000 });
+    S.rttMs = performance.now() - started; // thời gian một lượt gọi /round: số đo độ trễ mạng gửi kèm cập nhật
     if (seq !== S.roundSeq) return true; // đã có yêu cầu mới hơn: bỏ phản hồi cũ để chỉ số không nhảy ngược
     S.roundKnown = true;
     S.config = data.config || S.config;
@@ -674,6 +680,11 @@ function clearItems() {
 }
 
 // ───────── Huấn luyện và gửi ─────────
+/** Tổng thời gian trích đặc trưng của các ảnh dùng để học (ms), theo số đo của Web Worker. */
+function usableExtractMs() {
+  return labeledItems().filter(item => item.hasFeature).reduce((sum, item) => sum + (item.extractMs || 0), 0);
+}
+
 async function trainLocal() {
   if (S.busy) return;
   S.busy = "train";
@@ -725,6 +736,7 @@ async function trainLocal() {
         epochs: config.epochs, lr: config.lr, batch: config.batch, n_train: result.nTrain, n_holdout: result.nHoldout,
         acc_before: result.accBefore, acc_after: result.accAfter, loss_before: result.lossBefore, loss_after: result.lossAfter,
         train_ms: result.trainMs,
+        extract_ms: usableExtractMs(), rtt_ms: S.rttMs,
       },
     };
     renderTrainResult(result);
@@ -853,9 +865,30 @@ function poll() {
   }
 }
 
+const SIM_LABEL = { iid: "Ảnh bất kỳ", three_groups: "Mỗi người 3 nhóm", one_group: "Mỗi người 1 nhóm", plantdoc_only: "Chỉ ảnh ngoài đồng" };
+const signedPoints = value => (value === null || value === undefined ? "—" : `${value > 0 ? "+" : value < 0 ? "−" : ""}${fmtNum(Math.abs(value), 1)}`);
+
+/** Số đo của thí nghiệm mô phỏng (chương 4.5): độ chính xác của mô hình chung so với FedAvg v7 gốc, theo kịch bản và số người mỗi vòng. */
+async function renderSimulation() {
+  const box = byId("comm-sim-body");
+  let sim = null;
+  try { sim = (await getSummary())?.community_simulation; } catch { /* phần phụ: không có thì nói rõ bên dưới */ }
+  if (!sim?.available) { box.innerHTML = '<p class="field-hint">Chưa có báo cáo mô phỏng trên máy chủ này.</p>'; return; }
+  const ks = [...new Set(sim.runs.filter(r => r.gate).map(r => r.k))].sort((a, b) => a - b);
+  const rows = Object.keys(SIM_LABEL).map(sc => `<tr><th scope="row">${esc(SIM_LABEL[sc])}</th>${ks.map(k => {
+    const run = sim.runs.find(r => r.gate && r.scenario === sc && r.k === k);
+    return `<td class="mono">${run ? signedPoints(run.final_delta_mean_points.accuracy) : "—"}</td>`;
+  }).join("")}</tr>`).join("");
+  box.innerHTML = `<p class="field-hint">Điểm phần trăm so với FedAvg v7 gốc (${fmtPct(sim.base_test.accuracy, 1)} trên ${fmtInt(sim.test.images)} ảnh test giữ riêng) sau ${sim.rounds} vòng, trung bình ${sim.seeds.length} lần chạy. K là số người mỗi vòng.</p>
+    <div tabindex="0" role="group" aria-label="Bảng kết quả mô phỏng, cuộn được bằng phím mũi tên" class="table-responsive mt-2">
+      <table class="data-table"><thead><tr><th scope="col">Người tham gia</th>${ks.map(k => `<th scope="col">K = ${k}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="field-hint mt-2">Dữ liệu người tham gia đủ đa dạng thì tăng khoảng 1 đến 2 điểm; mỗi người một nhóm bệnh thì cần K lớn; ảnh ngoài đồng gần như không tăng vì phần trích đặc trưng bị đóng băng. Chi tiết, đường theo vòng và đối chứng không cổng: <a href="#ket-qua">chương 4, mục 4.5</a>.</p>`;
+}
+
 export async function mount() {
   if (S.mounted) return;
   S.mounted = true;
+  renderSimulation();
   loadSession();
   byId("comm-join-form").addEventListener("submit", join);
   byId("comm-code").addEventListener("input", event => { event.currentTarget.value = event.currentTarget.value.toUpperCase(); });

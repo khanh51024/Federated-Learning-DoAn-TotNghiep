@@ -151,7 +151,7 @@ def keyboard_journey(browser: Any, base: str) -> dict[str, Any]:
         out["notes"].append(f"có viền focus nhìn thấy: {'có' if visible else 'KHÔNG'}")
         if reached:
             page.keyboard.press("Enter")
-            page.wait_for_selector("#diag-summary .diag-headline", timeout=180000)
+            page.wait_for_selector("#local-view .diag-headline", timeout=180000)
             kept = page.evaluate("document.activeElement && document.activeElement !== document.body")
             out["notes"].append(f"sau Enter focus còn trên phần tử: {'có' if kept else 'KHÔNG (mất focus)'}")
             out["ok"] = bool(visible and kept)
@@ -243,14 +243,14 @@ def main() -> int:
                         page.goto(f"{base}/#chan-doan", wait_until="load", timeout=60000)
                         wait_ready(page, "chan-doan")
                         page.click("#gallery-grid .gallery-item")
-                        page.wait_for_selector("#diag-summary .diag-headline", timeout=180000)
+                        page.wait_for_selector("#local-view .diag-headline", timeout=180000)
                         for _ in range(80):
-                            if page.evaluate("document.querySelectorAll('#diag-summary .skeleton').length") == 0:
+                            if page.evaluate("document.querySelectorAll('#local-view .skeleton').length") == 0:
                                 break
                             page.wait_for_timeout(100)
                         page.wait_for_timeout(500)
                         metrics = page.evaluate(MEASURE_JS)
-                        metrics["headline"] = page.evaluate("(document.querySelector('#diag-summary .diag-headline') || {}).innerText || ''")[:160]
+                        metrics["headline"] = page.evaluate("(document.querySelector('#local-view .diag-headline') || {}).innerText || ''")[:160]
                         axe = [] if args.no_axe else run_axe(page, axe_source)
                         if not args.no_shots and width in (390, 1440):
                             page.screenshot(path=str(shots / f"chan-doan-ket-qua-{width}-{theme}.png"), full_page=True)

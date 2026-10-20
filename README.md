@@ -2,7 +2,7 @@
 
 > **Demo bảo vệ GĐ1/GĐ2 hiện tại:** xem [hướng dẫn web và nguồn số liệu](docs/WEB_DEMO_GD1_GD2.md). Trang web dùng ba nhánh mixed PlantVillage/PlantDoc đã ghim; phiên Flower 5 client localhost là smoke kỹ thuật trên ảnh nhiễu ngẫu nhiên (kiểm chứng hệ thống, không đo độ chính xác). Các lệnh và số liệu scratch trong phần lịch sử bên dưới không phải đối chứng chính của demo.
 
-> **Nghiên Cứu & Triển Khai Hệ Thống Học Liên Kết (Federated Learning) Ứng Dụng Chẩn Đoán Bệnh Cây Trồng Trên Nền Tảng Flower Framework**
+> **Nghiên Cứu & Triển Khai Hệ Thống Học Phân Tán (Federated Learning) Ứng Dụng Chẩn Đoán Bệnh Cây Trồng Trên Nền Tảng Flower Framework**
 
 Hệ thống được tổ chức theo cấu trúc **Monorepo hoàn chỉnh**:
 - **`src/`**: Toàn bộ lõi AI / Machine Learning / Federated Learning chuẩn hóa (`model`, `data`, `centralized`, `federated`, `common`).
@@ -29,6 +29,10 @@ python -m venv .venv
 # Cài đặt dependencies
 pip install -r requirements.txt
 ```
+
+> **Sau khi clone:** checkpoint `.pt` nằm ở Git LFS. Chạy `git lfs install` rồi `git lfs pull`; nếu thiếu, mỗi file chỉ nặng ~130 byte (con trỏ LFS)
+> và web từ chối nạp mô hình. Kiểm: `ls -l artifacts/branch_demo/20261003/*/checkpoint_best.pt` phải thấy 6 đến 19 MB mỗi file.
+> Ba tệp hợp đồng trong `artifacts/branch_demo/*/contract/` được ghim theo byte nên `.gitattributes` đã tắt đổi dòng cho chúng.
 
 ### Bước 2: Chạy toàn bộ kiểm thử tự động (Unit & Integration Tests)
 Chứng minh tính đúng đắn toán học của FedAvg ($n_k$), trích xuất trọng số, tính toàn vẹn SHA-256 và luồng tích hợp 5 clients:
@@ -63,7 +67,7 @@ Báo cáo (đọc theo thứ tự):
 4. **Kết quả**: bảng 7 mô hình, tập giữ riêng và khoảng tin cậy, phân tích lỗi, độ tin cậy xác suất.
 5. **Kết luận**: trả lời câu hỏi nghiên cứu, hạn chế, hướng phát triển.
 
-Demo: **Chẩn đoán ảnh** (một ảnh qua cả 7 mô hình, đúng/sai và lý do, Grad-CAM) và **Học liên kết** (tham gia như một client thật từ trình duyệt).
+Demo: **Chẩn đoán ảnh** (một ảnh qua ba cách nhận diện ngang hàng: Local only, PlantVillage, Cộng đồng; bảy mô hình của đồ án nằm sau nút "Tổng hợp 7 mô hình"; đúng/sai và lý do, Grad-CAM) và **Học phân tán** (tham gia như một client thật từ trình duyệt, xem trọng số và độ trễ từng vòng, tải trọng số).
 
 **Phụ lục kỹ thuật** (liên kết ở chân trang): kiểm chứng số liệu, mã băm mô hình, và chạy thử Flower 5 client trên máy này để kiểm chứng hệ thống.
 
@@ -147,7 +151,7 @@ Federated-Learning-DoAn-TotNghiep/
 │   ├── services/model_service.py  # MỘT CỬA inference — chỉ mở cho model đã qua cổng web_visible của registry
 │   ├── state.py             # trạng thái background task + Flower demo
 │   └── static/              # Giao diện báo cáo + demo (HTML/CSS/ES module, không bước build)
-│       ├── index.html       # Báo cáo 5 chương · Demo (Chẩn đoán, Học liên kết) · Phụ lục kỹ thuật
+│       ├── index.html       # Báo cáo 5 chương · Demo (Chẩn đoán, Học phân tán) · Phụ lục kỹ thuật
 │       ├── admin/           # Trang quản trị /quan-tri (admin.html + admin.js)
 │       ├── css/{style,pages}.css
 │       ├── js/app.js        # khởi động; js/core/ (router, store, api, charts, status, theme, motion, flnet, crosshair), js/pages/ (mỗi bước một file)

@@ -155,3 +155,33 @@ def test_non_finite_numbers_become_null_not_a_500(evidence, monkeypatch):
     assert response.status_code == 200
     fedavg = next(m for m in response.json()["reeval"]["models"] if m["model_id"] == "fedavg")
     assert fedavg["calibration"]["plantdoc"]["ece_raw"] is None and fedavg["temperature"] is None
+
+
+def test_summary_has_the_plantvillage_reference_and_community_simulation_sections(evidence):
+    """Hai cách nhận còn lại của đồ án có báo cáo riêng, tách khỏi bảy mô hình đã kiểm hash (không làm các mục cũ bị giữ lại)."""
+    result = evidence_service.summary(evidence)
+    assert result["reeval"]["available"] is True
+    pv = result["plantvillage_reference"]
+    assert pv["available"] is True, pv.get("reason")
+    assert pv["model"]["trained_by_project"] is False and pv["leakage"]["plantvillage"] == "likely" and pv["leakage"]["plantdoc"] == "none"
+    assert pv["preprocessing_chosen"] == "hf_half_256_224"
+    cmp = pv["preprocessing_comparison_on_val"]
+    assert cmp["hf_half_256_224"]["val_top1"] > cmp["imagenet_256_224"]["val_top1"] + 0.3, "chuẩn hóa của tác giả phải tốt hơn hẳn ImageNet"
+    assert pv["holdout"]["by_source"]["plantdoc"]["count"] == 172
+    assert pv["vs_fedavg_on_holdout"]["plantdoc"]["fedavg_top1"] > pv["vs_fedavg_on_holdout"]["plantdoc"]["plantvillage_model_top1"]
+
+    sim = result["community_simulation"]
+    assert sim["available"] is True, sim.get("reason")
+    assert {r["scenario"] for r in sim["runs"]} == {"iid", "three_groups", "one_group", "plantdoc_only"}
+    gated = [r for r in sim["runs"] if r["gate"]]
+    assert {r["k"] for r in gated} == {3, 10, 25} and all(len(r["mean_curve"]["accuracy"]) == sim["rounds"] + 1 for r in sim["runs"])
+    assert sim["test"]["images"] == 11015 and sim["base_test"]["plantdoc_count"] == 172
+
+
+def test_plantvillage_report_is_withheld_when_it_does_not_match_the_pinned_checkpoint(evidence, monkeypatch):
+    report = evidence_service._load_json(evidence_service.reg.PLANTVILLAGE_EVAL_JSON)
+    tampered = copy.deepcopy(report)
+    tampered["model"]["checkpoint_sha256"] = "0" * 64
+    monkeypatch.setattr(evidence_service, "_load_json", lambda path: tampered if path == evidence_service.reg.PLANTVILLAGE_EVAL_JSON else None)
+    result = evidence_service._plantvillage_reference(evidence)
+    assert result["available"] is False and "SHA-256" in result["reason"]

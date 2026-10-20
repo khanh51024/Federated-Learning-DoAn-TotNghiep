@@ -54,7 +54,7 @@ Mỗi `model`:
 | `expected_state_sha256` | hash khai báo trong metrics gốc |
 | `checkpoint_status` | `hash_verified` \| `matches_manifest` \| `missing_on_this_machine` \| `smoke_overwrite_detected` \| `hash_mismatch` \| `quarantined` \| `present` \| `not_applicable` |
 | `preprocessing_id` | `imagenet_eval_v1` \| `canonical_v1` \| `get_default_transform(eval)` |
-| `metrics` / `metrics_source` / `metrics_waiver` | số liệu + file nguồn; waiver chỉ cho model `reference` |
+| `metrics` / `metrics_source` / `metrics_waiver` | số liệu + file nguồn; waiver chỉ cho model `reference` (mô hình PlantVillage ngoài: số đo ở `artifacts/plantvillage_reference_eval.json`, báo cáo riêng, không thuộc bundle bảy mô hình) |
 | `inference` | backend nạp model: `published_bundle` (+ `key`) \| `torchscript_reference` |
 | `inference_test` | kết quả bài forward bắt buộc trên `artifacts/sample_test_leaf.jpg` |
 | `web_visible` / `web_gate_failures` | có được phép dùng trên web không và lý do nếu bị chặn |

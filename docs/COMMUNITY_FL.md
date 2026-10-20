@@ -1,10 +1,10 @@
-# Học liên kết cộng đồng: mỗi người vào web là một client
+# Học phân tán cộng đồng: mỗi người vào web là một client
 
-Trang **Demo · Học liên kết** của web có khối **“Tham gia từ máy của bạn”**. Người có mã tham gia mở trang, thêm ảnh lá của mình, chọn nhóm cho từng ảnh,
+Trang **Demo · Học phân tán** của web có khối **“Tham gia từ máy của bạn”**. Người có mã tham gia mở trang, thêm ảnh lá của mình, chọn nhóm cho từng ảnh,
 huấn luyện **ngay trong trình duyệt** và gửi trọng số về máy chủ. Máy chủ gộp theo vòng (FedAvg) khi đủ K người. Ảnh không rời máy.
 
-Tài liệu này mô tả phạm vi, giao thức, phòng thủ, cách vận hành và bằng chứng nghiên cứu đã đo. Đây là tính năng **thử nghiệm**:
-mô hình cộng đồng tách khỏi bảy mô hình đã kiểm hash và không bao giờ được trình bày như số liệu khoa học.
+Tài liệu này mô tả phạm vi, giao thức, phòng thủ, cách vận hành và bằng chứng nghiên cứu đã đo. Đây là một trong ba cách nhận diện chính của đồ án (cùng Local only và PlantVillage): trang Chẩn đoán luôn dùng phiên bản mới nhất đã qua cổng.
+Mô hình cộng đồng tách khỏi bảy mô hình đã kiểm hash; số đo mức báo cáo là thí nghiệm mô phỏng bên dưới, còn “độ chính xác giám sát” của từng vòng chỉ để theo dõi.
 
 ## Phạm vi: học gì, không học gì
 
@@ -30,7 +30,7 @@ Trình duyệt (mỗi người)                          Máy chủ (một tiế
 | Trạng thái, mã/token, vòng, lịch sử, khôi phục | `web/services/community_store.py` |
 | HTTP, hạn mức, quản trị | `web/routers/community_fl.py` |
 | Dự đoán bằng mô hình cộng đồng | `web/services/community_inference.py`, `POST /api/community/predict` |
-| Giao diện (trang Demo · Học liên kết, ô ở trang Chẩn đoán) | `web/static/js/pages/community.js`, `workers/community-worker.js`, `core/community-math.js` |
+| Giao diện (trang Demo · Học phân tán, ô ở trang Chẩn đoán) | `web/static/js/pages/community.js`, `workers/community-worker.js`, `core/community-math.js` |
 | Xuất ONNX, dựng đặc trưng giám sát | `scripts/export_community_feature_model.py`, `scripts/build_community_eval_features.py` |
 | Kiểm thử | `tests/test_community_fl.py`, `test_community_js.py`, `test_community_assets.py`, `scripts/e2e_community.py` |
 
@@ -134,7 +134,7 @@ liên kết từ menu công khai; quyền thật nằm ở token mà các API qu
 Trang làm được: mở/đóng phiên (đóng khi vòng đang có người gửi thì phải bấm hai lần); chỉnh K, K tối thiểu, hạn vòng, ngưỡng cắt và các
 cài đặt nâng cao (có kiểm giới hạn ngay trên biểu mẫu); tạo mã (hiện đúng một lần, kèm link tham gia `/?code=…#hoc-lien-ket`, sao chép hoặc
 in danh sách); thu hồi mã; xem tiến độ vòng, các phiên bản và vòng đã gộp; gộp vòng ngay; khôi phục phiên bản; xem nhật ký. Người nhận link
-tham gia vào thẳng trang Học liên kết với mã đã điền sẵn (mã được xóa khỏi thanh địa chỉ sau khi đọc).
+tham gia vào thẳng trang Học phân tán với mã đã điền sẵn (mã được xóa khỏi thanh địa chỉ sau khi đọc).
 
 Lưu ý: link chứa mã nên chỉ gửi riêng cho từng người; chuỗi truy vấn có thể nằm lại trong nhật ký truy cập của nginx. Nginx đã giới hạn
 `/api/community/admin/` ở 20 yêu cầu/phút, trang tự làm mới mỗi 10 giây (6 yêu cầu/phút). Muốn chắc hơn, giới hạn `/quan-tri` và
@@ -171,18 +171,37 @@ Chính sách chỉnh được (có giới hạn kiểm ở `src/federated/commun
 | Head khởi điểm trên tập giám sát | Tái hiện đúng số bundle đã công bố (PlantVillage và PlantDoc, tối đa lệch 1 ảnh) |
 | 30 cập nhật đồng thời | tất cả 200 trong 0,7 s, một lần gộp; RSS máy chủ tăng ~2 MB |
 
-Mô phỏng vòng FedAvg lớp cuối (6 vòng, 5 seed, 30–100 ảnh mỗi người) cho thấy hiệu quả phụ thuộc mạnh vào **phân bố nhóm của người
-tham gia và K**:
+Số mô phỏng cũ (6 vòng, 5 seed, không có mã trong repo) đã được thay bằng thí nghiệm có mã và tệp kết quả ở mục dưới.
 
-| Người dùng | Cấu hình “mạnh” (10 epoch, lr 0,05, K=3), không cổng | Cấu hình mặc định (3 epoch, lr 0,01), có cổng |
-|---|---|---|
-| IID | +1,0 điểm | +1,7 |
-| Mỗi người 3 nhóm | −3,8 | +0,3 (K=3), +0,7 (K=10), +1,2 (K=25) |
-| Mỗi người 1 nhóm | −4,2 | −0,2 (K=3), −0,1 (K=10), +0,4 (K=25) |
-| Ảnh ngoài đồng (PlantDoc), K=3 | −2,5 (riêng PlantDoc −10,5) | +0,2 (riêng PlantDoc −1,6) |
+## Thí nghiệm mô phỏng (số đo mức báo cáo)
 
-Hệ quả đã áp dụng: huấn luyện cục bộ **nhẹ** theo mặc định, cổng chặn thoái lui, **K nên ≥ 10** nếu muốn thấy tiến bộ, và giao diện
-coi “vòng bị từ chối” là kết quả bình thường. Với K nhỏ và người dùng chỉ có vài nhóm, mô hình cộng đồng gần như đứng yên ở FedAvg v7.
+Chạy `python scripts/build_community_sim_features.py` rồi `python scripts/simulate_community.py` (mã: `src/federated/community_sim.py`, bản port numpy của `trainSoftmax`/`splitHoldout`/`makeRng` trong `community-math.js`, đã kiểm khớp JS bằng `tests/test_community_js.py`). Báo cáo: `artifacts/community_fl/simulation_report.json`; web hiện ở chương 4, mục 4.5 và ở trang Học phân tán.
+
+- Kho người tham gia: 4225 ảnh của split calibration (37 nhóm; không giao train và validation). Mỗi người 30–100 ảnh, học 3 epoch, lr 0.01, batch 16, giữ lại 20% để kiểm.
+- Máy chủ mô phỏng gọi đúng `check_update`, `aggregate_heads` (trần `n_cap`), `gate_decision` của `src/federated/community.py`; cổng chạy trên tập giám sát validation như production.
+- Số báo cáo trên **test giữ riêng 11015 ảnh** (chưa dùng để chọn mô hình). Mô hình gốc FedAvg v7: chính xác 92.66%, macro-recall 89.86%, PlantDoc 50.0% (172 ảnh).
+- 20 vòng, 5 seed. Bảng: thay đổi độ chính xác (điểm phần trăm) so với mô hình gốc ở vòng cuối, trung bình các seed.
+
+| Người tham gia | K=3 | K=10 | K=25 |
+|---|---|---|---|
+| Ảnh bất kỳ (IID) | +1,66 | +1,83 | +1,97 |
+| Mỗi người 3 nhóm | +0,39 | +1,47 | +1,50 |
+| Mỗi người 1 nhóm | −0,67 | +0,60 | +1,05 |
+| Chỉ ảnh ngoài đồng (PlantDoc) | +0,19 | −0,21 | −0,01 |
+
+Đối chứng không có cổng giám sát (K=10):
+
+- Ảnh bất kỳ (IID), K=10: chính xác +1,92 (không cổng) so với +1,83 (có cổng); PlantDoc +0,47 so với +0,12.
+- Mỗi người 3 nhóm, K=10: chính xác +1,55 (không cổng) so với +1,47 (có cổng); PlantDoc −0,47 so với 0,00.
+- Chỉ ảnh ngoài đồng (PlantDoc), K=10: chính xác −0,78 (không cổng) so với −0,21 (có cổng); PlantDoc −1,40 so với −0,23.
+
+Đọc kết quả: dữ liệu người tham gia đủ đa dạng thì mô hình chung nhích lên khoảng 1–2 điểm; mỗi người một nhóm bệnh thì cần K lớn; ảnh ngoài đồng gần như không tăng (đặc trưng đóng băng học chủ yếu từ ảnh trong phòng) và cổng giúp tránh tụt. PlantDoc test chỉ 172 ảnh nên số PlantDoc dao động mạnh giữa các seed. Không thay thế thử nghiệm với người thật.
+
+## Trọng số và độ trễ của từng vòng
+
+Mỗi vòng ghi (cột `rounds.detail`, JSON; cơ sở dữ liệu cũ tự thêm cột khi khởi động): trọng số gộp đúng công thức FedAvg `min(n, n_cap) / tổng` của từng đóng góp (ẩn danh, không có mã người tham gia), độ lớn cập nhật trước/sau khi cắt, đã bị cắt hay chưa, `train_ms`, `extract_ms`, `rtt_ms` (do client báo, chỉ để theo dõi), thời gian từ lúc mở vòng đến lúc nhận, `delta_norm` (độ lớn thay đổi của mô hình chung), `agg_ms`, `eval_ms`, thời lượng vòng.
+`GET /api/community/history` trả các trường này; trang Học phân tán và trang quản trị hiện biểu đồ thay đổi độ chính xác theo phiên bản, bảng trọng số gộp từng người và nút tải trọng số.
+`GET /api/community/heads/{version}` trả tệp `.npz` (`weight` 38×1024, `bias` 38) của một phiên bản còn lưu, kèm `X-Head-SHA`; công khai, giới hạn tần suất như `/history`.
 
 ## Giới hạn đã biết
 

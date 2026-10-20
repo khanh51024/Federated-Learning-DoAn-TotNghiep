@@ -453,6 +453,7 @@ def build_network_and_reference() -> list[dict[str, Any]]:
     m = base_model("plantvillage_traced_reference", reg.FAMILY_REFERENCE, "PlantVillage TorchScript (tham chiếu)")
     insp = inspect_checkpoint(reg.PLANTVILLAGE_TRACED_PT)
     m.update(
+        architecture="MobileNetV2 (Hugging Face transformers)",
         checkpoint_path=reg.PLANTVILLAGE_TRACED_PT,
         checkpoint_exists=insp["checkpoint_exists"],
         file_sha256=insp["file_sha256"],
@@ -462,16 +463,18 @@ def build_network_and_reference() -> list[dict[str, Any]]:
             else "hash_verified" if insp["file_sha256"] == reg.PLANTVILLAGE_TRACED_SHA256
             else "hash_mismatch"
         ),
-        preprocessing_id="get_default_transform(eval)",
+        preprocessing_id="hf_half_256_224",
         protocol_id="plantvillage_traced_reference",
         inference={"backend": reg.BACKEND_TORCHSCRIPT_REFERENCE},
         metrics_waiver=(
-            "Model tham chiếu độc lập, không công bố accuracy; web luôn gắn nhãn 'Tham chiếu' "
-            "và không dùng để so sánh với FedAvg."
+            "Model ngoài (Hugging Face), không do đồ án huấn luyện; số đo nằm ở artifacts/plantvillage_reference_eval.json "
+            "(báo cáo đánh giá lại riêng, không thuộc bundle bảy mô hình đã kiểm hash); web gắn nhãn 'Tham chiếu'."
         ),
         status="reference_only",
         display_label="Tham chiếu (không phải FedAvg)",
-        notes="TorchScript inference tham chiếu độc lập; softmax chưa calibration.",
+        notes=("TorchScript của mô hình Hugging Face linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification (MobileNetV2, "
+               "học trên bộ Kaggle New Plant Diseases, bản tăng cường của PlantVillage); đồ án KHÔNG huấn luyện mà đánh giá lại: "
+               "xem artifacts/plantvillage_reference_eval.json. Softmax thô."),
     )
     models.append(m)
     return models
@@ -646,7 +649,7 @@ FAMILY_DEFAULTS: dict[str, dict[str, str]] = {
     reg.FAMILY_REFERENCE: {
         "pipeline": reg.PIPELINE_EXTERNAL,
         "role": reg.ROLE_REFERENCE,
-        "dataset_id": "PlantVillage 38 lớp (model tham chiếu độc lập)",
+        "dataset_id": "Kaggle New Plant Diseases (bản tăng cường của PlantVillage, 38 lớp); mô hình ngoài, đồ án chỉ đánh giá lại",
     },
     reg.FAMILY_SMOKE: {
         "pipeline": reg.PIPELINE_SRC,

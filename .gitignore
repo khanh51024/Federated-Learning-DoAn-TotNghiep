@@ -65,5 +65,6 @@ artifacts/checkpoints/*.pt
 artifacts/checkpoints/smoke/*.pt
 
 # Học liên kết cộng đồng: mô hình ONNX, đặc trưng giám sát và trạng thái vòng (sinh lại được / dữ liệu vận hành)
-artifacts/community_fl/
+artifacts/community_fl/*
+!artifacts/community_fl/simulation_report.json
 artifacts/community_demo_packs/

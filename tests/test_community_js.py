@@ -219,3 +219,29 @@ def test_every_static_js_file_parses_as_an_es_module():
         if done.returncode != 0:
             failures.append(f"{path.relative_to(JS_DIR).as_posix()}: {done.stderr.strip().splitlines()[-1] if done.stderr else '?'}")
     assert not failures, failures
+
+
+def test_simulation_port_matches_the_browser_trainer_split_and_rng(tmp_path):
+    """`src.federated.community_sim` phải học đúng như người tham gia thật: cùng bộ sinh số, cùng cách tách, cùng SGD."""
+    from src.federated import community_sim as sim
+
+    rng = np.random.default_rng(11)
+    n, dim, classes = 53, core.FEATURE_DIM, core.NUM_CLASSES
+    features = rng.normal(size=(n, dim)).astype(np.float32)
+    labels = rng.integers(0, 8, size=n)
+    weight = (rng.normal(size=(classes, dim)) * 0.05).astype(np.float32)
+    bias = (rng.normal(size=classes) * 0.01).astype(np.float32)
+    cfg = {"epochs": 3, "lr": 0.01, "batch": 16, "seed": 5}
+    js = run_node(tmp_path, {
+        "train": {**cfg, "features": features.ravel().tolist(), "labels": labels.tolist(),
+                  "weight": weight.ravel().tolist(), "bias": bias.tolist()},
+        "split": {"labels": labels.tolist(), "fraction": 0.2},
+    })
+    w, b, loss = sim.train_softmax(features, labels, weight, bias, epochs=cfg["epochs"], lr=cfg["lr"], batch=cfg["batch"], seed=cfg["seed"])
+    assert np.abs(w.ravel() - np.array(js["train"]["weight"])).max() < 2e-5
+    assert np.abs(b - np.array(js["train"]["bias"])).max() < 2e-5
+    assert loss[-1] == pytest.approx(js["train"]["loss"][-1], rel=1e-4)
+    stream = sim.make_rng(cfg["seed"])
+    assert [stream() for _ in range(3)][0] == pytest.approx(js["order"][0])
+    train, holdout = sim.split_holdout(labels.tolist(), 0.2)
+    assert train == js["split"]["train"] and holdout == js["split"]["holdout"]

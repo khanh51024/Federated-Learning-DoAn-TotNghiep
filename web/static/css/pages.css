@@ -756,11 +756,64 @@ body[data-route="gioi-thieu"] .top-header .eyebrow { margin-bottom: 0; }
 .diag-table tr.is-collapsed { display: none; }
 .diag-tabs { margin-bottom: 0; }
 .diag-tabpanel:not(.hidden) { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
-.diag-tab-image { display: flex; align-items: center; gap: var(--space-3); }
-.diag-tab-thumb { width: 96px; height: 96px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-sunken); }
-.diag-tab-thumb[hidden] { display: none; }
-/* In và nút "In kết quả"/"Đang chạy" chỉ thuộc tab Đồ án */
-.diag-output:not([data-active-tab="do-an"]) .diag-header-actions { display: none; }
+/* Chẩn đoán gọn: thấy kết quả ngay khi vào trang (không phải cuộn). Thanh điều khiển ngang, ba cách nhận ngang hàng bằng tab. */
+body[data-route="chan-doan"] .top-header { margin-bottom: var(--space-3); }
+body[data-route="chan-doan"] .page-title { font-size: 24px; }
+body[data-route="chan-doan"] .page-desc { display: none; }
+body[data-route="chan-doan"] .top-header { margin-bottom: var(--space-2); }
+#diag-brief { gap: var(--space-1) var(--space-5); margin-bottom: var(--space-3); }
+#diag-brief .brief-card { padding: 0; border: 0; background: none; box-shadow: none; }
+#diag-brief .brief-dot { display: none; }
+#diag-brief .fold { margin: 2px 0 0; padding: 0; border: 0; background: none; box-shadow: none; }
+#diag-brief .fold > summary { padding: 0; min-height: 0; border: 0; background: none; color: var(--accent-emerald-strong); font-size: var(--fs-xs); font-weight: 600; }
+.diag-bar { padding: var(--space-3); }
+.diag-bar .selected-thumb { max-height: 96px; }
+.diag-bar .diag-controls { grid-template-columns: 96px minmax(0, 1fr); padding: 0; border: 0; background: none; gap: var(--space-3); }
+.diag-bar .selected-meta .fold { margin: 0; padding: 0; border: 0; background: none; box-shadow: none; }
+.diag-bar .selected-meta .fold > summary { padding: 2px 0; min-height: 0; border: 0; background: none; color: var(--accent-emerald-strong); font-size: var(--fs-xs); font-weight: 600; }
+.diag-bar .diag-options .form-group { display: flex; flex-direction: row; align-items: center; gap: var(--space-2); }
+.diag-bar .diag-options .form-group label { margin: 0; white-space: nowrap; }
+.diag-bar .diag-options .form-group .input-field { flex: 1 1 auto; min-width: 0; }
+.diag-bar .selected-meta .meta-label { margin: 2px 0; }
+#local-view .diag-headline, #pv-view .diag-headline, #comm-view .diag-headline { padding: var(--space-2) var(--space-3); }
+#local-view .vg-value, #pv-view .vg-value, #comm-view .vg-value { font-size: var(--fs-lg); }
+#local-view .verdict-grid, #pv-view .verdict-grid, #comm-view .verdict-grid { margin-top: 0; gap: var(--space-3); }
+.diag-bar .diag-control-grid { gap: var(--space-2); }
+.diag-bar .diag-options { align-items: flex-end; }
+.diag-bar .diag-options .form-group { min-width: 240px; flex: 1 1 240px; }
+.diag-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.diag-tabs { margin-bottom: 0; }
+.diag-tabs .subtab { display: inline-flex; align-items: center; }
+.tab-badge { margin-left: var(--space-2); padding: 1px 8px; border-radius: 999px; background: var(--bg-sunken); color: var(--text-secondary); font-size: var(--fs-xs); font-weight: 700; font-variant-numeric: tabular-nums; }
+.tab-badge.is-ok { background: var(--tint-emerald); color: var(--accent-emerald-strong); }
+.tab-badge.is-bad { background: var(--tint-rose); color: var(--accent-rose); }
+.tab-badge.is-mid { background: var(--tint-amber); color: var(--accent-amber); }
+.diag-tabpanel:not(.hidden) { display: block; min-width: 0; }
+.diag-panel { padding: var(--space-4); }
+.diag-panel > .panel-desc { font-size: var(--fs-sm); }
+.local-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--space-3); }
+.local-card { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; padding: var(--space-3); border: 1px solid var(--border-color); border-left: 4px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-surface); }
+.local-card.is-correct { border-left-color: var(--accent-emerald); }
+.local-card.is-wrong { border-left-color: var(--accent-rose); }
+.local-card > header { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-2); }
+.local-card .row-sub { display: inline; margin: 0; }
+.local-pred { overflow-wrap: anywhere; line-height: 1.35; }
+.local-shard { color: var(--text-secondary); font-size: var(--fs-xs); line-height: 1.4; }
+.local-cam { width: 112px; height: 112px; margin-top: var(--space-1); object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border-color); }
+.local-why { margin: var(--space-2) 0 0 var(--space-4); display: grid; gap: var(--space-1); font-size: var(--fs-sm); }
+.top3-bars { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.top3-bars li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(160px, 260px); align-items: center; gap: var(--space-3); }
+.top3-bars .conf { margin-top: 0; }
+.kv-list { display: grid; gap: var(--space-2); margin: 0; }
+.kv-list > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: var(--space-3); }
+.kv-list dt { color: var(--text-muted); font-size: var(--fs-sm); }
+.kv-list dd { margin: 0; overflow-wrap: anywhere; }
+.diag-dialog { width: min(1100px, 94vw); max-height: 88vh; padding: var(--space-5); overflow: auto; border: 1px solid var(--border-color); border-radius: var(--radius-lg); background: var(--bg-surface); color: var(--text-primary); }
+.diag-dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
+.diag-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+@media (max-width: 1100px) {
+  .top3-bars li, .kv-list > div { grid-template-columns: minmax(0, 1fr); }
+}
 .diag-table th[scope="row"] { text-align: left; white-space: nowrap; }
 .cell-pred { min-width: 210px; }
 .diag-table td,
@@ -788,7 +841,6 @@ body[data-route="gioi-thieu"] .top-header .eyebrow { margin-bottom: 0; }
 .conf-cal b { color: var(--text-secondary); font-weight: 600; }
 
 /* thanh điều khiển ở đầu cột kết quả: ảnh đang chọn + nhãn thật + chế độ + nút */
-.diag-header-actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
 .diag-controls {
   display: grid;
   grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
@@ -1025,12 +1077,11 @@ body[data-route="gioi-thieu"] .top-header .eyebrow { margin-bottom: 0; }
   /* bước 4: in một lần chẩn đoán (ảnh + bảng 7 mô hình + Grad-CAM), bỏ phần điều khiển */
   .diag-input,
 .diag-tabs,
-#dpanel-pv,
-#dpanel-community,
+#diag-all-dialog,
 .diag-control-grid,
-.diag-header-actions,
 #diag-empty { display: none !important; }
   .diag-layout { grid-template-columns: minmax(0, 1fr); }
+  .diag-tabpanel.hidden { display: block !important; }
   .diag-controls { grid-template-columns: 140px minmax(0, 1fr); background: none; }
   .conf-fill { transition: none; }
   .diag-table tr,
@@ -1448,7 +1499,6 @@ body[data-route="gioi-thieu"] .top-header .eyebrow { margin-bottom: 0; }
 .comm-result.is-error { border-left-color: var(--accent-rose); background: var(--tint-rose); }
 .comm-result ul { margin: 6px 0 0 18px; }
 .comm-result li + li { margin-top: 4px; }
-.comm-diag { margin-top: var(--space-3); }
 /* hướng dẫn khi phiên đóng + thanh bốn cột mốc của người tham gia */
 .comm-closed { margin: 0; padding: var(--space-3) var(--space-4); border-left: 4px solid var(--accent-amber); border-radius: var(--radius-md); background: var(--tint-amber); font-size: var(--fs-sm); line-height: 1.6; }
 .comm-howto { padding: var(--space-3) var(--space-4); border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-subtle); }
@@ -1708,6 +1758,45 @@ body[data-group="demo"] .page-title { letter-spacing: -0.01em; }
 .vg-value { font-size: var(--fs-xl); font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
 .vg-sub { color: var(--text-secondary); font-size: var(--fs-sm); }
 #diag-empty { padding: var(--space-6) var(--space-4); }
+
+/* Trọng số và độ trễ của học phân tán (trang Học phân tán và trang quản trị dùng chung) */
+.comm-weights { min-width: 0; }
+.cw-block + .cw-block { margin-top: var(--space-5); }
+.cw-h { margin-bottom: var(--space-2); font-size: var(--fs-sm); font-weight: 700; color: var(--text-primary); }
+.cw-cards { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--space-3); }
+.cw-card { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: var(--space-3); border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-subtle); }
+.cw-card-title { color: var(--text-muted); font-size: var(--fs-xs); font-weight: 600; }
+.cw-card-value { font-size: var(--fs-lg); font-weight: 700; color: var(--accent-emerald-strong); font-variant-numeric: tabular-nums; }
+.cw-card-hint { color: var(--text-secondary); font-size: var(--fs-xs); line-height: 1.4; }
+.cw-chart { margin: 0; }
+.cw-svg { display: block; width: 100%; height: auto; max-height: 300px; }
+.cw-grid { stroke: var(--border-color); stroke-width: 1; }
+.cw-tick { fill: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.cw-zero { stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.cw-note { margin-left: auto; color: var(--text-muted); font-size: var(--fs-xs); }
+.cw-block .data-table th, .cw-block .data-table td, #result-three .data-table th, #result-three .data-table td { vertical-align: middle; }
+.cw-line { fill: none; stroke-width: 2; stroke-linejoin: round; }
+.cw-line.cw-acc { stroke: var(--chart-1); }
+.cw-line.cw-macro { stroke: var(--chart-2); }
+.cw-line.cw-pd { stroke: var(--chart-4); }
+.cw-dot.cw-acc { fill: var(--chart-1); }
+.cw-dot.cw-macro { fill: var(--chart-2); }
+.cw-dot.cw-pd { fill: var(--chart-4); }
+.cw-legend { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-top: var(--space-2); font-size: var(--fs-sm); color: var(--text-secondary); }
+.cw-key { display: inline-flex; align-items: center; gap: var(--space-2); }
+.cw-swatch { display: inline-block; width: 14px; height: 4px; border-radius: 2px; }
+.cw-swatch.cw-acc { background: var(--chart-1); }
+.cw-swatch.cw-macro { background: var(--chart-2); }
+.cw-swatch.cw-pd { background: var(--chart-4); }
+.cw-meter { width: 90px; height: 10px; vertical-align: middle; }
+.cw-rounds { display: flex; flex-direction: column; gap: var(--space-2); }
+.cw-round > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); }
+.cw-sum { color: var(--text-secondary); font-size: var(--fs-sm); font-weight: 400; }
+.cw-round .row-state { font-weight: 600; overflow-wrap: anywhere; }
+.cw-round .row-state.is-ok { color: var(--accent-emerald-strong); }
+.cw-round .row-state.is-bad { color: var(--accent-rose); }
+.cw-round .row-state.is-warn { color: var(--accent-amber); }
+@media (max-width: 1100px) { .cw-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* Học phân tán: thẻ phiên hiện tại, hai cột (các bước | vòng gần đây và kỳ vọng) */
 .comm-session { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--border-color); border-radius: var(--radius-lg); background: var(--bg-surface); }

@@ -7,7 +7,6 @@ import pytest
 from PIL import Image
 
 from web.plantvillage_reference import ROOT, predict_plantvillage
-from src.data.plantvillage import get_default_transform
 
 
 def test_reference_output_contract():
@@ -22,11 +21,14 @@ def test_reference_output_contract():
     assert result["checkpoint"] == "plantvillage_traced.pt"
 
 
-def test_reference_preprocessing_matches_evaluation():
+def test_reference_preprocessing_is_the_model_authors_config():
+    """Cấu hình của tác giả (preprocessor_config.json): resize 256 bilinear, cắt giữa 224, mean = std = 0,5.
+    Chuẩn hóa ImageNet làm độ chính xác trên validation tụt từ 91,6% xuống 51,4% (artifacts/plantvillage_reference_eval.json)."""
     import web.plantvillage_reference as module
-    assert module.get_default_transform is get_default_transform
-    steps = get_default_transform(is_train=False).transforms
+    steps = module._transform().transforms
     assert [type(step).__name__ for step in steps] == ["Resize", "CenterCrop", "ToTensor", "Normalize"]
+    assert steps[0].size == 256 and steps[1].size == (224, 224)
+    assert tuple(steps[3].mean) == (0.5, 0.5, 0.5) and tuple(steps[3].std) == (0.5, 0.5, 0.5)
 
 
 def test_reference_endpoint():

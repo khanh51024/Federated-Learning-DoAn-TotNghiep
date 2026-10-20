@@ -12,6 +12,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
+import io
 import json
 import os
 import secrets
@@ -246,7 +247,7 @@ class CommunityStore:
               status TEXT NOT NULL, k_target INTEGER NOT NULL, k_min INTEGER NOT NULL, opened_at REAL NOT NULL,
               deadline REAL NOT NULL, extensions INTEGER NOT NULL DEFAULT 0, closed_at REAL,
               n_updates INTEGER NOT NULL DEFAULT 0, n_examples INTEGER NOT NULL DEFAULT 0, n_clipped INTEGER NOT NULL DEFAULT 0,
-              result_version INTEGER, reason TEXT, candidate_metrics TEXT, parent_metrics TEXT);
+              result_version INTEGER, reason TEXT, candidate_metrics TEXT, parent_metrics TEXT, detail TEXT);
             CREATE TABLE IF NOT EXISTS codes(
               id INTEGER PRIMARY KEY AUTOINCREMENT, digest TEXT NOT NULL UNIQUE, label TEXT,
               max_uses INTEGER NOT NULL, uses INTEGER NOT NULL DEFAULT 0, expires_at REAL NOT NULL,
@@ -263,6 +264,9 @@ class CommunityStore:
               id INTEGER PRIMARY KEY AUTOINCREMENT, ts REAL NOT NULL, kind TEXT NOT NULL, detail TEXT NOT NULL);
             """
         )
+        # Cơ sở dữ liệu tạo trước khi có cột `detail` (trọng số gộp, độ lớn cập nhật, độ trễ theo vòng) vẫn dùng được
+        if "detail" not in {row[1] for row in conn.execute("PRAGMA table_info(rounds)").fetchall()}:
+            conn.execute("ALTER TABLE rounds ADD COLUMN detail TEXT")
 
     def _bootstrap(self, conn: sqlite3.Connection) -> None:
         with self._lock:
@@ -498,7 +502,8 @@ class CommunityStore:
 
     def _aggregate(self, conn: sqlite3.Connection, rnd: sqlite3.Row, now: float) -> Dict[str, Any]:
         rows = conn.execute(
-            "SELECT id, num_examples, clipped, head FROM updates WHERE round_id = ? AND head IS NOT NULL "
+            "SELECT id, num_examples, clipped, head, received_at, local, norm_raw, norm_used FROM updates "
+            "WHERE round_id = ? AND head IS NOT NULL "
             "AND participant_id NOT IN (SELECT id FROM participants WHERE revoked = 1) ORDER BY id",
             (rnd["round_id"],),
         ).fetchall()
@@ -508,9 +513,14 @@ class CommunityStore:
         updates = [{"head": core.head_from_bytes(bytes(r["head"])), "num_examples": r["num_examples"]} for r in rows]
         n_examples = int(sum(r["num_examples"] for r in rows))
         n_clipped = int(sum(r["clipped"] for r in rows))
+        started = time.perf_counter()
         candidate = core.aggregate_heads(updates, parent, policy)
+        agg_ms = (time.perf_counter() - started) * 1000
+        started = time.perf_counter()
         candidate_metrics = core.evaluate_head(candidate, self.assets.evalset)
         parent_metrics = core.evaluate_head(parent, self.assets.evalset)
+        eval_ms = (time.perf_counter() - started) * 1000
+        detail = json.dumps(self._round_detail(rnd, rows, parent, candidate, policy, agg_ms, eval_ms))
         best = core.best_of([json.loads(r["metrics"]) for r in conn.execute("SELECT metrics FROM heads").fetchall()])
         accepted, reasons = core.gate_decision(candidate_metrics, parent_metrics, policy, best)
         conn.execute("UPDATE updates SET head = NULL WHERE round_id = ?", (rnd["round_id"],))
@@ -519,8 +529,8 @@ class CommunityStore:
             text = "; ".join(core.GATE_MESSAGES[r] for r in reasons)
             conn.execute(
                 "UPDATE rounds SET status = 'rejected', closed_at = ?, reason = ?, n_updates = ?, n_examples = ?, n_clipped = ?, "
-                "candidate_metrics = ?, parent_metrics = ? WHERE round_id = ?",
-                (now, ",".join(reasons), *common, rnd["round_id"]),
+                "candidate_metrics = ?, parent_metrics = ?, detail = ? WHERE round_id = ?",
+                (now, ",".join(reasons), *common, detail, rnd["round_id"]),
             )
             self._log(conn, "round_rejected", round_id=rnd["round_id"], reasons=reasons, message=text)
             return {"accepted": False, "reasons": reasons, "metrics": candidate_metrics}
@@ -534,13 +544,52 @@ class CommunityStore:
         )
         conn.execute(
             "UPDATE rounds SET status = 'aggregated', closed_at = ?, result_version = ?, n_updates = ?, n_examples = ?, "
-            "n_clipped = ?, candidate_metrics = ?, parent_metrics = ? WHERE round_id = ?",
-            (now, version, *common, rnd["round_id"]),
+            "n_clipped = ?, candidate_metrics = ?, parent_metrics = ?, detail = ? WHERE round_id = ?",
+            (now, version, *common, detail, rnd["round_id"]),
         )
         self._meta_set(conn, "current_version", str(version))
         self._prune_heads(conn, version)
         self._log(conn, "round_aggregated", round_id=rnd["round_id"], version=version, clients=len(rows), examples=n_examples)
         return {"accepted": True, "version": version, "metrics": candidate_metrics}
+
+    @staticmethod
+    def _round_detail(rnd: sqlite3.Row, rows: List[sqlite3.Row], parent: Head, candidate: Head, policy: Policy,
+                      agg_ms: float, eval_ms: float) -> Dict[str, Any]:
+        """Trọng số gộp (đúng công thức `aggregate_heads`: min(n, n_cap) / tổng), độ lớn cập nhật và độ trễ của từng đóng góp.
+
+        Ẩn danh: không lưu mã người tham gia. Độ trễ do client báo (train/extract/rtt) chỉ để theo dõi, không ảnh hưởng gộp."""
+        used = [min(max(int(r["num_examples"]), 1), policy.n_cap) for r in rows]
+        total = sum(used) or 1
+        contributors = []
+        for row, n_used in zip(rows, used):
+            local = json.loads(row["local"]) if row["local"] else {}
+            contributors.append({
+                "n": int(row["num_examples"]), "n_used": n_used, "weight": round(n_used / total, 6),
+                "norm": round(float(row["norm_raw"]), 6), "norm_used": round(float(row["norm_used"]), 6),
+                "clipped": bool(row["clipped"]),
+                "train_ms": local.get("train_ms"), "extract_ms": local.get("extract_ms"), "rtt_ms": local.get("rtt_ms"),
+                "wait_s": round(max(0.0, float(row["received_at"]) - float(rnd["opened_at"])), 2),
+            })
+        delta = np.concatenate([
+            (candidate[core.WEIGHT_KEY] - parent[core.WEIGHT_KEY]).ravel(),
+            (candidate[core.BIAS_KEY] - parent[core.BIAS_KEY]).ravel(),
+        ]).astype(np.float64)
+        return {"contributors": contributors, "delta_norm": round(float(np.linalg.norm(delta)), 6),
+                "agg_ms": round(agg_ms, 2), "eval_ms": round(eval_ms, 2), "n_cap": policy.n_cap}
+
+    def head_download(self, version: int) -> Optional[Tuple[bytes, str]]:
+        """Tệp .npz (weight 38x1024, bias 38) của một phiên bản còn lưu; None nếu không có hoặc đã bị dọn."""
+        with self._conn() as conn:
+            row = conn.execute("SELECT sha, file FROM heads WHERE version = ?", (int(version),)).fetchone()
+        if row is None or not row["file"]:
+            return None
+        try:
+            head = self._load_head(int(version), row["sha"])
+        except (OSError, ValueError, AssetsUnavailable):
+            return None
+        buffer = io.BytesIO()
+        np.savez(buffer, weight=head[core.WEIGHT_KEY], bias=head[core.BIAS_KEY])
+        return buffer.getvalue(), row["sha"]
 
     # ------------------------------------------------------------------ dữ liệu trả cho giao diện
     @staticmethod
@@ -585,7 +634,8 @@ class CommunityStore:
                 "feature_model": self.feature_model_info(),
                 "caveat": (
                     "Người tham gia chỉ huấn luyện lớp phân loại cuối; phần trích đặc trưng giữ nguyên. “Độ chính xác giám sát” "
-                    "tính trên tập kiểm tra đã dùng để chọn mô hình gốc, nên chỉ để theo dõi, không phải kết quả khoa học."
+                    "tính trên tập validation đã dùng để chọn mô hình gốc, nên chỉ dùng để theo dõi từng vòng; số đo mức báo cáo "
+                    "là thí nghiệm mô phỏng ở chương 4 (test giữ riêng)."
                 ),
             }
         return data
@@ -694,6 +744,17 @@ class CommunityStore:
             "reasons": reasons, "messages": [core.GATE_MESSAGES.get(r, r) for r in reasons],
             "metrics": CommunityStore._metrics_view(json.loads(row["candidate_metrics"]) if row["candidate_metrics"] else None),
             "parent_metrics": CommunityStore._metrics_view(json.loads(row["parent_metrics"]) if row["parent_metrics"] else None),
+            **CommunityStore._detail_view(row),
+        }
+
+    @staticmethod
+    def _detail_view(row: sqlite3.Row) -> Dict[str, Any]:
+        detail = json.loads(row["detail"]) if row["detail"] else {}
+        closed = row["closed_at"]
+        return {
+            "contributors": detail.get("contributors", []), "delta_norm": detail.get("delta_norm"),
+            "agg_ms": detail.get("agg_ms"), "eval_ms": detail.get("eval_ms"), "n_cap": detail.get("n_cap"),
+            "duration_s": round(float(closed) - float(row["opened_at"]), 2) if closed is not None else None,
         }
 
     def history(self, limit: int = 20) -> Dict[str, Any]:
@@ -708,7 +769,8 @@ class CommunityStore:
             ]
             versions = [
                 {"version": r["version"], "kind": r["kind"], "created_at": r["created_at"], "clients": r["n_clients"],
-                 "examples": r["n_examples"], "sha": r["sha"], "metrics": self._metrics_view(json.loads(r["metrics"]))}
+                 "examples": r["n_examples"], "sha": r["sha"], "downloadable": bool(r["file"]),
+                 "metrics": self._metrics_view(json.loads(r["metrics"]))}
                 for r in conn.execute(
                     "SELECT * FROM heads WHERE version = 0 OR version > (SELECT MAX(version) FROM heads) - ? ORDER BY version",
                     (HISTORY_VERSIONS,)).fetchall()

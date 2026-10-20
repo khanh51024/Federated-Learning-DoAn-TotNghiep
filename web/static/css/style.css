@@ -1011,13 +1011,6 @@ input[type="checkbox"] {
   color: var(--text-muted);
 }
 
-.pv-result {
-  margin-top: var(--space-2);
-  white-space: pre-wrap;
-  font-size: var(--fs-sm);
-  line-height: 1.6;
-}
-
 .empty-placeholder {
   border: 1px dashed var(--border-strong);
   border-radius: var(--radius-lg);

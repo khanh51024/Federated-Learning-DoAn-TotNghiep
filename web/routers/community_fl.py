@@ -7,7 +7,7 @@ Giao thức (JSON qua HTTPS, ảnh KHÔNG bao giờ rời máy người dùng):
   GET  /api/community/round           (token) head cha hiện hành + hạn + số cập nhật đã nhận
   POST /api/community/update          (token) head mới + số ảnh + phân bố nhãn → nhận/từ chối kèm lý do
   GET  /api/community/history         các vòng đã gộp/bị từ chối và các phiên bản
-  POST /api/community/predict         ảnh → dự đoán của mô hình cộng đồng (thử nghiệm) so với FedAvg v7
+  POST /api/community/predict         ảnh → dự đoán của mô hình cộng đồng (phiên bản mới nhất) so với FedAvg v7
   /api/community/admin/*              (tài khoản COMMUNITY_ADMIN_USER, mặc định "admin" + mật khẩu COMMUNITY_ADMIN_TOKEN; Bearer
                                       <mật khẩu> hoặc Basic) mở/đóng phiên, đặt K/hạn, phát mã, thu hồi, khôi phục
 
@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel, Field, ValidationError
 from starlette.concurrency import run_in_threadpool
 
@@ -213,7 +213,7 @@ class UpdateBody(BaseModel):
 
 
 LOCAL_KEYS = ("epochs", "lr", "batch", "n_train", "n_holdout", "acc_before", "acc_after", "loss_before", "loss_after",
-              "extract_ms", "train_ms")
+              "extract_ms", "train_ms", "rtt_ms")
 
 
 def _clean_local(raw: Optional[Dict[str, Any]]) -> Dict[str, float]:
@@ -319,6 +319,20 @@ def get_history(request: Request, limit: int = Query(20, ge=1, le=200),
                 store: CommunityStore = Depends(require_store)) -> Dict[str, Any]:
     _limit(store, f"ip:{_client_ip(request)}", _scaled(PUBLIC_PER_MINUTE), 60)
     return store.history(limit)
+
+
+@router.get("/heads/{version}")
+def get_head_file(version: int, request: Request, store: CommunityStore = Depends(require_store)) -> Response:
+    """Tệp trọng số lớp cuối (.npz: weight 38x1024, bias 38) của một phiên bản; công khai vì là mô hình chung, không chứa dữ liệu người dùng."""
+    _limit(store, f"ip:{_client_ip(request)}", _scaled(PUBLIC_PER_MINUTE), 60)
+    found = store.head_download(version)
+    if found is None:
+        raise HTTPException(status_code=404, detail="Phiên bản này không còn tệp trọng số (đã dọn hoặc không tồn tại).")
+    data, sha = found
+    return Response(
+        content=data, media_type="application/octet-stream",
+        headers={"Content-Disposition": f'attachment; filename="cropfed-head-v{version:06d}.npz"', "X-Head-SHA": sha},
+    )
 
 
 @router.post("/predict")

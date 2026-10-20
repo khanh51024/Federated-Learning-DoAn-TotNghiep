@@ -742,15 +742,17 @@ def test_report_sections_use_numbered_headings_and_diagnosis_has_one_empty_messa
     assert stage[: stage.index("</div>")].count("Chưa chọn ảnh") == 0, "trang Chẩn đoán chỉ giữ một câu hướng dẫn khi chưa có ảnh (#diag-empty)"
 
 
-def test_diagnosis_has_three_peer_methods_and_groups_models_by_training_method():
+def test_diagnosis_has_three_peer_methods_with_the_seven_model_summary_behind_a_button():
     section = HTML[HTML.index('id="page-chan-doan"'):HTML.index('id="page-hoc-lien-ket"')]
     tabs = re.findall(r'role="tab" id="(dtab-[\w-]+)"[^>]*aria-controls="(dpanel-[\w-]+)"', section)
-    assert [t for t, _ in tabs] == ["dtab-do-an", "dtab-pv", "dtab-community"], "ba cách nhận diện ngang hàng"
+    assert [t for t, _ in tabs] == ["dtab-local", "dtab-pv", "dtab-community"], "ba cách nhận diện ngang hàng"
     for _, panel in tabs:
         assert f'id="{panel}"' in section and 'role="tabpanel"' in section
-    for button in ("btn-plantvillage", "plantvillage-result", "btn-community", "community-result"):
-        assert f'id="{button}"' in section, f"{button} phải còn để diagnosis.js gắn xử lý"
     assert "<details" not in section[section.index('id="dpanel-pv"'):section.index('id="dpanel-community"')], "PlantVillage không còn là mục gấp phụ"
+    assert 'id="btn-all-models"' in section and '<dialog class="diag-dialog" id="diag-all-dialog"' in section, "bảy mô hình nằm sau một nút"
+    assert 'id="btn-diagnose"' in section and "btn-plantvillage" not in section, "một nút chạy cả ba cách"
+    assert "thử nghiệm" not in section.lower(), "cộng đồng là một trong ba cách chính, không còn là thử nghiệm"
     diagnosis = JS_BY_REL["pages/diagnosis.js"]
-    assert "const GROUPS" in diagnosis and "data-toggle-locals" in diagnosis, "bảng gom Centralized / FedAvg / Local-only, Local thu gọn được"
+    assert "const GROUPS" in diagnosis and "data-toggle-locals" in diagnosis, "bảng trong hộp thoại gom Centralized / FedAvg / Local-only"
+    assert "runPv(" in diagnosis and "runCommunity(" in diagnosis and "renderLocal()" in diagnosis
     assert '$$("#page-ket-qua .subtab")' in JS_BY_REL["pages/results.js"], "tab của chương Kết quả không được bắt nhầm tab của trang Chẩn đoán"

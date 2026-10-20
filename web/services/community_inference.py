@@ -1,6 +1,7 @@
 """Suy luận bằng mô hình cộng đồng: backbone + classifier[0..2] của FedAvg v7 (đóng băng) + head cộng đồng hiện hành.
 
-Cùng một vector đặc trưng được đưa qua head cộng đồng và head gốc để so sánh. Đây là mô hình THỬ NGHIỆM: head thay đổi theo
+Cùng một vector đặc trưng được đưa qua head cộng đồng và head gốc để so sánh. Đây là một trong ba cách nhận diện chính của đồ án: luôn
+dùng phiên bản mới nhất đã qua cổng chất lượng. Head thay đổi theo
 từng vòng nên không nằm trong registry tĩnh và không bao giờ được trộn vào bảng bảy mô hình đã kiểm hash.
 """
 from __future__ import annotations
@@ -51,7 +52,7 @@ def predict(image: Any, version: int, head: core.Head, head_sha: str, base_head:
     baseline = _top3(logits(base_head), classes)
     return {
         "ready": True,
-        "kind": "community_experimental",
+        "kind": "community_latest",
         "version": version,
         "head_sha": head_sha,
         "predicted_class": community[0]["class"],
@@ -65,7 +66,8 @@ def predict(image: Any, version: int, head: core.Head, head_sha: str, base_head:
         "metrics": {k: metrics.get(k) for k in ("accuracy", "macro_recall", "plantvillage_accuracy", "plantdoc_accuracy")},
         "base_metrics": {k: base_metrics.get(k) for k in ("accuracy", "macro_recall", "plantvillage_accuracy", "plantdoc_accuracy")},
         "caveat": (
-            "Mô hình cộng đồng là thử nghiệm: chỉ lớp cuối được học từ ảnh người dùng tự gán nhãn. Độ chính xác giám sát tính "
-            "trên tập đã dùng để chọn mô hình gốc, không phải số liệu khoa học."
+            "Mô hình cộng đồng: chỉ lớp cuối được học từ ảnh người tham gia tự gán nhãn, luôn là phiên bản mới nhất đã qua cổng. "
+            "Độ chính xác giám sát tính trên tập validation đã dùng để chọn mô hình gốc, chỉ để theo dõi; số đo mức báo cáo là "
+            "thí nghiệm mô phỏng ở chương 4 (test giữ riêng)."
         ),
     }

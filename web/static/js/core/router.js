@@ -36,7 +36,7 @@ export const ROUTES = [
   {
     id: "chan-doan", step: 6, group: "Demo", label: "Chẩn đoán ảnh",
     title: "Chẩn đoán bệnh trên lá cây",
-    desc: "Tải ảnh lá cây hoặc chọn ảnh mẫu để xem kết quả dự đoán từ bảy mô hình",
+    desc: "Tải ảnh lá hoặc chọn ảnh mẫu: ba cách nhận diện (Local only, PlantVillage, Cộng đồng) trả lời cùng lúc",
     load: () => import("../pages/diagnosis.js"),
   },
   {

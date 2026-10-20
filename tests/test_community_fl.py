@@ -6,6 +6,7 @@ không gian 1024 chiều) nên cổng chấp nhận có nghĩa thật. Test tíc
 from __future__ import annotations
 
 import base64
+import io
 import json
 import sqlite3
 from pathlib import Path
@@ -285,6 +286,47 @@ def test_full_round_aggregates_exactly_fedavg_and_publishes_a_new_version(api: T
     assert history["current_version"] == 1 and history["totals"]["accepted"] == 1
     assert [v["version"] for v in history["versions"]] == [0, 1]
     assert "participant" not in json.dumps(history)
+
+
+def test_round_detail_records_weights_norms_latency_and_serves_the_head_file(api: TestClient, store: CommunityStore):
+    _open(api, k_target=3, k_min=2, clip_norm=50.0, n_cap=50)
+    participants = [_join(api, c) for c in _codes(api, count=3)]
+    round_data, parent = _parent_head(api, participants[0])
+    sizes = [20, 40, 80]
+    for i, (headers, n) in enumerate(zip(participants, sizes)):
+        local = {"train_ms": 1000 + i, "extract_ms": 500, "rtt_ms": 40, "acc_before": 0.5, "acc_after": 0.6}
+        response = api.post("/api/community/update", headers=headers, json=_payload(round_data, _client_head(parent, 0.4, 20 + i), n, local=local))
+        assert response.status_code == 200, response.text
+    history = api.get("/api/community/history").json()
+    finished = history["rounds"][0]
+    people = finished["contributors"]
+    assert [c["n"] for c in people] == sizes and [c["n_used"] for c in people] == [20, 40, 50], "trần n_cap áp dụng cho trọng số"
+    weights = [c["weight"] for c in people]
+    assert sum(weights) == pytest.approx(1.0, abs=1e-4) and weights[1] == pytest.approx(40 / 110, abs=1e-5)
+    assert all(c["norm"] == pytest.approx(0.4, rel=1e-3) and not c["clipped"] for c in people)
+    assert [c["train_ms"] for c in people] == [1000.0, 1001.0, 1002.0] and all(c["rtt_ms"] == 40.0 and c["extract_ms"] == 500.0 for c in people)
+    assert all(c["wait_s"] >= 0 for c in people)
+    assert finished["delta_norm"] > 0 and finished["duration_s"] >= 0 and finished["agg_ms"] is not None and finished["n_cap"] == 50
+    assert "participant" not in json.dumps(history), "chi tiết đóng góp phải ẩn danh"
+
+    newest = history["versions"][-1]
+    assert newest["version"] == 1 and newest["downloadable"] is True
+    download = api.get("/api/community/heads/1")
+    assert download.status_code == 200 and download.headers["x-head-sha"] == newest["sha"]
+    with np.load(io.BytesIO(download.content), allow_pickle=False) as data:
+        assert data["weight"].shape == (core.NUM_CLASSES, core.FEATURE_DIM) and data["bias"].shape == (core.NUM_CLASSES,)
+        assert core.head_sha(core.as_head(data["weight"], data["bias"])) == newest["sha"]
+    assert api.get("/api/community/heads/99").status_code == 404
+
+
+def test_store_upgrades_a_database_created_before_the_detail_column(tmp_path: Path, clock: Clock):
+    first = CommunityStore(tmp_path / "state", _synthetic_assets(tmp_path), SECRET, ADMIN, clock=clock)
+    with sqlite3.connect(first.db_path) as conn:
+        conn.execute("ALTER TABLE rounds DROP COLUMN detail")
+    again = CommunityStore(tmp_path / "state", _synthetic_assets(tmp_path), SECRET, ADMIN, clock=clock)
+    with sqlite3.connect(again.db_path) as conn:
+        assert "detail" in {row[1] for row in conn.execute("PRAGMA table_info(rounds)")}
+    assert again.history()["rounds"] == []
 
 
 def test_have_sha_skips_resending_the_head(api: TestClient):

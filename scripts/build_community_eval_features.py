@@ -8,7 +8,7 @@ Chạy (sau scripts/export_community_feature_model.py):
     python scripts/build_community_eval_features.py
 
 Lưu ý khoa học: tập validation này đã được dùng để chọn mô hình gốc, nên độ chính xác tính trên nó chỉ là tín hiệu GIÁM SÁT của
-hệ thống, không phải số liệu khoa học và không được trộn với số công bố của bundle.
+hệ thống (theo dõi từng vòng), không được trộn với số công bố của bundle; số mức báo cáo lấy từ scripts/simulate_community.py.
 """
 from __future__ import annotations
 

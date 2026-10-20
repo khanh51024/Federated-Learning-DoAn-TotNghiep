@@ -160,7 +160,9 @@ PIPELINE_SRC = "src"                   # engine trong repo (Flower demo, simulat
 BACKEND_PUBLISHED_BUNDLE = "published_bundle"        # web/demo_evidence.predict_published (kiểm hash bundle)
 BACKEND_TORCHSCRIPT_REFERENCE = "torchscript_reference"  # web/plantvillage_reference.predict_plantvillage
 
-KNOWN_PREPROCESSING = frozenset({"imagenet_eval_v1", "canonical_v1", "get_default_transform(eval)"})
+KNOWN_PREPROCESSING = frozenset({"imagenet_eval_v1", "canonical_v1", "get_default_transform(eval)", "hf_half_256_224"})
+COMMUNITY_SIMULATION_JSON = f"{COMMUNITY_FL_DIR}/simulation_report.json"  # thí nghiệm mô phỏng học phân tán cộng đồng
+PLANTVILLAGE_EVAL_JSON = "artifacts/plantvillage_reference_eval.json"  # đánh giá lại mô hình PlantVillage (không huấn luyện lại)
 
 # ---------------------------------------------------------------------------
 # Family & status semantics (bảng tra cho build_registry + UI)
