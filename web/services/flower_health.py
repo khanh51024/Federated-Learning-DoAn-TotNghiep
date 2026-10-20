@@ -11,6 +11,7 @@ import hashlib
 import importlib.metadata
 import importlib.util
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -177,9 +178,69 @@ def run_evidence(run_dir: Path, read_checkpoint_hash: Callable[[Path], Optional[
             "sha256": _sha256(checkpoint_path) if checkpoint_path.is_file() else None,
             "model_hash": ckpt_hash,
         },
+        "log_check": log_crosscheck(run_dir, len(rounds)) if rounds else None,
         "scientific_valid": False,
         "note": "Phiên dùng ảnh nhiễu ngẫu nhiên: chỉ chứng minh hệ thống chạy thật, không đo độ chính xác.",
     }
+
+
+# ---------------------------------------------------------------------------
+# 3b. đối chiếu độc lập từ log gốc
+# ---------------------------------------------------------------------------
+_ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
+_RESULTS_RE = re.compile(r"(aggregate_fit|aggregate_evaluate): received (\d+) results and (\d+) failures")
+_FINISHED_RE = re.compile(r"Run finished (\d+) round\(s\)")
+
+
+def _clean_lines(path: Path) -> Optional[List[str]]:
+    try:
+        return _ANSI.sub("", path.read_text(encoding="utf-8", errors="replace")).splitlines()
+    except OSError:
+        return None
+
+
+def log_crosscheck(run_dir: Path, rounds: int) -> Dict[str, Any]:
+    """Đếm lại từ log do chính Flower/tiến trình client in ra, không dùng history.json.
+
+    history.json là bản tóm tắt do mã của ta ghi; server.log và client_XX.log là output của tiến trình thật. Hai nguồn
+    này phải khớp nhau thì mới kết luận Flower đã chạy: server gộp đủ 5 kết quả mỗi vòng cả fit lẫn evaluate, và mỗi
+    client thật sự nhận `rounds` lệnh train + `rounds` lệnh evaluate.
+    """
+    problems: List[str] = []
+    server = _clean_lines(run_dir / "server.log")
+    fit: List[tuple] = []
+    evaluate: List[tuple] = []
+    finished: Optional[int] = None
+    if server is None:
+        problems.append("thiếu server.log")
+    else:
+        for line in server:
+            match = _RESULTS_RE.search(line)
+            if match:
+                (fit if match.group(1) == "aggregate_fit" else evaluate).append((int(match.group(2)), int(match.group(3))))
+            done = _FINISHED_RE.search(line)
+            if done:
+                finished = int(done.group(1))
+        if len(fit) != rounds or any(ok != EXPECTED_CLIENTS or bad for ok, bad in fit):
+            problems.append(f"server.log: aggregate_fit {fit} (cần {rounds} vòng × {EXPECTED_CLIENTS} kết quả, 0 lỗi)")
+        if len(evaluate) != rounds or any(ok != EXPECTED_CLIENTS or bad for ok, bad in evaluate):
+            problems.append(f"server.log: aggregate_evaluate {evaluate} (cần {rounds} vòng × {EXPECTED_CLIENTS} kết quả, 0 lỗi)")
+        if finished != rounds:
+            problems.append(f"server.log: 'Run finished' ghi {finished} vòng, cần {rounds}")
+    clients: List[Dict[str, Any]] = []
+    for index in range(EXPECTED_CLIENTS):
+        lines = _clean_lines(run_dir / f"client_{index:02d}.log")
+        if lines is None:
+            problems.append(f"thiếu client_{index:02d}.log")
+            clients.append({"name": f"client_{index:02d}", "train": None, "evaluate": None})
+            continue
+        train = sum("Received: train message" in line for line in lines)
+        evaluated = sum("Received: evaluate message" in line for line in lines)
+        clients.append({"name": f"client_{index:02d}", "train": train, "evaluate": evaluated})
+        if train != rounds or evaluated != rounds:
+            problems.append(f"client_{index:02d}.log: nhận {train} lệnh train / {evaluated} lệnh evaluate, cần {rounds}/{rounds}")
+    return {"ok": not problems, "problems": problems, "fit": fit, "evaluate": evaluate, "finished_rounds": finished,
+            "clients": clients, "rounds": rounds}
 
 
 # ---------------------------------------------------------------------------
@@ -217,6 +278,7 @@ def build_health(snapshot: Optional[Dict[str, Any]] = None, port_open: Optional[
 
     if evidence is None:
         for item_id, label in (("clients", f"{EXPECTED_CLIENTS}/{EXPECTED_CLIENTS} client kết nối"), ("rounds", "Mọi vòng nhận đủ cập nhật hợp lệ"),
+                               ("logs", "Log gốc của server và 5 client khớp với bản tóm tắt"),
                                ("hashes", "Chuỗi mã băm khớp đến checkpoint")):
             items.append(_item(item_id, None, label, "chưa có phiên hoàn tất nào để kiểm"))
     else:
@@ -227,6 +289,15 @@ def build_health(snapshot: Optional[Dict[str, Any]] = None, port_open: Optional[
         rounds_ok = bool(rounds) and all(r["accepted"] == EXPECTED_CLIENTS and not r["rejected"] for r in rounds)
         items.append(_item("rounds", rounds_ok, "Mọi vòng nhận đủ cập nhật hợp lệ",
                            f"{len(rounds)}/{evidence['configured_rounds']} vòng xong; nhận " + ", ".join(f"{r['accepted']}/{EXPECTED_CLIENTS}" for r in rounds)))
+        check = evidence["log_check"]
+        if check is None:
+            items.append(_item("logs", None, "Log gốc của server và 5 client khớp với bản tóm tắt", "phiên chưa có vòng nào để đối chiếu"))
+        elif check["ok"]:
+            items.append(_item("logs", True, "Log gốc của server và 5 client khớp với bản tóm tắt",
+                               f"server gộp {EXPECTED_CLIENTS}/{EXPECTED_CLIENTS} kết quả mỗi vòng ({check['rounds']} vòng, fit và evaluate); "
+                               f"mỗi client nhận {check['rounds']} lệnh train + {check['rounds']} lệnh evaluate"))
+        else:
+            items.append(_item("logs", False, "Log gốc của server và 5 client khớp với bản tóm tắt", "; ".join(check["problems"])[:400]))
         chain, final = evidence["hash_chain_ok"], evidence["final_matches_checkpoint"]
         if chain is None and final is None:
             items.append(_item("hashes", None, "Chuỗi mã băm khớp đến checkpoint", "phiên cũ chưa ghi mã băm; chạy lại một phiên để có bằng chứng này"))
@@ -259,9 +330,9 @@ def _verdict(flwr: Dict[str, Any], newest: Optional[Dict[str, Any]], evidence: O
     if newest and newest["status"] == "failed":
         return BROKEN, f"Phiên Flower gần nhất ({newest['name']}) bị lỗi: {newest.get('error') or 'không rõ nguyên nhân'}."
     core = {i["id"]: i["ok"] for i in items}
-    if evidence and core.get("clients") and core.get("rounds") and core.get("hashes") is not False:
+    if evidence and core.get("clients") and core.get("rounds") and core.get("logs") and core.get("hashes") is not False:
         return WORKING, (f"Flower đã chạy thật: {evidence['connected_clients']} client, {len(evidence['rounds'])} vòng, "
-                         "mọi vòng nhận đủ cập nhật hợp lệ" + (", chuỗi mã băm khớp đến checkpoint." if core.get("hashes") else "."))
+                         "log gốc của server và từng client khớp với kết quả, mọi vòng nhận đủ cập nhật hợp lệ" + (", chuỗi mã băm khớp đến checkpoint." if core.get("hashes") else "."))
     if evidence:
-        return BROKEN, "Phiên Flower gần nhất hoàn tất nhưng bằng chứng không đạt (thiếu client, thiếu cập nhật hoặc mã băm lệch)."
+        return BROKEN, "Phiên Flower gần nhất hoàn tất nhưng bằng chứng không đạt (thiếu client, thiếu cập nhật, log gốc không khớp hoặc mã băm lệch)."
     return NOT_VERIFIED, "Flower đã cài nhưng chưa có phiên nào chạy xong trên máy chủ này; hãy chạy một phiên kiểm tra để có bằng chứng."

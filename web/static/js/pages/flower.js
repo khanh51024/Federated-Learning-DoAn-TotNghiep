@@ -1,7 +1,8 @@
 // Demo · Flower: Flower có chạy thật không? Đọc /api/flower/health cho kết luận, /api/flower/evidence/{id} cho bằng chứng thô.
 // "Server online" chưa đủ: mỗi mục kiểm vì thế có một nút mở ra đúng lệnh máy chủ đã chạy + output nguyên bản (log server/client,
 // session/history/progress, mã băm tính lại từ tệp). Trang không khởi động gì — muốn có phiên mới thì mở Phụ lục kỹ thuật mục D.
-import { getJson } from "../core/api.js";
+import { getJson, postJson } from "../core/api.js";
+import { clearCredential, storedAuthHeader, ADMIN_PAGE } from "../core/admin-auth.js";
 import { byId, esc, fmtInt, fmtNum, notify, setHtml, skeleton } from "../core/dom.js";
 
 const REFRESH_MS = 3000;
@@ -167,6 +168,61 @@ function roundsHtml(evidence) {
     <p class="field-hint">${esc(evidence.note || "")}</p>`;
 }
 
+
+// ---------------------------------------------------------------------------
+// chạy kiểm chứng ngay: bằng chứng tươi do chính người xem kích hoạt, không phải bản ghi cũ
+// ---------------------------------------------------------------------------
+let starting = false;
+const START_BODY = { rounds: 2, local_epochs: 1, seed: 42, alpha: 0.1, smoke: true, engine: "network", num_clients: 5,
+  server_address: "127.0.0.1:8089", require_real_clients: false, dataset_root: null, require_real_evaluation: false,
+  reject_suspicious_updates: false, max_update_norm: null };
+
+function ago(iso) {
+  const ms = Date.now() - new Date(iso).getTime();
+  if (!iso || Number.isNaN(ms) || ms < 0) return "";
+  const m = Math.round(ms / 60000);
+  if (m < 1) return "vừa xong";
+  if (m < 60) return `${m} phút trước`;
+  const h = Math.round(m / 60);
+  return h < 48 ? `${h} giờ trước` : `${Math.round(h / 24)} ngày trước`;
+}
+
+function verifyHtml(data) {
+  const active = !!data.live?.active;
+  const finished = data.evidence?.finished_at_utc;
+  const when_ = finished ? `Bằng chứng đang hiển thị là của phiên kết thúc ${esc(ago(finished))} (${esc(when(finished))}). ` : "";
+  const action = active
+    ? `<p class="mt-2"><b>Đang có phiên chạy.</b> Mở mục "Đang có phiên chạy" ở trên để xem PID và log của 6 tiến trình ngay lúc này.</p>`
+    : `<p class="mt-2"><button type="button" class="btn btn-primary" id="flower-verify-now"${starting ? " disabled" : ""}>${starting ? "Đang khởi động…" : "Chạy kiểm chứng ngay (khoảng 30 giây)"}</button>
+       <span class="field-hint">Máy chủ có thể yêu cầu đăng nhập quản trị. Máy chủ sẽ sinh 1 server + 5 client thật; kết quả hiện ngay trên trang này.</span></p>`;
+  return `<div class="callout mt-4" role="note"><b>Các mục trên đọc lại bằng chứng của một phiên đã chạy.</b> ${when_}Muốn chắc Flower chạy ngay lúc này thì chạy một phiên mới:
+    PID, log và mã băm của phiên đó sẽ xuất hiện trực tiếp. Phiên kiểm tra dùng ảnh nhiễu nên chỉ chứng minh hệ thống chạy thật, không đo độ chính xác của mô hình.${action}</div>`;
+}
+
+async function verifyNow() {
+  if (starting) return;
+  starting = true;
+  lastSignature = ""; // dựng lại nút ở trạng thái "đang khởi động"
+  refresh();
+  try {
+    const result = await postJson("/api/federated/train", START_BODY, { headers: storedAuthHeader(), timeoutMs: 30000 });
+    notify("info", "Đã bắt đầu phiên Flower", result.message || "Server và 5 client đang khởi động.");
+    OPEN.add("live");
+    EVIDENCE.delete("live");
+  } catch (error) {
+    if (error?.status === 401) { // máy chủ bật quyền quản trị mà chưa đăng nhập (hoặc mật khẩu đã lưu không còn đúng)
+      clearCredential();
+      notify("warning", "Cần đăng nhập quản trị", "Hãy đăng nhập ở trang quản trị rồi quay lại bấm nút này.");
+      setTimeout(() => location.assign(ADMIN_PAGE), 1200);
+    }
+    else notify("error", "Không bắt đầu được phiên Flower", error.message);
+  } finally {
+    starting = false;
+    lastSignature = "";
+    refresh();
+  }
+}
+
 function render(data) {
   const verdict = VERDICT[data.verdict] || VERDICT.not_verified;
   const live = data.live?.active
@@ -197,8 +253,7 @@ function render(data) {
     <p class="panel-desc">Mỗi mục mở được để xem đúng lệnh máy chủ đã chạy và kết quả nguyên bản — không phải lời khẳng định "đạt" suông.</p>
     ${itemsHtml(data.items || [])}
     ${roundsHtml(data.evidence)}
-    <div class="callout mt-4" role="note"><b>Muốn có bằng chứng mới?</b> Mở <a href="#phu-luc">Phụ lục kỹ thuật, mục D</a>, đăng nhập quản trị rồi bấm Bắt đầu (FedAvg qua Flower, 5 client).
-      Trang này tự cập nhật khi phiên chạy. Phiên kiểm tra dùng ảnh nhiễu nên chỉ chứng minh hệ thống chạy thật, không đo độ chính xác của mô hình.</div>`);
+    ${verifyHtml(data)}`);
 
   for (const id of OPEN) if (!EVIDENCE.has(id)) loadEvidence(id); // mục đang mở sau khi dựng lại: tải tiếp phần còn thiếu
   refreshLive(data);
@@ -243,6 +298,7 @@ function bind(root) {
     loadEvidence(id, { force: refetch });
   }, true); // sự kiện toggle không nổi bóng: phải nghe ở giai đoạn capture
   root.addEventListener("click", async event => {
+    if (event.target.closest("#flower-verify-now")) { verifyNow(); return; }
     const button = event.target.closest(".copy-btn");
     if (!button) return;
     try {

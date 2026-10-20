@@ -25,7 +25,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from src import registry as reg
 from web.services import flower_health as fh
 
-ITEM_IDS = ("flwr", "ports", "attempt", "clients", "rounds", "hashes", "live")
+ITEM_IDS = ("flwr", "ports", "attempt", "clients", "rounds", "logs", "hashes", "live")
 
 MAX_BLOCK_CHARS = 40_000   # một block không được kéo dài bất tận khi có nhiều người mở liên tục
 COMMAND_TIMEOUT_S = 6.0
@@ -323,6 +323,41 @@ def _rounds_blocks(run_dir: Optional[Path]) -> List[Dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------------
+# 5b. đối chiếu log gốc
+# ---------------------------------------------------------------------------
+def _logs_blocks(run_dir: Optional[Path]) -> List[Dict[str, Any]]:
+    if run_dir is None:
+        return [_note("Chưa có phiên hoàn tất nào để đối chiếu log.")]
+    history = fh._read_json(run_dir / "history.json") or {}
+    rounds = len([a for a in history.get("audit_rounds", []) if isinstance(a, dict)])
+    check = fh.log_crosscheck(run_dir, rounds)
+    verdict = "KHỚP" if check["ok"] else "LỆCH: " + "; ".join(check["problems"])
+    server_rows = [{"round": i + 1, "fit": f"{ok} kết quả / {bad} lỗi", "evaluate": f"{e_ok} kết quả / {e_bad} lỗi"}
+                   for i, ((ok, bad), (e_ok, e_bad)) in enumerate(zip(check["fit"], check["evaluate"]))]
+    blocks = [
+        _note(f"Kết quả đối chiếu: {verdict}. Số đếm dưới đây được tính lại từ server.log và client_XX.log (chữ do tiến trình "
+              "Flower thật in ra), không lấy từ history.json."),
+        _records_block("server.log: số kết quả server gộp được mỗi vòng", [("round", "Vòng"), ("fit", "aggregate_fit"),
+                                                                            ("evaluate", "aggregate_evaluate")], server_rows,
+                       caption=f"Dòng 'Run finished' ghi {check['finished_rounds']} vòng; history.json ghi {rounds} vòng."),
+        _records_block("client_XX.log: số lệnh mỗi tiến trình client nhận từ server",
+                       [("name", "Tiến trình"), ("train", "Lệnh train"), ("evaluate", "Lệnh evaluate")], check["clients"],
+                       caption=f"Mỗi client phải nhận đúng {rounds} lệnh train và {rounds} lệnh evaluate: một client không kết "
+                               "nối hoặc bị bỏ qua sẽ thiếu dòng."),
+    ]
+    log_block = _file_block("server.log: các dòng gộp kết quả (lọc từ log gốc)", run_dir / "server.log", tail_lines=2000)
+    kept = [line for line in (log_block["content"] or "").splitlines() if "aggregate_" in line or "Run finished" in line]
+    log_block["content"] = _redact("\n".join(kept))
+    log_block["truncated"] = False
+    log_block["note"] = f"Lọc {len(kept)} dòng aggregate_fit / aggregate_evaluate / Run finished từ server.log gốc; đã bỏ mã màu."
+    blocks.append(log_block)
+    first_client = run_dir / "client_00.log"
+    if first_client.is_file():
+        blocks.append(_file_block("client_00.log: log gốc của một client làm mẫu", first_client, tail_lines=60))
+    return blocks
+
+
+# ---------------------------------------------------------------------------
 # 6. chuỗi mã băm
 # ---------------------------------------------------------------------------
 def _sha_command(path: Path) -> Optional[Dict[str, Any]]:
@@ -450,6 +485,9 @@ ASSERTIONS: Dict[str, str] = {
     "attempt": "đạt khi session.json của phiên mới nhất có status = completed; failed → không đạt kèm dòng cuối server.log.",
     "clients": f"đạt khi connected_clients của phiên hoàn tất bằng đúng {fh.EXPECTED_CLIENTS}.",
     "rounds": f"đạt khi mọi vòng trong audit_rounds có accepted_clients = {fh.EXPECTED_CLIENTS} và rejected_clients = 0.",
+    "logs": f"đạt khi server.log có đúng số dòng 'aggregate_fit/aggregate_evaluate: received {fh.EXPECTED_CLIENTS} results and 0 failures' "
+            "cho mọi vòng + dòng 'Run finished', và mỗi client_XX.log nhận đúng số lệnh train/evaluate. Đếm lại từ log gốc, độc "
+            "lập với history.json; lệch ở bất kỳ chỗ nào → không đạt và kết luận chuyển sang 'chưa chạy được'.",
     "hashes": "đạt khi parent_model_hash của vòng r bằng global_model_hash của vòng r-1 trên suốt chuỗi, và mã băm vòng "
               "cuối khớp giá trị ghi trong global.pt.",
     "live": "chỉ hiện khi có phiên đang chạy; đạt khi manager báo active = true.",
@@ -466,7 +504,7 @@ def build(item_id: str, snapshot: Optional[Dict[str, Any]] = None, *, completed_
     builders: Dict[str, Callable[[], List[Dict[str, Any]]]] = {
         "flwr": _flwr_blocks, "ports": _ports_blocks, "attempt": lambda: _attempt_blocks(newest_dir),
         "clients": lambda: _clients_blocks(completed_dir), "rounds": lambda: _rounds_blocks(completed_dir),
-        "hashes": lambda: _hashes_blocks(completed_dir), "live": lambda: _live_blocks(snapshot or {}),
+        "logs": lambda: _logs_blocks(completed_dir), "hashes": lambda: _hashes_blocks(completed_dir), "live": lambda: _live_blocks(snapshot or {}),
     }
     run = newest_dir if item_id == "attempt" else completed_dir
     return {"id": item_id, "generated_at": _utc_now(), "assertion": ASSERTIONS[item_id],

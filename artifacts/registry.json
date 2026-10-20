@@ -2881,9 +2881,10 @@
         "artifacts/web_runs/network_smoke/20261020T044747Z_a53e696c/global.pt",
         "artifacts/web_runs/network_smoke/20261020T045142Z_1ca8ac5f/global.pt",
         "artifacts/web_runs/network_smoke/20261020T045245Z_3445c976/global.pt",
-        "artifacts/web_runs/network_smoke/20261020T045330Z_ef63fb9f/global.pt"
+        "artifacts/web_runs/network_smoke/20261020T045330Z_ef63fb9f/global.pt",
+        "artifacts/web_runs/network_smoke/20261020T061219Z_38ec696a/global.pt"
       ],
-      "count": 14
+      "count": 15
     }
   ],
   "evidence_reports": {
@@ -2962,7 +2963,7 @@
   },
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-20T12:05:04",
+      "generated_at": "2026-10-20T13:14:32",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -2974,7 +2975,7 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-20T12:05:07",
+      "generated_at": "2026-10-20T13:14:34",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
@@ -3009,16 +3010,16 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-20T12:05:10",
+      "generated_at": "2026-10-20T13:14:37",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
     },
     "checkpoint_catalog": {
       "status": "complete",
-      "total_pt_files": 71,
+      "total_pt_files": 72,
       "in_models": 15,
-      "in_groups": 56,
+      "in_groups": 57,
       "unclassified": [],
       "source": "quét đĩa (scripts/build_registry.py)"
     }

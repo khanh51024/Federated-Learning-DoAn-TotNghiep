@@ -14,7 +14,8 @@ H0, H1, H2 = "a" * 64, "b" * 64, "c" * 64
 
 
 def _write_run(root: Path, name: str, *, status: str = "completed", rounds: int = 2, accepted: int = 5, chain_ok: bool = True,
-               final_hash: str = H2, error: str | None = None, with_checkpoint: bool = True, log: str | None = None) -> Path:
+               final_hash: str = H2, error: str | None = None, with_checkpoint: bool = True, log: str | None = None,
+               client_train_msgs: int | None = None) -> Path:
     run = root / name
     run.mkdir(parents=True)
     session = {"kind": fh.SMOKE_KIND, "status": status, "scientific_valid": False, "published_result_reproduction": False,
@@ -25,6 +26,15 @@ def _write_run(root: Path, name: str, *, status: str = "completed", rounds: int 
     if log:
         (run / "server.log").write_text(log, encoding="utf-8")
     if status == "completed":
+        if not log:  # log gốc do Flower in ra (có cả mã màu ANSI như thật) để mục "logs" đối chiếu được
+            colour = "\x1b[92mINFO \x1b[0m:      "
+            body = "".join(f"{colour}[ROUND {r}]\n{colour}aggregate_fit: received {accepted} results and 0 failures\n"
+                           f"{colour}aggregate_evaluate: received 5 results and 0 failures\n" for r in range(1, rounds + 1))
+            (run / "server.log").write_text(body + f"{colour}Run finished {rounds} round(s) in 17.27s\n", encoding="utf-8")
+        msgs = rounds if client_train_msgs is None else client_train_msgs
+        for c in range(5):
+            lines = "[*] Starting Flower Client\n" + "INFO :      Received: train message abc\nINFO :      Received: evaluate message def\n" * msgs
+            (run / f"client_{c:02d}.log").write_text(lines, encoding="utf-8")
         hashes = [(H0, H1), (H1 if chain_ok else H0, H2)]
         audits = [{"round": i + 1, "clients": [{"client_id": c} for c in range(5)], "accepted_clients": accepted, "suspicious_clients": 0,
                    "rejected_clients": 0, "round_fit_elapsed_ms": 1500.0, "mean_probe_rtt_ms": 12.0, "max_probe_rtt_ms": 20.0,
@@ -117,3 +127,27 @@ def test_endpoint_is_public_read_only_and_never_starts_anything():
     body = response.json()
     assert body["verdict"] in (fh.WORKING, fh.NOT_VERIFIED, fh.BROKEN) and {"flwr", "items", "evidence", "live"} <= set(body)
     assert TestClient(app).post("/api/flower/health").status_code == 405
+
+
+def test_log_crosscheck_passes_on_matching_server_and_client_logs(runs):
+    _write_run(runs, "20261020T010000Z_zzzz0001")
+    result = _health()
+    item = _by_id(result)["logs"]
+    assert item["ok"] is True and "5/5" in item["detail"]
+    assert result["verdict"] == fh.WORKING
+
+
+def test_a_client_that_never_received_all_rounds_breaks_the_verdict_even_if_history_looks_fine(runs):
+    """history.json là bản tóm tắt do mã của ta ghi: nếu log của client không có lệnh train đủ số vòng thì không được kết luận 'đã chạy'."""
+    _write_run(runs, "20261020T010000Z_zzzz0002", client_train_msgs=1)
+    result = _health()
+    item = _by_id(result)["logs"]
+    assert item["ok"] is False and "client_00.log" in item["detail"]
+    assert result["verdict"] == fh.BROKEN
+
+
+def test_missing_raw_logs_are_not_treated_as_working(runs):
+    run = _write_run(runs, "20261020T010000Z_zzzz0003")
+    (run / "server.log").unlink()
+    result = _health()
+    assert _by_id(result)["logs"]["ok"] is False and result["verdict"] == fh.BROKEN
