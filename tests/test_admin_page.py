@@ -1,4 +1,4 @@
-"""Trang quản trị học liên kết cộng đồng (/quan-tri): tệp tĩnh riêng, tiêu đề bảo mật, tham chiếu đủ tài nguyên, không script/style
+"""Trang quản trị học phân tán cộng đồng (/quan-tri): tệp tĩnh riêng, tiêu đề bảo mật, tham chiếu đủ tài nguyên, không script/style
 inline (CSP của trang cấm), mọi id mà JS dùng đều có trong HTML, và dữ liệu mà trang cần có trong /admin/state."""
 from __future__ import annotations
 

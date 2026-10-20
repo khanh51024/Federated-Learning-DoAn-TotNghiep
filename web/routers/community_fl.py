@@ -1,4 +1,4 @@
-"""Router học liên kết cộng đồng: mỗi người vào web là một client, huấn luyện lớp cuối trong trình duyệt.
+"""Router học phân tán cộng đồng: mỗi người vào web là một client, huấn luyện lớp cuối trong trình duyệt.
 
 Giao thức (JSON qua HTTPS, ảnh KHÔNG bao giờ rời máy người dùng):
   GET  /api/community/status          công khai: phiên đang mở không, vòng hiện tại, phiên bản mô hình, cấu hình client
@@ -82,7 +82,7 @@ _STATE: Optional[StoreState] = None
 _STATE_LOCK = threading.Lock()
 
 
-PUBLIC_REASON = "Học liên kết cộng đồng chưa được bật trên máy chủ này."
+PUBLIC_REASON = "Học phân tán cộng đồng chưa được bật trên máy chủ này."
 
 
 def _unavailable(detail: str) -> StoreState:

@@ -4,7 +4,7 @@
 .admin-main > #admin-app > .panel { margin-top: var(--space-4); }
 .admin-topbar-actions { margin-left: auto; display: flex; align-items: center; gap: var(--space-2); }
 @media (max-width: 560px) {
-  /* thanh trên cùng ở màn hẹp: chỉ giữ nút; trạng thái phiên đã có ngay trong khối "Phiên học liên kết" */
+  /* thanh trên cùng ở màn hẹp: chỉ giữ nút; trạng thái phiên đã có ngay trong khối "Phiên học phân tán" */
   .admin-topbar-actions #session-badge-top { display: none; }
   .admin-topbar-actions { gap: var(--space-1); min-width: 0; }
 }

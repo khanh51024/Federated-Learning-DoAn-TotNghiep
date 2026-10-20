@@ -116,7 +116,7 @@ def main() -> int:
             # ── 1b. Địa chỉ cũ của sáu bước vẫn mở đúng trang (mã tham gia đã in có dạng /?code=…#huan-luyen) ──
             context, page, errors = open_page(browser, base, "/?code=ABCDE-FGHJK#huan-luyen")
             page.wait_for_selector("#page-hoc-lien-ket.active", timeout=30000)
-            check("địa chỉ cũ #huan-luyen mở trang Học liên kết và đổi sang #hoc-lien-ket",
+            check("địa chỉ cũ #huan-luyen mở trang Học phân tán và đổi sang #hoc-lien-ket",
                   page.evaluate("location.hash") == "#hoc-lien-ket", page.evaluate("location.hash"))
             page.wait_for_selector("#comm-main:not(.hidden)", timeout=30000)
             check("địa chỉ cũ: mã trong liên kết vẫn được điền sẵn", page.locator("#comm-code").input_value().replace("-", "") == "ABCDEFGHJK")

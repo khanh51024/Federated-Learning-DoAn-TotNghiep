@@ -8,7 +8,7 @@
 Tự host để demo chạy được khi không có Internet và để phiên bản không đổi ngầm (trước đây `index.html` nạp `chart.js` không ghim từ CDN).
 Nâng cấp: tải bản mới vào đây, đổi `?v=` trong `index.html`, rồi chạy lại `python scripts/update_status.py`.
 
-## onnxruntime-web (học liên kết cộng đồng)
+## onnxruntime-web (học phân tán cộng đồng)
 
 Chạy phần đóng băng của mô hình (backbone + `classifier[0..2]`) trong Web Worker để trích đặc trưng 1024 chiều từ ảnh của người dùng.
 Chỉ dùng bản wasm, `numThreads = 1` nên KHÔNG cần header COOP/COEP. Ba tệp phải đi cùng nhau: `.mjs` nạp `-threaded.mjs`, rồi

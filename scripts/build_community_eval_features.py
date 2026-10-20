@@ -1,4 +1,4 @@
-"""Tạo tập đặc trưng GIÁM SÁT cho cổng chấp nhận của học liên kết cộng đồng.
+"""Tạo tập đặc trưng GIÁM SÁT cho cổng chấp nhận của học phân tán cộng đồng.
 
 Máy chủ web không có ảnh, nên cổng "head mới không được kém head cũ" không thể chạy backbone. Script này (chạy trên máy có
 dataset) trích đặc trưng 1024 chiều của toàn bộ ảnh validation của release đã ghim bằng đúng file ONNX mà trình duyệt dùng, rồi

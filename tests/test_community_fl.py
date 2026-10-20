@@ -1,4 +1,4 @@
-"""Học liên kết cộng đồng: lõi số học, trạng thái vòng (SQLite) và giao thức HTTP.
+"""Học phân tán cộng đồng: lõi số học, trạng thái vòng (SQLite) và giao thức HTTP.
 
 Không cần dataset, ONNX hay trình duyệt: tập đặc trưng giám sát và head khởi điểm được dựng tổng hợp (38 cụm Gaussian trong
 không gian 1024 chiều) nên cổng chấp nhận có nghĩa thật. Test tích hợp với artifact thật nằm ở tests/test_community_assets.py.
@@ -454,7 +454,7 @@ def hashlib_sha(data: bytes) -> str:
 
 
 def test_missing_artifacts_disable_the_feature_without_breaking_status(tmp_path: Path):
-    app.dependency_overrides[store_state] = lambda: StoreState(None, "Học liên kết cộng đồng chưa được bật trên máy chủ này.",
+    app.dependency_overrides[store_state] = lambda: StoreState(None, "Học phân tán cộng đồng chưa được bật trên máy chủ này.",
                                                               "Chưa có community_manifest.json")
     try:
         client = TestClient(app)

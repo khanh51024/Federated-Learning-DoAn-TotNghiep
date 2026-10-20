@@ -1,4 +1,4 @@
-"""Artifact thật của học liên kết cộng đồng (artifacts/community_fl/): SHA khớp manifest, head khởi điểm tái hiện đúng số đã công bố
+"""Artifact thật của học phân tán cộng đồng (artifacts/community_fl/): SHA khớp manifest, head khởi điểm tái hiện đúng số đã công bố
 trên tập giám sát, ONNX khớp PyTorch. Bỏ qua nếu máy chưa sinh artifact (chạy hai script trong scripts/ trước)."""
 from __future__ import annotations
 

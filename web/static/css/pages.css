@@ -724,7 +724,7 @@ body[data-route="gioi-thieu"] .top-header .eyebrow { margin-bottom: 0; }
 .summary-line { font-size: var(--fs-xs); color: var(--text-muted); margin-bottom: 4px; }
 .summary-big { font-size: var(--fs-md); line-height: 1.5; }
 .summary-pillars { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
-/* UI-03: kết quả chính của mô hình học liên kết nổi lên đầu; đúng/sai không chỉ dựa vào màu (có chữ ✓/✕) */
+/* UI-03: kết quả chính của mô hình học phân tán nổi lên đầu; đúng/sai không chỉ dựa vào màu (có chữ ✓/✕) */
 .diag-headline {
   margin-bottom: var(--space-3);
   padding: var(--space-3) var(--space-4);
@@ -1383,7 +1383,7 @@ body[data-route="gioi-thieu"] .top-header .eyebrow { margin-bottom: 0; }
   .error-card:hover img, .fl-client:hover .fl-node-card, .fl-server:hover .fl-node-card { transform: none; }
 }
 
-/* ───────── Học liên kết cộng đồng (bước 5): tham gia từ máy của bạn ───────── */
+/* ───────── Học phân tán cộng đồng (bước 5): tham gia từ máy của bạn ───────── */
 .comm-panel { margin-bottom: var(--space-4); }
 /* chiều cao cuối của khối (đo ở 320–1920 px) để lúc đang tải không chiếm ít chỗ hơn rồi đẩy nội dung bên dưới */
 .comm-panel[aria-busy="true"] { min-height: 430px; }
@@ -1689,7 +1689,7 @@ body[data-group="demo"] .page-title { letter-spacing: -0.01em; }
 .vg-sub { color: var(--text-secondary); font-size: var(--fs-sm); }
 #diag-empty { padding: var(--space-6) var(--space-4); }
 
-/* Học liên kết: thẻ phiên hiện tại, hai cột (các bước | vòng gần đây và kỳ vọng) */
+/* Học phân tán: thẻ phiên hiện tại, hai cột (các bước | vòng gần đây và kỳ vọng) */
 .comm-session { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--border-color); border-radius: var(--radius-lg); background: var(--bg-surface); }
 .comm-session dt { color: var(--text-muted); font-size: var(--fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
 .comm-session dd { margin-top: 2px; font-size: var(--fs-lg); font-weight: 700; color: var(--accent-emerald-strong); font-variant-numeric: tabular-nums; }

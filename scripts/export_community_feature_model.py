@@ -1,4 +1,4 @@
-"""Xuất phần ĐÓNG BĂNG của FedAvg v7 (backbone + classifier[0..2]) sang ONNX cho học liên kết cộng đồng trong trình duyệt.
+"""Xuất phần ĐÓNG BĂNG của FedAvg v7 (backbone + classifier[0..2]) sang ONNX cho học phân tán cộng đồng trong trình duyệt.
 
 Trình duyệt chạy file ONNX này (onnxruntime-web, wasm) để biến ảnh thành vector đặc trưng 1024 chiều; chỉ lớp
 `classifier.3` (38.950 tham số) được huấn luyện và gửi về máy chủ. Script này:

@@ -1,4 +1,4 @@
-"""Phần số học JS của học liên kết cộng đồng phải khớp tham chiếu Python: resize kiểu PIL (từng byte), chuẩn hóa, softmax regression,
+"""Phần số học JS của học phân tán cộng đồng phải khớp tham chiếu Python: resize kiểu PIL (từng byte), chuẩn hóa, softmax regression,
 mã hóa head. Chạy bằng Node (không cần trình duyệt); bỏ qua nếu không có Node."""
 from __future__ import annotations
 

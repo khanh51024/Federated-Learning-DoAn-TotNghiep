@@ -1,4 +1,4 @@
-// Phần số học của học liên kết cộng đồng, thuần JS (không DOM) để chạy trong Web Worker và kiểm bằng Node:
+// Phần số học của học phân tán cộng đồng, thuần JS (không DOM) để chạy trong Web Worker và kiểm bằng Node:
 // tiền xử lý ảnh trùng canonical_v1 của PyTorch, huấn luyện softmax regression cho lớp cuối, mã hóa head.
 //
 // Vì sao tự viết resize: `createImageBitmap(..., { resizeQuality: "high" })` KHÔNG khớp torchvision Resize(antialias=True)

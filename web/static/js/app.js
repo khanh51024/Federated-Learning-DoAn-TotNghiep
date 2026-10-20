@@ -42,7 +42,7 @@ function initGroupArrowKeys() {
 }
 
 // Thả ảnh ra ngoài vùng thả sẽ làm trình duyệt mở tệp (file:///…) và dỡ cả ứng dụng. Vì cancel `drop` ở đây cũng hủy cách xử lý mặc định
-// của <input type=file>, mọi vùng thả (trang Chẩn đoán, trang Học liên kết) phải tự đọc `dataTransfer.files`.
+// của <input type=file>, mọi vùng thả (trang Chẩn đoán, trang Học phân tán) phải tự đọc `dataTransfer.files`.
 function initDropGuard() {
   const cancel = event => event.preventDefault();
   document.addEventListener("dragover", cancel);

@@ -40,15 +40,15 @@ export const ROUTES = [
     load: () => import("../pages/diagnosis.js"),
   },
   {
-    id: "hoc-lien-ket", step: 7, group: "Demo", label: "Học liên kết",
-    title: "Tham gia học liên kết (federated learning) từ trình duyệt",
-    desc: "Góp ảnh lá của bạn vào một vòng học liên kết thật, ngay trong trình duyệt",
+    id: "hoc-lien-ket", step: 7, group: "Demo", label: "Học phân tán",
+    title: "Tham gia học phân tán (federated learning) từ trình duyệt",
+    desc: "Góp ảnh lá của bạn vào một vòng học phân tán thật, ngay trong trình duyệt",
     load: () => import("../pages/community.js"),
   },
   {
     id: "phu-luc", step: 8, group: "Phụ lục", inNav: false, label: "Phụ lục kỹ thuật",
     title: "Phụ lục kỹ thuật",
-    desc: "Kiểm chứng số liệu, nguồn gốc mô hình và kiểm thử hệ thống học liên kết trên máy chủ",
+    desc: "Kiểm chứng số liệu, nguồn gốc mô hình và kiểm thử hệ thống học phân tán trên máy chủ",
     load: () => import("../pages/appendix.js"),
   },
 ];

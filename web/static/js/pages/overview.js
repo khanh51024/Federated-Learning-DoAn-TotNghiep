@@ -29,7 +29,7 @@ function heroHtml() {
     <section class="hero overview-hero" id="overview-hero">
       <span class="hero-glow" id="hero-glow" aria-hidden="true"></span>
       <div class="overview-hero-copy">
-        <p class="eyebrow">Đồ án tốt nghiệp · học liên kết chẩn đoán bệnh lá cây</p>
+        <p class="eyebrow">Đồ án tốt nghiệp · học phân tán chẩn đoán bệnh lá cây</p>
         <h2 class="hero-question">Học chung.<br>Ảnh ở lại từng nơi.</h2>
         <p class="hero-note">Mỗi client huấn luyện mô hình trên dữ liệu riêng. Máy chủ tổng hợp trọng số thành một mô hình chung; ảnh không cần tập trung về máy chủ.</p>
         <p class="viewer-scope" id="overview-scope">Thực nghiệm trên các phân vùng dữ liệu giả lập.</p>
@@ -149,7 +149,7 @@ export async function mount() {
     <div class="report-pair mt-4">
     <section class="panel report-section" aria-labelledby="problem-title">
       ${sectionHead("1.1", "Bài toán", { id: "problem-title", lead: "Huấn luyện chung khi ảnh nằm ở nhiều nơi và không muốn gom về một máy" })}
-      <p class="panel-desc mt-2">Ảnh bệnh lá cây do nhiều nơi giữ riêng. Gom hết về một máy để huấn luyện thì tốn đường truyền và mỗi nơi phải giao ảnh gốc. Học liên kết cho mỗi nơi (client) tự huấn luyện trên ảnh của mình, chỉ gửi trọng số mô hình lên máy chủ để gộp lại.</p>
+      <p class="panel-desc mt-2">Ảnh bệnh lá cây do nhiều nơi giữ riêng. Gom hết về một máy để huấn luyện thì tốn đường truyền và mỗi nơi phải giao ảnh gốc. Học phân tán cho mỗi nơi (client) tự huấn luyện trên ảnh của mình, chỉ gửi trọng số mô hình lên máy chủ để gộp lại.</p>
       <p class="panel-desc mt-2">Khó khăn của đề tài: ảnh ở các client không giống nhau, ví dụ nơi này nhiều ảnh cà chua, nơi kia gần như không có. Với dữ liệu lệch như vậy, mô hình gộp có thể kém hơn mô hình huấn luyện trên toàn bộ ảnh.</p>
     </section>
 
@@ -181,7 +181,7 @@ export async function mount() {
         <a class="toc-card" href="#ket-qua"><span class="toc-no">4</span><b>Kết quả</b><span>Bảy mô hình, tập giữ riêng và thống kê, phân tích lỗi, độ tin cậy của xác suất.</span></a>
         <a class="toc-card" href="#ket-luan"><span class="toc-no">5</span><b>Kết luận</b><span>Trả lời câu hỏi nghiên cứu, hạn chế và hướng phát triển.</span></a>
         <a class="toc-card is-demo" href="#chan-doan"><span class="toc-no">Demo</span><b>Chẩn đoán ảnh</b><span>Tải ảnh lá, xem bảy mô hình dự đoán cùng lúc.</span></a>
-        <a class="toc-card is-demo" href="#hoc-lien-ket"><span class="toc-no">Demo</span><b>Học liên kết</b><span>Tham gia như một client thật từ trình duyệt của bạn.</span></a>
+        <a class="toc-card is-demo" href="#hoc-lien-ket"><span class="toc-no">Demo</span><b>Học phân tán</b><span>Tham gia như một client thật từ trình duyệt của bạn.</span></a>
       </div>
       <p class="field-hint mt-3">Số liệu kiểm chứng và phần chạy thử hệ thống trên máy chủ nằm ở <a href="#phu-luc">Phụ lục kỹ thuật</a>.</p>
     </section>`;

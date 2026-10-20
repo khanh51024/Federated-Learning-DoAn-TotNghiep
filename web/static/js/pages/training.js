@@ -216,7 +216,7 @@ function renderViews(task, network) {
   }
 }
 
-/** Client "đang kết nối" theo trạng thái máy chủ: chỉ tính khi tác vụ hiện tại là học liên kết (tránh số cũ của phiên Flower trước). */
+/** Client "đang kết nối" theo trạng thái máy chủ: chỉ tính khi tác vụ hiện tại là học phân tán (tránh số cũ của phiên Flower trước). */
 function clientView(task, network) {
   const kind = kindOfTask(task);
   const isNetwork = task?.type === "federated-network";

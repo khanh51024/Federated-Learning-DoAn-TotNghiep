@@ -1,4 +1,4 @@
-"""Kiểm thử đầu-cuối học liên kết cộng đồng bằng trình duyệt thật (Playwright + Chromium) và một máy chủ thật.
+"""Kiểm thử đầu-cuối học phân tán cộng đồng bằng trình duyệt thật (Playwright + Chromium) và một máy chủ thật.
 
 Kịch bản: máy chủ uvicorn thật (artifact thật, trạng thái ở thư mục tạm) → quản trị mở phiên (K = 3) và phát mã → BA context trình
 duyệt độc lập, mỗi người nhập mã, thêm ảnh gallery có nhãn, chọn nhóm, huấn luyện trong Worker (onnxruntime-web) và gửi → máy chủ
@@ -186,7 +186,7 @@ def admin_ui_checks(browser: Any, base: str, admin_token: str) -> None:
     check("trang quản trị: ghi chú chứa HTML hiện như văn bản, không chạy mã",
           page.evaluate("window.__xss") == 0 and page.locator("#codes-body img").count() == 0)
     link = page.locator("#codes-list li .code-link").first.inner_text()
-    check("trang quản trị: link tham gia có mã và trỏ trang Học liên kết", "?code=" in link and link.endswith("#hoc-lien-ket"), link)
+    check("trang quản trị: link tham gia có mã và trỏ trang Học phân tán", "?code=" in link and link.endswith("#hoc-lien-ket"), link)
 
     # thu hồi một mã (nút hai bước)
     revoke = page.locator("#codes-body [data-revoke]").first

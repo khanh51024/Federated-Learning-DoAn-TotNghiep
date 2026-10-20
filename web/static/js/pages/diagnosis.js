@@ -253,7 +253,7 @@ function verdict(result, trueClass) {
 function rowHtml(modelId, expanded = false) {
   const result = state.rows.get(modelId);
   const label = MODEL_LABELS[modelId];
-  const phase = modelId === "centralized" ? "Gom ảnh" : modelId === "fedavg" ? "Học liên kết" : "Học riêng";
+  const phase = modelId === "centralized" ? "Gom ảnh" : modelId === "fedavg" ? "Học phân tán" : "Học riêng";
   if (!result) {
     return `<th scope="row">${modelPill(modelId)}<span class="row-sub">${phase}</span></th>
       <td colspan="3"><span class="skeleton skeleton-line"></span></td>`;
@@ -318,7 +318,7 @@ function renderTable(modelIds, { animateIds = [] } = {}) {
   }
 }
 
-/** Kết quả chính (UI-03): mô hình học liên kết đứng đầu với nhãn dự đoán, đúng/sai và độ tin cậy; các mô hình còn lại chỉ là đối chiếu. */
+/** Kết quả chính (UI-03): mô hình học phân tán đứng đầu với nhãn dự đoán, đúng/sai và độ tin cậy; các mô hình còn lại chỉ là đối chiếu. */
 /** Số mô hình (trong các mô hình đang hiển thị) trùng với mô hình chính về loại cây và về nhóm bệnh. */
 function agreement(refId) {
   const ref = state.rows.get(refId);
@@ -348,7 +348,7 @@ function headlineHtml(trueClass) {
   const truth = trueClass && v !== "correct"
     ? `<p class="headline-truth">Nhãn thật: <b>${esc(formatDiseaseName(trueClass))}</b></p>` : "";
   return `<div class="diag-headline ${tone}">
-      <p class="summary-line">Kết quả chính, mô hình ${esc(MODEL_LABELS[ref])}${ref === "fedavg" ? " (học liên kết)" : ""}</p>
+      <p class="summary-line">Kết quả chính, mô hình ${esc(MODEL_LABELS[ref])}${ref === "fedavg" ? " (học phân tán)" : ""}</p>
       <div class="verdict-grid">
         <div class="vg-cell"><span class="vg-label">Loại cây</span><b class="vg-value">${esc(cropOf(result.predicted_class))}</b><span class="vg-sub">${agreeText(agree.sameCrop)}</span></div>
         <div class="vg-cell"><span class="vg-label">Nhóm</span><b class="vg-value headline-name">${esc(diseaseOf(result.predicted_class))}${uncertain}</b><span class="vg-sub">${agreeText(agree.sameClass)}</span></div>
@@ -438,7 +438,7 @@ function explanation(results, trueClass) {
     const info = shardInfo("fedavg", trueClass);
     lines.push(verdict(fed, trueClass) === "correct"
       ? `<b>FedAvg</b> đúng: học từ cả năm client, tổng cộng ${fmtInt(info?.count)} ảnh của nhóm này mà không ảnh nào rời khỏi client.`
-      : `<b>FedAvg</b> sai dù đã tổng hợp ${fmtInt(info?.count)} ảnh của nhóm này từ các client — ảnh này khó với cả mô hình học liên kết.`);
+      : `<b>FedAvg</b> sai dù đã tổng hợp ${fmtInt(info?.count)} ảnh của nhóm này từ các client — ảnh này khó với cả mô hình học phân tán.`);
   }
   const overview = [];
   if (wrongZero.length) overview.push(`${names(wrongZero)} nhận sai và không có ảnh của nhóm này trong phần dữ liệu học.`);

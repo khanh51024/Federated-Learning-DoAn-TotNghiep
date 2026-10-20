@@ -7,7 +7,7 @@
   <script src="/static/js/theme-boot.js?v=1"></script>
   <!-- favicon: Lucide "boxes" v1.59.0 (ISC) — hình học y nguyên, nguồn ghi ở web/static/vendor/README.md -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23047857' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z'/%3E%3Cpath d='m7 16.5-4.74-2.85'/%3E%3Cpath d='m7 16.5 5-3'/%3E%3Cpath d='M7 16.5v5.17'/%3E%3Cpath d='M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z'/%3E%3Cpath d='m17 16.5-5-3'/%3E%3Cpath d='m17 16.5 4.74-2.85'/%3E%3Cpath d='M17 16.5v5.17'/%3E%3Cpath d='M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z'/%3E%3Cpath d='M12 8 7.26 5.15'/%3E%3Cpath d='m12 8 4.74-2.85'/%3E%3Cpath d='M12 13.5V8'/%3E%3C/svg%3E">
-  <title>CropFed FL — Học Liên Kết Chẩn Đoán Bệnh Lá Cây</title>
+  <title>CropFed FL — Học Phân Tán Chẩn Đoán Bệnh Lá Cây</title>
   <!-- Font tự host (Be Vietnam Pro có bộ glyph tiếng Việt đầy đủ); tải trước các subset dùng ở lần vẽ đầu -->
   <link rel="preload" as="font" type="font/woff2" crossorigin href="/static/fonts/be-vietnam-pro-400-latin.woff2">
   <link rel="preload" as="font" type="font/woff2" crossorigin href="/static/fonts/be-vietnam-pro-400-vietnamese.woff2">
@@ -63,7 +63,7 @@
         </span>
         <span class="brand-text">
           <span class="brand-title">CropFed FL</span>
-          <span class="brand-subtitle">Học liên kết · bệnh lá cây</span>
+          <span class="brand-subtitle">Học phân tán · bệnh lá cây</span>
         </span>
       </a>
 
@@ -90,7 +90,7 @@
           <span class="nav-label">Chẩn đoán ảnh</span>
         </a>
         <a class="nav-item" href="#hoc-lien-ket" data-route="hoc-lien-ket">
-          <span class="nav-label">Học liên kết</span>
+          <span class="nav-label">Học phân tán</span>
         </a>
       </nav>
 
@@ -259,7 +259,7 @@
               <div class="panel-header-flex">
                 <div>
                   <h3 class="panel-title panel-title-sm"><span class="step-no">2</span> Kết quả chẩn đoán</h3>
-                  <p class="panel-desc">Bảy mô hình trả lời cùng lúc trên một ảnh.</p>
+                  <p class="panel-desc">Bảy mô hình của ba cách huấn luyện trả lời cùng lúc trên một ảnh: 1 Centralized (gom ảnh về một chỗ, mức tham chiếu), 1 FedAvg (học phân tán, phương pháp đề xuất) và 5 Local (mỗi client tự học riêng).</p>
                 </div>
                 <div class="diag-header-actions">
                   <span class="status-badge hidden" id="diag-progress-badge">Đang chạy</span>
@@ -358,7 +358,7 @@
 
             <details class="panel panel-fold" id="community-model">
               <summary>Mô hình cộng đồng (thử nghiệm, không nằm trong bảy mô hình trên)</summary>
-              <p class="panel-desc mt-2">Dùng phiên bản lớp cuối mới nhất do người tham gia ở trang <a href="#hoc-lien-ket">Học liên kết</a> cùng huấn luyện trên backbone của FedAvg v7.</p>
+              <p class="panel-desc mt-2">Dùng phiên bản lớp cuối mới nhất do người tham gia ở trang <a href="#hoc-lien-ket">Học phân tán</a> cùng huấn luyện trên backbone của FedAvg v7.</p>
               <button type="button" class="btn btn-secondary mt-3" id="btn-community" disabled>Nhận diện bằng mô hình cộng đồng</button>
               <div id="community-result" class="comm-diag" role="status" aria-live="polite"></div>
             </details>
@@ -366,10 +366,10 @@
         </div>
       </section>
 
-      <!-- DEMO 2: HỌC LIÊN KẾT TỪ TRÌNH DUYỆT -->
+      <!-- DEMO 2: HỌC PHÂN TÁN TỪ TRÌNH DUYỆT -->
       <section id="page-hoc-lien-ket" class="tab-pane" data-route="hoc-lien-ket">
-        <!-- Ba ý chính của học liên kết trên trình duyệt -->
-        <section class="demo-brief" aria-label="Học liên kết hoạt động thế nào">
+        <!-- Ba ý chính của học phân tán trên trình duyệt -->
+        <section class="demo-brief" aria-label="Học phân tán hoạt động thế nào">
           <article class="brief-card">
             <span class="brief-dot" aria-hidden="true"></span>
             <div class="brief-content">
@@ -393,11 +393,11 @@
           </article>
         </section>
 
-        <!-- THAM GIA TỪ MÁY CỦA BẠN: học liên kết thật, huấn luyện lớp cuối ngay trong trình duyệt -->
+        <!-- THAM GIA TỪ MÁY CỦA BẠN: học phân tán thật, huấn luyện lớp cuối ngay trong trình duyệt -->
         <section class="panel comm-panel" id="comm-panel" aria-labelledby="comm-title" aria-busy="true">
           <div class="panel-header-flex">
             <div>
-              <h3 class="panel-title panel-title-sm" id="comm-title">Phiên học liên kết</h3>
+              <h3 class="panel-title panel-title-sm" id="comm-title">Phiên học phân tán</h3>
               <p class="panel-desc">Tham gia bằng mã do người tổ chức phát, rồi làm lần lượt bốn bước.</p>
             </div>
             <span class="status-badge" id="comm-badge">Đang kiểm tra…</span>
@@ -517,7 +517,7 @@
             <div class="comm-side">
             <div class="comm-block" id="comm-history-box">
               <h4 class="subhead">Các vòng gần đây</h4>
-              <div tabindex="0" role="group" aria-label="Bảng các vòng học liên kết cộng đồng, cuộn được bằng phím mũi tên" class="table-responsive mt-2">
+              <div tabindex="0" role="group" aria-label="Bảng các vòng học phân tán cộng đồng, cuộn được bằng phím mũi tên" class="table-responsive mt-2">
                 <table class="data-table wrap-head stack-sm" role="table">
                   <thead role="rowgroup">
                     <tr role="row"><th scope="col" role="columnheader">Vòng</th><th scope="col" role="columnheader">Người</th><th scope="col" role="columnheader">Ảnh</th><th scope="col" role="columnheader">Kết quả</th><th scope="col" role="columnheader">Độ chính xác giám sát</th></tr>
@@ -557,13 +557,13 @@
         </div>
 
         <section class="panel appendix-section mt-4" id="appendix-system" aria-labelledby="appendix-system-title">
-          <h3 class="panel-title section-title" id="appendix-system-title"><span class="sec-no">D.</span> Kiểm thử hệ thống học liên kết trên máy chủ</h3>
+          <h3 class="panel-title section-title" id="appendix-system-title"><span class="sec-no">D.</span> Kiểm thử hệ thống học phân tán trên máy chủ</h3>
           <p class="panel-desc">Chạy thử FedAvg qua Flower hoặc Centralized trên máy chủ để kiểm tra điều phối và phép gộp. Chỉ quản trị viên được bắt đầu hoặc dừng; ai cũng xem được tiến trình.</p>
         <div class="callout callout-warn mt-4" role="note"><p>
-          <b>Phần chạy trên máy chủ dưới đây dùng để kiểm chứng hệ thống học liên kết, không để đo độ chính xác.</b>
+          <b>Phần chạy trên máy chủ dưới đây dùng để kiểm chứng hệ thống học phân tán, không để đo độ chính xác.</b>
           Máy chủ demo không có bộ ảnh lá nên mô hình học trên ảnh nhiễu ngẫu nhiên; độ chính xác đứng ở mức đoán ngẫu nhiên (1/38) là đúng kỳ vọng.
           Điều được chứng minh là phần tính toán thật: với Flower, 6 tiến trình Python (1 máy chủ, 5 client) trao đổi trọng số qua gRPC và mỗi vòng sinh ra một mô hình chung có mã băm mới.
-          Độ chính xác của đồ án xem ở chương 4; học thật từ ảnh lá: trang <a href="#hoc-lien-ket">Học liên kết</a>.
+          Độ chính xác của đồ án xem ở chương 4; học thật từ ảnh lá: trang <a href="#hoc-lien-ket">Học phân tán</a>.
         </p></div>
 
         <div class="train-layout mt-4">
@@ -804,7 +804,7 @@
   </div>
 
   <footer class="app-footer">
-    <span>CropFed FL · đồ án học liên kết chẩn đoán bệnh lá cây</span>
+    <span>CropFed FL · đồ án học phân tán chẩn đoán bệnh lá cây</span>
     <nav class="footer-links" aria-label="Liên kết phụ">
       <a href="#phu-luc">Phụ lục kỹ thuật</a>
     </nav>

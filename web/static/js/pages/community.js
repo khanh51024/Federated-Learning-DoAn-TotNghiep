@@ -1,4 +1,4 @@
-// Demo · Học liên kết ("Tham gia từ máy của bạn"): học liên kết thật. Máy này là một client: ảnh được xử lý và học ngay trong trình duyệt
+// Demo · Học phân tán ("Tham gia từ máy của bạn"): học phân tán thật. Máy này là một client: ảnh được xử lý và học ngay trong trình duyệt
 // (Web Worker + onnxruntime-web), chỉ lớp cuối của mô hình (~156 KB) được gửi lên máy chủ. Giao thức: docs/COMMUNITY_FL.md.
 import { getJson, postJson } from "../core/api.js";
 import { decodeHead, encodeHead } from "../core/community-math.js";
@@ -100,7 +100,7 @@ function renderStatus() {
   if (!st || st.enabled === false) {
     setBadge("Chưa bật", "is-neutral");
     toggleHidden(main, true);
-    setText(disabled, st?.reason || "Học liên kết cộng đồng chưa được bật trên máy chủ này.");
+    setText(disabled, st?.reason || "Học phân tán cộng đồng chưa được bật trên máy chủ này.");
     toggleHidden(disabled, false);
     return;
   }
@@ -139,7 +139,7 @@ function cachedModel() {
   try { return localStorage.getItem(MODEL_CACHED_KEY) === "1"; } catch { return false; }
 }
 
-/** Kiểm khả năng trình duyệt ngay khi mở trang Học liên kết (trước khi người dùng nhập mã). */
+/** Kiểm khả năng trình duyệt ngay khi mở trang Học phân tán (trước khi người dùng nhập mã). */
 function supportProblem() {
   const missing = [];
   if (typeof Worker === "undefined") missing.push("tiến trình nền (Web Worker)");
@@ -622,7 +622,7 @@ async function join(event) {
     S.expiresAt = data.expires_at;
     saveSession();
     input.value = "";
-    notify("success", "Đã tham gia", "Máy của bạn là một client của phiên học liên kết cộng đồng.");
+    notify("success", "Đã tham gia", "Máy của bạn là một client của phiên học phân tán cộng đồng.");
     await loadStatus();
     await refreshRound();
   } catch (error) {

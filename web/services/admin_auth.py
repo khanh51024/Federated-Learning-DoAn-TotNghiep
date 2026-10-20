@@ -1,4 +1,4 @@
-"""Xác thực quản trị dùng chung cho mọi API cần quyền admin (học liên kết cộng đồng và điều khiển huấn luyện).
+"""Xác thực quản trị dùng chung cho mọi API cần quyền admin (học phân tán cộng đồng và điều khiển huấn luyện).
 
 Nguyên tắc:
 - Kiểm ở BACKEND bằng tiêu đề `Authorization` (Basic `tài khoản:mật khẩu` hoặc Bearer `mật khẩu`), không dùng cookie nên

@@ -41,7 +41,7 @@ function buildSummary() {
   const covered = summary?.plantdoc?.available ? summary.plantdoc.classes_covered : null;
   root.innerHTML = `
     <section class="panel">
-      <div class="panel-header-flex"><div>${sectionHead("4.1", "Tổng hợp: so sánh ba phương pháp huấn luyện")}<p class="panel-desc">1 mô hình gom ảnh · 1 mô hình học liên kết · 5 mô hình học riêng</p></div>
+      <div class="panel-header-flex"><div>${sectionHead("4.1", "Tổng hợp: so sánh ba phương pháp huấn luyện")}<p class="panel-desc">1 mô hình gom ảnh · 1 mô hình học phân tán · 5 mô hình học riêng</p></div>
         <div class="segmented" role="radiogroup" aria-label="Nguồn ảnh so sánh">
           <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-result-source="plantvillage">PlantVillage</button>
           <button type="button" class="segmented-option" role="radio" aria-checked="false" data-result-source="plantdoc">PlantDoc · ngoài đồng</button>
@@ -151,7 +151,7 @@ function buildSummary() {
             callbacks: {
               title: items => {
                 const id = MODEL_ORDER[items[0].dataIndex];
-                const role = id === "centralized" ? "gom ảnh về một chỗ" : id === "fedavg" ? "học liên kết" : "mỗi nơi tự học";
+                const role = id === "centralized" ? "gom ảnh về một chỗ" : id === "fedavg" ? "học phân tán" : "mỗi nơi tự học";
                 return `${MODEL_LABELS[id]} · ${role}`;
               },
               label: ctx => `${ctx.dataset.label}: ${fmtNum(ctx.parsed.y, 2)}%`,

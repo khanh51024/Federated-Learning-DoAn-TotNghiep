@@ -8,11 +8,11 @@ function pillarsHtml() {
     <div class="pillar-grid mt-3">
       <article class="pillar pillar-centralized">
         <header><span class="pillar-tag">Gom ảnh về một máy · mức tham chiếu</span><h4>Centralized</h4></header>
-        <p class="pillar-desc">Gom toàn bộ ảnh về một máy rồi huấn luyện một mô hình. Dùng làm mức tham chiếu: học liên kết cố gắng tiến gần mức này mà không phải gom ảnh.</p>
+        <p class="pillar-desc">Gom toàn bộ ảnh về một máy rồi huấn luyện một mô hình. Dùng làm mức tham chiếu: học phân tán cố gắng tiến gần mức này mà không phải gom ảnh.</p>
         <p class="pillar-foot">Ảnh gốc được gửi về máy chủ</p>
       </article>
       <article class="pillar pillar-fedavg">
-        <header><span class="pillar-tag">Học liên kết · phương pháp đề xuất</span><h4>FedAvg</h4></header>
+        <header><span class="pillar-tag">Học phân tán · phương pháp đề xuất</span><h4>FedAvg</h4></header>
         <p class="pillar-desc">Các client huấn luyện trên ảnh của mình và chỉ gửi trọng số; máy chủ lấy trung bình có trọng số theo số ảnh để được một mô hình chung.</p>
         <p class="pillar-foot">Ảnh gốc ở lại trên client</p>
       </article>
@@ -81,7 +81,7 @@ function systemHtml() {
   return `
     <ul class="system-list mt-3">
       <li><b>Chẩn đoán ảnh.</b> Máy chủ chạy bảy mô hình đã huấn luyện trên cùng một ảnh và hiện kết quả cạnh nhau, kèm vùng ảnh mô hình dựa vào (Grad-CAM).</li>
-      <li><b>Học liên kết từ trình duyệt.</b> Mỗi người tham gia là một client thật: trình duyệt tính đặc trưng ảnh bằng mạng nền đóng băng của FedAvg, huấn luyện lớp phân loại cuối (khoảng 39 nghìn tham số) và chỉ gửi trọng số lớp đó (khoảng 156 KB) lên máy chủ. Máy chủ kiểm tra rồi gộp theo FedAvg qua từng vòng.</li>
+      <li><b>Học phân tán từ trình duyệt.</b> Mỗi người tham gia là một client thật: trình duyệt tính đặc trưng ảnh bằng mạng nền đóng băng của FedAvg, huấn luyện lớp phân loại cuối (khoảng 39 nghìn tham số) và chỉ gửi trọng số lớp đó (khoảng 156 KB) lên máy chủ. Máy chủ kiểm tra rồi gộp theo FedAvg qua từng vòng.</li>
       <li><b>Kiểm thử hệ thống.</b> Phiên Flower với năm tiến trình client trên máy chủ chỉ để kiểm chứng điều phối và phép gộp, không đo độ chính xác. Xem <a href="#phu-luc">Phụ lục kỹ thuật</a>.</li>
     </ul>`;
 }

@@ -1,4 +1,4 @@
-"""Trạng thái và điều phối vòng của học liên kết cộng đồng (SQLite + file head theo phiên bản).
+"""Trạng thái và điều phối vòng của học phân tán cộng đồng (SQLite + file head theo phiên bản).
 
 Một tiến trình uvicorn duy nhất: mọi thay đổi trạng thái đi qua `self._lock` (RLock) và một giao dịch SQLite, nên một vòng
 chỉ được gộp đúng một lần và khởi động lại không làm mất vòng. Logic số học nằm ở src/federated/community.py.
@@ -375,7 +375,7 @@ class CommunityStore:
         result: Dict[str, Any] = {}
         with self._tx() as conn:
             if not self.is_open(conn):
-                raise CommunityError("closed", "Phiên học liên kết cộng đồng hiện đang đóng.")
+                raise CommunityError("closed", "Phiên học phân tán cộng đồng hiện đang đóng.")
             row = None
             if len(normalized) == CODE_LENGTH and all(ch in CODE_ALPHABET for ch in normalized):
                 row = conn.execute("SELECT * FROM codes WHERE digest = ?", (self._code_digest(normalized),)).fetchone()
@@ -627,7 +627,7 @@ class CommunityStore:
     ) -> Tuple[core.UpdateCheck, int, int]:
         """Mọi kiểm tra một cập nhật trước khi ghi; ném CommunityError (đã có mã + thông điệp tiếng Việt) nếu từ chối."""
         if rnd is None:
-            raise CommunityError("closed", "Phiên học liên kết cộng đồng hiện đang đóng.")
+            raise CommunityError("closed", "Phiên học phân tán cộng đồng hiện đang đóng.")
         if int(body["round_id"]) != rnd["round_id"]:
             raise CommunityError(
                 "stale_round", "Vòng này đã đóng trong lúc bạn huấn luyện. Hãy huấn luyện lại trên mô hình mới nhất.")

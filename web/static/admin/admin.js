@@ -1,4 +1,4 @@
-// Trang quản trị học liên kết cộng đồng. Mọi quyền nằm ở token quản trị mà máy chủ kiểm; trang này chỉ là giao diện cho
+// Trang quản trị học phân tán cộng đồng. Mọi quyền nằm ở token quản trị mà máy chủ kiểm; trang này chỉ là giao diện cho
 // các API /api/community/admin/*. Token chỉ giữ trong sessionStorage của tab; mã vừa tạo chỉ giữ trong bộ nhớ.
 import { getJson, postJson } from "/static/js/core/api.js";
 import { esc, fmtNum, formatApiError } from "/static/js/core/dom.js";
@@ -238,7 +238,7 @@ function renderSession() {
   top.textContent = open ? "Phiên đang mở" : "Phiên đang đóng";
   top.className = `status-badge ${open ? "success" : "is-neutral"}`;
   text("session-note", open
-    ? "Người có mã có thể vào trang Học liên kết của trang chính và tham gia."
+    ? "Người có mã có thể vào trang Học phân tán của trang chính và tham gia."
     : "Phiên đang đóng: không ai vào được cho tới khi bạn mở.");
   const toggle = $("btn-toggle-session");
   toggle.textContent = open ? "Đóng phiên" : "Mở phiên";

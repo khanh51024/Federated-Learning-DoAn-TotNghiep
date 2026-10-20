@@ -5,7 +5,7 @@ Kiến trúc (từ 2026-10-09, xem docs/MODEL_REGISTRY.md):
 - web/routers/monitoring.py  — status, metrics, clients, weights inspect, artifact status
 - web/routers/inference.py   — dual inference, PlantVillage reference, demo evidence, compare
 - web/routers/training.py    — điều khiển centralized/federated demo + network metrics
-- web/routers/community_fl.py — học liên kết cộng đồng: mỗi người vào web là một client (xem docs/COMMUNITY_FL.md)
+- web/routers/community_fl.py — học phân tán cộng đồng: mỗi người vào web là một client (xem docs/COMMUNITY_FL.md)
 - web/services/model_service.py — service registry/inference duy nhất (đọc artifacts/registry.json)
 - web/state.py               — trạng thái background task + NetworkDemoManager dùng chung
 
@@ -178,7 +178,7 @@ async def serve_index(request: Request):
 
 
 ADMIN_PAGE = Path(__file__).resolve().parent / "static" / "admin" / "admin.html"
-# Trang quản trị học liên kết cộng đồng: tệp tĩnh riêng, KHÔNG nằm trong menu của trang chính và không có liên kết từ menu công khai.
+# Trang quản trị học phân tán cộng đồng: tệp tĩnh riêng, KHÔNG nằm trong menu của trang chính và không có liên kết từ menu công khai.
 # Quyền thật nằm ở token quản trị mà các API /api/community/admin/* kiểm; các tiêu đề dưới đây chỉ làm trang khó bị nhúng/lập chỉ mục.
 ADMIN_PAGE_HEADERS = {
     "Cache-Control": "no-store",

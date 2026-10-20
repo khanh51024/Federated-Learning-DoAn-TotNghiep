@@ -1,4 +1,4 @@
-// Web Worker của học liên kết cộng đồng: mọi việc nặng chạy ở đây để giao diện không giật.
+// Web Worker của học phân tán cộng đồng: mọi việc nặng chạy ở đây để giao diện không giật.
 //   init     tải/kiểm SHA-256 mô hình đặc trưng ONNX (có cache), tạo phiên onnxruntime-web (wasm, 1 luồng)
 //   extract  ảnh -> tensor canonical_v1 (resize kiểu PIL) -> vector 1024 chiều; giữ trong bộ nhớ worker, ảnh không đi đâu cả
 //   train    softmax regression cho lớp cuối trên đặc trưng đã giữ, đo trước/sau trên phần ảnh giữ lại

@@ -173,7 +173,7 @@ def test_cache_control_policy_is_a_pure_function_of_path_and_status():
 
 BANNED_VISIBLE_TERMS = {
     r"Val accuracy": "dùng 'độ chính xác trên tập kiểm tra'",
-    r"Học liên hiệp": "thuật ngữ thống nhất là 'học liên kết'",
+    r"Học liên hiệp": "thuật ngữ thống nhất là 'học phân tán'",
     r"Test giữ riêng": "dùng 'tập giữ riêng'",
     r"tập (?:ảnh )?độc lập": "'độc lập' nói quá: tập này chỉ là tập giữ riêng, không dùng để chọn mô hình",
     r"(?<!giả định )ảnh độc lập": "xem 'tập giữ riêng' (chỉ 'giả định ảnh độc lập' của thống kê là hợp lệ)",
@@ -419,7 +419,7 @@ def test_hero_replay_survives_pane_switches_and_live_diagram_is_state_driven():
     observer = observer[: observer.index(".observe(diagram)")]
     assert "width <= 0" in observer and "> 24" in observer, "ResizeObserver của hero phải bỏ qua 0↔W và dung sai thanh cuộn"
     training = JS_BY_REL["pages/training.js"]
-    assert "completed > topo.lastRound && visible && view.federated" in training, "chỉ nhịp khi một vòng học liên kết thật vừa xong"
+    assert "completed > topo.lastRound && visible && view.federated" in training, "chỉ nhịp khi một vòng học phân tán thật vừa xong"
     assert "live_progress.length" not in training.replace("live?.length", ""), "không đếm epoch Centralized như vòng liên kết"
     assert 'kind === "centralized" && task?.status === "running"' in training, "đang chạy Centralized thì không hiện client đang kết nối"
 
@@ -610,7 +610,7 @@ def test_server_side_training_is_framed_as_system_verification_on_noise_images()
     callout = appendix[appendix.index('<div class="callout callout-warn mt-4" role="note">'):]
     callout = callout[: callout.index("</div>")]
     assert "kiểm chứng hệ thống" in callout and "ảnh nhiễu ngẫu nhiên" in callout and "chương 4" in callout
-    assert 'id="page-hoc-lien-ket"' in HTML and "Flower" not in HTML[HTML.index('id="page-hoc-lien-ket"'):HTML.index('id="page-phu-luc"')], "trang Học liên kết không được trộn với kiểm thử Flower"
+    assert 'id="page-hoc-lien-ket"' in HTML and "Flower" not in HTML[HTML.index('id="page-hoc-lien-ket"'):HTML.index('id="page-phu-luc"')], "trang Học phân tán không được trộn với kiểm thử Flower"
 
 
 def test_training_tables_have_matching_column_counts_and_no_accuracy_columns():
