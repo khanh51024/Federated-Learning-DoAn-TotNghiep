@@ -93,8 +93,19 @@ def build_report() -> dict:
                         raise ValueError("unexpected transport or shard")
                     if abs(event["weight_p_k"] - n_k / sum(evidence["shard_counts"].values())) > 1e-9:
                         raise ValueError("unexpected aggregation weight")
-                    entry["clients"].append({k: event[k] for k in ("client_id", "sample_count_n_k", "weight_p_k",
-                        "train_loss", "delta_l2", "payload_down_bytes", "payload_up_bytes", "optimizer_steps_applied")})
+                    client = {k: event[k] for k in ("client_id", "sample_count_n_k", "weight_p_k",
+                        "train_loss", "delta_l2", "payload_down_bytes", "payload_up_bytes", "optimizer_steps_applied")}
+                    # `delta_l2` gom mọi tensor float, kể cả thống kê BatchNorm (running_mean/var). Tách hai phần để biết
+                    # trọng số học được thực sự trôi bao nhiêu. Chuẩn từng tensor đã làm tròn 6 chữ số nên kiểm lại bằng sai số tương đối.
+                    layer = event["layer_delta_norms"]
+                    bn_sq = sum(v * v for name, v in layer.items() if name.endswith(("running_mean", "running_var")))
+                    learn_sq = sum(v * v for name, v in layer.items() if not name.endswith(("running_mean", "running_var")))
+                    if abs((bn_sq + learn_sq) ** 0.5 - event["delta_l2"]) > 1e-3 * max(event["delta_l2"], 1.0):
+                        raise ValueError("layer_delta_norms không khớp delta_l2")
+                    # Chỉ lưu phần học được (làm tròn như web hiển thị) để payload /api/evidence/summary nhỏ; phần BatchNorm
+                    # suy ra được: sqrt(delta_l2^2 - delta_l2_learnable^2).
+                    client["delta_l2_learnable"] = round(learn_sq ** 0.5, 4)
+                    entry["clients"].append(client)
             item["history"].append(entry)
         report["models"].append(item)
 

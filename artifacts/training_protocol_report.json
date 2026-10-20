@@ -925,7 +925,8 @@
               "delta_l2": 58.926501,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 1.8051
             },
             {
               "client_id": "client_01",
@@ -935,7 +936,8 @@
               "delta_l2": 62.094072,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 2.0573
             },
             {
               "client_id": "client_02",
@@ -945,7 +947,8 @@
               "delta_l2": 57.92875,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 1.875
             },
             {
               "client_id": "client_03",
@@ -955,7 +958,8 @@
               "delta_l2": 63.917997,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 2.2443
             },
             {
               "client_id": "client_04",
@@ -965,7 +969,8 @@
               "delta_l2": 60.794017,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 2.2467
             }
           ]
         },
@@ -986,7 +991,8 @@
               "delta_l2": 16.910234,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 1.3561
             },
             {
               "client_id": "client_01",
@@ -996,7 +1002,8 @@
               "delta_l2": 16.561669,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 1.427
             },
             {
               "client_id": "client_02",
@@ -1006,7 +1013,8 @@
               "delta_l2": 16.357001,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 1.4858
             },
             {
               "client_id": "client_03",
@@ -1016,7 +1024,8 @@
               "delta_l2": 20.033631,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 1.6472
             },
             {
               "client_id": "client_04",
@@ -1026,7 +1035,8 @@
               "delta_l2": 15.264357,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 1.6313
             }
           ]
         },
@@ -1047,7 +1057,8 @@
               "delta_l2": 13.250406,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 1.1293
             },
             {
               "client_id": "client_01",
@@ -1057,7 +1068,8 @@
               "delta_l2": 11.956574,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 1.1059
             },
             {
               "client_id": "client_02",
@@ -1067,7 +1079,8 @@
               "delta_l2": 12.763388,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 1.2357
             },
             {
               "client_id": "client_03",
@@ -1077,7 +1090,8 @@
               "delta_l2": 15.082024,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 1.3052
             },
             {
               "client_id": "client_04",
@@ -1087,7 +1101,8 @@
               "delta_l2": 13.104237,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 1.2977
             }
           ]
         },
@@ -1108,7 +1123,8 @@
               "delta_l2": 13.059701,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.998
             },
             {
               "client_id": "client_01",
@@ -1118,7 +1134,8 @@
               "delta_l2": 10.907839,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.9327
             },
             {
               "client_id": "client_02",
@@ -1128,7 +1145,8 @@
               "delta_l2": 11.741755,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 1.0792
             },
             {
               "client_id": "client_03",
@@ -1138,7 +1156,8 @@
               "delta_l2": 14.094234,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 1.1015
             },
             {
               "client_id": "client_04",
@@ -1148,7 +1167,8 @@
               "delta_l2": 13.108566,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 1.1174
             }
           ]
         },
@@ -1169,7 +1189,8 @@
               "delta_l2": 12.814259,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.9205
             },
             {
               "client_id": "client_01",
@@ -1179,7 +1200,8 @@
               "delta_l2": 10.360169,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.8298
             },
             {
               "client_id": "client_02",
@@ -1189,7 +1211,8 @@
               "delta_l2": 11.024367,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.9737
             },
             {
               "client_id": "client_03",
@@ -1199,7 +1222,8 @@
               "delta_l2": 13.046467,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.9632
             },
             {
               "client_id": "client_04",
@@ -1209,7 +1233,8 @@
               "delta_l2": 12.93796,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 1.0092
             }
           ]
         },
@@ -1230,7 +1255,8 @@
               "delta_l2": 13.026949,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.8501
             },
             {
               "client_id": "client_01",
@@ -1240,7 +1266,8 @@
               "delta_l2": 10.303041,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.7639
             },
             {
               "client_id": "client_02",
@@ -1250,7 +1277,8 @@
               "delta_l2": 10.931409,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.9065
             },
             {
               "client_id": "client_03",
@@ -1260,7 +1288,8 @@
               "delta_l2": 13.305945,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.8873
             },
             {
               "client_id": "client_04",
@@ -1270,7 +1299,8 @@
               "delta_l2": 12.395639,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.9221
             }
           ]
         },
@@ -1291,7 +1321,8 @@
               "delta_l2": 12.712522,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.8175
             },
             {
               "client_id": "client_01",
@@ -1301,7 +1332,8 @@
               "delta_l2": 9.990651,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.7095
             },
             {
               "client_id": "client_02",
@@ -1311,7 +1343,8 @@
               "delta_l2": 10.674131,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.8449
             },
             {
               "client_id": "client_03",
@@ -1321,7 +1354,8 @@
               "delta_l2": 12.94029,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.8125
             },
             {
               "client_id": "client_04",
@@ -1331,7 +1365,8 @@
               "delta_l2": 12.358027,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.8538
             }
           ]
         },
@@ -1352,7 +1387,8 @@
               "delta_l2": 12.802518,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.772
             },
             {
               "client_id": "client_01",
@@ -1362,7 +1398,8 @@
               "delta_l2": 9.721596,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.6749
             },
             {
               "client_id": "client_02",
@@ -1372,7 +1409,8 @@
               "delta_l2": 10.496148,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.8069
             },
             {
               "client_id": "client_03",
@@ -1382,7 +1420,8 @@
               "delta_l2": 12.731191,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.7542
             },
             {
               "client_id": "client_04",
@@ -1392,7 +1431,8 @@
               "delta_l2": 12.119154,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.7913
             }
           ]
         },
@@ -1413,7 +1453,8 @@
               "delta_l2": 13.210584,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.7494
             },
             {
               "client_id": "client_01",
@@ -1423,7 +1464,8 @@
               "delta_l2": 9.497218,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.6427
             },
             {
               "client_id": "client_02",
@@ -1433,7 +1475,8 @@
               "delta_l2": 10.691422,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.7937
             },
             {
               "client_id": "client_03",
@@ -1443,7 +1486,8 @@
               "delta_l2": 13.17275,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.7219
             },
             {
               "client_id": "client_04",
@@ -1453,7 +1497,8 @@
               "delta_l2": 12.183691,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.748
             }
           ]
         },
@@ -1474,7 +1519,8 @@
               "delta_l2": 12.54666,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.72
             },
             {
               "client_id": "client_01",
@@ -1484,7 +1530,8 @@
               "delta_l2": 9.893961,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.6209
             },
             {
               "client_id": "client_02",
@@ -1494,7 +1541,8 @@
               "delta_l2": 10.92148,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.7646
             },
             {
               "client_id": "client_03",
@@ -1504,7 +1552,8 @@
               "delta_l2": 12.687401,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.6702
             },
             {
               "client_id": "client_04",
@@ -1514,7 +1563,8 @@
               "delta_l2": 11.66818,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.7101
             }
           ]
         },
@@ -1535,7 +1585,8 @@
               "delta_l2": 12.608391,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.701
             },
             {
               "client_id": "client_01",
@@ -1545,7 +1596,8 @@
               "delta_l2": 9.782298,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.5983
             },
             {
               "client_id": "client_02",
@@ -1555,7 +1607,8 @@
               "delta_l2": 10.278517,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.7269
             },
             {
               "client_id": "client_03",
@@ -1565,7 +1618,8 @@
               "delta_l2": 12.416082,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.6372
             },
             {
               "client_id": "client_04",
@@ -1575,7 +1629,8 @@
               "delta_l2": 11.819943,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.6836
             }
           ]
         },
@@ -1596,7 +1651,8 @@
               "delta_l2": 12.797838,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.6792
             },
             {
               "client_id": "client_01",
@@ -1606,7 +1662,8 @@
               "delta_l2": 9.97335,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.5742
             },
             {
               "client_id": "client_02",
@@ -1616,7 +1673,8 @@
               "delta_l2": 10.296957,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.7216
             },
             {
               "client_id": "client_03",
@@ -1626,7 +1684,8 @@
               "delta_l2": 12.567467,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.616
             },
             {
               "client_id": "client_04",
@@ -1636,7 +1695,8 @@
               "delta_l2": 11.810533,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.6507
             }
           ]
         },
@@ -1657,7 +1717,8 @@
               "delta_l2": 12.919454,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.6531
             },
             {
               "client_id": "client_01",
@@ -1667,7 +1728,8 @@
               "delta_l2": 9.508931,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.5473
             },
             {
               "client_id": "client_02",
@@ -1677,7 +1739,8 @@
               "delta_l2": 10.633713,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.6963
             },
             {
               "client_id": "client_03",
@@ -1687,7 +1750,8 @@
               "delta_l2": 12.664523,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.5891
             },
             {
               "client_id": "client_04",
@@ -1697,7 +1761,8 @@
               "delta_l2": 11.53992,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.6134
             }
           ]
         },
@@ -1718,7 +1783,8 @@
               "delta_l2": 12.513256,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.6367
             },
             {
               "client_id": "client_01",
@@ -1728,7 +1794,8 @@
               "delta_l2": 9.531334,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.5332
             },
             {
               "client_id": "client_02",
@@ -1738,7 +1805,8 @@
               "delta_l2": 10.710345,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.6808
             },
             {
               "client_id": "client_03",
@@ -1748,7 +1816,8 @@
               "delta_l2": 12.233518,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.5757
             },
             {
               "client_id": "client_04",
@@ -1758,7 +1827,8 @@
               "delta_l2": 11.139001,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.5907
             }
           ]
         },
@@ -1779,7 +1849,8 @@
               "delta_l2": 12.648395,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.6291
             },
             {
               "client_id": "client_01",
@@ -1789,7 +1860,8 @@
               "delta_l2": 9.576155,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.5358
             },
             {
               "client_id": "client_02",
@@ -1799,7 +1871,8 @@
               "delta_l2": 10.428636,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.6606
             },
             {
               "client_id": "client_03",
@@ -1809,7 +1882,8 @@
               "delta_l2": 12.334134,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.5531
             },
             {
               "client_id": "client_04",
@@ -1819,7 +1893,8 @@
               "delta_l2": 10.934307,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.5693
             }
           ]
         },
@@ -1840,7 +1915,8 @@
               "delta_l2": 12.57899,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.6042
             },
             {
               "client_id": "client_01",
@@ -1850,7 +1926,8 @@
               "delta_l2": 9.430687,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.5149
             },
             {
               "client_id": "client_02",
@@ -1860,7 +1937,8 @@
               "delta_l2": 10.716499,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.6488
             },
             {
               "client_id": "client_03",
@@ -1870,7 +1948,8 @@
               "delta_l2": 11.801769,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.5309
             },
             {
               "client_id": "client_04",
@@ -1880,7 +1959,8 @@
               "delta_l2": 11.066915,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.5556
             }
           ]
         },
@@ -1901,7 +1981,8 @@
               "delta_l2": 12.616802,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.5919
             },
             {
               "client_id": "client_01",
@@ -1911,7 +1992,8 @@
               "delta_l2": 9.430499,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.501
             },
             {
               "client_id": "client_02",
@@ -1921,7 +2003,8 @@
               "delta_l2": 10.066752,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.6318
             },
             {
               "client_id": "client_03",
@@ -1931,7 +2014,8 @@
               "delta_l2": 12.547185,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.5181
             },
             {
               "client_id": "client_04",
@@ -1941,7 +2025,8 @@
               "delta_l2": 11.078331,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.5429
             }
           ]
         },
@@ -1962,7 +2047,8 @@
               "delta_l2": 12.720108,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.5825
             },
             {
               "client_id": "client_01",
@@ -1972,7 +2058,8 @@
               "delta_l2": 9.373095,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.4884
             },
             {
               "client_id": "client_02",
@@ -1982,7 +2069,8 @@
               "delta_l2": 10.263643,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.6208
             },
             {
               "client_id": "client_03",
@@ -1992,7 +2080,8 @@
               "delta_l2": 11.999192,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.4991
             },
             {
               "client_id": "client_04",
@@ -2002,7 +2091,8 @@
               "delta_l2": 11.056581,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.5153
             }
           ]
         },
@@ -2023,7 +2113,8 @@
               "delta_l2": 12.586599,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.5655
             },
             {
               "client_id": "client_01",
@@ -2033,7 +2124,8 @@
               "delta_l2": 9.345181,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.4781
             },
             {
               "client_id": "client_02",
@@ -2043,7 +2135,8 @@
               "delta_l2": 10.339125,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.6073
             },
             {
               "client_id": "client_03",
@@ -2053,7 +2146,8 @@
               "delta_l2": 12.121066,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.4737
             },
             {
               "client_id": "client_04",
@@ -2063,7 +2157,8 @@
               "delta_l2": 10.947371,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.4993
             }
           ]
         },
@@ -2084,7 +2179,8 @@
               "delta_l2": 12.522002,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.5512
             },
             {
               "client_id": "client_01",
@@ -2094,7 +2190,8 @@
               "delta_l2": 9.290377,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.4735
             },
             {
               "client_id": "client_02",
@@ -2104,7 +2201,8 @@
               "delta_l2": 10.159862,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.6104
             },
             {
               "client_id": "client_03",
@@ -2114,7 +2212,8 @@
               "delta_l2": 12.252315,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.4825
             },
             {
               "client_id": "client_04",
@@ -2124,7 +2223,8 @@
               "delta_l2": 10.652778,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 314
+              "optimizer_steps_applied": 314,
+              "delta_l2_learnable": 0.4821
             }
           ]
         },
@@ -2145,7 +2245,8 @@
               "delta_l2": 12.657855,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.5354
             },
             {
               "client_id": "client_01",
@@ -2155,7 +2256,8 @@
               "delta_l2": 9.64592,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.4666
             },
             {
               "client_id": "client_02",
@@ -2165,7 +2267,8 @@
               "delta_l2": 10.199401,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.5896
             },
             {
               "client_id": "client_03",
@@ -2175,7 +2278,8 @@
               "delta_l2": 11.794922,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.4449
             },
             {
               "client_id": "client_04",
@@ -2185,7 +2289,8 @@
               "delta_l2": 11.129765,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.4752
             }
           ]
         },
@@ -2206,7 +2311,8 @@
               "delta_l2": 12.133987,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.4052
             },
             {
               "client_id": "client_01",
@@ -2216,7 +2322,8 @@
               "delta_l2": 9.324495,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.3407
             },
             {
               "client_id": "client_02",
@@ -2226,7 +2333,8 @@
               "delta_l2": 9.789324,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.4619
             },
             {
               "client_id": "client_03",
@@ -2236,7 +2344,8 @@
               "delta_l2": 11.882027,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.3469
             },
             {
               "client_id": "client_04",
@@ -2246,7 +2355,8 @@
               "delta_l2": 9.97334,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.3281
             }
           ]
         },
@@ -2267,7 +2377,8 @@
               "delta_l2": 12.115039,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.3902
             },
             {
               "client_id": "client_01",
@@ -2277,7 +2388,8 @@
               "delta_l2": 9.276186,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.3424
             },
             {
               "client_id": "client_02",
@@ -2287,7 +2399,8 @@
               "delta_l2": 10.155428,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.4482
             },
             {
               "client_id": "client_03",
@@ -2297,7 +2410,8 @@
               "delta_l2": 11.570758,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.3256
             },
             {
               "client_id": "client_04",
@@ -2307,7 +2421,8 @@
               "delta_l2": 9.914059,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.3241
             }
           ]
         },
@@ -2328,7 +2443,8 @@
               "delta_l2": 12.1229,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.382
             },
             {
               "client_id": "client_01",
@@ -2338,7 +2454,8 @@
               "delta_l2": 9.270715,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.3331
             },
             {
               "client_id": "client_02",
@@ -2348,7 +2465,8 @@
               "delta_l2": 9.772911,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.4363
             },
             {
               "client_id": "client_03",
@@ -2358,7 +2476,8 @@
               "delta_l2": 11.730216,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 265
+              "optimizer_steps_applied": 265,
+              "delta_l2_learnable": 0.3248
             },
             {
               "client_id": "client_04",
@@ -2368,7 +2487,8 @@
               "delta_l2": 9.887045,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.3193
             }
           ]
         },
@@ -2389,7 +2509,8 @@
               "delta_l2": 12.005284,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.381
             },
             {
               "client_id": "client_01",
@@ -2399,7 +2520,8 @@
               "delta_l2": 9.163212,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.331
             },
             {
               "client_id": "client_02",
@@ -2409,7 +2531,8 @@
               "delta_l2": 9.527563,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 167
+              "optimizer_steps_applied": 167,
+              "delta_l2_learnable": 0.4293
             },
             {
               "client_id": "client_03",
@@ -2419,7 +2542,8 @@
               "delta_l2": 11.496478,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.319
             },
             {
               "client_id": "client_04",
@@ -2429,7 +2553,8 @@
               "delta_l2": 9.936447,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.3166
             }
           ]
         },
@@ -2450,7 +2575,8 @@
               "delta_l2": 12.180004,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.3866
             },
             {
               "client_id": "client_01",
@@ -2460,7 +2586,8 @@
               "delta_l2": 9.239019,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 245
+              "optimizer_steps_applied": 245,
+              "delta_l2_learnable": 0.325
             },
             {
               "client_id": "client_02",
@@ -2470,7 +2597,8 @@
               "delta_l2": 9.597837,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.432
             },
             {
               "client_id": "client_03",
@@ -2480,7 +2608,8 @@
               "delta_l2": 11.265021,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.313
             },
             {
               "client_id": "client_04",
@@ -2490,7 +2619,8 @@
               "delta_l2": 9.780699,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.3039
             }
           ]
         },
@@ -2511,7 +2641,8 @@
               "delta_l2": 12.151518,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 170
+              "optimizer_steps_applied": 170,
+              "delta_l2_learnable": 0.379
             },
             {
               "client_id": "client_01",
@@ -2521,7 +2652,8 @@
               "delta_l2": 9.16596,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 246
+              "optimizer_steps_applied": 246,
+              "delta_l2_learnable": 0.3276
             },
             {
               "client_id": "client_02",
@@ -2531,7 +2663,8 @@
               "delta_l2": 9.658675,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 168
+              "optimizer_steps_applied": 168,
+              "delta_l2_learnable": 0.4283
             },
             {
               "client_id": "client_03",
@@ -2541,7 +2674,8 @@
               "delta_l2": 11.769974,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 266
+              "optimizer_steps_applied": 266,
+              "delta_l2_learnable": 0.3073
             },
             {
               "client_id": "client_04",
@@ -2551,7 +2685,8 @@
               "delta_l2": 9.851597,
               "payload_down_bytes": 6275944,
               "payload_up_bytes": 6275944,
-              "optimizer_steps_applied": 315
+              "optimizer_steps_applied": 315,
+              "delta_l2_learnable": 0.3005
             }
           ]
         }

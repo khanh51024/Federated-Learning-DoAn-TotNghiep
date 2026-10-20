@@ -64,22 +64,25 @@ export function trainingHistoryHtml(training) {
 }
 
 export function telemetryHtml(round) {
-  const rows = round.clients.map(c => `<tr><th scope="row">${esc(c.client_id)}</th><td>${fmtInt(c.sample_count_n_k)}</td><td>${fmtNum(c.weight_p_k, 4)}</td><td>${fmtNum(c.train_loss, 4)}</td><td>${fmtNum(c.delta_l2, 3)}</td><td>${fmtInt(c.optimizer_steps_applied)}</td></tr>`).join("");
-  return `<p class="field-hint">Vòng ${round.round}: ${fmtNum(round.duration_sec, 2)} giây; top-1 validation ${fmtPct(round.val_accuracy)}.</p>${table(["Client", "Số ảnh n_k", "Hệ số gộp p_k", "Train loss", "‖w_k − w‖₂", "Bước cập nhật"], rows, "Telemetry năm client ở vòng đã chọn")}`;
+  const rows = round.clients.map(c => `<tr><th scope="row">${esc(c.client_id)}</th><td>${fmtInt(c.sample_count_n_k)}</td><td>${fmtNum(c.weight_p_k, 4)}</td><td>${fmtNum(c.train_loss, 4)}</td><td>${fmtNum(c.delta_l2_learnable, 3)}</td><td>${fmtNum(bnNorm(c), 1)}</td><td>${fmtInt(c.optimizer_steps_applied)}</td></tr>`).join("");
+  return `<p class="field-hint">Vòng ${round.round}: ${fmtNum(round.duration_sec, 2)} giây; top-1 validation ${fmtPct(round.val_accuracy)}.</p>${table(["Client", "Số ảnh n_k", "Hệ số gộp p_k", "Train loss", "‖Δ‖₂ trọng số học", "‖Δ‖₂ thống kê BatchNorm", "Bước cập nhật"], rows, "Telemetry năm client ở vòng đã chọn")}`;
 }
 
 const mean = values => values.reduce((a, b) => a + b, 0) / values.length;
+/** Phần thống kê BatchNorm của ‖w_k − w‖₂ = căn(tổng² − phần trọng số học được²). */
+const bnNorm = c => Math.sqrt(Math.max(0, c.delta_l2 ** 2 - c.delta_l2_learnable ** 2));
 export const localModels = training => (training?.models || []).filter(m => m.model_id.startsWith("local_"));
 
-/** Độ trôi cập nhật của client (‖w_k − w‖₂): nhận xét sinh từ telemetry, biểu đồ vẽ ở results.js. */
+/** Độ trôi cập nhật của client: phần trọng số học được (‖Δ‖₂ trên weight/bias) tách khỏi thống kê BatchNorm; biểu đồ vẽ ở results.js. */
 function driftHtml(fed) {
   const rows = fed.history;
-  const range = row => { const v = row.clients.map(c => c.delta_l2); return `${fmtNum(Math.min(...v), 0)}–${fmtNum(Math.max(...v), 0)}`; };
+  const range = (row, key, digits) => { const v = row.clients.map(c => c[key]); return `${fmtNum(Math.min(...v), digits)}–${fmtNum(Math.max(...v), digits)}`; };
   const last = rows[rows.length - 1];
   const lossMax = Math.max(...last.clients.map(c => c.train_loss));
+  const bnShare = Math.floor(100 * rows.flatMap(r => r.clients).reduce((low, c) => Math.min(low, 1 - (c.delta_l2_learnable ** 2) / (c.delta_l2 ** 2)), 1));
   return `<h4 class="subhead mt-4">Độ trôi của client (client drift)</h4>
-    <div class="chart-container mt-3"><canvas id="chart-fedavg-drift" aria-label="Độ lớn cập nhật của từng client qua các vòng FedAvg"></canvas></div>
-    <p class="field-hint mt-2">Độ lớn cập nhật ‖w_k − w‖₂ của client giảm từ khoảng ${range(rows[0])} ở vòng 1 xuống khoảng ${range(last)} ở vòng ${last.round} rồi đi ngang, không về 0. Loss huấn luyện cục bộ ở vòng ${last.round} của mọi client dưới ${fmtNum(Math.ceil(lossMax * 100) / 100, 2)}, trong khi macro-F1 PlantDoc của mô hình toàn cục chỉ ${fmtPct(last.plantdoc_macro_f1_supported, 1)}: mỗi client khớp tốt dữ liệu của mình nhưng các cập nhật vẫn lệch nhau. Phù hợp với mô tả về độ phân kỳ trọng số khi dữ liệu non-IID của <a href="https://arxiv.org/abs/1806.00582" target="_blank" rel="noopener noreferrer">Zhao và cộng sự (2018)</a>; đây là quan sát, chưa phải kết luận nhân quả.</p>`;
+    <div class="chart-container mt-3"><canvas id="chart-fedavg-drift" aria-label="Độ lớn cập nhật trọng số học được của từng client qua các vòng FedAvg"></canvas></div>
+    <p class="field-hint mt-2">Biểu đồ vẽ phần trọng số học được của cập nhật, ‖Δ‖₂ = ‖w_k − w_toàn cục‖₂ chỉ trên weight và bias, đo so với mô hình toàn cục client nhận ở đầu vòng. Phần này giảm từ khoảng ${range(rows[0], "delta_l2_learnable", 2)} ở vòng 1 xuống khoảng ${range(last, "delta_l2_learnable", 2)} ở vòng ${last.round}, chưa về 0. Tổng ‖w_k − w‖₂ gồm cả running mean/var của BatchNorm lớn hơn nhiều (${range(rows[0], "delta_l2", 0)} ở vòng 1, ${range(last, "delta_l2", 0)} ở vòng ${last.round}) và luôn có ít nhất ${bnShare}% bình phương độ lớn đó nằm ở thống kê BatchNorm, nên số tổng không đo mức học của trọng số. Loss huấn luyện cục bộ ở vòng ${last.round} của mọi client dưới ${fmtNum(Math.ceil(lossMax * 100) / 100, 2)}, trong khi macro-F1 PlantDoc của mô hình toàn cục chỉ ${fmtPct(last.plantdoc_macro_f1_supported, 1)}: mỗi client khớp tốt dữ liệu của mình nhưng các cập nhật vẫn lệch nhau. Phù hợp với mô tả về độ phân kỳ trọng số khi dữ liệu non-IID của <a href="https://arxiv.org/abs/1806.00582" target="_blank" rel="noopener noreferrer">Zhao và cộng sự (2018)</a>; đây là quan sát, chưa phải kết luận nhân quả.</p>`;
 }
 
 /** Diễn biến huấn luyện Centralized: mọi mốc đọc từ history và cấu hình đã kiểm hash. */

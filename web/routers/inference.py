@@ -10,6 +10,7 @@ from fastapi.routing import APIRouter
 from PIL import Image
 from starlette.concurrency import run_in_threadpool
 
+from src.common.image_io import to_rgb
 from web.demo_evidence import PROTOCOL_ID, load_evidence
 from web.services import evidence_service, model_service
 
@@ -34,10 +35,21 @@ SCIENTIFIC_STATUS = {
 }
 
 
-def _predict(model_id: str, image: Image.Image, temperature: Optional[float] = None) -> Dict[str, Any]:
+def _check_crop(crop: Optional[str]) -> None:
+    """`crop` do người dùng chọn: chỉ nhận tên loại cây có trong taxonomy 38 lớp."""
+    if crop:
+        evidence = _gated_evidence()
+        classes = evidence.get("classes") if evidence.get("available") else None
+        known = {c.split("___", 1)[0] for c in (classes or model_service.known_classes())}
+        # Không có danh sách lớp nào để đối chiếu thì từ chối thay vì cho qua (fail-closed), và không phản chiếu chuỗi người dùng gửi.
+        if not known or crop not in known:
+            raise HTTPException(status_code=400, detail="crop không thuộc các loại cây của taxonomy 38 lớp.")
+
+
+def _predict(model_id: str, image: Image.Image, temperature: Optional[float] = None, crop: Optional[str] = None) -> Dict[str, Any]:
     """Cửa duy nhất tới model: lỗi registry/cổng được đổi thành HTTP có lý do rõ ràng."""
     try:
-        return model_service.predict(model_id, image, temperature)
+        return model_service.predict(model_id, image, temperature, crop or None)
     except model_service.UnknownModel as exc:
         # model_id do server tự suy ra từ lựa chọn đã kiểm; thiếu nghĩa là registry chưa được sinh đúng
         raise HTTPException(status_code=503, detail=f"Registry chưa có model: {exc} — chạy scripts/update_status.py") from exc
@@ -80,7 +92,7 @@ def _read_image(file: UploadFile) -> Image.Image:
         raise HTTPException(status_code=400, detail="File tải lên không phải là ảnh hợp lệ")
     _reject_too_many_pixels(size)
     try:
-        return image.convert("RGB")
+        return to_rgb(image)
     except Exception:
         raise HTTPException(status_code=400, detail="File tải lên không phải là ảnh hợp lệ")
 
@@ -208,15 +220,17 @@ def run_all_inference(
     file: UploadFile = File(...),
     true_class: str | None = Query(None, description="Nhãn thật nếu biết (chỉ để giải thích shard, không ảnh hưởng dự đoán)"),
     explain: bool = Query(False, description="Kèm ảnh Grad-CAM cho lớp mà từng mô hình dự đoán"),
+    crop: str | None = Query(None, description="Loại cây do người dùng chọn (vd Tomato): chỉ xét bệnh của cây đó"),
 ) -> Dict[str, Any]:
     """Một ảnh qua cả 7 mô hình (mỗi mô hình đúng một lần, qua cổng registry). Hàm đồng bộ: FastAPI chạy trong threadpool
     nên poll /api/status không bị chặn khi đang suy luận."""
     image = _read_image(file)
     _check_true_class(true_class)
+    _check_crop(crop)
     temperatures = _temperatures()
     started = time.perf_counter()
     try:
-        results = {key: _predict(registry_id, image, temperatures.get(key)) for key, registry_id in ALL_MODELS}
+        results = {key: _predict(registry_id, image, temperatures.get(key), crop) for key, registry_id in ALL_MODELS}
     except ValueError as exc:
         raise HTTPException(status_code=503, detail=f"Artifact suy luận chưa sẵn sàng: {exc}") from exc
     predict_ms = (time.perf_counter() - started) * 1000

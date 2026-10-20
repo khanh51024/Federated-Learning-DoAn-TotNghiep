@@ -91,21 +91,21 @@ class ModelNotAllowed(RuntimeError):
         super().__init__(f"{model_id} chưa đạt cổng hiển thị: {'; '.join(reasons) or 'không rõ lý do'}")
 
 
-def run_backend(entry: Dict[str, Any], image: Any, temperature: Optional[float] = None) -> Dict[str, Any]:
+def run_backend(entry: Dict[str, Any], image: Any, temperature: Optional[float] = None, crop: Optional[str] = None) -> Dict[str, Any]:
     """Gọi đúng backend mà entry registry khai báo. Không kiểm web_visible (dành cho bài kiểm tra của registry)."""
     inference = entry.get("inference") or {}
     backend = inference.get("backend")
     if backend == reg.BACKEND_PUBLISHED_BUNDLE:
         from web.demo_evidence import predict_published
 
-        return predict_published(image, inference["key"], temperature=temperature)
+        return predict_published(image, inference["key"], temperature=temperature, crop=crop)
     if backend == reg.BACKEND_TORCHSCRIPT_REFERENCE:
         from web import plantvillage_reference as reference
 
         # Kiểm lại hash MỖI lần dùng (bundle published tự kiểm hash trong load_evidence; TorchScript thì chưa)
         if _file_sha256(reference.MODEL_FILE) != reg.PLANTVILLAGE_TRACED_SHA256:
             raise ValueError("PlantVillage TorchScript đã đổi so với hash đã ghim — chạy lại scripts/update_status.py")
-        return reference.predict_plantvillage(image)
+        return reference.predict_plantvillage(image)  # mô hình tham chiếu ngoài: không có chế độ chọn loại cây
     raise ValueError(f"{entry.get('model_id')}: backend inference {backend!r} không được hỗ trợ")
 
 
@@ -132,10 +132,10 @@ def explain(model_id: str, image: Any, class_name: str) -> Dict[str, Any]:
     return explain_published(image, inference["key"], class_name)
 
 
-def predict(model_id: str, image: Any, temperature: Optional[float] = None) -> Dict[str, Any]:
+def predict(model_id: str, image: Any, temperature: Optional[float] = None, crop: Optional[str] = None) -> Dict[str, Any]:
     """Dự đoán qua registry: từ chối model không tồn tại hoặc chưa đạt cổng web_visible."""
     entry = _gated_entry(model_id)
-    result = dict(run_backend(entry, image, temperature))
+    result = dict(run_backend(entry, image, temperature, crop))
     result["registry"] = {
         "model_id": entry["model_id"],
         "role": entry.get("role"),

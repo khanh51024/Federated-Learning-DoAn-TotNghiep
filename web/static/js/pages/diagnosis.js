@@ -35,6 +35,7 @@ const state = {
   showStats: false, // chỉ hiện độ khó/recall từ catalog khi bundle khả dụng và ảnh đã đối chiếu manifest validation
   controller: null,
   rows: new Map(), // model_id -> kết quả hoặc {error}
+  runCrop: "", // loại cây của lần chẩn đoán đang chạy (đọc từ ô chọn lúc bấm), vd "Corn_(maize)"; rỗng = để mô hình tự đoán
   explain: false, // người dùng bật Grad-CAM
   explanations: new Map(), // model_id -> {class, image}
   allEndpoint: null, // null: chưa biết; false: máy chủ cũ không có /api/inference/all → gọi từng cặp
@@ -306,7 +307,7 @@ function detailHtml(modelId) {
         return `<li><span>${esc(formatDiseaseName(t.class))}</span><b class="mono">${fmtNum(t.confidence, 2)}%</b>${cal ? `<span class="mono text-muted">hiệu chuẩn ${fmtNum(cal.confidence, 1)}%</span>` : ""}</li>`;
       }).join("")}</ol>
       <p class="field-hint">Độ chính xác công bố của mô hình này trên tập kiểm tra: PlantVillage ${fmtPct(val?.plantvillage?.top1_accuracy)} · PlantDoc ${fmtPct(val?.plantdoc?.top1_accuracy)}.
-        ${result.calibrated ? `Số hiệu chuẩn chia logit cho T = ${fmtNum(result.calibrated.temperature, 2)}; thứ tự các nhóm không đổi.` : "Xác suất softmax chưa hiệu chuẩn."}</p>
+        ${result.calibrated ? `Số hiệu chuẩn chia logit cho T = ${fmtNum(result.calibrated.temperature, 2)}; thứ tự các nhóm không đổi.` : result.crop_restricted ? cropRestrictedHint(result.crop_restricted) : "Xác suất softmax chưa hiệu chuẩn."}</p>
     </div></td>`;
 }
 
@@ -393,7 +394,7 @@ function headlineHtml(trueClass) {
     : v === "wrong-disease" ? '<span class="verdict mid">✕ Sai bệnh (đúng loại cây)</span>'
       : v === "wrong" ? '<span class="verdict bad">✕ Sai cả loại cây</span>'
         : '<span class="verdict none">chưa biết nhãn thật nên chưa chấm</span>';
-  const calibrated = result.calibrated ? `sau hiệu chuẩn ${fmtNum(result.calibrated.confidence_pct, 1)}%` : "chưa hiệu chuẩn";
+  const calibrated = result.calibrated ? `sau hiệu chuẩn ${fmtNum(result.calibrated.confidence_pct, 1)}%` : result.crop_restricted ? "chuẩn hóa trong nhóm cây" : "chưa hiệu chuẩn";
   const uncertain = result.is_uncertain ? ' <span class="pill-flag" title="Xác suất cao nhất dưới 50% hoặc hai nhóm đầu quá sát nhau">không chắc</span>' : "";
   const agree = agreement(ref);
   const agreeText = count => (agree.total > 1 ? `${count}/${agree.total} mô hình đồng ý` : "chỉ một mô hình");
@@ -597,10 +598,38 @@ async function renderStage() {
   if (fresh) setStageView("cam");
 }
 
+/** Dòng giải thích dưới danh sách top-3 khi kết quả bị giới hạn theo cây: kèm phần xác suất gốc mô hình đặt vào cây đó. */
+function cropRestrictedHint(info) {
+  const crop = String(info.crop).replace(/_/g, " ");
+  const low = info.low_crop_mass ? " Mô hình gần như không thấy cây này trong ảnh: kết quả không đáng tin." : "";
+  return `Đã giới hạn theo cây ${esc(crop)} do bạn chọn; xác suất chuẩn hóa lại trong nhóm cây (${fmtNum(info.classes_in_crop, 0)} nhóm). Mô hình đặt ${fmtNum(info.crop_mass_pct, 1)}% xác suất gốc vào cây này.${low}`;
+}
+
+/** Kết quả đã bị giới hạn theo cây người dùng chọn: nói rõ để không ai đọc xác suất như softmax thô của 38 lớp. */
+function renderCropNote(models) {
+  const results = models.map(id => state.rows.get(id)).filter(r => r && !r.error);
+  const restricted = results.find(r => r.crop_restricted);
+  const summary = byId("diag-summary");
+  const note = document.createElement("p");
+  note.className = "field-hint mt-2";
+  note.id = "diag-crop-note";
+  if (restricted) {
+    const low = results.some(r => r.crop_restricted?.low_crop_mass);
+    note.textContent = `Đã giới hạn theo cây ${restricted.crop_restricted.crop.replace(/_/g, " ")} do bạn chọn: xác suất được chuẩn hóa lại trong nhóm cây này, không còn là softmax của 38 lớp.${low ? " Ít nhất một mô hình đặt dưới 50% xác suất gốc vào cây này, nên kết quả đó không đáng tin." : ""} Nếu ảnh không phải cây này, kết quả vô nghĩa.`;
+  } else if (state.runCrop && results.length) {
+    // máy chủ cũ hoặc đường gọi từng cặp bỏ qua tham số crop: nói rõ thay vì im lặng
+    note.textContent = "Lựa chọn loại cây không được áp dụng: máy chủ này chưa hỗ trợ giới hạn theo cây, kết quả ở trên là kết quả đầy đủ 38 nhóm.";
+  } else {
+    return;
+  }
+  summary.appendChild(note);
+}
+
 function renderAll({ animate = false } = {}) {
   const models = plannedModels();
   renderTable(models, { animateIds: animate ? models : [] });
   summarize(models);
+  renderCropNote(models);
   renderGradcam(models);
   renderStage();
   renderLocal();
@@ -649,7 +678,8 @@ function finishRun() {
 async function runAll(runId, controller, form) {
   setText(byId("diag-progress-badge"), state.explain ? "Đang chạy 7 mô hình + Grad-CAM" : "Đang chạy 7 mô hình");
   try {
-    const data = await postForm(`/api/inference/all?explain=${state.explain ? "true" : "false"}`, form, { signal: controller.signal, timeoutMs: 120000 });
+    const cropQuery = state.runCrop ? `&crop=${encodeURIComponent(state.runCrop)}` : "";
+    const data = await postForm(`/api/inference/all?explain=${state.explain ? "true" : "false"}${cropQuery}`, form, { signal: controller.signal, timeoutMs: 120000 });
     if (runId !== state.runId) return true;
     for (const id of MODEL_ORDER) {
       const result = data.models?.[id];
@@ -724,6 +754,7 @@ async function run() {
   state.explanations.clear();
   state.timing = null;
   state.runExplain = state.explain;
+  state.runCrop = byId("inference-crop")?.value || "";
 
   const models = plannedModels();
   const form = new FormData();
@@ -903,7 +934,7 @@ function topListHtml(top3, pillar, calibrated) {
 
 function headlineBlock(title, data, trueClass, extra = "") {
   const v = verdict(data, trueClass);
-  const calibrated = data.calibrated ? `sau hiệu chuẩn ${fmtNum(data.calibrated.confidence_pct, 1)}%` : "chưa hiệu chuẩn";
+  const calibrated = data.calibrated ? `sau hiệu chuẩn ${fmtNum(data.calibrated.confidence_pct, 1)}%` : data.crop_restricted ? "chuẩn hóa trong nhóm cây" : "chưa hiệu chuẩn";
   const uncertain = data.is_uncertain ? ' <span class="pill-flag" title="Xác suất cao nhất dưới 50% hoặc hai nhóm đầu quá sát nhau">không chắc</span>' : "";
   const truth = trueClass && v !== "correct" ? `<p class="headline-truth">Nhãn thật: <b>${esc(formatDiseaseName(trueClass))}</b></p>` : "";
   return `<div class="diag-headline ${v === "correct" ? "is-correct" : v ? "is-wrong" : "is-unknown"}">
@@ -1105,6 +1136,15 @@ export async function mount() {
     const note = byId("gallery-note");
     if (note) note.textContent = "Ảnh mẫu có nhãn thật; chưa đối chiếu được với tập kiểm tra nên không xếp độ khó.";
   }
+
+  const cropSelect = byId("inference-crop");
+  for (const crop of [...new Set(state.classes.map(cls => cls.split("___")[0]))].sort()) {
+    const option = document.createElement("option");
+    option.value = crop;
+    option.textContent = crop.replace(/_/g, " ");
+    cropSelect.appendChild(option);
+  }
+  // Đổi cây chỉ có hiệu lực ở lần chẩn đoán SAU (đọc giá trị lúc bấm); không gọi lại mô hình ngầm.
 
   const trueSelect = byId("inference-true-class");
   for (const cls of state.classes) {

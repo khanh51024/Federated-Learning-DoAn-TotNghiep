@@ -50,7 +50,9 @@ def overlay(image: Any, cam: np.ndarray, alpha: float = 0.45) -> Any:
     """Ảnh đầu vào đã resize 224×224 (đúng thứ mô hình thấy) phủ bản đồ nhiệt."""
     from PIL import Image
 
-    base = image.convert("RGB").resize((SIZE, SIZE), Image.BILINEAR)
+    from src.common.image_io import to_rgb
+
+    base = to_rgb(image).resize((SIZE, SIZE), Image.BILINEAR)
     heat = Image.fromarray((np.clip(cam, 0, 1) * 255).astype(np.uint8), mode="L").resize((SIZE, SIZE), Image.BILINEAR)
     colored = _colormap(np.asarray(heat, dtype=np.float32) / 255.0)
     weight = (np.asarray(heat, dtype=np.float32) / 255.0)[..., None] * alpha

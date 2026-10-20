@@ -133,8 +133,8 @@ function buildSummary() {
       const palette = [colors.centralized, colors.fedavg, colors.local, colors.violet, colors.danger];
       const ids = fedTraining.history[0].clients.map(c => c.client_id);
       return { type: "line", data: { labels: fedTraining.history.map(r => r.round), datasets: ids.map((id, i) => ({
-        label: id, data: fedTraining.history.map(r => r.clients.find(c => c.client_id === id).delta_l2), borderColor: palette[i % palette.length], tension: 0.2, pointRadius: 0,
-      })) }, options: { animation: lineDraw(), interaction: { mode: "index", intersect: false }, scales: { x: { title: { display: true, text: "Vòng FedAvg" } }, y: { min: 0, title: { display: true, text: "‖w_k − w‖₂" } } } } };
+        label: id, data: fedTraining.history.map(r => r.clients.find(c => c.client_id === id).delta_l2_learnable), borderColor: palette[i % palette.length], tension: 0.2, pointRadius: 0,
+      })) }, options: { animation: lineDraw(), interaction: { mode: "index", intersect: false }, scales: { x: { title: { display: true, text: "Vòng FedAvg" } }, y: { min: 0, title: { display: true, text: "‖Δ‖₂ trọng số học được" } } } } };
     });
   }
 

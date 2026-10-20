@@ -33,7 +33,7 @@ from src.model.mobilenetv3 import (
     set_parameters,
 )
 from .faulty_client import apply_fault_mode
-from .network_probe import measure_probe_rtt_ms
+from .network_probe import measure_link, measure_probe_rtt_ms
 from .telemetry import ClientRoundTelemetry
 
 
@@ -169,13 +169,17 @@ class PlantVillageClient:
         send_hash = compute_model_hash(final_weights)
 
         bytes_sent = sum(t.numel() * t.element_size() for t in final_weights.values())
+        bytes_received = sum(
+            int(np.asarray(v).nbytes) if not isinstance(v, torch.Tensor) else v.numel() * v.element_size()
+            for v in global_weights.values()
+        )
 
         telemetry = ClientRoundTelemetry(
             client_id=self.client_id,
             round_num=round_num,
             local_train_time_s=round(local_train_duration, 3),
             bytes_uploaded=bytes_sent,
-            bytes_downloaded=bytes_sent,
+            bytes_downloaded=bytes_received,
             loss=avg_loss,
             accuracy=avg_acc,
             num_examples=self.num_examples,
@@ -224,8 +228,10 @@ try:
             return [v.detach().cpu().numpy() for v in weights.values()]
 
         def fit(self, parameters, config):
+            fit_started = time.perf_counter()
             param_keys = list(self.core.model.state_dict().keys())
             weights_dict = {k: torch.from_numpy(p) for k, p in zip(param_keys, parameters)}
+            decode_ms = (time.perf_counter() - fit_started) * 1000.0
             round_num = int(config.get("round", 1))
             configured_local_epochs = int(config.get("local_epochs", self.core.local_epochs))
             if configured_local_epochs <= 0:
@@ -238,12 +244,21 @@ try:
                 )
 
             probe_rtt_ms = None
+            link: Dict[str, Any] = {}
             probe_port = config.get("probe_port")
             if self.core.probe_host and probe_port is not None:
                 try:
                     probe_rtt_ms = float(measure_probe_rtt_ms(self.core.probe_host, int(probe_port)))
                 except Exception:
                     probe_rtt_ms = None
+                try:
+                    # Đo tuyến trên một kết nối giữ sẵn (RTT không tính bắt tay TCP, MB/s mỗi chiều). Chỉ chạy khi máy chủ
+                    # yêu cầu (probe_payload_bytes >= 0); -1 hoặc thiếu = không đo, giữ hành vi cũ.
+                    payload = int(config.get("probe_payload_bytes", -1))
+                    if payload >= 0:
+                        link = measure_link(self.core.probe_host, int(probe_port), payload_bytes=payload)
+                except Exception:
+                    link = {}
 
             # Server controls the local training budget for this round. Preserve
             # the previous client setting so the adapter remains reusable.
@@ -253,10 +268,13 @@ try:
                 res = self.core.fit(weights_dict, round_num=round_num)
             finally:
                 self.core.local_epochs = previous_local_epochs
+            encode_started = time.perf_counter()
             updated_ndarrays = [
                 v.detach().cpu().numpy() if isinstance(v, torch.Tensor) else np.asarray(v)
                 for v in res["weights"].values()
             ]
+            encode_ms = (time.perf_counter() - encode_started) * 1000.0
+            client_wall_ms = (time.perf_counter() - fit_started) * 1000.0
             metrics = {
                 "loss": float(res["loss"]),
                 "accuracy": float(res["accuracy"]),
@@ -271,6 +289,15 @@ try:
                 "local_train_time_s": float(res["train_duration_s"]),
                 "client_id": int(self.core.client_id),
                 "probe_rtt_ms": float(probe_rtt_ms) if probe_rtt_ms is not None else -1.0,
+                # Đo trên đồng hồ của CHÍNH client (không cần đồng bộ giờ giữa hai máy); -1 = không đo.
+                "client_wall_ms": float(client_wall_ms),
+                "client_decode_ms": float(decode_ms),
+                "client_encode_ms": float(encode_ms),
+                "probe_connect_ms": float(link.get("connect_ms", -1.0)),
+                "probe_rtt_persistent_ms": float(link.get("rtt_ms_p50", -1.0)),
+                "probe_up_mb_per_s": float(link.get("up_mb_per_s_net", -1.0)),
+                "probe_down_mb_per_s": float(link.get("down_mb_per_s_net", -1.0)),
+                "probe_payload_bytes": int(link.get("payload_bytes", -1)),
                 "data_mode": str(self.core.data_mode),
                 "training_seed": int(self.core.seed),
                 "partition_id": str(self.core.partition_id),

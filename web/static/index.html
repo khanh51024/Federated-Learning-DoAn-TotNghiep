@@ -289,6 +289,15 @@
                       <input type="checkbox" id="explain-toggle"> Xem vùng mô hình nhìn (Grad-CAM)
                     </label>
                   </div>
+                  <div class="diag-options">
+                    <div class="form-group">
+                      <label for="inference-crop">Loại cây (nếu biết)</label>
+                      <select id="inference-crop" class="input-field" aria-describedby="inference-crop-hint">
+                        <option value="">Không biết (tự đoán)</option>
+                      </select>
+                    </div>
+                    <p class="field-hint" id="inference-crop-hint">Chọn loại cây thì bảy mô hình chỉ xét bệnh của cây đó; chọn sai cây thì kết quả sai.</p>
+                  </div>
                   <div class="diag-actions">
                     <button type="button" class="btn btn-primary" id="btn-diagnose" disabled>
                       <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>

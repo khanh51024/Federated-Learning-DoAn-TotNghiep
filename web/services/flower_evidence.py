@@ -308,8 +308,8 @@ def _rounds_blocks(run_dir: Optional[Path]) -> List[Dict[str, Any]]:
         _records_block("audit_rounds nguyên bản trong history.json", columns, rows,
                        caption="estimated_comm_overhead_ms = thời gian vòng (từ lúc gửi cấu hình đến lúc gộp xong) trừ giờ học "
                                 "lâu nhất của một client. Đây là ước tính thô, không phải số đo riêng gRPC: nó gồm cả truyền "
-                                "weights, đóng/mở gói tensor và chờ client sẵn sàng, nên vòng 1 thường lớn hơn vòng sau "
-                                "(client còn nạp mô hình lần đầu)."),
+                                "weights, đóng/mở gói tensor và xếp hàng. Phiên ghi trước 2026-10-21 còn tính cả thời gian chờ "
+                                "đủ client kết nối nên vòng 1 lớn hơn hẳn; từ bản mới đồng hồ vòng chỉ chạy sau khi đủ client."),
         _file_block("progress.json — tiến trình server ghi theo từng vòng", run_dir / "progress.json", prettify_json=True),
     ]
     log_block = _file_block("server.log — các dòng Flower in ra khi chạy từng vòng", run_dir / "server.log")

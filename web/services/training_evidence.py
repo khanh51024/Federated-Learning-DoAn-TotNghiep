@@ -1,6 +1,7 @@
 """Read-only projection of verified training metadata; no checkpoint loading in HTTP requests."""
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from src import registry as reg
@@ -59,6 +60,9 @@ def training_report(evidence: dict[str, Any], load_json) -> dict[str, Any]:
             n = evidence["shard_counts"][client["client_id"]]
             if client["sample_count_n_k"] != n or abs(client["weight_p_k"] - n / sum(evidence["shard_counts"].values())) > 1e-9:
                 raise ValueError("training report: sai trọng số client")
+            learnable, total = client.get("delta_l2_learnable"), client.get("delta_l2")
+            if not all(isinstance(x, (int, float)) and math.isfinite(x) for x in (learnable, total)) or not 0 <= learnable <= total + 1e-3:
+                raise ValueError("training report: delta_l2_learnable thiếu hoặc không hợp lệ")
     splits = {s["name"]: s for s in report["release"]["splits"]}
     if splits["val"]["manifest_sha256"] != evidence["validation_manifest_sha256"] or splits["val"]["by_source"] != evidence["validation_counts"]:
         raise ValueError("training report: validation manifest khác bundle")

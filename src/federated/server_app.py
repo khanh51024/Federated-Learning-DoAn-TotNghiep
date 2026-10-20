@@ -15,7 +15,9 @@ import csv
 import copy
 import hashlib
 import json
+import math
 import random
+import re
 import sys
 import time
 from pathlib import Path
@@ -363,6 +365,18 @@ def run_federated_simulation(
 
 
 # Flower Network Server Deployment
+_SHA256_HEX = re.compile(r"[0-9a-f]{64}")
+
+
+def _optional_number(value: Any) -> Optional[float]:
+    """Số đo client gửi lên: -1, thiếu, NaN hoặc vô cực = không đo -> None (không ghi 0 như thể đã đo; JSON không có Infinity)."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) and number >= 0 else None
+
+
 class AuditedFlowerFedAvg:
     """Factory-backed wrapper for Flower FedAvg with server-side update audit.
 
@@ -386,6 +400,7 @@ class AuditedFlowerFedAvg:
         expected_clients: Optional[Dict[int, Dict[str, Any]]] = None,
         expected_smoke: Optional[bool] = None,
         progress_file: Optional[str | Path] = None,
+        probe_payload_bytes: int = -1,
     ) -> Any:
         from flwr.common import FitIns, ndarrays_to_parameters, parameters_to_ndarrays
         from flwr.server.strategy import FedAvg
@@ -400,7 +415,9 @@ class AuditedFlowerFedAvg:
                 self._parent_by_round: Dict[int, Dict[str, np.ndarray]] = {}
                 self._fit_started_at: Dict[int, float] = {}
                 self._parent_hash_by_round: Dict[int, str] = {}
+                self._down_payload_bytes_by_round: Dict[int, int] = {}
                 self.audit_rounds: List[Dict[str, Any]] = []
+                self.failed_rounds: List[Dict[str, Any]] = []
                 self.final_parameters: Any = initial_parameters
                 super().__init__(
                     fraction_fit=1.0,
@@ -422,11 +439,15 @@ class AuditedFlowerFedAvg:
                 arrays = parameters_to_ndarrays(parameters)
                 parent = {k: np.asarray(v).copy() for k, v in zip(model_keys, arrays)}
                 self._parent_by_round[int(server_round)] = parent
-                self._fit_started_at[int(server_round)] = time.perf_counter()
                 parent_hash = compute_model_hash(parent)
                 self._parent_hash_by_round[int(server_round)] = parent_hash
+                # Byte THẬT trên dây theo chiều xuống (mỗi client nhận một bản): tổng độ dài các mảng đã tuần tự hóa.
+                self._down_payload_bytes_by_round[int(server_round)] = int(sum(len(t) for t in parameters.tensors))
 
                 pairs = super().configure_fit(server_round, parameters, client_manager)
+                # Đồng hồ vòng chỉ bắt đầu SAU khi đủ client đã kết nối (sample() chờ client): đặt trước đó thì vòng 1 bị cộng
+                # thêm thời gian khởi động client (15-22 s đo được) và bị đọc nhầm là thời gian truyền.
+                self._fit_started_at[int(server_round)] = time.perf_counter()
                 self._write_progress({
                     "round_in_progress": int(server_round),
                     "completed_round": len(self.audit_rounds),
@@ -448,6 +469,7 @@ class AuditedFlowerFedAvg:
                             "local_epochs": int(local_epochs),
                             "seed": int(seed),
                             "probe_port": int(probe_port) if probe_port is not None else -1,
+                            "probe_payload_bytes": int(probe_payload_bytes),
                         }
                     )
                     configured.append((client, FitIns(fit_ins.parameters, config)))
@@ -466,8 +488,11 @@ class AuditedFlowerFedAvg:
                 learnable_norms: List[float] = []
                 local_train_times: List[float] = []
                 client_records: List[Dict[str, Any]] = []
+                validate_ms = 0.0
+                client_wall_values: List[float] = []
 
                 for client_proxy, fit_res in results:
+                    validate_started = time.perf_counter()
                     arrays = parameters_to_ndarrays(fit_res.parameters)
                     if len(arrays) != len(model_keys):
                         raise RuntimeError(f"Round {server_round}: wrong tensor count from {client_proxy.cid}")
@@ -479,6 +504,16 @@ class AuditedFlowerFedAvg:
                         reported_parent_hash=reported_parent_hash,
                         max_update_norm=max_update_norm,
                     )
+                    # Chiều client -> server: tính lại băm trên đúng các mảng vừa nhận rồi so với băm client khai.
+                    # Khác nhau = byte bị đổi trên đường truyền (hoặc client khai sai): loại bất kể chế độ quan sát.
+                    server_recomputed_hash = compute_model_hash(client_weights)
+                    # Băm do client tự khai chỉ là kiểm TOÀN VẸN (bắt lỗi truyền và lỗi client), không phải xác thực: ai sửa được
+                    # byte trên đường truyền không TLS cũng tính lại được băm. Chỉ nhận 64 ký tự hex; chuỗi khác bị coi là sai.
+                    reported_raw = str(fit_res.metrics.get("hash", ""))
+                    client_reported_hash = reported_raw if _SHA256_HEX.fullmatch(reported_raw) else "invalid"
+                    # None = client không khai băm (chưa kiểm được); Flower client của repo luôn khai.
+                    upload_hash_ok = (server_recomputed_hash == client_reported_hash) if "hash" in fit_res.metrics else None
+                    validate_ms += (time.perf_counter() - validate_started) * 1000.0
                     fit_res.metrics["server_received_update_norm"] = float(validation.received_update_norm)
                     fit_res.metrics["server_validation_status"] = (
                         "rejected" if not validation.accepted else "suspicious" if validation.suspicious else "ok"
@@ -518,7 +553,24 @@ class AuditedFlowerFedAvg:
                         "learnable_update_relative": float(learnable["relative"]) if learnable else None,
                         "validation_reason": validation.reason,
                         "status": "ok",
+                        "upload_hash_ok": upload_hash_ok,
+                        "client_reported_hash": client_reported_hash,
+                        "server_recomputed_hash": server_recomputed_hash,
+                        # Byte THẬT đã tuần tự hóa nhận được từ client này (gồm phần đầu .npy của từng mảng).
+                        "payload_bytes_up": int(sum(len(t) for t in fit_res.parameters.tensors)),
+                        "payload_bytes_down": int(self._down_payload_bytes_by_round.get(int(server_round), 0)),
+                        # Các số đo đồng hồ của CHÍNH client; None = client không đo/không có probe.
+                        "client_wall_ms": _optional_number(fit_res.metrics.get("client_wall_ms")),
+                        "client_decode_ms": _optional_number(fit_res.metrics.get("client_decode_ms")),
+                        "client_encode_ms": _optional_number(fit_res.metrics.get("client_encode_ms")),
+                        "probe_connect_ms": _optional_number(fit_res.metrics.get("probe_connect_ms")),
+                        "probe_rtt_persistent_ms": _optional_number(fit_res.metrics.get("probe_rtt_persistent_ms")),
+                        "probe_up_mb_per_s": _optional_number(fit_res.metrics.get("probe_up_mb_per_s")),
+                        "probe_down_mb_per_s": _optional_number(fit_res.metrics.get("probe_down_mb_per_s")),
+                        "probe_payload_bytes": _optional_number(fit_res.metrics.get("probe_payload_bytes")),
                     }
+                    if record["client_wall_ms"] is not None:
+                        client_wall_values.append(float(record["client_wall_ms"]))
 
                     if client_id in seen_ids or client_id < 0 or client_id >= num_clients:
                         raise RuntimeError(f"Round {server_round}: duplicate or invalid client_id {client_id}")
@@ -550,6 +602,17 @@ class AuditedFlowerFedAvg:
                         )
                         continue
 
+                    if upload_hash_ok is False:
+                        rejected_count += 1
+                        record["status"] = "rejected_upload_hash_mismatch"
+                        record["validation_reason"] = "upload_hash_mismatch"
+                        client_records.append(record)
+                        print(
+                            f"[!] Flower client {client_proxy.cid} rejected: upload_hash_mismatch "
+                            f"(client={client_reported_hash[:12]} server={server_recomputed_hash[:12]})"
+                        )
+                        continue
+
                     if not validation.accepted:
                         rejected_count += 1
                         record["status"] = "rejected"
@@ -574,6 +637,12 @@ class AuditedFlowerFedAvg:
                     accepted_results.append((client_proxy, fit_res))
 
                 if failures or len(results) != num_clients or len(accepted_results) != num_clients:
+                    # Lưu bằng chứng của vòng thất bại TRƯỚC khi hủy vòng (trước đây chỉ in ra stdout).
+                    self.failed_rounds.append({"round": int(server_round), "clients": client_records, "failures": len(failures)})
+                    self._write_progress({
+                        "round_in_progress": int(server_round), "completed_round": len(self.audit_rounds),
+                        "failed_round": self.failed_rounds[-1], "rounds": self.audit_rounds,
+                    })
                     raise RuntimeError(
                         f"Round {server_round} requires exactly {num_clients} accepted clients; "
                         f"received={len(results)} accepted={len(accepted_results)} failures={len(failures)}"
@@ -589,14 +658,17 @@ class AuditedFlowerFedAvg:
                     for _, fit_res in accepted_results
                 ]
                 parent_tensors = {k: torch.from_numpy(v) for k, v in parent.items()}
+                aggregate_started = time.perf_counter()
                 averaged = aggregate_fedavg(updates, parent_weights=parent_tensors)
                 aggregated_parameters = ndarrays_to_parameters([
                     averaged[k].detach().cpu().numpy() for k in model_keys
                 ])
                 global_model_hash = compute_model_hash({k: averaged[k].detach().cpu().numpy() for k in model_keys})
+                aggregate_ms = (time.perf_counter() - aggregate_started) * 1000.0
                 metrics: Dict[str, Any] = {}
 
                 server_eval_metrics: Optional[Dict[str, Any]] = None
+                eval_started = time.perf_counter()
                 if aggregated_parameters is not None and evaluation_loader is not None:
                     eval_device = evaluation_device or torch.device("cpu")
                     aggregated_arrays = parameters_to_ndarrays(aggregated_parameters)
@@ -617,10 +689,18 @@ class AuditedFlowerFedAvg:
                         }
                     )
 
+                eval_ms = (time.perf_counter() - eval_started) * 1000.0 if evaluation_loader is not None else 0.0
                 elapsed_ms = (
                     time.perf_counter() - self._fit_started_at.get(int(server_round), time.perf_counter())
                 ) * 1000.0
                 max_train_ms = max(local_train_times, default=0.0) * 1000.0
+                slowest_wall_ms = max(client_wall_values) if client_wall_values else None
+                # Phần còn lại của vòng khi trừ việc server tự làm và việc client chậm nhất làm trong máy nó:
+                # tải xuống + tải lên + gRPC + xếp hàng của client chậm nhất. Là ƯỚC LƯỢNG (client phải khai client_wall_ms).
+                transfer_estimate_ms = (
+                    max(0.0, elapsed_ms - validate_ms - aggregate_ms - eval_ms - slowest_wall_ms)
+                    if slowest_wall_ms is not None else None
+                )
                 valid_rtts = [float(r["probe_rtt_ms"]) for r in client_records if r.get("probe_rtt_ms") is not None]
                 metrics.update(
                     {
@@ -651,6 +731,11 @@ class AuditedFlowerFedAvg:
                         "rejected_clients": int(rejected_count),
                         "round_fit_elapsed_ms": float(elapsed_ms),
                         "estimated_comm_overhead_ms": float(max(0.0, elapsed_ms - max_train_ms)),
+                        "server_validate_ms": float(validate_ms),
+                        "server_aggregate_ms": float(aggregate_ms),
+                        "server_eval_ms": float(eval_ms),
+                        "slowest_client_wall_ms": slowest_wall_ms,
+                        "transfer_estimate_ms": transfer_estimate_ms,
                         "mean_probe_rtt_ms": float(np.mean(valid_rtts)) if valid_rtts else None,
                         "max_probe_rtt_ms": float(np.max(valid_rtts)) if valid_rtts else None,
                         "server_validation_metrics": server_eval_metrics,
@@ -685,6 +770,7 @@ def start_flower_server(
     checkpoint_file: Optional[str | Path] = reg.FEDERATED_NETWORK_GLOBAL_PT,
     progress_file: Optional[str | Path] = None,
     expected_smoke: Optional[bool] = None,
+    probe_payload_bytes: int = -1,
 ) -> Any:
     """Khởi chạy Flower Server lắng nghe kết nối từ các client process qua IP:Port."""
     import flwr as fl
@@ -742,7 +828,9 @@ def start_flower_server(
     bind_host, port_text = server_address.rsplit(":", 1)
     flower_port = int(port_text)
     probe_port = flower_port + 1
-    probe_server = ProbeServer(bind_host, probe_port)
+    if probe_payload_bytes > ProbeServer.MAX_PAYLOAD_BYTES:
+        raise ValueError(f"probe_payload_bytes vượt trần {ProbeServer.MAX_PAYLOAD_BYTES} byte của probe server")
+    probe_server = ProbeServer(bind_host, probe_port, allow_payload=probe_payload_bytes >= 0)
     probe_server.start()
 
     strategy = AuditedFlowerFedAvg.build(
@@ -759,6 +847,7 @@ def start_flower_server(
         expected_clients=expected_client_contract(evaluation_partition_dir, num_clients),
         expected_smoke=expected_smoke,
         progress_file=progress_file,
+        probe_payload_bytes=probe_payload_bytes,
     )
 
     try:
@@ -900,6 +989,8 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint-file", type=str, default=reg.FEDERATED_NETWORK_GLOBAL_PT)
     parser.add_argument("--progress-file", type=str, default=None)
     parser.add_argument("--smoke", action="store_true")
+    parser.add_argument("--probe-payload-bytes", type=int, default=-1,
+                        help="Mỗi vòng client đo tuyến bằng khối byte này (RTT giữ kết nối + MB/s hai chiều); -1 = không đo")
     parser.add_argument("--partition-dir", type=str, default="data/partitions_stage2_scratch_v3/label100")
     parser.add_argument("--dataset-root", type=str, default=None)
     args = parser.parse_args()
@@ -927,6 +1018,7 @@ if __name__ == "__main__":
             checkpoint_file=args.checkpoint_file,
             progress_file=args.progress_file,
             expected_smoke=args.smoke,
+            probe_payload_bytes=args.probe_payload_bytes,
         )
     else:
         run_federated_simulation(

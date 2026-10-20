@@ -19,9 +19,10 @@ class ClientRoundTelemetry:
     client_id: int
     round_num: int
     local_train_time_s: float = 0.0
-    download_time_ms: float = 0.0
-    upload_time_ms: float = 0.0
-    network_rtt_ms: float = 0.0
+    # None = CHƯA ĐO (mô phỏng trong một tiến trình không có mạng). Không ghi 0, vì 0 đọc như "đo được 0 ms".
+    download_time_ms: Optional[float] = None
+    upload_time_ms: Optional[float] = None
+    network_rtt_ms: Optional[float] = None
     bytes_downloaded: int = 0
     bytes_uploaded: int = 0
     loss: float = 0.0
@@ -77,7 +78,8 @@ class TelemetryManager:
         for r in self.history:
             for c in r.client_metrics:
                 train_times.append(c.local_train_time_s)
-                rtts.append(c.network_rtt_ms)
+                if c.network_rtt_ms is not None:
+                    rtts.append(c.network_rtt_ms)
                 upload_bytes.append(c.bytes_uploaded)
 
         return {
@@ -87,10 +89,11 @@ class TelemetryManager:
                 "median": round(float(np.median(train_times)), 3) if train_times else 0.0,
                 "p95": round(float(np.percentile(train_times, 95)), 3) if train_times else 0.0,
             },
+            # None = chưa đo (mô phỏng một tiến trình); không ghi 0,0 như thể đã đo được 0 ms
             "network_rtt_ms": {
-                "mean": round(float(np.mean(rtts)), 2) if rtts else 0.0,
-                "median": round(float(np.median(rtts)), 2) if rtts else 0.0,
-                "p95": round(float(np.percentile(rtts, 95)), 2) if rtts else 0.0,
+                "mean": round(float(np.mean(rtts)), 2) if rtts else None,
+                "median": round(float(np.median(rtts)), 2) if rtts else None,
+                "p95": round(float(np.percentile(rtts, 95)), 2) if rtts else None,
             },
             "total_uploaded_mb": round(sum(upload_bytes) / (1024 * 1024), 2),
         }

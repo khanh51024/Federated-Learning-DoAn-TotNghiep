@@ -249,18 +249,32 @@ def _input_tensor(image: Any) -> Any:
             T.ToTensor(),
             T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
-    return _TRANSFORM(image.convert("RGB")).unsqueeze(0)
+    from src.common.image_io import to_rgb
+
+    return _TRANSFORM(to_rgb(image)).unsqueeze(0)
 
 
-def _top3(probabilities: Any, classes: list[str]) -> list[dict[str, Any]]:
-    values, indices = probabilities.topk(3)
+def _top3(probabilities: Any, classes: list[str], k: int = 3) -> list[dict[str, Any]]:
+    values, indices = probabilities.topk(min(k, len(classes)))
     return [{"class": classes[int(i)], "confidence": round(float(v) * 100, 2)} for v, i in zip(values, indices)]
 
 
-def predict_published(image: Any, model_id: str, root: Path = STORE, temperature: float | None = None) -> dict[str, Any]:
+def crop_of_class(class_name: str) -> str:
+    """Tên loại cây của một lớp: phần trước '___' (vd 'Tomato___Late_blight' -> 'Tomato')."""
+    return class_name.split("___", 1)[0]
+
+
+def crop_names(classes: list[str]) -> list[str]:
+    return sorted({crop_of_class(c) for c in classes})
+
+
+def predict_published(image: Any, model_id: str, root: Path = STORE, temperature: float | None = None,
+                      crop: str | None = None) -> dict[str, Any]:
     """Load only a pinned checkpoint, using the published canonical_v1 transform.
 
-    `temperature` (fit trên tập calibration riêng) chỉ thêm khối `calibrated`; dự đoán và `confidence_pct` giữ nguyên softmax thô."""
+    `temperature` (fit trên tập calibration riêng) chỉ thêm khối `calibrated`; dự đoán và `confidence_pct` giữ nguyên softmax thô.
+    `crop` (người dùng chọn loại cây): chỉ xét các lớp của cây đó và chuẩn hóa lại xác suất trong nhóm; kết quả KHÔNG thô nữa nên
+    được đánh dấu ở khối `crop_restricted`. Chọn sai cây thì kết quả sai, mô hình không kiểm lại lựa chọn đó."""
     evidence = load_evidence(root)
     if not evidence["available"]:
         raise ValueError(evidence["reason"])
@@ -272,9 +286,23 @@ def predict_published(image: Any, model_id: str, root: Path = STORE, temperature
         logits = model(tensor)[0]
     probabilities = torch.softmax(logits, dim=0)
     classes = evidence["classes"]
-    top3 = _top3(probabilities, classes)
-    top_values = probabilities.topk(2).values
-    margin = float(top_values[0] - top_values[1])
+    keep = None
+    if crop is not None:
+        if crop not in crop_names(classes):
+            raise ValueError("Loại cây không thuộc taxonomy")
+        keep = torch.tensor([crop_of_class(c) == crop for c in classes])
+    unrestricted_top3 = _top3(probabilities, classes)
+
+    # Phần xác suất gốc (38 lớp) mà mô hình đặt vào cây được chọn: nếu thấp, mô hình không thấy cây đó trong ảnh và xác suất chuẩn hóa
+    # lại bên dưới là giả tạo (một nhóm chỉ có một lớp luôn ra 100%).
+    crop_mass = float(probabilities[keep].sum()) if keep is not None else 1.0
+    if keep is not None:
+        # softmax chỉ trên các lớp của cây được chọn (ổn định số học kể cả khi khối xác suất gốc của cây đó gần bằng 0)
+        probabilities = torch.softmax(logits.masked_fill(~keep, float("-inf")), dim=0)
+    in_scope = int(keep.sum()) if keep is not None else len(classes)
+    top3 = _top3(probabilities, classes, min(3, in_scope))
+    top_values = probabilities.topk(min(2, in_scope)).values
+    margin = float(top_values[0] - top_values[1]) if len(top_values) > 1 else float(top_values[0])
     result = {
         "ready": True,
         "model_id": model_id,
@@ -290,14 +318,25 @@ def predict_published(image: Any, model_id: str, root: Path = STORE, temperature
         "predicted_class": top3[0]["class"],
         "confidence_pct": top3[0]["confidence"],
         "top3": top3,
-        "is_uncertain": bool(float(top_values[0]) < 0.5 or margin < 0.2),
+        "is_uncertain": bool(float(top_values[0]) < 0.5 or margin < 0.2 or crop_mass < 0.5),
         "confidence_calibrated": False,
         "model_validation": model_info["metrics"],
         "checkpoint_sha256": model_info["checkpoint_sha256"],
         "evidence_level": evidence["evidence_level"],
         "scope": "single cropped leaf image; validation is not an external-photo accuracy estimate",
     }
-    if temperature and temperature > 0:
+    if keep is not None:
+        result["crop_restricted"] = {
+            "crop": crop,
+            "source": "người dùng chọn",
+            "unrestricted_top1": unrestricted_top3[0],
+            "crop_mass_pct": round(crop_mass * 100, 2),
+            "classes_in_crop": in_scope,
+            "low_crop_mass": bool(crop_mass < 0.5),
+            "note": "Chỉ xét bệnh của cây đã chọn; xác suất chuẩn hóa lại trong nhóm cây đó, không còn là softmax thô của 38 lớp.",
+        }
+    if temperature and temperature > 0 and keep is None:
+        # Nhiệt độ T học trên phân bố 38 lớp: không áp cho xác suất đã giới hạn theo cây (sẽ là số không được kiểm chứng)
         scaled = torch.softmax(logits / float(temperature), dim=0)
         top3_scaled = _top3(scaled, classes)  # T > 0 không đổi thứ tự lớp
         result["calibrated"] = {

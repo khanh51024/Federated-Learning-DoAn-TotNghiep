@@ -40,7 +40,7 @@ def test_report_contains_verified_history_configs_and_release(source):
     assert fed["validation_overall"]["top1_accuracy"] == pytest.approx(0.9044006069802731)
 
 
-@pytest.mark.parametrize("tamper", ["checkpoint", "runtime", "client", "weight", "split", "source"])
+@pytest.mark.parametrize("tamper", ["checkpoint", "runtime", "client", "weight", "split", "source", "drift_missing", "drift_exceeds_total"])
 def test_rejects_misleading_report(source, tamper):
     evidence, report = source
     bad = copy.deepcopy(report)
@@ -53,6 +53,10 @@ def test_rejects_misleading_report(source, tamper):
         fed["history"][0]["clients"].pop()
     elif tamper == "weight":
         fed["history"][0]["clients"][0]["weight_p_k"] = 1
+    elif tamper == "drift_missing":
+        del fed["history"][0]["clients"][0]["delta_l2_learnable"]
+    elif tamper == "drift_exceeds_total":
+        fed["history"][0]["clients"][0]["delta_l2_learnable"] = fed["history"][0]["clients"][0]["delta_l2"] * 2
     elif tamper == "split":
         next(s for s in bad["release"]["splits"] if s["name"] == "val")["by_source"]["plantdoc"] = 172
     else:
