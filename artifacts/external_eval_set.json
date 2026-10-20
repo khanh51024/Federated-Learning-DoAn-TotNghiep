@@ -1,0 +1,186 @@
+{
+ "manifest": "data/external/plantwild_overlap_manifest.json",
+ "manifest_sha256": "5adba619df55e4b0cb9f94565fecd67cc3307acab0141e5c64391db93d91b5db",
+ "candidates": 5485,
+ "kept": 5045,
+ "kept_by_tier": {
+  "strict": 2304,
+  "healthy_assumed": 2741
+ },
+ "classes_covered": 33,
+ "classes_with_field_photos_in_training_before": 14,
+ "excluded": {
+  "unreadable": 0,
+  "near_duplicate_of_plantdoc": 288,
+  "near_duplicate_of_plantvillage": 42,
+  "duplicate_inside_plantwild": 110
+ },
+ "reference_images": {
+  "plantdoc_scenes": 2463,
+  "plantvillage": 54334
+ },
+ "nearest_plantdoc_hamming_histogram": {
+  "0": 187,
+  "1": 36,
+  "2": 19,
+  "3": 11,
+  "4": 11,
+  "5": 12,
+  "6": 12,
+  "7": 13,
+  "8": 11,
+  "9": 27,
+  "10": 28,
+  "11": 75,
+  "12": 159,
+  "13": 263,
+  "14": 434,
+  "15": 701,
+  "16": 901,
+  "17": 1120,
+  "18": 880,
+  "19": 459,
+  "20": 126
+ },
+ "per_class": {
+  "Apple___Black_rot": {
+   "count": 76
+  },
+  "Apple___Cedar_apple_rust": {
+   "count": 136
+  },
+  "Apple___Apple_scab": {
+   "count": 246
+  },
+  "Pepper,_bell___Bacterial_spot": {
+   "count": 56
+  },
+  "Cherry_(including_sour)___Powdery_mildew": {
+   "count": 31
+  },
+  "Orange___Haunglongbing_(Citrus_greening)": {
+   "count": 133
+  },
+  "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
+   "count": 89
+  },
+  "Corn_(maize)___Northern_Leaf_Blight": {
+   "count": 111
+  },
+  "Corn_(maize)___Common_rust_": {
+   "count": 153
+  },
+  "Grape___Black_rot": {
+   "count": 113
+  },
+  "Potato___Early_blight": {
+   "count": 101
+  },
+  "Potato___Late_blight": {
+   "count": 95
+  },
+  "Squash___Powdery_mildew": {
+   "count": 163
+  },
+  "Strawberry___Leaf_scorch": {
+   "count": 35
+  },
+  "Tomato___Bacterial_spot": {
+   "count": 100
+  },
+  "Tomato___Early_blight": {
+   "count": 151
+  },
+  "Tomato___Late_blight": {
+   "count": 147
+  },
+  "Tomato___Leaf_Mold": {
+   "count": 142
+  },
+  "Tomato___Tomato_mosaic_virus": {
+   "count": 59
+  },
+  "Tomato___Septoria_leaf_spot": {
+   "count": 91
+  },
+  "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+   "count": 76
+  },
+  "Apple___healthy": {
+   "count": 421
+  },
+  "Pepper,_bell___healthy": {
+   "count": 233
+  },
+  "Blueberry___healthy": {
+   "count": 265
+  },
+  "Cherry_(including_sour)___healthy": {
+   "count": 276
+  },
+  "Corn_(maize)___healthy": {
+   "count": 153
+  },
+  "Grape___healthy": {
+   "count": 194
+  },
+  "Peach___healthy": {
+   "count": 150
+  },
+  "Potato___healthy": {
+   "count": 247
+  },
+  "Raspberry___healthy": {
+   "count": 171
+  },
+  "Soybean___healthy": {
+   "count": 231
+  },
+  "Strawberry___healthy": {
+   "count": 190
+  },
+  "Tomato___healthy": {
+   "count": 210
+  }
+ },
+ "map": {
+  "disease_v2": {
+   "apple black rot": "Apple___Black_rot",
+   "apple rust": "Apple___Cedar_apple_rust",
+   "apple scab": "Apple___Apple_scab",
+   "bell pepper bacterial spot": "Pepper,_bell___Bacterial_spot",
+   "cherry powdery mildew": "Cherry_(including_sour)___Powdery_mildew",
+   "citrus greening disease": "Orange___Haunglongbing_(Citrus_greening)",
+   "corn gray leaf spot": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+   "corn northern leaf blight": "Corn_(maize)___Northern_Leaf_Blight",
+   "corn rust": "Corn_(maize)___Common_rust_",
+   "grape black rot": "Grape___Black_rot",
+   "potato early blight": "Potato___Early_blight",
+   "potato late blight": "Potato___Late_blight",
+   "squash powdery mildew": "Squash___Powdery_mildew",
+   "strawberry leaf scorch": "Strawberry___Leaf_scorch",
+   "tomato bacterial leaf spot": "Tomato___Bacterial_spot",
+   "tomato early blight": "Tomato___Early_blight",
+   "tomato late blight": "Tomato___Late_blight",
+   "tomato leaf mold": "Tomato___Leaf_Mold",
+   "tomato mosaic virus": "Tomato___Tomato_mosaic_virus",
+   "tomato septoria leaf spot": "Tomato___Septoria_leaf_spot",
+   "tomato yellow leaf curl virus": "Tomato___Tomato_Yellow_Leaf_Curl_Virus"
+  },
+  "healthy_v1_assumed": {
+   "apple leaf": "Apple___healthy",
+   "blueberry leaf": "Blueberry___healthy",
+   "cherry leaf": "Cherry_(including_sour)___healthy",
+   "corn leaf": "Corn_(maize)___healthy",
+   "grape leaf": "Grape___healthy",
+   "bell pepper leaf": "Pepper,_bell___healthy",
+   "peach leaf": "Peach___healthy",
+   "potato leaf": "Potato___healthy",
+   "raspberry leaf": "Raspberry___healthy",
+   "soybean leaf": "Soybean___healthy",
+   "strawberry leaf": "Strawberry___healthy",
+   "tomato leaf": "Tomato___healthy"
+  }
+ },
+ "rule": "Manifest khóa theo SHA-256 trước mọi lần train mới; ảnh trùng PlantDoc/PlantVillage đã loại."
+}

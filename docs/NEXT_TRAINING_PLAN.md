@@ -135,3 +135,45 @@ không còn "chưa ai nhìn"; nếu thêm nhóm mới thì cần một tập ki�
 
 Việc cần làm sau khi có kết quả: đưa bundle về bằng `scripts/import_branch_demo.py` (cập nhật nhánh/commit ghim và hash; web
 kiểm hash từng checkpoint trước khi hiện số), chấm lại độc lập, so từng nhóm cũ/mới. Không hứa trước con số.
+
+## 5. Công thức train mới và ngưỡng chấp nhận (chuẩn bị 2026-10-21, chưa chạy)
+
+Cập nhật sau đợt đo ở `docs/DANH_GIA_DU_LIEU_MO_HINH_FEDAVG_2026-10-21.md`. Mọi mô hình hiện có đạt 33,1% (Centralized) và 31,8% (FedAvg) top-1
+trên ảnh bệnh ngoài đồng của PlantWild và đoán thành có bệnh trong 87–94% ảnh lá khỏe, nên mục tiêu của lần train sau là ảnh ngoài đồng, không phải PlantVillage.
+
+### 5.1 Dữ liệu
+- Release v4 = v3 cộng các lá PlantDoc đã kiểm nhãn (5.569 lá đang cách ly; quy tắc nhận nhóm ≥ 90% "đúng" và ≤ 20% "không rõ" ở mục 3) và ảnh lá khỏe ngoài đồng.
+- **PlantWild không được dùng để học**: giấy phép CC BY-NC-ND 4.0 và đã khóa làm tập thử ngoài đồng cố định (`artifacts/external_eval_set.json`, manifest SHA-256 `5adba619…`).
+  Nếu thêm nguồn ảnh mới thì phải loại trùng với manifest này bằng `scripts/build_external_eval_set.py` trước khi học.
+- Cảnh PlantDoc nguyên khung đi qua bộ phát hiện lá (`scripts/train_leaf_detector.py`) để cắt lá; tiêu chí chấp nhận bộ phát hiện giữ như mục 2.
+
+### 5.2 Cách học
+| Hạng mục | Hiện tại | Đề xuất |
+|---|---|---|
+| Tăng cường ảnh | chỉ lật ngang | `src/data/robust_transforms.py` (cắt-phóng ngẫu nhiên, xoay, đổi màu, mờ, nén JPEG, độ phân giải thấp, xóa mảng); suy luận vẫn `canonical_v1` |
+| Lấy mẫu | có hoàn lại, một ảnh lặp tới 14 lần mỗi epoch | không hoàn lại; cân bằng miền bằng trọng số mất mát hoặc trọng số lớp |
+| Hàm mất mát | cross-entropy | thêm label smoothing 0,1 để giảm độ tin cậy quá cao khi sai |
+| Chọn checkpoint | macro-F1 PlantDoc trên chính tập kiểm tra | giữ nguyên quy tắc đã ghi trước, chọn chỉ trên tập kiểm tra; báo tập giữ riêng và PlantWild đúng một lần |
+| So sánh Centralized và FedAvg | AdamW so với SGD không động lượng, 83 epoch so với 27 vòng | cùng họ bộ tối ưu (SGD động lượng 0,9) và cùng số bước gradient: số epoch của Centralized = số vòng × số epoch cục bộ của FedAvg |
+| BatchNorm trong FedAvg | gộp trung bình theo n_k | đối chứng thêm FedBN (BatchNorm giữ cục bộ) hoặc GroupNorm; ghi rõ phương án nào dùng |
+| Hạt giống | một | ba (42, 123, 2026); báo trung bình ± độ lệch chuẩn |
+
+Phép đo ở mục 4.3 của báo cáo cho thấy phép gộp không gây sai số và chênh lệch với tập trung đến từ số bước cục bộ cùng độ lệch dữ liệu; vì vậy nên thử E nhỏ và FedAvgM trước khi tăng số client.
+
+### 5.3 Backbone
+Giữ MobileNetV3-Small cho so sánh ba phương pháp (một lần truyền 6,3 MB). Thêm một mô hình trần chỉ huấn luyện tập trung (ConvNeXt-Tiny hoặc EfficientNet-B0) để biết giới hạn của dữ liệu;
+mô hình cỡ 28 triệu tham số tương ứng khoảng 112 MB mỗi lần truyền, gấp khoảng 18 lần, nên không dùng cho học phân tán trong phạm vi đồ án.
+
+### 5.4 Ngưỡng chấp nhận (đặt trước khi train)
+Một đợt train mới chỉ được nhập vào web nếu đồng thời:
+1. top-1 trên PlantWild (tầng bệnh) tăng ít nhất 10 điểm so với mô hình hiện có (Centralized ≥ 43,1%, FedAvg ≥ 41,8%) và cận dưới khoảng tin cậy 95% cao hơn mốc cũ;
+2. top-1 PlantDoc tập giữ riêng không giảm quá 2 điểm so với 63,4% (Centralized) và 50,0% (FedAvg);
+3. top-1 PlantVillage không giảm quá 0,5 điểm trên tập kiểm tra và tập giữ riêng;
+4. tỉ lệ ảnh lá khỏe PlantWild bị đoán thành bệnh giảm xuống dưới 60% (chỉ báo xu hướng, nhãn ngầm định);
+5. kết quả báo ba hạt giống; chênh Centralized và FedAvg đi kèm khoảng tin cậy.
+
+### 5.5 Việc đã làm sẵn
+- Tập thử ngoài đồng và công cụ đo: `scripts/build_external_eval_set.py`, `scripts/eval_external_set.py`, `scripts/eval_inference_variants.py`.
+- Bộ tăng cường ảnh và kiểm khô (vẽ lưới ảnh, chạy một batch qua MobileNetV3-Small trên CPU): `src/data/robust_transforms.py`, `scripts/preview_augmentations.py`.
+- Chức năng chọn loại cây ở trang Chẩn đoán (cận trên đã đo: +7,6 đến +21,2 điểm trên PlantDoc khi chọn đúng cây).
+- Đo tốc độ hai máy: `scripts/prepare_network_speedtest.py`, `scripts/summarize_network_speedtest.py`, hướng dẫn LAN `docs/HUONG_DAN_DO_TOC_DO_LAN.md`.

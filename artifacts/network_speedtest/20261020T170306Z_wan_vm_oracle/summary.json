@@ -1,0 +1,300 @@
+{
+ "label": "wan_vm_oracle",
+ "created_utc": "20261020T170306Z",
+ "notes": "Máy chủ Flower trên VM Oracle 149.118.51.118; client 0 trên laptop qua ssh -L (TCP trong TCP, Internet thật); client 1 chạy ngay trên VM. 380 ảnh/client, 2 epoch/vòng, 3 vòng.",
+ "evidence": "đo tốc độ trên dữ liệu PlantVillage thật (shard nhỏ); KHÔNG dùng làm kết quả độ chính xác",
+ "machines": {
+  "0": "laptop",
+  "1": "vm_oracle"
+ },
+ "runs": {
+  "wan": {
+   "rounds": 3,
+   "clients": 2,
+   "all_upload_hashes_ok": true,
+   "all_clients_accepted": true,
+   "final_model_hash": "4fd0b34313dd9bc42dbd014e43e942df743b8bd83939c312f0ead1d398336611",
+   "hash_chain_ok": true,
+   "by_machine": {
+    "laptop": {
+     "local_train_time_s": {
+      "min": 20.364,
+      "median": 20.936,
+      "max": 21.188,
+      "n": 3
+     },
+     "client_wall_ms": {
+      "min": 21735.614,
+      "median": 21982.054,
+      "max": 22182.831,
+      "n": 3
+     },
+     "probe_connect_ms": {
+      "min": 0.465,
+      "median": 0.668,
+      "max": 12.989,
+      "n": 3
+     },
+     "probe_rtt_persistent_ms": {
+      "min": 46.614,
+      "median": 46.651,
+      "max": 46.698,
+      "n": 3
+     },
+     "probe_up_mb_per_s": {
+      "min": 13.088,
+      "median": 33.742,
+      "max": 34.014,
+      "n": 3
+     },
+     "probe_down_mb_per_s": {
+      "min": 29.89,
+      "median": 31.15,
+      "max": 51.978,
+      "n": 3
+     },
+     "train_images_per_s": {
+      "min": 17.93,
+      "median": 18.15,
+      "max": 18.66,
+      "n": 3
+     },
+     "predicted_transfer_ms": {
+      "min": 292.6,
+      "median": 379.5,
+      "max": 652.7,
+      "n": 3
+     }
+    },
+    "vm_oracle": {
+     "local_train_time_s": {
+      "min": 5.126,
+      "median": 5.155,
+      "max": 5.16,
+      "n": 3
+     },
+     "client_wall_ms": {
+      "min": 5156.671,
+      "median": 5186.341,
+      "max": 5191.79,
+      "n": 3
+     },
+     "probe_connect_ms": {
+      "min": 0.049,
+      "median": 0.058,
+      "max": 0.058,
+      "n": 3
+     },
+     "probe_rtt_persistent_ms": {
+      "min": 0.02,
+      "median": 0.021,
+      "max": 0.023,
+      "n": 3
+     },
+     "probe_up_mb_per_s": {
+      "min": 2844.518,
+      "median": 2953.961,
+      "max": 3041.503,
+      "n": 3
+     },
+     "probe_down_mb_per_s": {
+      "min": 2567.154,
+      "median": 2927.924,
+      "max": 2978.398,
+      "n": 3
+     },
+     "train_images_per_s": {
+      "min": 73.64,
+      "median": 73.71,
+      "max": 74.13,
+      "n": 3
+     },
+     "predicted_transfer_ms": {
+      "min": 4.0,
+      "median": 4.1,
+      "max": 4.5,
+      "n": 3
+     }
+    }
+   },
+   "round_fit_elapsed_ms": {
+    "min": 22634.155,
+    "median": 22820.163,
+    "max": 23019.219,
+    "n": 3
+   },
+   "transfer_estimate_ms": {
+    "min": 762.553,
+    "median": 771.43,
+    "max": 835.426,
+    "n": 3
+   },
+   "predicted_transfer_ms_slowest_client": {
+    "min": 292.6,
+    "median": 379.5,
+    "max": 652.7,
+    "n": 3
+   },
+   "per_round": [
+    {
+     "round": 1,
+     "round_fit_elapsed_ms": 22634.2,
+     "server_validate_ms": 38.14289497677237,
+     "server_aggregate_ms": 24.97212204616517,
+     "server_eval_ms": 0.0,
+     "slowest_client_wall_ms": 21735.614299999725,
+     "transfer_estimate_ms": 835.4261400018004,
+     "clients": [
+      {
+       "client_id": 0,
+       "machine": "laptop",
+       "num_examples": 380,
+       "status": "ok",
+       "upload_hash_ok": true,
+       "local_train_time_s": 20.364,
+       "client_wall_ms": 21735.614299999725,
+       "client_decode_ms": 2.8243000015208963,
+       "client_encode_ms": 1.679800003330456,
+       "probe_connect_ms": 0.6678999998257495,
+       "probe_rtt_persistent_ms": 46.651199998450466,
+       "probe_rtt_legacy_one_shot_ms": 93.81719999873894,
+       "probe_up_mb_per_s": 13.087997297219887,
+       "probe_down_mb_per_s": 31.149994165825902,
+       "payload_bytes_up": 6307176,
+       "payload_bytes_down": 6307176,
+       "predicted_transfer_ms": 652.7,
+       "train_images_per_s": 18.66
+      },
+      {
+       "client_id": 1,
+       "machine": "vm_oracle",
+       "num_examples": 380,
+       "status": "ok",
+       "upload_hash_ok": true,
+       "local_train_time_s": 5.16,
+       "client_wall_ms": 5191.789534990676,
+       "client_decode_ms": 1.1045349529013038,
+       "client_encode_ms": 0.34476304426789284,
+       "probe_connect_ms": 0.05778798367828131,
+       "probe_rtt_persistent_ms": 0.022743945010006428,
+       "probe_rtt_legacy_one_shot_ms": 0.47266704495996237,
+       "probe_up_mb_per_s": 3041.5030382769173,
+       "probe_down_mb_per_s": 2927.923844244632,
+       "payload_bytes_up": 6307176,
+       "payload_bytes_down": 6307176,
+       "predicted_transfer_ms": 4.0,
+       "train_images_per_s": 73.64
+      }
+     ],
+     "predicted_transfer_ms_slowest_client": 652.7
+    },
+    {
+     "round": 2,
+     "round_fit_elapsed_ms": 23019.2,
+     "server_validate_ms": 41.32136597763747,
+     "server_aggregate_ms": 32.51410904340446,
+     "server_eval_ms": 0.0,
+     "slowest_client_wall_ms": 22182.830800000374,
+     "transfer_estimate_ms": 762.5528659664269,
+     "clients": [
+      {
+       "client_id": 1,
+       "machine": "vm_oracle",
+       "num_examples": 380,
+       "status": "ok",
+       "upload_hash_ok": true,
+       "local_train_time_s": 5.155,
+       "client_wall_ms": 5186.340500018559,
+       "client_decode_ms": 1.0724460007622838,
+       "client_encode_ms": 0.3076069988310337,
+       "probe_connect_ms": 0.05795795004814863,
+       "probe_rtt_persistent_ms": 0.021192943677306175,
+       "probe_rtt_legacy_one_shot_ms": 0.4178839735686779,
+       "probe_up_mb_per_s": 2844.517579978681,
+       "probe_down_mb_per_s": 2567.153944901035,
+       "payload_bytes_up": 6307176,
+       "payload_bytes_down": 6307176,
+       "predicted_transfer_ms": 4.5,
+       "train_images_per_s": 73.71
+      },
+      {
+       "client_id": 0,
+       "machine": "laptop",
+       "num_examples": 380,
+       "status": "ok",
+       "upload_hash_ok": true,
+       "local_train_time_s": 21.188,
+       "client_wall_ms": 22182.830800000374,
+       "client_decode_ms": 1.2634000013349578,
+       "client_encode_ms": 1.3547999988077208,
+       "probe_connect_ms": 0.4654000003938563,
+       "probe_rtt_persistent_ms": 46.61409999971511,
+       "probe_rtt_legacy_one_shot_ms": 93.9330000001064,
+       "probe_up_mb_per_s": 34.014103027398264,
+       "probe_down_mb_per_s": 51.978290619259404,
+       "payload_bytes_up": 6307176,
+       "payload_bytes_down": 6307176,
+       "predicted_transfer_ms": 292.6,
+       "train_images_per_s": 17.93
+      }
+     ],
+     "predicted_transfer_ms_slowest_client": 292.6
+    },
+    {
+     "round": 3,
+     "round_fit_elapsed_ms": 22820.2,
+     "server_validate_ms": 41.852060006931424,
+     "server_aggregate_ms": 24.82684003189206,
+     "server_eval_ms": 0.0,
+     "slowest_client_wall_ms": 21982.053700001416,
+     "transfer_estimate_ms": 771.4304909059138,
+     "clients": [
+      {
+       "client_id": 0,
+       "machine": "laptop",
+       "num_examples": 380,
+       "status": "ok",
+       "upload_hash_ok": true,
+       "local_train_time_s": 20.936,
+       "client_wall_ms": 21982.053700001416,
+       "client_decode_ms": 2.3700999990978744,
+       "client_encode_ms": 1.339999998890562,
+       "probe_connect_ms": 12.989100003323983,
+       "probe_rtt_persistent_ms": 46.69810000268626,
+       "probe_rtt_legacy_one_shot_ms": 93.39600000021164,
+       "probe_up_mb_per_s": 33.74211430941766,
+       "probe_down_mb_per_s": 29.890090186798275,
+       "payload_bytes_up": 6307176,
+       "payload_bytes_down": 6307176,
+       "predicted_transfer_ms": 379.5,
+       "train_images_per_s": 18.15
+      },
+      {
+       "client_id": 1,
+       "machine": "vm_oracle",
+       "num_examples": 380,
+       "status": "ok",
+       "upload_hash_ok": true,
+       "local_train_time_s": 5.126,
+       "client_wall_ms": 5156.670755008236,
+       "client_decode_ms": 1.0870490223169327,
+       "client_encode_ms": 0.32156798988580704,
+       "probe_connect_ms": 0.04860397893935442,
+       "probe_rtt_persistent_ms": 0.02034998033195734,
+       "probe_rtt_legacy_one_shot_ms": 0.7661709096282721,
+       "probe_up_mb_per_s": 2953.9609997536286,
+       "probe_down_mb_per_s": 2978.3977593541904,
+       "payload_bytes_up": 6307176,
+       "payload_bytes_down": 6307176,
+       "predicted_transfer_ms": 4.1,
+       "train_images_per_s": 74.13
+      }
+     ],
+     "predicted_transfer_ms_slowest_client": 379.5
+    }
+   ],
+   "history_sha256": "8cfe37eb309a71422c44f75592f2682e1642dfbffc10ba046c4d846abfaeea52",
+   "server_address": "127.0.0.1:18089"
+  }
+ }
+}

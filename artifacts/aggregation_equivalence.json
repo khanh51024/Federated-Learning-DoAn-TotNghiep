@@ -1,0 +1,221 @@
+{
+ "evidence": "thí nghiệm numpy trên lớp cuối với đặc trưng 1024 chiều đã trích sẵn; KHÔNG phải mô hình của đồ án",
+ "features": "data/community_sim/features.npz",
+ "train_examples": 4225,
+ "test_examples": 11015,
+ "clients": 5,
+ "seed": 20261020,
+ "lr_selection": {
+  "rule": "lr có loss học thấp nhất sau 100 bước tập trung (không dùng tập test)",
+  "losses": {
+   "0.05": 0.19385441469567236,
+   "0.1": 0.12297428453485315,
+   "0.2": 0.07245253561488221,
+   "0.5": 0.02917531174513887,
+   "1.0": 0.01486490940371741
+  },
+  "chosen": 1.0
+ },
+ "fedsgd_equals_centralized": {
+  "alpha": 0.1,
+  "n_k": [
+   1004,
+   1411,
+   743,
+   468,
+   599
+  ],
+  "lr": 1.0,
+  "steps": 100,
+  "l2": 0.0001,
+  "float64": {
+   "max_abs_weight_diff_over_all_steps": 4.904410211281629e-14,
+   "final_relative_diff": 1.430307072106729e-14,
+   "float_eps": 2.220446049250313e-16,
+   "test_accuracy_centralized": 94.498,
+   "test_accuracy_fedsgd": 94.498
+  },
+  "float32": {
+   "max_abs_weight_diff_over_all_steps": 7.450580596923828e-07,
+   "final_relative_diff": 3.6757997802283764e-07,
+   "float_eps": 1.1920928955078125e-07,
+   "test_accuracy_centralized": 94.498,
+   "test_accuracy_fedsgd": 94.498
+  }
+ },
+ "drift_grid": [
+  {
+   "alpha": 100.0,
+   "local_steps": 1,
+   "rounds": 100,
+   "n_k": [
+    808,
+    824,
+    867,
+    883,
+    843
+   ],
+   "relative_distance_to_centralized": 1.3286530350069866e-14,
+   "test_accuracy_aggregated": 94.498,
+   "test_accuracy_centralized": 94.498,
+   "test_accuracy_clients_before_aggregation_mean": 94.453,
+   "test_accuracy_clients_before_aggregation_min": 94.435,
+   "test_accuracy_clients_before_aggregation_max": 94.489,
+   "client_to_aggregate_relative_distance_mean": 0.004379795282196956
+  },
+  {
+   "alpha": 100.0,
+   "local_steps": 5,
+   "rounds": 20,
+   "n_k": [
+    808,
+    824,
+    867,
+    883,
+    843
+   ],
+   "relative_distance_to_centralized": 0.11025600203006873,
+   "test_accuracy_aggregated": 94.653,
+   "test_accuracy_centralized": 94.498,
+   "test_accuracy_clients_before_aggregation_mean": 94.576,
+   "test_accuracy_clients_before_aggregation_min": 94.435,
+   "test_accuracy_clients_before_aggregation_max": 94.689,
+   "client_to_aggregate_relative_distance_mean": 0.018256255747699977
+  },
+  {
+   "alpha": 100.0,
+   "local_steps": 20,
+   "rounds": 5,
+   "n_k": [
+    808,
+    824,
+    867,
+    883,
+    843
+   ],
+   "relative_distance_to_centralized": 0.15596611632504148,
+   "test_accuracy_aggregated": 94.526,
+   "test_accuracy_centralized": 94.498,
+   "test_accuracy_clients_before_aggregation_mean": 94.389,
+   "test_accuracy_clients_before_aggregation_min": 94.181,
+   "test_accuracy_clients_before_aggregation_max": 94.662,
+   "client_to_aggregate_relative_distance_mean": 0.06923586722461697
+  },
+  {
+   "alpha": 1.0,
+   "local_steps": 1,
+   "rounds": 100,
+   "n_k": [
+    990,
+    557,
+    746,
+    948,
+    984
+   ],
+   "relative_distance_to_centralized": 8.344621675620216e-15,
+   "test_accuracy_aggregated": 94.498,
+   "test_accuracy_centralized": 94.498,
+   "test_accuracy_clients_before_aggregation_mean": 94.429,
+   "test_accuracy_clients_before_aggregation_min": 94.326,
+   "test_accuracy_clients_before_aggregation_max": 94.517,
+   "client_to_aggregate_relative_distance_mean": 0.006855721571854256
+  },
+  {
+   "alpha": 1.0,
+   "local_steps": 5,
+   "rounds": 20,
+   "n_k": [
+    990,
+    557,
+    746,
+    948,
+    984
+   ],
+   "relative_distance_to_centralized": 0.3958441498758174,
+   "test_accuracy_aggregated": 94.78,
+   "test_accuracy_centralized": 94.498,
+   "test_accuracy_clients_before_aggregation_mean": 94.466,
+   "test_accuracy_clients_before_aggregation_min": 94.199,
+   "test_accuracy_clients_before_aggregation_max": 94.662,
+   "client_to_aggregate_relative_distance_mean": 0.02245894975934957
+  },
+  {
+   "alpha": 1.0,
+   "local_steps": 20,
+   "rounds": 5,
+   "n_k": [
+    990,
+    557,
+    746,
+    948,
+    984
+   ],
+   "relative_distance_to_centralized": 0.39923720729707307,
+   "test_accuracy_aggregated": 94.535,
+   "test_accuracy_centralized": 94.498,
+   "test_accuracy_clients_before_aggregation_mean": 93.752,
+   "test_accuracy_clients_before_aggregation_min": 93.255,
+   "test_accuracy_clients_before_aggregation_max": 94.063,
+   "client_to_aggregate_relative_distance_mean": 0.07975020723974888
+  },
+  {
+   "alpha": 0.1,
+   "local_steps": 1,
+   "rounds": 100,
+   "n_k": [
+    1004,
+    1411,
+    743,
+    468,
+    599
+   ],
+   "relative_distance_to_centralized": 1.430307072106729e-14,
+   "test_accuracy_aggregated": 94.498,
+   "test_accuracy_centralized": 94.498,
+   "test_accuracy_clients_before_aggregation_mean": 94.181,
+   "test_accuracy_clients_before_aggregation_min": 93.681,
+   "test_accuracy_clients_before_aggregation_max": 94.58,
+   "client_to_aggregate_relative_distance_mean": 0.012288105972802763
+  },
+  {
+   "alpha": 0.1,
+   "local_steps": 5,
+   "rounds": 20,
+   "n_k": [
+    1004,
+    1411,
+    743,
+    468,
+    599
+   ],
+   "relative_distance_to_centralized": 0.5960213722453147,
+   "test_accuracy_aggregated": 94.035,
+   "test_accuracy_centralized": 94.498,
+   "test_accuracy_clients_before_aggregation_mean": 92.697,
+   "test_accuracy_clients_before_aggregation_min": 90.685,
+   "test_accuracy_clients_before_aggregation_max": 93.79,
+   "client_to_aggregate_relative_distance_mean": 0.037140272151192824
+  },
+  {
+   "alpha": 0.1,
+   "local_steps": 20,
+   "rounds": 5,
+   "n_k": [
+    1004,
+    1411,
+    743,
+    468,
+    599
+   ],
+   "relative_distance_to_centralized": 0.5731755854892857,
+   "test_accuracy_aggregated": 93.491,
+   "test_accuracy_centralized": 94.498,
+   "test_accuracy_clients_before_aggregation_mean": 90.025,
+   "test_accuracy_clients_before_aggregation_min": 87.517,
+   "test_accuracy_clients_before_aggregation_max": 91.929,
+   "client_to_aggregate_relative_distance_mean": 0.09282734060902997
+  }
+ ],
+ "reading": "Phép gộp không gây sai số (A: chênh ở mức làm tròn). Chênh lệch FedAvg so với tập trung chỉ xuất hiện khi mỗi client chạy nhiều hơn một bước cục bộ trên dữ liệu lệch (B), tức là do học cục bộ chứ không phải do truyền/gộp trọng số.",
+ "seconds": 75.0
+}

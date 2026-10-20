@@ -1,0 +1,300 @@
+{
+ "label": "loopback_baseline",
+ "created_utc": "20261020T170306Z",
+ "notes": "Mốc: server và hai client cùng một laptop (loopback), hai client tranh nhau CPU nên thời gian tính chậm hơn khi chạy trên hai máy riêng.",
+ "evidence": "đo tốc độ trên dữ liệu PlantVillage thật (shard nhỏ); KHÔNG dùng làm kết quả độ chính xác",
+ "machines": {
+  "0": "laptop_client_0",
+  "1": "laptop_client_1"
+ },
+ "runs": {
+  "loopback": {
+   "rounds": 3,
+   "clients": 2,
+   "all_upload_hashes_ok": true,
+   "all_clients_accepted": true,
+   "final_model_hash": "a5a208d350525f39ed497857b40db836be1a561aa5eeeacacb589830192f2a8b",
+   "hash_chain_ok": true,
+   "by_machine": {
+    "laptop_client_0": {
+     "local_train_time_s": {
+      "min": 39.319,
+      "median": 39.901,
+      "max": 42.039,
+      "n": 3
+     },
+     "client_wall_ms": {
+      "min": 39496.557,
+      "median": 40109.846,
+      "max": 42238.017,
+      "n": 3
+     },
+     "probe_connect_ms": {
+      "min": 0.87,
+      "median": 12.866,
+      "max": 15.801,
+      "n": 3
+     },
+     "probe_rtt_persistent_ms": {
+      "min": 0.118,
+      "median": 0.171,
+      "max": 0.187,
+      "n": 3
+     },
+     "probe_up_mb_per_s": {
+      "min": 576.005,
+      "median": 618.313,
+      "max": 1253.683,
+      "n": 3
+     },
+     "probe_down_mb_per_s": {
+      "min": 568.579,
+      "median": 786.771,
+      "max": 1013.961,
+      "n": 3
+     },
+     "train_images_per_s": {
+      "min": 9.04,
+      "median": 9.52,
+      "max": 9.66,
+      "n": 3
+     },
+     "predicted_transfer_ms": {
+      "min": 10.7,
+      "median": 17.4,
+      "max": 21.0,
+      "n": 3
+     }
+    },
+    "laptop_client_1": {
+     "local_train_time_s": {
+      "min": 39.155,
+      "median": 39.329,
+      "max": 41.251,
+      "n": 3
+     },
+     "client_wall_ms": {
+      "min": 39339.252,
+      "median": 39540.309,
+      "max": 41517.782,
+      "n": 3
+     },
+     "probe_connect_ms": {
+      "min": 0.708,
+      "median": 0.864,
+      "max": 0.954,
+      "n": 3
+     },
+     "probe_rtt_persistent_ms": {
+      "min": 0.057,
+      "median": 0.12,
+      "max": 0.154,
+      "n": 3
+     },
+     "probe_up_mb_per_s": {
+      "min": 573.625,
+      "median": 915.771,
+      "max": 1393.432,
+      "n": 3
+     },
+     "probe_down_mb_per_s": {
+      "min": 469.443,
+      "median": 1065.04,
+      "max": 1089.924,
+      "n": 3
+     },
+     "train_images_per_s": {
+      "min": 9.21,
+      "median": 9.66,
+      "max": 9.71,
+      "n": 3
+     },
+     "predicted_transfer_ms": {
+      "min": 9.8,
+      "median": 12.2,
+      "max": 23.3,
+      "n": 3
+     }
+    }
+   },
+   "round_fit_elapsed_ms": {
+    "min": 40200.354,
+    "median": 40679.203,
+    "max": 42868.221,
+    "n": 3
+   },
+   "transfer_estimate_ms": {
+    "min": 318.678,
+    "median": 365.437,
+    "max": 373.591,
+    "n": 3
+   },
+   "predicted_transfer_ms_slowest_client": {
+    "min": 10.7,
+    "median": 17.4,
+    "max": 23.3,
+    "n": 3
+   },
+   "per_round": [
+    {
+     "round": 1,
+     "round_fit_elapsed_ms": 42868.2,
+     "server_validate_ms": 141.52410000315285,
+     "server_aggregate_ms": 123.24330000046757,
+     "server_eval_ms": 0.0,
+     "slowest_client_wall_ms": 42238.01669999739,
+     "transfer_estimate_ms": 365.4372999990301,
+     "clients": [
+      {
+       "client_id": 0,
+       "machine": "laptop_client_0",
+       "num_examples": 380,
+       "status": "ok",
+       "upload_hash_ok": true,
+       "local_train_time_s": 42.039,
+       "client_wall_ms": 42238.01669999739,
+       "client_decode_ms": 3.5433999983069953,
+       "client_encode_ms": 1.8228999979328364,
+       "probe_connect_ms": 15.801199999259552,
+       "probe_rtt_persistent_ms": 0.17050000315066427,
+       "probe_rtt_legacy_one_shot_ms": 14.081699999223929,
+       "probe_up_mb_per_s": 1253.68270594938,
+       "probe_down_mb_per_s": 1013.9605963432454,
+       "payload_bytes_up": 6307176,
+       "payload_bytes_down": 6307176,
+       "predicted_transfer_ms": 10.7,
+       "train_images_per_s": 9.04
+      },
+      {
+       "client_id": 1,
+       "machine": "laptop_client_1",
+       "num_examples": 380,
+       "status": "ok",
+       "upload_hash_ok": true,
+       "local_train_time_s": 41.251,
+       "client_wall_ms": 41517.78220000051,
+       "client_decode_ms": 3.8786999975854997,
+       "client_encode_ms": 1.541899997391738,
+       "probe_connect_ms": 0.7075000030454248,
+       "probe_rtt_persistent_ms": 0.057100001868093386,
+       "probe_rtt_legacy_one_shot_ms": 25.37039999879198,
+       "probe_up_mb_per_s": 1393.4315653075923,
+       "probe_down_mb_per_s": 1089.923626901396,
+       "payload_bytes_up": 6307176,
+       "payload_bytes_down": 6307176,
+       "predicted_transfer_ms": 9.8,
+       "train_images_per_s": 9.21
+      }
+     ],
+     "predicted_transfer_ms_slowest_client": 10.7
+    },
+    {
+     "round": 2,
+     "round_fit_elapsed_ms": 40200.4,
+     "server_validate_ms": 171.12320000160253,
+     "server_aggregate_ms": 115.33090000011725,
+     "server_eval_ms": 0.0,
+     "slowest_client_wall_ms": 39540.309299998626,
+     "transfer_estimate_ms": 373.59099999957834,
+     "clients": [
+      {
+       "client_id": 0,
+       "machine": "laptop_client_0",
+       "num_examples": 380,
+       "status": "ok",
+       "upload_hash_ok": true,
+       "local_train_time_s": 39.319,
+       "client_wall_ms": 39496.556999998575,
+       "client_decode_ms": 2.6075999994645827,
+       "client_encode_ms": 1.5948000000207685,
+       "probe_connect_ms": 0.8703999992576428,
+       "probe_rtt_persistent_ms": 0.11780000204453245,
+       "probe_rtt_legacy_one_shot_ms": 13.832999997248407,
+       "probe_up_mb_per_s": 618.3128549845464,
+       "probe_down_mb_per_s": 786.7714702221531,
+       "payload_bytes_up": 6307176,
+       "payload_bytes_down": 6307176,
+       "predicted_transfer_ms": 17.4,
+       "train_images_per_s": 9.66
+      },
+      {
+       "client_id": 1,
+       "machine": "laptop_client_1",
+       "num_examples": 380,
+       "status": "ok",
+       "upload_hash_ok": true,
+       "local_train_time_s": 39.329,
+       "client_wall_ms": 39540.309299998626,
+       "client_decode_ms": 2.6727000004029833,
+       "client_encode_ms": 3.6673000031441916,
+       "probe_connect_ms": 0.9536999968986493,
+       "probe_rtt_persistent_ms": 0.15409999832627364,
+       "probe_rtt_legacy_one_shot_ms": 3.23729999945499,
+       "probe_up_mb_per_s": 915.7713178467927,
+       "probe_down_mb_per_s": 1065.0402339377877,
+       "payload_bytes_up": 6307176,
+       "payload_bytes_down": 6307176,
+       "predicted_transfer_ms": 12.2,
+       "train_images_per_s": 9.66
+      }
+     ],
+     "predicted_transfer_ms_slowest_client": 17.4
+    },
+    {
+     "round": 3,
+     "round_fit_elapsed_ms": 40679.2,
+     "server_validate_ms": 138.9902999981132,
+     "server_aggregate_ms": 111.68779999934486,
+     "server_eval_ms": 0.0,
+     "slowest_client_wall_ms": 40109.84649999955,
+     "transfer_estimate_ms": 318.6781000040355,
+     "clients": [
+      {
+       "client_id": 1,
+       "machine": "laptop_client_1",
+       "num_examples": 380,
+       "status": "ok",
+       "upload_hash_ok": true,
+       "local_train_time_s": 39.155,
+       "client_wall_ms": 39339.25150000141,
+       "client_decode_ms": 2.0445000009203795,
+       "client_encode_ms": 1.8302999997104052,
+       "probe_connect_ms": 0.8639999978186097,
+       "probe_rtt_persistent_ms": 0.12040000001434237,
+       "probe_rtt_legacy_one_shot_ms": 2.4009000007936265,
+       "probe_up_mb_per_s": 573.6253214602225,
+       "probe_down_mb_per_s": 469.4426964715349,
+       "payload_bytes_up": 6307176,
+       "payload_bytes_down": 6307176,
+       "predicted_transfer_ms": 23.3,
+       "train_images_per_s": 9.71
+      },
+      {
+       "client_id": 0,
+       "machine": "laptop_client_0",
+       "num_examples": 380,
+       "status": "ok",
+       "upload_hash_ok": true,
+       "local_train_time_s": 39.901,
+       "client_wall_ms": 40109.84649999955,
+       "client_decode_ms": 3.1038999986776616,
+       "client_encode_ms": 1.7054000018106308,
+       "probe_connect_ms": 12.866000000940403,
+       "probe_rtt_persistent_ms": 0.18670000281417742,
+       "probe_rtt_legacy_one_shot_ms": 3.4272000011696946,
+       "probe_up_mb_per_s": 576.0046393145414,
+       "probe_down_mb_per_s": 568.5792757864398,
+       "payload_bytes_up": 6307176,
+       "payload_bytes_down": 6307176,
+       "predicted_transfer_ms": 21.0,
+       "train_images_per_s": 9.52
+      }
+     ],
+     "predicted_transfer_ms_slowest_client": 23.3
+    }
+   ],
+   "history_sha256": "f3449402204e3878bfb74fe4f6595078880f6be01510577ce9e5bdc6143856fd",
+   "server_address": "127.0.0.1:18089"
+  }
+ }
+}

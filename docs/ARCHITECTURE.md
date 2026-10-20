@@ -76,8 +76,10 @@ sequenceDiagram
     Note over Client: 7. Tính Delta_k = w_k - w_t và ||Delta_k||_2
     Note over Client: 8. Tính SEND_HASH = SHA256(w_k)
     Client->>Server: 9. Gửi Update Trọng số + n_k + Hash + Telemetry
-    Note over Server: 10. Server xác thực CLIENT_HASH == SERVER_HASH
+    Note over Server: 10. Server tính lại SHA256 trên đúng các mảng vừa nhận, so với băm client khai (khác = loại, upload_hash_mismatch)
 ```
+
+Chiều xuống được kiểm bằng `parent_model_hash` (client băm bản nhận được, server so với băm bản đã gửi); chiều lên được kiểm ở bước 10. Cả hai chiều đều đi nguyên byte (float32/int64, không nén); chứng cứ ở `artifacts/weight_exchange_audit.json`.
 
 ---
 

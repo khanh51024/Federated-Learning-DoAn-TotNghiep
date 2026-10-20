@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 4 mục kỹ thuật chưa XONG)",
+  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 3 mục kỹ thuật chưa XONG)",
   "canonical_run_id": "20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62",
   "dataset_truth": {
     "source": "data/partitions_stage2_scratch_v3/suite.json",
@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-20T13:14:32",
+      "generated_at": "2026-10-21T00:38:53",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,13 +145,13 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-20T13:14:34",
+      "generated_at": "2026-10-21T00:39:04",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
-      "generated_at": "2026-10-20T01:05:20",
-      "code_fingerprint": "12b32f45d6adc39f302e547795520d6574014ffb79880ea3151ff97318f87a67",
+      "generated_at": "2026-10-21T00:48:00",
+      "code_fingerprint": "a8a0865d2037fd39c7e8329a165dfd014544abaefd8c6eddf121fe92ab672b67",
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
@@ -180,7 +180,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-20T13:14:37",
+      "generated_at": "2026-10-21T00:39:01",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
@@ -268,8 +268,8 @@
     {
       "id": "full_tests",
       "title": "Full tests pass trên mã nguồn hiện tại",
-      "status": "CHƯA",
-      "detail": "kết quả cũ (2026-10-20T01:05:20) không còn khớp mã nguồn hiện tại — chạy lại --full-gates",
+      "status": "XONG",
+      "detail": "technical_acceptance=pass lúc 2026-10-21T00:48:00 (gồm test mạng, 72 file test) với mã nguồn có dấu vân tay a8a0865d2037; thay mã sau thời điểm này thì phải chạy lại",
       "unlock": []
     },
     {
@@ -358,7 +358,7 @@
       "id": "release",
       "title": "Release sạch (mọi gate kỹ thuật XONG)",
       "status": "CHƯA",
-      "detail": "còn mục kỹ thuật chưa XONG: ['no_hardcode', 'docs_clean', 'full_tests']",
+      "detail": "còn mục kỹ thuật chưa XONG: ['no_hardcode', 'docs_clean']",
       "unlock": []
     }
   ],
