@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from src import registry as reg
 from web.services import model_service
+from web.services.training_evidence import training_report
 
 MODEL_ORDER = ("centralized", "fedavg", "local_00", "local_01", "local_02", "local_03", "local_04")
 SOURCES = ("plantdoc", "plantvillage")
@@ -509,6 +510,17 @@ def _holdout_report(evidence: Dict[str, Any]) -> tuple[Optional[Dict[str, Any]],
     return report, ""
 
 
+def _holdout_per_class(block: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Số ảnh đúng theo lớp PlantDoc của tập giữ riêng (support × recall; recall lưu dạng thập phân)."""
+    rows = []
+    for name, item in (block.get("per_class_recall") or {}).items():
+        support, recall = _int(item.get("support")), item.get("recall")
+        if not support or recall is None:
+            continue
+        rows.append({"class": str(name), "support": support, "correct": int(round(float(recall) * support))})
+    return sorted(rows, key=lambda r: r["class"])
+
+
 def _holdout(evidence: Dict[str, Any]) -> Dict[str, Any]:
     report, reason = _holdout_report(evidence)
     if report is None:
@@ -525,6 +537,7 @@ def _holdout(evidence: Dict[str, Any]) -> Dict[str, Any]:
             "plantdoc": _metrics(rep["by_source"]["plantdoc"]),
             "plantvillage": _metrics(rep["by_source"]["plantvillage"]),
             "ece": {s: _calibration_row(calibration.get(s) or {}) for s in SOURCES},
+            "plantdoc_per_class": _holdout_per_class(rep["by_source"]["plantdoc"]),
         }
         if "vs_recorded" in rep:
             entry["vs_recorded"] = {
@@ -847,11 +860,12 @@ def summary(evidence: Dict[str, Any]) -> Dict[str, Any]:
             "reason": reason,
             "identity": None,
             "checklist": _guard("checklist", lambda: _checklist(redact=True)),
-            **{name: _withheld(reason) for name in ("reeval", "plantdoc", "domain_gap", "leakage", "shards", "holdout", "statistics", "fullframe", "plantvillage_reference", "community_simulation")},
+            **{name: _withheld(reason) for name in ("reeval", "plantdoc", "domain_gap", "leakage", "shards", "holdout", "statistics", "fullframe", "plantvillage_reference", "community_simulation", "training")},
         }
     return {
         "available": True,
         "identity": _identity(evidence),
+        "training": _guard("cấu hình huấn luyện", lambda: training_report(evidence, _load_json)),
         "reeval": _guard("tái đánh giá", lambda: _reeval(evidence)),
         "plantdoc": _guard("PlantDoc theo lớp", lambda: _plantdoc(evidence)),
         "domain_gap": _guard("khoảng cách miền", lambda: _domain_gap(evidence)),

@@ -1,4 +1,5 @@
 // Chương 4 · Kết quả: tổng hợp 7 mô hình, tập giữ riêng và thống kê, phân tích lỗi, độ tin cậy của xác suất.
+import { centralizedNoteHtml, holdoutPlantdocHtml, modelTraining, overallHtml, telemetryHtml, trainingHistoryHtml } from "../core/report-training.js";
 import { getDetails, getEvidence, getSummary, modelsById } from "../core/store.js";
 import { attachCrosshair } from "../core/crosshair.js";
 import { barRise, lineDraw, makeChartWhenVisible, pillarColors } from "../core/charts.js";
@@ -81,15 +82,61 @@ function buildSummary() {
       </div>
       <p class="field-hint mt-3"><b>Cách đọc:</b> “đúng” là tỉ lệ ảnh mà mô hình đoán đúng bệnh (Top-1). Macro-F1 là điểm trung bình công bằng giữa các nhóm (không bị nhóm nhiều ảnh lấn át), tính trên các nhóm có ảnh kiểm tra${covered ? `; PlantDoc chỉ phủ ${esc(covered)} nhóm` : ""}. Cách chia tập và các thuật ngữ nằm ở <a href="#du-lieu">chương 2</a> và <a href="#phuong-phap">chương 3</a>.</p>
     </section>
+    ${overallHtml(summary?.training)}
 
     <details class="overview-detail mt-4">
       <summary><span><strong>Lịch sử huấn luyện Centralized</strong><small>Đường độ chính xác và sai số theo epoch</small></span></summary>
       <div class="overview-detail-body">
       <h4 class="panel-title">Quá trình huấn luyện Centralized v6</h4>
-      <p class="panel-desc">${fmtInt(evidence.centralized_history.length)} epoch trong dữ liệu công bố. Lịch sử từng vòng của FedAvg chưa đủ trong bộ dữ liệu giao diện để vẽ đường so sánh tương ứng.</p>
+      ${centralizedNoteHtml(summary?.training, byModel.centralized.metrics.plantdoc.top1_accuracy)}
       <div class="chart-container mt-4"><canvas id="chart-central-history" aria-label="Độ chính xác và sai số trên tập kiểm tra của Centralized qua các epoch"></canvas></div>
+      <p class="field-hint mt-2">Lịch sử FedAvg có trong mục riêng bên dưới, trích từ checkpoint của vòng được chọn.</p>
+      <div class="chart-container mt-4"><canvas id="chart-central-f1" aria-label="Macro-F1 của PlantDoc và PlantVillage qua các epoch của Centralized; điểm đánh dấu là epoch được chọn"></canvas></div>
       </div>
-    </details>`;
+    </details>
+    ${trainingHistoryHtml(summary?.training)}`;
+
+  const fedTraining = modelTraining(summary?.training, "fedavg");
+  const roundSelect = byId("fedavg-round");
+  if (summary?.training?.available && roundSelect) {
+    const renderRound = () => {
+      const row = fedTraining.history.find(r => r.round === Number(roundSelect.value));
+      if (row) byId("fedavg-client-telemetry").innerHTML = telemetryHtml(row);
+    };
+    roundSelect.addEventListener("change", renderRound);
+    renderRound();
+    makeChartWhenVisible(byId("chart-fedavg-history"), () => {
+      const colors = pillarColors();
+      return { type: "line", data: { labels: fedTraining.history.map(r => r.round), datasets: [
+        { label: "Top-1 validation (%)", data: fedTraining.history.map(r => r.val_accuracy * 100), borderColor: colors.fedavg, tension: 0.2, pointRadius: 2 },
+        { label: "Macro-F1 PlantDoc (%)", data: fedTraining.history.map(r => r.plantdoc_macro_f1_supported * 100), borderColor: colors.danger, tension: 0.2, pointRadius: 2 },
+      ] }, options: { animation: lineDraw(), scales: { x: { title: { display: true, text: "Vòng FedAvg" } }, y: { min: 0, max: 100, ticks: { callback: v => `${v}%` } } } } };
+    });
+  }
+
+  const central = modelTraining(summary?.training, "centralized");
+  if (summary?.training?.available && central?.history?.length) {
+    makeChartWhenVisible(byId("chart-central-f1"), () => {
+      const colors = pillarColors();
+      const epochs = central.history.map(r => r.epoch);
+      const chosen = central.history.find(r => r.epoch === central.selected_step);
+      return { type: "line", data: { labels: epochs, datasets: [
+        { label: "Macro-F1 PlantVillage (%)", data: central.history.map(r => r.plantvillage_macro_f1_supported * 100), borderColor: colors.centralized, tension: 0.2, pointRadius: 0 },
+        { label: "Macro-F1 PlantDoc (%)", data: central.history.map(r => r.plantdoc_macro_f1_supported * 100), borderColor: colors.danger, tension: 0.2, pointRadius: 0 },
+        { label: `Epoch được chọn (${central.selected_step})`, data: epochs.map(e => (e === chosen.epoch ? chosen.plantdoc_macro_f1_supported * 100 : null)), borderColor: colors.neutral, backgroundColor: colors.neutral, showLine: false, pointRadius: 6, pointStyle: "rectRot" },
+      ] }, options: { animation: lineDraw(), interaction: { mode: "index", intersect: false }, scales: { x: { title: { display: true, text: "Epoch" } }, y: { min: 0, max: 100, ticks: { callback: v => `${v}%` } } } } };
+    });
+  }
+  if (summary?.training?.available && fedTraining?.history?.length) {
+    makeChartWhenVisible(byId("chart-fedavg-drift"), () => {
+      const colors = pillarColors();
+      const palette = [colors.centralized, colors.fedavg, colors.local, colors.violet, colors.danger];
+      const ids = fedTraining.history[0].clients.map(c => c.client_id);
+      return { type: "line", data: { labels: fedTraining.history.map(r => r.round), datasets: ids.map((id, i) => ({
+        label: id, data: fedTraining.history.map(r => r.clients.find(c => c.client_id === id).delta_l2), borderColor: palette[i % palette.length], tension: 0.2, pointRadius: 0,
+      })) }, options: { animation: lineDraw(), interaction: { mode: "index", intersect: false }, scales: { x: { title: { display: true, text: "Vòng FedAvg" } }, y: { min: 0, title: { display: true, text: "‖w_k − w‖₂" } } } } };
+    });
+  }
 
   const showSource = source => {
     const locals = MODEL_ORDER.filter(id => id.startsWith("local_"));
@@ -472,6 +519,7 @@ function buildHoldout() {
       </details>
       ${recordedText ? `<p class="field-hint mt-2">Đối chiếu: số Centralized trên tập giữ riêng do nhóm huấn luyện tự ghi — ${recordedText} (số gốc làm tròn 4 chữ số).</p>` : ""}
     </section>
+    ${holdoutPlantdocHtml(ho)}
 
     <details class="overview-detail mt-4">
       <summary><span><strong>Cách chọn mô hình và phương pháp thống kê</strong><small>Phạm vi tập giữ riêng, bootstrap theo cụm</small></span></summary>
@@ -481,7 +529,7 @@ function buildHoldout() {
       <b>Vì sao cần tập giữ riêng:</b>
       <ul>
         <li>Phiên bản mô hình được chọn theo điểm Macro-F1 PlantDoc ngay trên <b>chính tập kiểm tra dùng để báo cáo</b>, nên con số ở đó có thể hơi đẹp hơn thực tế (số liệu về epoch được chọn ở <a href="#ket-luan">chương 5</a>).</li>
-        <li>Vì vậy đồ án chấm lại thêm trên ${fmtInt(ho?.count)} ảnh <b>giữ riêng</b>, không dùng để chọn mô hình nên không bị thiên lệch này. ${valVsTest} Với FedAvg: web chưa có đủ lịch sử từng vòng để đo hiệu ứng chọn mô hình.</li>
+        <li>Vì vậy đồ án chấm lại thêm trên ${fmtInt(ho?.count)} ảnh <b>giữ riêng</b>, không dùng để chọn mô hình nên không bị thiên lệch này. ${valVsTest} Với FedAvg: web có lịch sử 27 vòng đến vòng được chọn nhưng không có vòng 28–32 nên chưa đo được hiệu ứng chọn mô hình.</li>
         <li><b>Lưu ý:</b> tập giữ riêng chưa nằm trong phép kiểm tra trùng ảnh; một phần ảnh PlantVillage trong tập này có thể là ảnh chụp lại cùng lá với ảnh học (xem mục “Độ nhạy” bên dưới).</li>
       </ul>
     </section>` : ""}

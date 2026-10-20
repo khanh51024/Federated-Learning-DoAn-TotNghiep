@@ -103,7 +103,7 @@ def test_http_route_returns_the_summary(evidence):
     assert body["available"] is True
     assert body["identity"]["protocol_id"] == evidence["protocol_id"]
     assert len(body["identity"]["models"]) == 7
-    assert len(response.content) < 120_000  # payload nhỏ để mở trang nhanh trên server 2 GiB RAM
+    assert len(response.content) < 145_000  # payload nhỏ để mở trang nhanh trên server 2 GiB RAM
 
 
 def test_checklist_is_redacted_when_the_bundle_is_withheld():

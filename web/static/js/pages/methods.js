@@ -1,6 +1,7 @@
 // Chương 3 · Phương pháp: ba cách huấn luyện, thuật toán FedAvg, thiết lập thí nghiệm, cách đánh giá, hệ thống demo.
 // Chỉ dùng số có trong /api/demo/evidence; siêu tham số không có trong bộ số liệu đã công bố thì không ghi.
-import { getEvidence } from "../core/store.js";
+import { configsHtml, glossaryHtml } from "../core/report-training.js";
+import { getEvidence, getSummary } from "../core/store.js";
 import { byId, esc, fmtInt, revealItems, sectionHead } from "../core/dom.js";
 
 function pillarsHtml() {
@@ -18,7 +19,7 @@ function pillarsHtml() {
       </article>
       <article class="pillar pillar-local">
         <header><span class="pillar-tag">Huấn luyện riêng · không chia sẻ trọng số</span><h4>Local-only</h4></header>
-        <p class="pillar-desc">Mỗi client huấn luyện một mô hình riêng trên ảnh của mình, không trao đổi gì. Có năm mô hình; cho thấy một nơi tự học thì thiếu những nhóm bệnh nào.</p>
+        <p class="pillar-desc">Mỗi client huấn luyện một mô hình riêng trên ảnh của mình, không trao đổi trọng số. Có năm mô hình; cho thấy một nơi tự học thì thiếu những nhóm bệnh nào.</p>
         <p class="pillar-foot">Năm mô hình Local 00–04</p>
       </article>
     </div>`;
@@ -61,7 +62,7 @@ function setupHtml(evidence) {
       <div><dt>Ảnh để kiểm tra</dt><dd>${fmtInt(val.plantvillage)} + ${fmtInt(val.plantdoc)} ảnh</dd></div>
       <div><dt>Số lần chạy</dt><dd>1 lần (seed ${esc(evidence.seed)})</dd></div>
     </dl>
-    <p class="field-hint mt-2">Ba cách huấn luyện dùng cùng một bộ ảnh và cùng kiến trúc mạng; các thiết lập huấn luyện khác (bộ tối ưu, số bước) chưa được cố định chung, nên so sánh Centralized với FedAvg chỉ mang tính tham khảo (xem hạn chế ở <a href="#ket-luan">chương 5</a>).</p>`;
+    <p class="field-hint mt-2">Ba cách huấn luyện dùng cùng một bộ ảnh và cùng kiến trúc mạng; các thiết lập huấn luyện khác (bộ tối ưu, số bước) khác nhau như bảng dưới, nên so sánh Centralized với FedAvg chỉ mang tính tham khảo (xem hạn chế ở <a href="#ket-luan">chương 5</a>).</p>`;
 }
 
 function metricsHtml() {
@@ -70,11 +71,12 @@ function metricsHtml() {
       <div><dt>Top-1</dt><dd>Tỉ lệ ảnh mà lựa chọn đầu tiên của mô hình đúng nhóm bệnh. Là số chính ở chương 4.</dd></div>
       <div><dt>Macro-F1</dt><dd>Điểm trung bình giữa các nhóm, mỗi nhóm có trọng số như nhau, nên nhóm nhiều ảnh không lấn át nhóm ít ảnh.</dd></div>
       <div><dt>Đúng loại cây</dt><dd>Mô hình đoán đúng loại cây, kể cả khi đoán sai bệnh.</dd></div>
-      <div><dt>Khoảng tin cậy 95%</dt><dd>Khoảng mà con số thật có khả năng nằm trong. Tính bằng bootstrap theo cụm: ảnh cùng một cảnh chụp hoặc cùng một lá không được coi là độc lập.</dd></div>
-      <div><dt>So sánh theo cặp (McNemar)</dt><dd>Kiểm tra hai mô hình khác nhau thật hay chỉ do ngẫu nhiên, trên đúng cùng một tập ảnh.</dd></div>
+      <div><dt>Khoảng tin cậy 95%</dt><dd>Khoảng ước lượng phản ánh độ bất định của phép đo. Tính bằng bootstrap theo cụm: ảnh cùng một cảnh chụp hoặc cùng một lá không được coi là độc lập.</dd></div>
+      <div><dt>So sánh theo cặp (McNemar)</dt><dd>So sánh cặp dự đoán trên cùng ảnh qua các trường hợp một mô hình đúng, mô hình kia sai. Kiểm định theo ảnh giả định các cặp độc lập; ảnh cùng cảnh có thể tương quan, nên đọc kèm khoảng tin cậy bootstrap theo cảnh.</dd></div>
       <div><dt>Độ tin cậy của xác suất (ECE)</dt><dd>Mô hình báo chắc 90% thì có đúng khoảng 90% số lần không. ECE càng thấp càng tốt; temperature scaling chỉnh xác suất mà không đổi dự đoán.</dd></div>
     </dl>
-    <p class="field-hint mt-2">Tập học, tập kiểm tra và tập giữ riêng được định nghĩa ở <a href="#du-lieu">chương 2</a>. Kết quả theo từng chỉ số ở <a href="#ket-qua">chương 4</a>.</p>`;
+    <p class="field-hint mt-2">Tập học, tập kiểm tra và tập giữ riêng được định nghĩa ở <a href="#du-lieu">chương 2</a>. Kết quả theo từng chỉ số ở <a href="#ket-qua">chương 4</a>.</p>
+    ${glossaryHtml()}`;
 }
 
 function systemHtml() {
@@ -88,7 +90,7 @@ function systemHtml() {
 
 export async function mount() {
   const root = byId("methods-root");
-  const evidence = await getEvidence().catch(error => ({ available: false, reason: error.message }));
+  const [evidence, summary] = await Promise.all([getEvidence().catch(error => ({ available: false, reason: error.message })), getSummary().catch(() => null)]);
   const section = (no, title, body) => `
     <section class="panel report-section mt-4" aria-labelledby="m-${no}">
       ${sectionHead(`3.${no}`, title, { id: `m-${no}` })}
@@ -100,7 +102,7 @@ export async function mount() {
     ${section(2, "Thuật toán FedAvg", fedavgHtml(evidence.shard_counts))}
     ${unavailable
       ? `<div class="callout callout-warn mt-4" role="note"><b>Chưa có số liệu thiết lập thí nghiệm.</b> ${esc(evidence.reason || "")}</div>`
-      : section(3, "Mô hình và thiết lập thí nghiệm", setupHtml(evidence))}
+      : section(3, "Mô hình và thiết lập thí nghiệm", setupHtml(evidence) + configsHtml(summary?.training))}
     ${section(4, "Cách đánh giá", metricsHtml())}
     ${section(5, "Hệ thống demo", systemHtml())}`;
   revealItems(root.querySelectorAll(".pillar"), { stagger: 60 });

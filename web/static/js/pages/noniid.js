@@ -1,4 +1,5 @@
 // Chương 2 · Dữ liệu: bộ ảnh, cách chia tập, rồi phân bố non-IID (heatmap 38 nhóm × 5 client) và vì sao Local-only không nhận ra bệnh chưa từng thấy.
+import { releaseHtml } from "../core/report-training.js";
 import { getEvidence, getPartitions, getSummary, modelsById } from "../core/store.js";
 import { attachCrosshair } from "../core/crosshair.js";
 import {
@@ -201,11 +202,11 @@ function datasetHtml(evidence, summary) {
       <div class="source-grid mt-3">
         <article class="source-card">
           <h4>PlantVillage</h4>
-          <p>Ảnh một chiếc lá chụp trong phòng, nền đơn giản. Là phần lớn dữ liệu học và kiểm tra.</p>
+          <p>Ảnh một chiếc lá chụp trong phòng, nền đơn giản (bản màu, 54.305 ảnh gốc, 38 nhóm). Là phần lớn dữ liệu học và kiểm tra.</p>
         </article>
         <article class="source-card">
           <h4>PlantDoc</h4>
-          <p>Ảnh lá ngoài đồng, nền phức tạp, ít ảnh hơn và chỉ phủ một phần các nhóm. Dùng để xem mô hình có giữ được độ chính xác khi ảnh khác kiểu.</p>
+          <p>Ảnh lá ngoài đồng, nền phức tạp, ít ảnh hơn và chỉ phủ một phần các nhóm. Bản phát hiện đối tượng có hộp bao lá; mỗi hộp được cắt thành một ảnh lá (nới 8% mỗi phía), nên một ảnh gốc có thể cho nhiều ảnh. Dùng để xem mô hình có giữ được độ chính xác khi ảnh khác kiểu.</p>
         </article>
       </div>
       <h4 class="subhead mt-4">Ba tập ảnh và mục đích của từng tập</h4>
@@ -214,6 +215,7 @@ function datasetHtml(evidence, summary) {
         <div><dt>Tập kiểm tra</dt><dd><b>${fmtInt(val.plantvillage)}</b> ảnh PlantVillage + <b>${fmtInt(val.plantdoc)}</b> ảnh PlantDoc. Dùng trong lúc huấn luyện để chọn phiên bản mô hình tốt nhất, nên số đo trên tập này có thể hơi đẹp hơn thực tế.</dd></div>
         <div><dt>Tập giữ riêng</dt><dd>${ho ? `<b>${fmtInt(ho.count)} ảnh</b> (${fmtInt(ho.counts_by_source?.plantvillage)} PlantVillage, ${fmtInt(ho.counts_by_source?.plantdoc)} PlantDoc). ` : ""}Là bộ chẩn đoán có sẵn của bộ dữ liệu (legacy), không dùng để chọn mô hình, nhưng chưa nằm trong kiểm tra trùng ảnh. Dùng làm phép kiểm tra bổ sung ở chương 4.</dd></div>
       </dl>
+      ${releaseHtml(summary?.training)}
     </section>`;
 }
 

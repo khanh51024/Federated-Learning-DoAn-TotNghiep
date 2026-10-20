@@ -11,6 +11,10 @@ function baseLimits(seed) {
     ["Chỉ nhận ảnh một chiếc lá đã cắt", "Mô hình không tự tìm lá trong ảnh toàn cây; ảnh khác kiểu sẽ cho kết quả kém dù xác suất dự đoán hiển thị vẫn cao."],
     ["Xác suất dự đoán chỉ được hiệu chuẩn một phần", "Web hiện cả xác suất gốc và xác suất đã hiệu chuẩn. Việc hiệu chuẩn học trên ảnh chủ yếu là PlantVillage nên với ảnh ngoài đồng mô hình vẫn gán xác suất cao hơn độ chính xác thực (xem chương 4, mục 4.4)."],
     ["Chưa thử nghiệm client lỗi hay bị tấn công", "Máy chủ có cơ chế kiểm tra bản cập nhật (chạy thử ở Phụ lục kỹ thuật), nhưng chưa có thí nghiệm đo độ chính xác nên chưa kết luận được."],
+    ["FedAvg v7 chưa chạy lại qua Flower", "Kết quả v7 dùng runner in_process_simulation; checkpoint lưu lịch sử 27 vòng, còn mốc hoàn tất vòng 32 được ghi trong RESULTS.md. Vòng 28–32 chưa có log để phân tích. Phiên Flower trên web dùng ảnh nhiễu, chỉ kiểm tra hệ thống; Local-only chưa có lịch sử từng vòng và thời gian chạy."],
+    ["Chênh lệch miền dữ liệu là vấn đề của dữ liệu", "Mô hình Centralized đạt rất cao trên PlantVillage nhưng thấp hơn nhiều trên PlantDoc, nên khoảng cách này không riêng của học liên kết. Mohanty và cộng sự (2016) cũng ghi nhận độ chính xác giảm mạnh khi ảnh được chụp trong điều kiện khác; Noyan (2022) chỉ ra PlantVillage có thiên lệch khi chụp."],
+    ["BatchNorm trong học liên kết", "MobileNetV3 có lớp BatchNorm; khi đặc trưng giữa các client khác nhau, việc lấy trung bình cả thống kê BatchNorm có thể gây hại (FedBN, Li và cộng sự 2021). Đồ án chưa thử nghiệm FedBN nên đây là giả thuyết cần kiểm chứng."],
+    ["Nhãn PlantDoc chưa được chuyên gia rà soát, chưa đo độ công bằng giữa client", "Nhãn PlantDoc được ánh xạ về 38 nhóm của PlantVillage mà chưa có chuyên gia rà lại. Chưa có số liệu độ chính xác của FedAvg trên dữ liệu từng client, nên chưa đánh giá được tính công bằng giữa các client."],
     ["Năm client là giả lập", "Năm client là năm phần của cùng một bộ dữ liệu, không phải năm nông hộ thật; không có độ trễ mạng hay thiết bị khác nhau."],
     ["Học phân tán cộng đồng có giới hạn đã đo", "Người tham gia chỉ học lớp cuối trên đặc trưng của backbone đóng băng, với ảnh và nhãn tự gán (chưa có chuyên gia kiểm). Thí nghiệm mô phỏng ở mục 4.5 cho thấy mức tăng khiêm tốn (khoảng 1 đến 2 điểm phần trăm khi dữ liệu người tham gia đủ đa dạng), gần như không tăng với ảnh ngoài đồng, và vòng có ít người mà mỗi người chỉ có một nhóm bệnh thì dễ bị cổng chất lượng từ chối. Người thật chưa được thử ở quy mô lớn."],
     ["Riêng tư chưa tuyệt đối", "Học phân tán chỉ giữ ảnh gốc không rời client; trọng số vẫn có thể làm lộ thông tin. Muốn bảo đảm mạnh hơn cần thêm kỹ thuật như differential privacy hoặc secure aggregation."],
@@ -93,7 +97,7 @@ function answersHtml(evidence) {
         <span class="conclusion-label">So với học riêng (Local-only)</span>
         <b>${signed(vsLocal)}</b>
         <span class="conclusion-sub">FedAvg so với Local-only tốt nhất · điểm phần trăm · PlantVillage</span>
-        <p>So với mô hình học riêng tốt nhất trên PlantVillage. Mỗi client chỉ thấy một phần nhóm bệnh nên mô hình riêng không nhận ra nhóm chưa từng thấy (<a href="#du-lieu">chương 2</a>).</p>
+        <p>So với mô hình học riêng tốt nhất trên PlantVillage. Mỗi client chỉ thấy một phần nhóm bệnh nên mô hình riêng có thể nhận diện kém các nhóm chưa được học (<a href="#du-lieu">chương 2</a>).</p>
       </article>
       <article class="conclusion warn">
         <span class="conclusion-label">Từ ảnh trong phòng sang ngoài đồng</span>
@@ -106,6 +110,8 @@ function answersHtml(evidence) {
 
 const FUTURE = [
   ["Chạy lặp lại nhiều lần", "Chạy nhiều seed và nhiều mức lệch dữ liệu (không chỉ α = 0,1) để biết kết quả có ổn định không. Cần GPU."],
+  ["Đối chiếu v7 trên Flower", "Dùng cùng release, W0, phân hoạch và cấu hình v7; lưu đủ log, đối chiếu checkpoint vòng 27 với runner hiện tại, rồi đo mạng thật riêng."],
+  ["Thuật toán chịu non-IID", "Thử FedProx, SCAFFOLD và FedBN trên cùng phân hoạch; đây là kế hoạch, chưa có kết quả để khẳng định cải thiện."],
   ["Huấn luyện cùng điều kiện", "Cho Centralized, FedAvg và Local-only cùng bộ tối ưu và số bước, rồi so sánh lại."],
   ["Kiểm thử ngoài đồng", "Thu thêm ảnh ngoài đồng phủ đủ các nhóm bệnh, giữ riêng một tập chưa từng dùng để chọn mô hình."],
   ["Tự tìm và cắt lá", "Thêm bước phát hiện lá trên ảnh toàn cây để người dùng không phải tự cắt ảnh."],
@@ -143,6 +149,30 @@ export async function mount() {
       ${sectionHead("5.3", "Hướng phát triển", { id: "c-future", lead: "Việc nên làm tiếp" })}
       <ul class="future-list mt-3">${FUTURE.map(([title, text]) => `<li><b>${esc(title)}.</b> ${esc(text)}</li>`).join("")}</ul>
       <p class="field-hint mt-3">Tình trạng các hạng mục kiểm thử và việc còn dở của dự án nằm ở <a href="#phu-luc">Phụ lục kỹ thuật</a>.</p>
+    </section>
+    <section class="panel report-section mt-4" aria-labelledby="c-progress">
+      ${sectionHead("5.4", "Tiến độ và nguồn tham khảo", { id: "c-progress" })}
+      <div tabindex="0" role="region" aria-label="Tiến độ theo giai đoạn" class="table-responsive mt-3"><table class="data-table wrap-head"><thead><tr><th scope="col">Giai đoạn</th><th scope="col">Đã có</th><th scope="col">Còn thiếu</th></tr></thead><tbody>
+        <tr><th scope="row">Mốc so sánh</th><td>Centralized v6, FedAvg v7 và 5 Local-only v7; cùng validation; đánh giá bổ sung legacy test</td><td>Đối chứng cùng bộ tối ưu và ngân sách</td></tr>
+        <tr><th scope="row">Non-IID</th><td>12 phân hoạch; kết quả huấn luyện α = 0,1, seed 42</td><td>Huấn luyện nhiều α và nhiều seed</td></tr>
+        <tr><th scope="row">Flower</th><td>Mã legacy và phiên localhost dùng ảnh nhiễu trên web</td><td>Chạy lại v7 trên Flower và đối chiếu runner</td></tr>
+        <tr><th scope="row">Thuật toán và client</th><td>MobileNetV3-Small; học lớp cuối trong demo cộng đồng</td><td>FedProx / SCAFFOLD / FedBN, lượng tử hóa, thử nhiều máy và client thật</td></tr>
+        <tr><th scope="row">Đánh giá triển khai</th><td>Phân tích lỗi, hiệu chuẩn, phép đo ảnh toàn cảnh trên dữ liệu hiện có</td><td>Tập thực địa mới, nhãn được chuyên gia duyệt, test cuối cùng được niêm phong</td></tr>
+      </tbody></table></div>
+      <p class="field-hint mt-2">Báo cáo tiến độ, không tuyên bố đã hoàn thành mọi giai đoạn. Số liệu huấn luyện truy từ checkpoint và manifest đã đối chiếu; kết quả thống kê lấy từ báo cáo đánh giá của dự án.</p>
+      <h4 class="subhead mt-4">Nguồn nền tảng</h4>
+      <ol class="limit-list mt-3">
+        <li>Hughes và Salathé (2015), <a href="https://arxiv.org/abs/1511.08060" target="_blank" rel="noopener noreferrer">An open access repository of images on plant health</a> — nguồn PlantVillage.</li>
+        <li>Mohanty, Hughes và Salathé (2016), <a href="https://doi.org/10.3389/fpls.2016.01419" target="_blank" rel="noopener noreferrer">Using Deep Learning for Image-Based Plant Disease Detection</a> — độ chính xác giảm khi ảnh khác điều kiện chụp.</li>
+        <li>Noyan (2022), <a href="https://arxiv.org/abs/2206.04374" target="_blank" rel="noopener noreferrer">Uncovering Bias in the PlantVillage Dataset</a> — thiên lệch nền của PlantVillage.</li>
+        <li>Zhao và cộng sự (2018), <a href="https://arxiv.org/abs/1806.00582" target="_blank" rel="noopener noreferrer">Federated Learning with Non-IID Data</a> — độ phân kỳ trọng số khi dữ liệu non-IID.</li>
+        <li>Li và cộng sự, <a href="https://arxiv.org/abs/1812.06127" target="_blank" rel="noopener noreferrer">FedProx</a> (2020), <a href="https://arxiv.org/abs/1910.06378" target="_blank" rel="noopener noreferrer">SCAFFOLD</a> (Karimireddy và cộng sự, 2020), <a href="https://arxiv.org/abs/2102.07623" target="_blank" rel="noopener noreferrer">FedBN</a> (2021) — các thuật toán chịu non-IID dự kiến thử ở giai đoạn sau.</li>
+        <li>Singh và cộng sự, <a href="https://arxiv.org/abs/1911.10317" target="_blank" rel="noopener noreferrer">PlantDoc: A Dataset for Visual Plant Disease Detection</a> — nguồn ảnh thực địa; các bản classification và object detection có quy mô khác nhau.</li>
+        <li>McMahan và cộng sự (2017), <a href="https://proceedings.mlr.press/v54/mcmahan17a.html" target="_blank" rel="noopener noreferrer">Communication-Efficient Learning of Deep Networks from Decentralized Data</a> — FedAvg.</li>
+        <li>Hsu, Qi và Brown (2019), <a href="https://arxiv.org/abs/1909.06335" target="_blank" rel="noopener noreferrer">Measuring the Effects of Non-Identical Data Distribution for Federated Visual Classification</a> — khảo sát non-IID; không chuyển số liệu CIFAR-10 thành kết quả của đồ án.</li>
+        <li>Howard và cộng sự (2019), <a href="https://arxiv.org/abs/1905.02244" target="_blank" rel="noopener noreferrer">Searching for MobileNetV3</a> — kiến trúc mạng.</li>
+        <li>Beutel và cộng sự (2020), <a href="https://arxiv.org/abs/2007.14390" target="_blank" rel="noopener noreferrer">Flower: A Friendly Federated Learning Research Framework</a> — nền tảng hệ thống.</li>
+      </ol>
     </section>`;
   revealItems(root.querySelectorAll(".conclusion"), { stagger: 60 });
 }
