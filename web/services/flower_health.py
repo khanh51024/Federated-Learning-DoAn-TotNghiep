@@ -116,6 +116,12 @@ def latest_completed_run(root: Optional[Path] = None) -> Optional[Path]:
     return None
 
 
+def newest_run_dir(root: Optional[Path] = None) -> Optional[Path]:
+    """Thư mục run mới nhất kể cả thất bại: tên mã hoá UTC nên tên lớn nhất là phiên gần nhất."""
+    dirs = _run_dirs(root or runs_root())
+    return dirs[0] if dirs else None
+
+
 # ---------------------------------------------------------------------------
 # 3. bằng chứng của một phiên hoàn tất
 # ---------------------------------------------------------------------------

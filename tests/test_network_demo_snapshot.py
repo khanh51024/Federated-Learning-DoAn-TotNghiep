@@ -42,12 +42,14 @@ def test_brief_rounds_keeps_only_what_the_page_needs():
 def test_snapshot_exposes_rounds_and_processes_after_the_session_closed(tmp_path):
     manager = _manager_with_progress(tmp_path)
     manager._final_exit_codes = {"server": 0, "client_00": 0}
+    manager._spawned = {"server": {"pid": 4242, "argv": ["python"]}, "client_00": {"pid": 4243, "argv": ["python"]}}
     snapshot = manager.snapshot()
     assert snapshot["rounds_brief"][0]["parent_model_hash"] == "a" * 64
     assert snapshot["active"] is False
+    # PID phải còn sau khi phiên đóng: bảng bằng chứng thô trên trang Flower dùng nó để chứng minh có 6 tiến trình thật
     assert snapshot["processes"] == [
-        {"name": "client_00", "running": False, "exit_code": 0},
-        {"name": "server", "running": False, "exit_code": 0},
+        {"name": "client_00", "pid": 4243, "running": False, "exit_code": 0},
+        {"name": "server", "pid": 4242, "running": False, "exit_code": 0},
     ]
 
 

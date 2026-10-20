@@ -1772,6 +1772,31 @@ body[data-group="demo"] .page-title { letter-spacing: -0.01em; }
 #flower-root .data-table th, #flower-root .data-table td { vertical-align: middle; }
 .flower-detail { display: block; margin-top: 2px; color: var(--text-secondary); font-size: var(--fs-sm); overflow-wrap: anywhere; }
 
+/* Bằng chứng thô của từng mục kiểm tra: lệnh máy chủ đã chạy + output nguyên bản (theo quy tắc mở/gấp .fold) */
+.flower-check > div { flex: 1 1 auto; min-width: 0; }
+.flower-ev { margin-top: var(--space-3); background: var(--bg-surface); }
+.flower-ev > summary { font-size: var(--fs-xs); color: var(--text-secondary); }
+.flower-ev[open] > summary { color: var(--accent-emerald-strong); }
+.flower-ev-body { display: grid; gap: var(--space-4); min-width: 0; }
+.ev-assert { margin: 0; color: var(--text-secondary); font-size: var(--fs-sm); }
+.ev-block { display: grid; gap: var(--space-2); min-width: 0; }
+.ev-title { margin: 0; font-size: var(--fs-sm); font-weight: 700; color: var(--text-primary); }
+.ev-labeled { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); flex-wrap: wrap; }
+.ev-tag { color: var(--text-muted); font-size: var(--fs-xs); font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
+.ev-pre { margin: 0; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+  background: var(--bg-sunken); font-family: var(--font-mono); font-size: var(--fs-xs); line-height: 1.55;
+  white-space: pre-wrap; overflow-wrap: anywhere; }
+.ev-cmd { color: var(--accent-purple); }
+.ev-out { max-height: 22rem; overflow: auto; color: var(--text-primary); }
+.ev-meta { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; margin: 0; color: var(--text-muted); font-size: var(--fs-xs); }
+.ev-exit { padding: 1px 8px; border-radius: 999px; font-weight: 700; }
+.ev-exit.is-ok { background: color-mix(in srgb, var(--accent-emerald) 18%, transparent); color: var(--accent-emerald-strong); }
+.ev-exit.is-bad { background: color-mix(in srgb, var(--accent-rose) 18%, transparent); color: var(--accent-rose); }
+.ev-note { margin: 0; padding-left: var(--space-3); border-left: 2px solid var(--border-color); color: var(--text-secondary); font-size: var(--fs-sm); }
+.ev-table th, .ev-table td { font-size: var(--fs-xs); }
+.ev-hash { max-width: 20ch; overflow-wrap: anywhere; }
+@media (max-width: 1100px) { .ev-out { max-height: 16rem; } .ev-hash { max-width: 12ch; } }
+
 /* Trọng số và độ trễ của học phân tán (trang Học phân tán và trang quản trị dùng chung) */
 .comm-weights { min-width: 0; }
 .cw-block + .cw-block { margin-top: var(--space-5); }

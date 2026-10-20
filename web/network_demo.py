@@ -55,6 +55,7 @@ class NetworkDemoManager:
         self._lock = threading.Lock()
         self._stop = threading.Event()
         self._processes: dict[str, subprocess.Popen[bytes]] = {}
+        self._spawned: dict[str, dict[str, Any]] = {}
         self._logs: list[Any] = []
         self._running = False
         self._final_exit_codes: dict[str, int | None] = {}
@@ -70,6 +71,7 @@ class NetworkDemoManager:
                 return
             self.run_dir = None
             self._final_exit_codes = {}
+            self._spawned = {}
 
     def prepare(self) -> None:
         """Reset cancellation before the API schedules the background task."""
@@ -81,6 +83,7 @@ class NetworkDemoManager:
     def snapshot(self) -> dict[str, Any]:
         with self._lock:
             processes = {name: process.poll() for name, process in self._processes.items()}
+            pids = {name: spec.get("pid") for name, spec in self._spawned.items()}
             run_dir = self.run_dir
             active = self._running
             final_codes = dict(self._final_exit_codes)
@@ -97,7 +100,7 @@ class NetworkDemoManager:
             "run_dir": str(run_dir) if run_dir else None,
             "active": active,
             "processes": [
-                {"name": name, "running": exit_code is None, "exit_code": exit_code}
+                {"name": name, "pid": pids.get(name), "running": exit_code is None, "exit_code": exit_code}
                 for name, exit_code in sorted(rows.items())
             ],
             "rounds_brief": _brief_rounds(progress.get("rounds") if progress else None),
@@ -151,8 +154,9 @@ class NetworkDemoManager:
         self._logs.append(stream)
         env = os.environ.copy()
         env.update({"PYTHONUNBUFFERED": "1", "OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1"})
+        argv = [sys.executable, "-u", *args]
         process = subprocess.Popen(
-            [sys.executable, "-u", *args],
+            argv,
             cwd=ROOT,
             env=env,
             stdout=stream,
@@ -161,7 +165,15 @@ class NetworkDemoManager:
         )
         with self._lock:
             self._processes[name] = process
+            self._spawned[name] = {"argv": argv, "pid": process.pid, "log": f"{name}.log",
+                                   "started_at_utc": datetime.now(timezone.utc).isoformat()}
         return process
+
+    def _write_session(self, run_dir: Path, metadata: dict[str, Any]) -> None:
+        """Ghi session.json kèm đúng argv + PID đã spawn, để trang Flower hiển thị lệnh thật chứ không phải lệnh minh hoạ."""
+        with self._lock:
+            metadata["commands"] = {name: dict(spec) for name, spec in self._spawned.items()}
+        (run_dir / "session.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
 
     def run(
         self,
@@ -180,6 +192,7 @@ class NetworkDemoManager:
                 raise RuntimeError("A Flower demo is already running")
             self._running = True
             self._processes.clear()
+            self._spawned.clear()
             self._final_exit_codes = {}
         run_dir = reg.abs_path(reg.NETWORK_SMOKE_RUNS_DIR) / (
             datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "_" + uuid.uuid4().hex[:8]
@@ -202,7 +215,7 @@ class NetworkDemoManager:
             "partition_dir": str(PARTITION),
             "started_at_utc": datetime.now(timezone.utc).isoformat(),
         }
-        (run_dir / "session.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+        self._write_session(run_dir, metadata)
 
         def report() -> None:
             if status_callback is not None:
@@ -232,6 +245,7 @@ class NetworkDemoManager:
             if max_update_norm is not None:
                 server_args.extend(["--max-update-norm", str(max_update_norm)])
             server = self._spawn("server", server_args, run_dir)
+            self._write_session(run_dir, metadata)  # lệnh của server phải nằm trên đĩa kể cả khi vòng chờ mở cổng sau đó timeout
             deadline = time.monotonic() + min(timeout_seconds, 60)
             while time.monotonic() < deadline:
                 if self._stop.is_set():
@@ -255,6 +269,7 @@ class NetworkDemoManager:
                     "--server", f"127.0.0.1:{port}", "--partition-dir", str(PARTITION),
                     "--smoke", "--local-epochs", str(local_epochs), "--seed", str(seed),
                 ], run_dir)
+                self._write_session(run_dir, metadata)
                 report()
 
             deadline = time.monotonic() + timeout_seconds
@@ -281,13 +296,13 @@ class NetworkDemoManager:
                 raise RuntimeError("Flower run did not audit 5 clients in every round")
             metadata["finished_at_utc"] = datetime.now(timezone.utc).isoformat()
             metadata["status"] = "completed"
-            (run_dir / "session.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+            self._write_session(run_dir, metadata)
             return {"run_dir": str(run_dir), "rounds": rounds, "accepted_clients": 5}
         except BaseException as exc:
             metadata["finished_at_utc"] = datetime.now(timezone.utc).isoformat()
             metadata["status"] = "cancelled" if isinstance(exc, InterruptedError) else "failed"
             metadata["error"] = str(exc)
-            (run_dir / "session.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+            self._write_session(run_dir, metadata)
             raise
         finally:
             self._close()
