@@ -743,6 +743,24 @@ body[data-route="gioi-thieu"] .top-header .eyebrow { margin-bottom: 0; }
 .summary-pill.fedavg { background: var(--tint-emerald); color: var(--accent-emerald-strong); border-color: var(--line-emerald); }
 .summary-pill.local { background: var(--tint-amber); color: var(--accent-amber); border-color: var(--line-amber); }
 
+/* gom bảy mô hình theo ba cách huấn luyện: hàng tiêu đề nhóm (có chữ, màu chỉ là phụ) và năm hàng Local thu gọn được */
+.group-row th { text-align: left; font-weight: 600; padding: var(--space-2) var(--space-3); border-top: 2px solid var(--border-color); }
+.group-head { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); }
+.group-title { font-weight: 700; }
+.group-sub { font-size: var(--fs-xs); color: var(--text-muted); font-weight: 400; }
+.group-summary-text { margin-left: var(--space-3); font-size: var(--fs-sm); font-weight: 600; }
+.group-row .btn { margin-left: var(--space-2); vertical-align: middle; }
+.group-centralized th { background: var(--tint-sky); border-top-color: var(--line-sky); }
+.group-fedavg th { background: var(--tint-emerald); border-top-color: var(--line-emerald); }
+.group-local th { background: var(--tint-amber); border-top-color: var(--line-amber); }
+.diag-table tr.is-collapsed { display: none; }
+.diag-tabs { margin-bottom: 0; }
+.diag-tabpanel:not(.hidden) { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+.diag-tab-image { display: flex; align-items: center; gap: var(--space-3); }
+.diag-tab-thumb { width: 96px; height: 96px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-sunken); }
+.diag-tab-thumb[hidden] { display: none; }
+/* In và nút "In kết quả"/"Đang chạy" chỉ thuộc tab Đồ án */
+.diag-output:not([data-active-tab="do-an"]) .diag-header-actions { display: none; }
 .diag-table th[scope="row"] { text-align: left; white-space: nowrap; }
 .cell-pred { min-width: 210px; }
 .diag-table td,
@@ -1006,7 +1024,9 @@ body[data-route="gioi-thieu"] .top-header .eyebrow { margin-bottom: 0; }
 
   /* bước 4: in một lần chẩn đoán (ảnh + bảng 7 mô hình + Grad-CAM), bỏ phần điều khiển */
   .diag-input,
-#pv-reference,
+.diag-tabs,
+#dpanel-pv,
+#dpanel-community,
 .diag-control-grid,
 .diag-header-actions,
 #diag-empty { display: none !important; }

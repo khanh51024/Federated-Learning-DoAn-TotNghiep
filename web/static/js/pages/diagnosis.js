@@ -26,6 +26,7 @@ const state = {
   item: null, // mục catalog nếu chọn ảnh mẫu
   previewUrl: null,
   mode: "all",
+  showLocals: false, // bảng gom nhóm: mở/thu năm hàng Local-only (mặc định thu về một dòng tóm tắt)
   quickModel: "fedavg",
   filter: "all",
   galleryAll: false, // đang xem toàn bộ thư viện ảnh mẫu (mặc định chỉ 8 ảnh đầu)
@@ -149,6 +150,7 @@ function setPreview(file, metaHtml) {
   byId("plantvillage-result").textContent = "";
   setDisabled(byId("btn-community"), false);
   byId("community-result").textContent = "";
+  syncTabImages();
 }
 
 function resetResults() {
@@ -303,19 +305,64 @@ function detailHtml(modelId) {
     </div></td>`;
 }
 
+// Ba cách huấn luyện của đồ án, theo thứ tự đọc: mức tham chiếu, phương pháp đề xuất, các nơi tự học riêng.
+const GROUPS = [
+  { pillar: "centralized", title: "Centralized", sub: "Gom ảnh về một chỗ · mức tham chiếu" },
+  { pillar: "fedavg", title: "FedAvg · học phân tán", sub: "Phương pháp đề xuất · ảnh ở lại client" },
+  { pillar: "local", title: "Local-only", sub: "Mỗi nơi tự học riêng, không chia sẻ trọng số" },
+];
+
+/** Dòng tóm tắt của nhóm Local-only khi đang thu gọn: số nơi nhận đúng, hoặc nhóm được dự đoán nhiều nhất khi chưa biết nhãn thật. */
+function localSummaryText(localIds) {
+  const results = localIds.map(id => state.rows.get(id)).filter(r => r && !r.error);
+  if (!results.length) return state.busy ? "đang chạy…" : "chưa có kết quả";
+  const trueClass = targetClass();
+  if (trueClass) {
+    const ok = results.filter(r => verdict(r, trueClass) === "correct").length;
+    return `${ok}/${results.length} nơi nhận đúng`;
+  }
+  const tally = new Map();
+  for (const r of results) tally.set(r.predicted_class, (tally.get(r.predicted_class) || 0) + 1);
+  const [name, n] = [...tally.entries()].sort((a, b) => b[1] - a[1])[0];
+  return `${n}/${results.length} nơi cùng dự đoán ${formatDiseaseName(name)}`;
+}
+
+function groupRowHtml(group, ids) {
+  const collapsible = group.pillar === "local" && ids.length > 1;
+  const summary = collapsible
+    ? `<span class="group-summary-text">${esc(localSummaryText(ids))}</span>
+       <button type="button" class="btn btn-ghost btn-sm" data-toggle-locals aria-expanded="${state.showLocals}" aria-controls="diag-body">${state.showLocals ? "Thu gọn" : `Xem ${ids.length} mô hình Local`}</button>`
+    : "";
+  return `<tr class="group-row group-${group.pillar}"><th scope="colgroup" colspan="4">
+      <span class="group-head"><span class="group-title">${esc(group.title)}${ids.length > 1 ? ` · ${ids.length} mô hình` : ""}</span><span class="group-sub">${esc(group.sub)}</span></span>
+      ${summary}</th></tr>`;
+}
+
 function renderTable(modelIds, { animateIds = [] } = {}) {
   const body = byId("diag-body");
   const expanded = new Set($$("tr.detail-row:not(.hidden)", body).map(r => r.dataset.model));
-  body.innerHTML = modelIds.map(id => `
-    <tr class="diag-row row-${pillarOf(id)}${state.rows.get(id) && !state.rows.get(id).error ? " is-clickable" : ""}" data-model="${id}">${rowHtml(id, expanded.has(id))}</tr>
-    <tr class="detail-row${expanded.has(id) ? "" : " hidden"}" id="detail-${id}" data-model="${id}">${detailHtml(id)}</tr>`).join("");
+  const rowsHtml = GROUPS.map(group => {
+    const ids = modelIds.filter(id => pillarOf(id) === group.pillar);
+    if (!ids.length) return "";
+    const collapsed = group.pillar === "local" && ids.length > 1 && !state.showLocals;
+    const member = collapsed ? " is-collapsed" : "";
+    return groupRowHtml(group, ids) + ids.map(id => `
+    <tr class="diag-row row-${pillarOf(id)}${state.rows.get(id) && !state.rows.get(id).error ? " is-clickable" : ""}${member}" data-model="${id}">${rowHtml(id, expanded.has(id))}</tr>
+    <tr class="detail-row${expanded.has(id) ? "" : " hidden"}${member}" id="detail-${id}" data-model="${id}">${detailHtml(id)}</tr>`).join("");
+  }).join("");
+  body.innerHTML = rowsHtml;
   // thanh độ tin cậy chạy từ 0 → giá trị (một lần reflow để chốt style ban đầu)
   void body.offsetWidth;
   $$(".conf-fill", body).forEach(el => setBar(el, Number(el.dataset.pct)));
   if (animateIds.length) {
-    const rows = animateIds.map(id => body.querySelector(`tr.diag-row[data-model="${id}"]`));
+    const rows = animateIds.map(id => body.querySelector(`tr.diag-row[data-model="${id}"]`)).filter(row => row && !row.classList.contains("is-collapsed"));
     revealItems(rows, { stagger: 60, offset: 6, duration: 260 });
   }
+}
+
+function toggleLocals() {
+  state.showLocals = !state.showLocals;
+  if (!byId("diag-result").classList.contains("hidden")) renderTable(plannedModels());
 }
 
 /** Kết quả chính (UI-03): mô hình học phân tán đứng đầu với nhãn dự đoán, đúng/sai và độ tin cậy; các mô hình còn lại chỉ là đối chiếu. */
@@ -736,6 +783,55 @@ async function runPlantVillageReference() {
   }
 }
 
+// ───────── Ba cách nhận diện ngang hàng (tab) ─────────
+const DIAG_TABS = ["do-an", "pv", "community"];
+
+/** Ảnh đang chọn hiện nhỏ ở tab PlantVillage và Cộng đồng (hai tab này không có khung ảnh riêng). */
+function syncTabImages() {
+  const source = byId("preview-image");
+  const has = state.file !== null && source.getAttribute("src");
+  $$("[data-tab-image]").forEach(box => {
+    const thumb = box.querySelector(".diag-tab-thumb");
+    thumb.hidden = !has;
+    if (has) thumb.src = source.src;
+    box.querySelector("[data-tab-image-hint]").textContent = has
+      ? "Dùng chung ảnh đã chọn ở cột bên trái."
+      : "Chọn ảnh lá ở cột bên trái để nhận diện.";
+  });
+}
+
+function activateDiagTab(name, { focus = false } = {}) {
+  byId("diag-output").dataset.activeTab = name;
+  for (const id of DIAG_TABS) {
+    const tab = byId(`dtab-${id}`);
+    const on = id === name;
+    tab.classList.toggle("is-active", on);
+    tab.setAttribute("aria-selected", String(on));
+    tab.tabIndex = on ? 0 : -1;
+    toggleHidden(byId(`dpanel-${id}`), !on);
+    if (on && focus) tab.focus();
+  }
+  syncTabImages();
+}
+
+function bindDiagTabs() {
+  DIAG_TABS.forEach((id, index) => {
+    const tab = byId(`dtab-${id}`);
+    tab.addEventListener("click", () => activateDiagTab(id));
+    tab.addEventListener("keydown", event => {
+      const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+      if (event.key === "Home" || event.key === "End") {
+        event.preventDefault();
+        activateDiagTab(DIAG_TABS[event.key === "Home" ? 0 : DIAG_TABS.length - 1], { focus: true });
+      } else if (step) {
+        event.preventDefault();
+        activateDiagTab(DIAG_TABS[(index + step + DIAG_TABS.length) % DIAG_TABS.length], { focus: true });
+      }
+    });
+  });
+  byId("preview-image").addEventListener("load", syncTabImages);
+}
+
 // ───────── Khởi tạo ─────────
 async function loadModelOptions() {
   const select = byId("inference-fed-source");
@@ -907,6 +1003,7 @@ export async function mount() {
   byId("btn-diagnose").addEventListener("click", run);
   byId("btn-plantvillage").addEventListener("click", runPlantVillageReference);
   byId("btn-community").addEventListener("click", runCommunityModel);
+  bindDiagTabs();
 
   // bấm dòng kết quả (hoặc Enter/Space trên nút trong ô tên mô hình) để mở top-3
   const body = byId("diag-body");
@@ -918,6 +1015,7 @@ export async function mount() {
     }
   };
   body.addEventListener("click", event => {
+    if (event.target.closest("[data-toggle-locals]")) { toggleLocals(); return; }
     const row = event.target.closest("tr.diag-row");
     if (row) toggleRow(row);
   });

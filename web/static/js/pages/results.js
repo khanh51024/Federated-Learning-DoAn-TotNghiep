@@ -725,7 +725,7 @@ const BUILDERS = {
 const building = new Map();
 
 async function activate(name) {
-  $$(".subtab").forEach(tab => {
+  $$("#page-ket-qua .subtab").forEach(tab => {
     const on = tab.dataset.subtab === name;
     tab.classList.toggle("is-active", on);
     tab.setAttribute("aria-selected", String(on));
@@ -756,7 +756,7 @@ export async function mount() {
     getSummary().catch(() => null),
   ]);
   // Gắn handler trước khi xét `available`: tab không được "chết"; khi thiếu bằng chứng, mọi tab đổi panel và nói rõ lý do.
-  $$(".subtab").forEach(tab => tab.addEventListener("click", () => activate(tab.dataset.subtab)));
+  $$("#page-ket-qua .subtab").forEach(tab => tab.addEventListener("click", () => activate(tab.dataset.subtab)));
   if (!evidence.available) {
     const callout = role => `<div class="callout callout-error"${role}><b>Chưa có số liệu để hiển thị.</b> ${esc(evidence.reason || "")}</div>`;
     $$(".subpanel").forEach(panel => { panel.innerHTML = callout(panel.id === "result-summary" ? ' role="alert"' : ""); });

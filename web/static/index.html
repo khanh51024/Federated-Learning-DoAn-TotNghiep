@@ -254,7 +254,14 @@
             </div>
           </div>
 
-          <div class="diag-output">
+          <div class="diag-output" id="diag-output" data-active-tab="do-an">
+            <!-- Ba cách nhận diện ngang hàng: mô hình của đồ án (ba cách huấn luyện), PlantVillage, mô hình cộng đồng -->
+            <div class="subtabs diag-tabs" role="tablist" aria-label="Ba cách nhận diện ảnh lá">
+              <button type="button" class="subtab is-active" role="tab" id="dtab-do-an" aria-selected="true" aria-controls="dpanel-do-an" data-diag-tab="do-an">Đồ án · 3 cách huấn luyện</button>
+              <button type="button" class="subtab" role="tab" id="dtab-pv" aria-selected="false" tabindex="-1" aria-controls="dpanel-pv" data-diag-tab="pv">PlantVillage · tham chiếu</button>
+              <button type="button" class="subtab" role="tab" id="dtab-community" aria-selected="false" tabindex="-1" aria-controls="dpanel-community" data-diag-tab="community">Cộng đồng · thử nghiệm</button>
+            </div>
+            <div class="diag-tabpanel" role="tabpanel" id="dpanel-do-an" aria-labelledby="dtab-do-an">
             <div class="panel">
               <div class="panel-header-flex">
                 <div>
@@ -293,8 +300,8 @@
                     <div class="form-group">
                       <span class="form-label" id="mode-label">Hiển thị</span>
                       <div class="segmented" role="radiogroup" aria-labelledby="mode-label">
-                        <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" id="mode-all" data-mode="all">Cả 7 mô hình</button>
-                        <button type="button" class="segmented-option" role="radio" aria-checked="false" id="mode-quick" data-mode="quick">Centralized và một mô hình khác</button>
+                        <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" id="mode-all" data-mode="all">Đủ 7 mô hình (gom 3 nhóm)</button>
+                        <button type="button" class="segmented-option" role="radio" aria-checked="false" id="mode-quick" data-mode="quick">Chỉ so Centralized với một mô hình</button>
                       </div>
                     </div>
                     <div class="form-group hidden" id="quick-model-group">
@@ -349,19 +356,33 @@
               </div>
             </div>
 
-            <details class="panel panel-fold" id="pv-reference">
-              <summary>Mô hình tham chiếu PlantVillage (chạy độc lập với bảy mô hình trên)</summary>
-              <p class="panel-desc mt-2">Mô hình 38 nhóm chạy riêng; xác suất dự đoán không phải độ chính xác.</p>
-              <button type="button" class="btn btn-secondary mt-3" id="btn-plantvillage" disabled>Nhận diện bằng PlantVillage</button>
-              <div id="plantvillage-result" class="pv-result" role="status" aria-live="polite"></div>
-            </details>
+            </div>
 
-            <details class="panel panel-fold" id="community-model">
-              <summary>Mô hình cộng đồng (thử nghiệm, không nằm trong bảy mô hình trên)</summary>
-              <p class="panel-desc mt-2">Dùng phiên bản lớp cuối mới nhất do người tham gia ở trang <a href="#hoc-lien-ket">Học phân tán</a> cùng huấn luyện trên backbone của FedAvg v7.</p>
-              <button type="button" class="btn btn-secondary mt-3" id="btn-community" disabled>Nhận diện bằng mô hình cộng đồng</button>
-              <div id="community-result" class="comm-diag" role="status" aria-live="polite"></div>
-            </details>
+            <div class="diag-tabpanel hidden" role="tabpanel" id="dpanel-pv" aria-labelledby="dtab-pv">
+              <div class="panel" id="pv-reference">
+                <h3 class="panel-title panel-title-sm">Mô hình tham chiếu PlantVillage</h3>
+                <p class="panel-desc">Mô hình 38 nhóm của bộ PlantVillage, chạy độc lập với bảy mô hình của đồ án; xác suất dự đoán không phải độ chính xác.</p>
+                <div class="diag-tab-image mt-3" data-tab-image>
+                  <img class="diag-tab-thumb" alt="Ảnh lá đang chọn" width="96" height="96" hidden>
+                  <p class="field-hint" data-tab-image-hint>Chọn ảnh lá ở cột bên trái để nhận diện.</p>
+                </div>
+                <button type="button" class="btn btn-secondary mt-3" id="btn-plantvillage" disabled>Nhận diện bằng PlantVillage</button>
+                <div id="plantvillage-result" class="pv-result" role="status" aria-live="polite"></div>
+              </div>
+            </div>
+
+            <div class="diag-tabpanel hidden" role="tabpanel" id="dpanel-community" aria-labelledby="dtab-community">
+              <div class="panel" id="community-model">
+                <h3 class="panel-title panel-title-sm">Mô hình cộng đồng (thử nghiệm)</h3>
+                <p class="panel-desc">Không nằm trong bảy mô hình của đồ án. Dùng phiên bản lớp cuối mới nhất do người tham gia ở trang <a href="#hoc-lien-ket">Học phân tán</a> cùng huấn luyện trên backbone của FedAvg v7.</p>
+                <div class="diag-tab-image mt-3" data-tab-image>
+                  <img class="diag-tab-thumb" alt="Ảnh lá đang chọn" width="96" height="96" hidden>
+                  <p class="field-hint" data-tab-image-hint>Chọn ảnh lá ở cột bên trái để nhận diện.</p>
+                </div>
+                <button type="button" class="btn btn-secondary mt-3" id="btn-community" disabled>Nhận diện bằng mô hình cộng đồng</button>
+                <div id="community-result" class="comm-diag" role="status" aria-live="polite"></div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
