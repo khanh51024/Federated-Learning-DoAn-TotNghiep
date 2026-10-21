@@ -201,7 +201,7 @@ Ba bộ chạy cũ ở các nhánh train gắn cứng release v3 và dùng hai c
 Quy trình:
 1. Kiểm nhãn người cho các nhóm lá PlantDoc cách ly (`data/label_review/index.html` → `decisions.json`), áp quy tắc nhận nhóm, dựng lại release
    (`scripts/build_release_v4.py`) và kiểm hợp đồng (`scripts/verify_release_contract.py`).
-2. `python scripts/pack_train_bundle.py`: tạo `train_data_v4.tar` (release + 79.271 ảnh, khoảng 2,5 GB), `train_code.tar` (mã đã commit, kèm bản chép 4 tệp kiểm của nhánh train) và `bundle.json` (SHA-256).
+2. `python scripts/pack_train_bundle.py`: tạo `train_data_v4.tar` (release + 79.316 ảnh, khoảng 2,5 GB), `train_code.tar` (mã đã commit, kèm bản chép 4 tệp kiểm của nhánh train) và `bundle.json` (SHA-256).
    Đã chạy thử trên bản giải nén tách rời ngoài repo (2026-10-21): SHA khớp, `verify_release_contract.py --contract-dir ... --images` 12/12 qua, `train_v4.py` chạy đủ ba cách ra `DONE`,
    và từ chối SHA release sai. Lưu ý khi giải nén trên Windows: giữ đường dẫn ngắn (< 260 ký tự), nếu không một số ảnh tên dài báo thiếu; máy Linux không bị.
 3. Trên máy GPU: giải nén vào `~/cropfed/{data,code}`, chạy `bash code/scripts/remote/setup_env.sh`, rồi
