@@ -1,1 +1,6 @@
 * text=auto eol=lf
+# Q5 result files keep their original bytes (CRLF), see PUSH_INVENTORY sha256
+results/20261021_q5/iid/q6_test.json -text
+results/20261021_q5/a10/q6_test.json -text
+results/20261021_q5/a01/q6_test.json -text
+results/20261021_q5/reports/Q6_RESULTS_test.json -text
