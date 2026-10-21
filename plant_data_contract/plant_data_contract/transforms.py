@@ -161,6 +161,26 @@ TRANSFORM_METADATA_REGISTRY: Dict[str, Dict[str, Any]] = {
         ],
         "eval_augmentations": [],
     },
+    "field_aug_v1": {
+        "version": "field_aug_v1",
+        "geometry": "aspect_preserving_letterbox_pad",
+        "target_size": [224, 224],
+        "interpolation": "bilinear",
+        "antialias": True,
+        "compositing_background": "ImageNet_mean_RGB",
+        "padding_fill": list(IMAGENET_MEAN_RGB),
+        "normalization": {"mean": IMAGENET_MEAN, "std": IMAGENET_STD, "space": "ImageNet1K"},
+        "exif_orientation": "applied by CanonicalClassificationDataset before the transform, not here",
+        "train_augmentations": [
+            {"type": "RandomRotation", "degrees": [-10, 10], "fill": list(IMAGENET_MEAN_RGB)},
+            {"type": "ColorJitter", "brightness": 0.3, "contrast": 0.3, "saturation": 0.3, "hue": 0.05},
+            {"type": "GaussianBlur", "kernel_size": 3, "sigma": [0.1, 1.5], "p": 0.3},
+            {"type": "RandomJpegCompression", "quality": [50, 90], "p": 0.3},
+            {"type": "RandomHorizontalFlip", "p": 0.5},
+        ],
+        "augmentation_canvas": "after letterbox to 224x224",
+        "eval_augmentations": [],
+    },
 }
 
 
@@ -245,6 +265,25 @@ def get_transforms(
             ])
         return T.Compose([
             T.Resize((image_size, image_size), interpolation=T.InterpolationMode.BILINEAR, antialias=True),
+            T.ToTensor(),
+            norm,
+        ])
+
+    elif transform_name == "field_aug_v1":
+        pad_op = ResizeKeepRatioPad(target_size=image_size, fill=IMAGENET_MEAN_RGB)
+        if is_train:
+            return T.Compose([
+                pad_op,
+                T.RandomRotation(degrees=(-10, 10), fill=IMAGENET_MEAN_RGB),
+                T.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.05),
+                T.RandomApply([T.GaussianBlur(kernel_size=3, sigma=(0.1, 1.5))], p=0.3),
+                RandomJpegCompression(probability=0.3, quality=(50, 90)),
+                T.RandomHorizontalFlip(p=0.5),
+                T.ToTensor(),
+                norm,
+            ])
+        return T.Compose([
+            pad_op,
             T.ToTensor(),
             norm,
         ])

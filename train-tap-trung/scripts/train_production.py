@@ -165,7 +165,7 @@ except ImportError:
     import subprocess
     whl_candidates = (
         list((WORKSPACE_ROOT / "plant_data_contract/dist").glob("*.whl"))
-        + list((WORKSPACE_ROOT / "train-gd-2/kaggle-workspace/campaign-mixed-pv-pd-v1").glob("*.whl"))
+        + list((WORKSPACE_ROOT / "train-phan-tan/kaggle-workspace/campaign-mixed-pv-pd-v1").glob("*.whl"))
         + list(Path(".").glob("*.whl"))
     )
     if whl_candidates:
@@ -218,8 +218,14 @@ from plant_data_contract.training_progress import TrainingProgress
 
 def approved_w0_kwargs(spec, args):
     """Resolve the pilot W0 state beside the approved ImageNet weights."""
+    allowed = (spec or {}).get("status") == "READY_FULL" or (
+        getattr(args, "mode", None) == "pilot" and
+        (spec or {}).get("status") == "PILOT_VIEW_LOCKED" and
+        getattr(args, "pilot_view_spec", None) and
+        spec.get("pilot_view_sha256") == getattr(args, "pilot_view_sha", None)
+    )
     if ((spec or {}).get("dataset_release") != "dataset/mixed/pv_pd_v3" or
-            spec.get("status") != "READY_FULL" or getattr(args, "init", "scratch") != "imagenet_v1"):
+            not allowed or getattr(args, "init", "scratch") != "imagenet_v1"):
         return {}
     name = spec.get("pretrained_w0_state_file")
     digest = spec.get("pretrained_w0_state_sha256")
@@ -230,6 +236,30 @@ def approved_w0_kwargs(spec, args):
         raise ValueError("READY_FULL pretrained v3 requires --pretrained-weights")
     return {"w0_state_path": Path(weights).resolve().with_name(name),
             "expected_w0_state_sha256": digest}
+
+
+def enforce_pilot_view_protocol(spec, args, w0_fingerprint, resolved_config):
+    """A new pilot spec pins view/W0/protocol without granting READY_FULL."""
+    if not getattr(args, "pilot_view_spec", None):
+        return
+    if not spec or spec.get("status") != "PILOT_VIEW_LOCKED" or args.mode != "pilot":
+        raise ValueError("Experimental pilot view requires a PILOT_VIEW_LOCKED spec")
+    if (spec.get("pilot_view_sha256") != args.pilot_view_sha or
+            spec.get("release_manifest_sha256") != resolved_config["release_manifest_sha256"] or
+            spec.get("expected_w0_fingerprint") != w0_fingerprint or
+            spec.get("pretrained_weights_sha256") != resolved_config["pretrained_file_sha256"]):
+        raise ValueError("Experimental pilot view, release, weights, or W0 differs from locked spec")
+    hp = spec["hyperparameters"]["centralized"]
+    if (args.init != "imagenet_v1" or args.transform_version != spec.get("preprocessing") or
+            args.sampler_repeat_policy != spec.get("sampler_repeat_policy") or
+            args.seed not in spec.get("allowed_seeds", []) or
+            float(args.plantdoc_sampling_ratio) not in spec.get("allowed_ratios", []) or
+            args.batch_size != hp["batch_size"] or args.epochs != hp["max_epochs"] or
+            abs(args.lr - hp["lr"]) > 1e-12 or
+            abs(resolved_config["weight_decay"] - hp["weight_decay"]) > 1e-12 or
+            not args.amp or
+            abs(float(getattr(args, "label_smoothing", 0.0)) - float(hp.get("label_smoothing", 0.0))) > 1e-12):
+        raise ValueError("Experimental pilot run differs from locked protocol")
 
 
 def enforce_approved_v3_protocol(spec, args, w0_fingerprint, resolved_config):
@@ -250,7 +280,8 @@ def enforce_approved_v3_protocol(spec, args, w0_fingerprint, resolved_config):
     ratio = 0.0 if raw_ratio in ("none", "false", "") else float(raw_ratio)
     if (args.init != expected_init or abs(ratio - expected_ratio) > 1e-9 or
             args.transform_version != spec.get("preprocessing") or
-            args.sampler_repeat_policy != expected_repeat_policy):
+            args.sampler_repeat_policy != expected_repeat_policy or
+            abs(float(getattr(args, "label_smoothing", 0.0)) - float(spec.get("hyperparameters", {}).get("centralized", {}).get("label_smoothing", 0.0))) > 1e-12):
         raise ValueError("Full v3 init/sampler/transform differs from approved pilot")
     if w0_fingerprint != spec.get("expected_w0_fingerprint"):
         raise ValueError("Full v3 W0 fingerprint differs from approved pilot")
@@ -263,6 +294,8 @@ from plant_data_contract.quality_metrics import summarize_quality
 from plant_data_contract.full_gate import verify_full_data_gate
 from plant_data_contract.quality_control import QualityControl, DEFAULT_CONVERGENCE
 from plant_data_contract.taxonomy import PLANTVILLAGE_38_CLASSES
+from plant_data_contract.contract_pin import verify_loaded_contract
+CONTRACT_PIN = verify_loaded_contract()
 
 
 def create_mobilenetv3_small_scratch(
@@ -802,6 +835,10 @@ def resolve_centralized_config(
         if args.mode != "pilot":
             raise ValueError("--pilot-train-manifest is only valid in pilot mode")
         effective_params["pilot_train_manifest_sha256"] = hashlib.sha256(Path(pilot_manifest).read_bytes()).hexdigest()
+    if getattr(args, "pilot_view_spec", None):
+        effective_params["pilot_view_spec_sha256"] = args.pilot_view_sha
+    if float(getattr(args, "label_smoothing", 0.0)) != 0.0:
+        effective_params["label_smoothing"] = float(args.label_smoothing)
     if w0_fingerprint:
         effective_params["w0_fingerprint"] = w0_fingerprint
     if getattr(args, "job_id", None):
@@ -853,13 +890,16 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--pretrained-weights", type=str, default=None, help="Path to pretrained weights file")
     parser.add_argument("--plantdoc-sampling-ratio", type=str, default="none", help="Minibatch sampling target ratio for PlantDoc ('none', '0.15', '0.25')")
     parser.add_argument("--sampler-repeat-policy", choices=["with_replacement", "cycle_without_replacement"], default="with_replacement", help="Domain sampler repeat policy; lower-repeat cycle mode is experimental")
-    parser.add_argument("--transform-version", choices=["canonical_v1", "aspect_pad_v1", "aspect_pad_mean_v2", "moderate_augment_v1", "light_augment_v2"], default="canonical_v1", help="Preprocessing transform pipeline version")
+    parser.add_argument("--label-smoothing", type=float, default=0.0, help="Train-loss label smoothing in [0, 1); 0 keeps the historical loss")
+    parser.add_argument("--transform-version", choices=["canonical_v1", "aspect_pad_v1", "aspect_pad_mean_v2", "moderate_augment_v1", "light_augment_v2", "field_aug_v1"], default="canonical_v1", help="Preprocessing transform pipeline version")
     parser.add_argument("--incumbent-summary", type=str, default=None, help="Full incumbent summary.json for the same seed/release")
     parser.add_argument("--incumbent-checkpoint", type=str, default=None, help="Full incumbent checkpoint whose SHA is recorded in the summary")
     parser.add_argument("--pv-max-regression", type=float, default=0.01, help="Maximum allowed PlantVillage macro-F1 regression from the verified full incumbent")
     parser.add_argument("--prepare-calibration", action="store_true", default=False, help="Fit temperature on the calibration split after selecting the best full checkpoint")
-    parser.add_argument("--full-image-verify", action="store_true", default=False, help="Perform 100% byte SHA-256 and decode verification of all 50k+ images (slow)")
+    parser.add_argument("--full-image-verify", action="store_true", default=False, help="Perform 100%% byte SHA-256 and decode verification of all 50k+ images (slow)")
     parser.add_argument("--pilot-train-manifest", type=str, default=None, help="Fixed, release-subset JSONL for pilot mode only")
+    parser.add_argument("--pilot-view-spec", type=str, default=None, help="Opt-in scene-disjoint experimental view spec")
+    parser.add_argument("--pilot-view-sha", type=str, default=None, help="Externally pinned SHA-256 of pilot view spec")
     return parser
 
 
@@ -978,6 +1018,17 @@ def main():
     )
     integrity_report = verify_release_integrity(release_dir, expected_release_sha=args.expected_release_sha)
     release_manifest_sha = integrity_report["release_manifest_sha256"]
+    view_train_rows = None
+    if args.pilot_view_sha and not args.pilot_view_spec:
+        raise ValueError("--pilot-view-sha requires --pilot-view-spec")
+    if args.pilot_view_spec:
+        if args.mode != "pilot" or not args.pilot_train_manifest:
+            raise ValueError("--pilot-view-spec requires pilot mode and --pilot-train-manifest")
+        from pilot_view_contract import verify_pilot_view
+        view_train_rows = verify_pilot_view(
+            Path(args.pilot_view_spec).resolve(), args.pilot_view_sha,
+            release_dir, release_manifest_sha, Path(args.pilot_train_manifest).resolve(),
+        )
     print(f"Dataset Root: {dataset_root}")
     print(f"Release Manifest SHA-256 Verified: {release_manifest_sha}")
 
@@ -1042,6 +1093,7 @@ def main():
         raise ValueError("--prepare-calibration is only valid in full mode")
     if args.preflight_only:
         enforce_approved_v3_protocol(spec, args, preflight_w0_fingerprint, resolved_config)
+        enforce_pilot_view_protocol(spec, args, preflight_w0_fingerprint, resolved_config)
 
     if args.preflight_only:
         print("=" * 70)
@@ -1098,6 +1150,7 @@ def main():
     )
     resolved_config["w0_fingerprint"] = w0_fingerprint
     enforce_approved_v3_protocol(spec, args, w0_fingerprint, resolved_config)
+    enforce_pilot_view_protocol(spec, args, w0_fingerprint, resolved_config)
 
     train_manifest = release_dir / "manifests/train.jsonl"
     val_manifest = release_dir / "manifests/val.jsonl"
@@ -1127,7 +1180,11 @@ def main():
         if not pilot_group_ids <= full_group_ids or {row["sample_id"] for row in train_ds.samples
                 if row["group_id"] in pilot_group_ids} != set(pilot_ids):
             raise ValueError("Pilot manifest splits a scene group")
-        if {row["sample_id"] for row in train_ds.samples if row["source_domain"] == "plantdoc"} - set(pilot_ids):
+        if args.pilot_view_spec:
+            if view_train_rows != pilot_rows:
+                raise ValueError("Pilot manifest differs from verified train-fit view")
+            val_manifest = Path(args.pilot_view_spec).resolve().parent / "manifests/development.jsonl"
+        elif {row["sample_id"] for row in train_ds.samples if row["source_domain"] == "plantdoc"} - set(pilot_ids):
             raise ValueError("Pilot manifest must contain all eligible PlantDoc train samples")
         train_ds = CanonicalClassificationDataset(
             samples=pilot_rows, dataset_root=dataset_root, transform=train_transform, return_metadata=False
@@ -1182,7 +1239,10 @@ def main():
     scheduler = ReduceLROnPlateau(optimizer, mode="max", factor=0.5, patience=3,
                                   threshold=0.002, threshold_mode="abs")
     scaler = GradScaler("cuda", enabled=bool(args.amp and torch.cuda.is_available()))
-    criterion = nn.CrossEntropyLoss()
+    _ls = float(getattr(args, "label_smoothing", 0.0))
+    if not 0.0 <= _ls < 1.0:
+        raise ValueError("--label-smoothing must be in [0, 1)")
+    criterion = nn.CrossEntropyLoss(label_smoothing=_ls) if _ls else nn.CrossEntropyLoss()
 
     max_train_batches = resolved_config["max_train_batches"]
     max_val_batches = resolved_config["max_val_batches"]
@@ -1286,7 +1346,7 @@ def main():
     if args.mode == "smoke":
         max_epochs = max(2, start_epoch)
     elif args.mode == "pilot":
-        max_epochs = min(args.epochs, 5)
+        max_epochs = args.epochs if getattr(args, "pilot_view_spec", None) else min(args.epochs, 5)
     else:  # full
         max_epochs = args.epochs
 

@@ -11,6 +11,7 @@ from torch.utils.data import Dataset, Sampler
 
 from plant_data_contract.path_resolver import PathResolver
 from plant_data_contract.crop_geometry import normalize_exif_orientation
+from plant_data_contract.image_rgb import to_rgb_on_black
 
 
 class CanonicalClassificationDataset(Dataset):
@@ -83,13 +84,7 @@ class CanonicalClassificationDataset(Dataset):
         with Image.open(resolved_path) as img:
             transposed = normalize_exif_orientation(img)
             decoded_width, decoded_height = transposed.size
-            if transposed.mode in ("RGBA", "LA") or (transposed.mode == "P" and "transparency" in transposed.info):
-                rgba = transposed.convert("RGBA")
-                bg = Image.new("RGB", rgba.size, (0, 0, 0))
-                bg.paste(rgba, mask=rgba.split()[3])
-                rgb_img = bg
-            else:
-                rgb_img = transposed.convert("RGB")
+            rgb_img = to_rgb_on_black(transposed)
 
         if self.transform is not None:
             tensor = self.transform(rgb_img)

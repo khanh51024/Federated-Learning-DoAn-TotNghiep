@@ -75,3 +75,25 @@ python training-workflows/colab_centralized/run.py `
 ```
 
 Trên Colab có thể thêm `--sync-dir` với đường dẫn thư mục Drive đã gắn để đồng bộ checkpoint. `SOURCE_MANIFEST.json` xác thực mã train, `results/20261003/artifact_manifest.json` xác thực kết quả.
+
+## Kết quả Q5 (21-10-2026) — `results/20261021_q5/`
+
+Lượt train đầy đủ Q5 của chiến dịch cải thiện, seed 42, release `pv_pd_v3`. Kết quả v7 ở `results/20261003/` vẫn giữ
+nguyên, là kết quả trước đó. Mọi số dưới đây là **tập kiểm thử chung** `legacy_diagnostic_test` (11.015 ảnh: 10.843
+PlantVillage + 172 crop PlantDoc / 96 cảnh / 13 lớp), mở **một lần**. Mỗi nhánh một seed ⇒ **chỉ mô tả**, không
+kết luận thống kê. Luôn đọc cặp *acc toàn tập + acc PlantDoc*, kèm macro-F1 PlantDoc: 98,4% ảnh test là PlantVillage.
+
+Suy luận: một pipeline chung cho mọi checkpoint (`deploy/DEPLOY.md`): xoay EXIF → RGB (alpha dán nền đen) → resize
+224×224 bilinear antialias (ép vuông) → ToTensor → chuẩn hóa ImageNet; xác suất = softmax(logit / T), T trong
+`deploy/temperatures.json` (fit trên tập calibration). Kiểm sha256 trước, rồi `torch.load(..., weights_only=False)` cho
+checkpoint train; hoặc dùng `*_state_dict.pt` với `weights_only=True`. Không có ngưỡng từ chối được bàn giao. Phần trăm
+hiển thị là độ tin cậy dự đoán, không phải accuracy. Chi tiết: `reports/Q6_REPORT_vi.md`, `reports/S4C_REPORT_vi.md`.
+
+| Checkpoint | sha256 | Epoch | T | Acc toàn tập | Acc PV | **Acc PD** | macro-F1 PD |
+|---|---|---:|---:|---:|---:|---:|---:|
+| `checkpoint_best.pt` (Colab T4) | `c45fa993…7809998` | 22 | 2,93 | 0,9867 | 0,9923 | **0,6337** | 0,5685 |
+
+- Vai trò: model cho web app (mức trần Centralized, chọn trước). Optimizer AdamW (client FedAvg/Local-only dùng SGD).
+- Trainer: `train-tap-trung/scripts/train_production.py` sha `ec2dcdba…` (đúng bản trong bundle code Q5).
+- Ảnh chụp nguyên cảnh (96 cảnh PlantDoc test, không detector): đúng 56/96 (S4C, mô tả).
+- Train có resume (epoch tốt nhất 22 có trước lần resume); spec Q5 không đưa lên nhánh (chứa id tài khoản).
