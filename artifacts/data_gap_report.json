@@ -9,7 +9,7 @@
   "dat_muc_tieu": 16,
   "du_toi_thieu": 17,
   "thieu": 5,
-  "total_field_ready": 26484
+  "total_field_ready": 26529
  },
  "classes": [
   {
@@ -148,15 +148,19 @@
   {
    "class": "Cherry_(including_sour)___Powdery_mildew",
    "pv_train": 618,
-   "field_ready": 0,
-   "field_sources": [],
+   "field_ready": 15,
+   "field_sources": [
+    "inat_cerasi"
+   ],
    "status": "thieu",
-   "missing_to_target": 300,
+   "missing_to_target": 285,
    "parts": {
     "plantdoc_v3": 0,
     "plantdoc_quarantine_total": 0,
     "plantdoc_quarantine_ready": 0,
-    "external_ready": {},
+    "external_ready": {
+     "inat_cerasi": 15
+    },
     "external_pending_review": 7,
     "own_photos_train": 0
    },
@@ -699,16 +703,24 @@
   {
    "class": "Strawberry___Leaf_scorch",
    "pv_train": 708,
-   "field_ready": 0,
-   "field_sources": [],
+   "field_ready": 30,
+   "field_sources": [
+    "inat_scorch",
+    "inat_strawberry___leaf_scorch",
+    "inat_wm_strawberry___leaf_scorch"
+   ],
    "status": "thieu",
-   "missing_to_target": 300,
+   "missing_to_target": 270,
    "parts": {
     "plantdoc_v3": 0,
     "plantdoc_quarantine_total": 0,
     "plantdoc_quarantine_ready": 0,
-    "external_ready": {},
-    "external_pending_review": 7,
+    "external_ready": {
+     "inat_scorch": 28,
+     "inat_strawberry___leaf_scorch": 1,
+     "inat_wm_strawberry___leaf_scorch": 1
+    },
+    "external_pending_review": 5,
     "own_photos_train": 0
    },
    "tests": {
@@ -1020,34 +1032,34 @@
  ],
  "local_only_ceiling_top1_percent": {
   "client_00": {
-   "classes_seen": 24,
-   "plantvillage_val": 63.8,
-   "plantdoc_val": 52.0,
-   "plantwild": 59.6
+   "classes_seen": 22,
+   "plantvillage_val": 63.7,
+   "plantdoc_val": 40.5,
+   "plantwild": 65.8
   },
   "client_01": {
-   "classes_seen": 21,
-   "plantvillage_val": 51.1,
-   "plantdoc_val": 56.5,
-   "plantwild": 54.0
+   "classes_seen": 22,
+   "plantvillage_val": 57.9,
+   "plantdoc_val": 43.5,
+   "plantwild": 63.2
   },
   "client_02": {
-   "classes_seen": 20,
-   "plantvillage_val": 64.9,
-   "plantdoc_val": 69.5,
-   "plantwild": 58.2
+   "classes_seen": 22,
+   "plantvillage_val": 57.8,
+   "plantdoc_val": 61.3,
+   "plantwild": 60.7
   },
   "client_03": {
-   "classes_seen": 22,
-   "plantvillage_val": 50.7,
-   "plantdoc_val": 43.9,
-   "plantwild": 56.2
+   "classes_seen": 24,
+   "plantvillage_val": 70.6,
+   "plantdoc_val": 81.8,
+   "plantwild": 60.9
   },
   "client_04": {
-   "classes_seen": 23,
-   "plantvillage_val": 48.3,
-   "plantdoc_val": 75.8,
-   "plantwild": 64.5
+   "classes_seen": 26,
+   "plantvillage_val": 74.6,
+   "plantdoc_val": 63.2,
+   "plantwild": 68.1
   }
  },
  "local_only_ceiling_source": "partition_spec_v4.json (label_alpha_0_1, release v4)",

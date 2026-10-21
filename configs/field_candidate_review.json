@@ -1,0 +1,70 @@
+{
+ "reviewer": "ai_screening",
+ "note": "Sàng lọc bằng mắt từng ảnh qua ảnh lưới (không phải chuyên gia). Nhận ảnh chụp lá thật có triệu chứng nhìn thấy được; loại ảnh hiển vi, ảnh cả luống hoặc cả cây không thấy lá rõ, ảnh nhãn thẻ, ảnh lá không rõ triệu chứng.",
+ "sources": {
+  "inat_cerasi": {
+   "target_class": "Cherry_(including_sour)___Powdery_mildew",
+   "taxon": "Podosphaera cerasi",
+   "candidates_total": 58,
+   "accepted_photo_ids": [
+    158238307,
+    211663397,
+    211663418,
+    333096845,
+    333096848,
+    333096849,
+    544939591,
+    544939636,
+    544939664,
+    544939699,
+    577875146,
+    577875167,
+    690849199,
+    690849233,
+    691401227
+   ]
+  },
+  "inat_scorch": {
+   "target_class": "Strawberry___Leaf_scorch",
+   "taxon": "Diplocarpon fragariae",
+   "candidates_total": 80,
+   "accepted_photo_ids": [
+    83400776,
+    83400815,
+    84928375,
+    84928405,
+    84928425,
+    85022558,
+    85035564,
+    85045436,
+    85045444,
+    85085080,
+    85085388,
+    100394936,
+    101772343,
+    101772348,
+    101915764,
+    102287834,
+    102287862,
+    102512997,
+    102526797,
+    103228653,
+    214303694,
+    241286076,
+    517855351,
+    517855421,
+    517855447,
+    536482301,
+    536482369,
+    536927972
+   ]
+  }
+ },
+ "existing_sample_ids": {
+  "note": "Ảnh đã có trong nguồn tải sẵn (iNaturalist, Wikimedia) nhưng chưa được kiểm; xem từng ảnh. Loại: 7 ảnh cherry (cây chủ là táo gai/loài khác, ảnh hiển vi) và 5 trang sách quảng cáo giống dâu.",
+  "Strawberry___Leaf_scorch": [
+   "ext_inat_strawberry___leaf_scorch_fc1438b6d084b3d5",
+   "ext_inat_wm_strawberry___leaf_scorch_1b098effeae2ab9d"
+  ]
+ }
+}

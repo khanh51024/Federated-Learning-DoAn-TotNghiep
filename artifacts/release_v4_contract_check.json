@@ -45,17 +45,22 @@
   {
    "name": "data_selection.inspect_dataset[full]",
    "ok": true,
-   "detail": "train=52409"
+   "detail": "train=52464"
   },
   {
    "name": "data_selection.inspect_dataset[label_alpha_0_1]",
    "ok": true,
-   "detail": "train=52409 shards=[8554, 9866, 12920, 8949, 12120]"
+   "detail": "train=52464 shards=[13107, 11691, 6647, 8863, 12156]"
   },
   {
    "name": "data_selection.inspect_dataset[iid]",
    "ok": true,
-   "detail": "train=52409 shards=[10548, 10486, 10467, 10465, 10443]"
+   "detail": "train=52464 shards=[10527, 10502, 10502, 10478, 10455]"
+  },
+  {
+   "name": "verify_image_dataset_integrity",
+   "ok": true,
+   "detail": "PARTIAL"
   }
  ]
 }

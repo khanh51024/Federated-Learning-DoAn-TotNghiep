@@ -25,7 +25,8 @@ với ảnh PlantVillage nhưng chỉ còn 33,1% (Centralized) và 31,8% (FedAvg
    - nguồn lá đặt trên nền giấy đồng màu (ớt, cà chua ruộng, cà chua Bangladesh, HLB, nho 18k) khai `same_source_hamming: 4` thay cho 10: dHash ở đó phản ánh nền, ngưỡng 10 nối chuỗi
      thành nhóm rất lớn (đo được: 916 trên 1.611 ảnh cà chua ruộng) và 47% ảnh ớt bacterial spot rơi vào test;
    - cùng một lá chụp xoay nhiều lần: dHash không nhận ra, nên ảnh cùng nguồn, cùng lớp có cosine DINOv2-small ≥ 0,95 gộp cùng nhóm
-     (`scripts/extract_external_features.py`, chỉ cho 7 nguồn nền đồng màu, khoảng 5,1 nghìn ảnh, vài phút). Ngưỡng chọn bằng cách xem tay 6 cặp ở mỗi dải cosine: từ 0,95 trở lên
+     (`scripts/extract_external_features.py`; đặc trưng của **toàn bộ** ảnh ngoài đồng đã nhập, 25.710 ảnh, vì kiểm lại cho thấy 286 cặp cosine ≥ 0,95 nằm ở hai split khác nhau
+     ở các nguồn ngoài 7 nguồn nền đồng màu: cà chua Pakistan 223, ESCA nho 34, ngô 19, khoai tây Ethiopia 10). Ngưỡng chọn bằng cách xem tay 6 cặp ở mỗi dải cosine: từ 0,95 trở lên
      đều là một lá; 0,92 trở xuống bắt đầu nối lá khác nhau và dồn cả một lớp vào một nhóm (ở 0,92 nhóm lớn nhất là 307 ảnh, tức cả lớp nhện đỏ). Hệ quả đã chấp nhận:
      cà chua ruộng Late blight và healthy không còn ảnh nào ở test (nhóm lớn), hai lớp này vẫn có test từ nguồn khác;
    - hai ảnh gần trùng (Hamming ≤ 4) mang **hai nhãn khác nhau**: ít nhất một nhãn sai, bỏ **cả hai ảnh đó** (không bỏ cả nhóm), không bao giờ gộp hai lớp vào một nhóm.
@@ -38,7 +39,7 @@ với ảnh PlantVillage nhưng chỉ còn 33,1% (Centralized) và 31,8% (FedAvg
 7. Phân vùng 5 client chia theo nhóm: `label_alpha_0_1` (Dirichlet α = 0,1) và `iid` (chỉ để minh họa trần của Local-only).
 8. **Đúng hợp đồng của bộ chạy huấn luyện**: `partition_shard_hashes` khóa theo tên tệp (`client_00.jsonl`), có `partition_spec_v4.json` (trạng thái PASS, SHA từng shard, thống kê
    entropy và JS theo bit như v3) và `quality_audit_v4.json` (cổng rò rỉ trước khi train đầy đủ). `scripts/verify_release_contract.py` chạy các bộ kiểm của nhánh `origin/train-centralized`
-   trên release và hiện đạt 11/11. Lần dựng đầu thiếu hai tệp trên và khóa shard sai, nên bộ chạy sẽ từ chối release; lỗi này phát hiện khi rà soát và đã sửa.
+   trên release và hiện đạt 12/12 (kiểm cả byte và giải mã ảnh). Lần dựng đầu thiếu hai tệp trên và khóa shard sai, nên bộ chạy sẽ từ chối release; lỗi này phát hiện khi rà soát và đã sửa.
 
 ## 3. Nguồn dữ liệu và giấy phép
 
@@ -65,29 +66,31 @@ Cấu hình ở `configs/external_sources.yaml`; mỗi ảnh mang giấy phép t
 | [Chilli Leaf Disease Image Dataset (ruộng ớt Bangladesh, điện thoại)](https://data.mendeley.com/datasets/tm3v4zmh7c) | CC BY 4.0 | 881 | 229 / 45 / 79 / 94 | mẫu 30/nhóm: nhận 1/2 nhóm |
 | iNaturalist (cấp research; CC0/CC BY/CC BY-NC theo từng ảnh) | theo ảnh | 1907 | 60 / 7 / 10 / 9 | kiểm từng ảnh: chỉ ảnh được đánh dấu "đúng" mới vào |
 | Wikimedia Commons (giấy phép theo từng tệp) | theo ảnh | 399 | 7 / 1 / 2 / 2 | kiểm từng ảnh: chỉ ảnh được đánh dấu "đúng" mới vào |
+| iNaturalist, loài nấm *Podosphaera cerasi* (ứng viên, nạp bằng `scripts/import_field_candidates.py`) | CC BY / CC BY-NC theo ảnh | 15 (trên 58 ứng viên, 7 quan sát) | 10 / 4 / 0 / 1 | kiểm từng ảnh bằng mắt (AI sàng lọc) |
+| iNaturalist, loài nấm *Diplocarpon fragariae* (ứng viên) | CC BY / CC BY-NC theo ảnh | 28 (trên 80 ứng viên, 17 quan sát) | 25 / 0 / 3 / 0 | kiểm từng ảnh bằng mắt (AI sàng lọc) |
 
 ## 4. Số liệu release
 
-Release `mixed_pv_pd_v4`, SHA-256 của `release_manifest.json`: `67a25495e0b441f957875a5c15536e03e2598ec0597c21ff7e21f165ea0f656a`.
+Release `mixed_pv_pd_v4`, SHA-256 của `release_manifest.json`: `68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b`.
 
 | Tập | Ảnh |
 |---|---:|
-| train | 52409 |
-| validation | 6723 |
-| calibration | 7014 |
-| legacy_diagnostic_test | 13125 |
+| train | 52464 |
+| validation | 6746 |
+| calibration | 7005 |
+| legacy_diagnostic_test | 13101 |
 | cách ly (quarantine) | 5030 |
 
-- Ảnh ngoài đồng thêm vào: 21113; lá PlantDoc cách ly được nhận lại: 1067; ảnh tự chụp: 0.
+- Ảnh ngoài đồng thêm vào: 21158; lá PlantDoc cách ly được nhận lại: 1067; ảnh tự chụp: 0.
 - PlantVillage train giữ đủ 35123 ảnh (không giới hạn; cân bằng miền làm lúc train).
 - Loại 2042 ảnh gần trùng với các tập đã khóa/PlantVillage; bỏ 38 ảnh có ảnh gần trùng (Hamming ≤ 4) mang nhãn khác.
-- Nhóm ngoài đồng: 10217 nhóm cho 21113 ảnh (nhóm lớn nhất 461 ảnh); 636 cặp ảnh chụp liên tiếp được gộp.
-- Rò rỉ cùng nguồn và cùng lớp (cổng ≤ 2%): ảnh có ảnh gần trùng ở split khác ≤ 10 bit: 0; chỉ báo cáo, không gộp: ≤ 14 bit: 5327 (25,2% ảnh ngoài đồng).
+- Nhóm ngoài đồng: 10058 nhóm cho 21158 ảnh (nhóm lớn nhất 465 ảnh, một phiên chụp ngô Common rust nằm hết ở calibration); 14789 cặp ảnh cùng nguồn, cùng lớp có cosine DINOv2 ≥ 0,95 được gộp, 0 cặp như vậy còn nằm ở hai split khác nhau; cổng cân bằng split: 31 cặp (nguồn, lớp) ≥ 100 ảnh, 0 vi phạm, 3 cảnh báo nhóm lớn (ngô khỏe Bangladesh, cà chua ruộng Late blight và khỏe).
+- Rò rỉ cùng nguồn và cùng lớp (cổng ≤ 2%): ảnh có ảnh gần trùng ở split khác ≤ 10 bit: 0; chỉ báo cáo, không gộp: ≤ 14 bit: 5283 (25,0% ảnh ngoài đồng; 3200 ảnh thuộc bộ ngô Mendeley, phần lớn là bản tăng cường của tác giả).
 - Kiểm rò rỉ giữa bốn tập: 0 giao nhau theo `group_id`, `parent_scene_id`, `byte_sha256`, `sample_id`, `image_id`.
-- `quality_audit_v4.json`: PASS (băm lại mọi tệp ảnh, 0 lệch byte; 0 ảnh trùng byte trong cùng split), SHA-256 `9fdacb6e517296c1efe5ecebb6a544e0ed9a2c720719b4cd39fe848d42c96a66`; `partition_spec_v4.json`: label_alpha_0_1 PASS, iid PASS, SHA-256 `56e7ea52b592245b492c29c6539f591eda1db4a72970a633e61db752810dc95f`.
-- `scripts/verify_release_contract.py` chạy các bộ kiểm của nhánh huấn luyện trên release này: 11/11 qua (`artifacts/release_v4_contract_check.json`).
-- Phân vùng `label_alpha_0_1`: số ảnh mỗi client [8554, 9866, 12920, 8949, 12120], rời nhau và hợp bằng đúng tập train, 0 nhóm bị chia cho nhiều client.
-- Phân vùng `iid`: số ảnh mỗi client [10548, 10486, 10467, 10465, 10443], rời nhau và hợp bằng đúng tập train, 0 nhóm bị chia cho nhiều client.
+- `quality_audit_v4.json`: PASS (băm lại mọi tệp ảnh, 0 lệch byte; 0 ảnh trùng byte trong cùng split), SHA-256 `40ad38c72f33dfd64bf193abd234f82d2d466a779e19d7f3cefdf28ab65a529a`; `partition_spec_v4.json`: label_alpha_0_1 PASS, iid PASS, SHA-256 `6699b3e1b11a09ce03dac5f0cab4f34876c837d14daad19b64f0286c92d55886`.
+- `scripts/verify_release_contract.py` chạy các bộ kiểm của nhánh huấn luyện trên release này: 12/12 qua (với `--images`) (`artifacts/release_v4_contract_check.json`).
+- Phân vùng `label_alpha_0_1`: số ảnh mỗi client [13107, 11691, 6647, 8863, 12156], rời nhau và hợp bằng đúng tập train, 0 nhóm bị chia cho nhiều client.
+- Phân vùng `iid`: số ảnh mỗi client [10527, 10502, 10502, 10478, 10455], rời nhau và hợp bằng đúng tập train, 0 nhóm bị chia cho nhiều client.
 
 Số ảnh ngoài đồng đã kiểm nhãn (dùng để học) theo lớp, từ `artifacts/data_gap_report.json`:
 
@@ -98,7 +101,7 @@ Số ảnh ngoài đồng đã kiểm nhãn (dùng để học) theo lớp, từ
 | Apple___Cedar_apple_rust | 175 | 435 | 2 | đạt mục tiêu (≥ 300, ≥ 2 nguồn) |
 | Apple___healthy | 1079 | 1128 | 2 | đạt mục tiêu (≥ 300, ≥ 2 nguồn) |
 | Blueberry___healthy | 983 | 145 | 1 | đủ tối thiểu (≥ 100) |
-| Cherry_(including_sour)___Powdery_mildew | 618 | 0 | 0 | thiếu (< 100) |
+| Cherry_(including_sour)___Powdery_mildew | 618 | 15 | 1 | thiếu (< 100) |
 | Cherry_(including_sour)___healthy | 582 | 200 | 1 | đủ tối thiểu (≥ 100) |
 | Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot | 332 | 2514 | 3 | đạt mục tiêu (≥ 300, ≥ 2 nguồn) |
 | Corn_(maize)___Common_rust_ | 769 | 3254 | 3 | đạt mục tiêu (≥ 300, ≥ 2 nguồn) |
@@ -119,7 +122,7 @@ Số ảnh ngoài đồng đã kiểm nhãn (dùng để học) theo lớp, từ
 | Raspberry___healthy | 236 | 160 | 2 | đủ tối thiểu (≥ 100) |
 | Soybean___healthy | 3295 | 199 | 1 | đủ tối thiểu (≥ 100) |
 | Squash___Powdery_mildew | 1176 | 189 | 1 | đủ tối thiểu (≥ 100) |
-| Strawberry___Leaf_scorch | 708 | 0 | 0 | thiếu (< 100) |
+| Strawberry___Leaf_scorch | 708 | 30 | 3 | thiếu (< 100) |
 | Strawberry___healthy | 312 | 492 | 2 | đạt mục tiêu (≥ 300, ≥ 2 nguồn) |
 | Tomato___Bacterial_spot | 1379 | 711 | 3 | đạt mục tiêu (≥ 300, ≥ 2 nguồn) |
 | Tomato___Early_blight | 660 | 1199 | 3 | đạt mục tiêu (≥ 300, ≥ 2 nguồn) |
@@ -132,7 +135,12 @@ Số ảnh ngoài đồng đã kiểm nhãn (dùng để học) theo lớp, từ
 | Tomato___Tomato_mosaic_virus | 240 | 153 | 1 | đủ tối thiểu (≥ 100) |
 | Tomato___healthy | 1063 | 1660 | 3 | đạt mục tiêu (≥ 300, ≥ 2 nguồn) |
 
-Tóm tắt: 16 lớp đạt mục tiêu, 17 lớp đủ tối thiểu, 5 lớp thiếu (tổng 26484 ảnh ngoài đồng sẵn sàng).
+Tóm tắt: 16 lớp đạt mục tiêu, 17 lớp đủ tối thiểu, 5 lớp thiếu (tổng 26529 ảnh ngoài đồng sẵn sàng).
+
+**Con số này đếm trước khi chia split.** Đếm lại trên tập học của release (chặt hơn): 36/38 lớp có ảnh ngoài đồng trong train; chỉ **12/38 lớp có ≥ 300 ảnh ngoài đồng trong train từ ≥ 2 nguồn**
+(16/38 nếu chỉ yêu cầu ≥ 2 nhóm); 5 lớp dưới 100 ảnh ngoài đồng trong train (Cherry powdery mildew, Grape black rot, Peach bacterial spot, Pepper khỏe, Strawberry leaf scorch) và 2 lớp không có
+(Grape Isariopsis, Tomato Target Spot). Tập thử ngoài đồng của release có 2258 ảnh nhưng **chỉ 1 ảnh đến từ cặp (nguồn, lớp) chưa có trong train**: số đo trên tập này là số "cùng nguồn", lạc quan hơn ảnh nguồn lạ.
+Chỉ có PlantWild (nguồn lạ, khóa riêng) và ảnh tự chụp sau này mới đo được khái quát hóa sang nguồn mới.
 
 ### Đo giá trị dữ liệu khi chưa train
 
@@ -179,8 +187,25 @@ Người dùng không kiểm nhãn được, nên các lớp thiếu được b�
 
 Mọi quyết định ở cả hai cách là **AI sàng lọc bằng mắt, không phải chuyên gia** (`reviewer = ai_screening`).
 
-Năm lớp vẫn chưa có ảnh ngoài đồng sau đợt này, vì không tìm thấy bộ dữ liệu công khai nào: Cherry Powdery mildew, Grape Leaf blight (Isariopsis), Strawberry Leaf scorch,
-Tomato Target Spot, và Peach Bacterial spot (chỉ 22 ảnh). Các lớp này vẫn có 600–1.500 ảnh PlantVillage để học. Độ chính xác trên ảnh ngoài đồng của chúng phải báo riêng.
+Năm lớp vẫn thiếu ảnh ngoài đồng (< 100) sau đợt này, vì không tìm thấy bộ dữ liệu công khai đủ lớn: Cherry Powdery mildew (15 ảnh), Grape Leaf blight (Isariopsis) (0), Strawberry Leaf scorch (30),
+Tomato Target Spot (0), và Peach Bacterial spot (22). Các lớp này vẫn có 600–1.500 ảnh PlantVillage để học. Độ chính xác trên ảnh ngoài đồng của chúng phải báo riêng.
+
+### Bổ sung đợt 3 (hai lớp thiếu, từ bộ ứng viên của phiên làm việc song song)
+
+Một phiên làm việc khác đã tải sẵn ba nhóm ứng viên (iNaturalist *Podosphaera cerasi* 58 ảnh, *Diplocarpon fragariae* 80 ảnh, FieldVitis 555 ảnh) và chỉ ra hai điều đã được kiểm lại và nhận vào:
+(1) số "ngoài đồng sẵn sàng" đếm trước khi chia split (xem ghi chú dưới bảng mục 4); (2) 286 cặp ảnh cosine ≥ 0,95 nằm ở hai split khác nhau ở các nguồn chưa trích đặc trưng (đã gộp nhóm, còn 0 cặp).
+Mọi ảnh ứng viên được xem từng ảnh qua ảnh lưới; tệp `configs/field_candidate_review.json` ghi `photo_id` ảnh được nhận (người kiểm: `ai_screening`, không phải chuyên gia).
+
+| Nhóm ứng viên | Kết quả |
+|---|---|
+| *Podosphaera cerasi* (cherry powdery mildew), 58 ảnh | Nhận 15 ảnh (7 quan sát). Loại: 15 ảnh soi kính hiển vi hoặc cận cảnh sợi nấm trên bề mặt lá, 4 ảnh lát kính/thẻ nhãn, cả cây hoặc cả bụi không thấy lá rõ, lá không thấy triệu chứng. Cây chủ chỉ biết qua tên loài nấm, không xác minh được từ ảnh. |
+| *Diplocarpon fragariae* (strawberry leaf scorch), 80 ảnh | Nhận 28 ảnh (17 quan sát) cộng 2 ảnh đã có sẵn ở nguồn khác (1 iNaturalist, 1 Wikimedia "Rode-vlekkenziekte"). Loại: 16 ảnh hiển vi, ảnh cả luống, ảnh lá đổi màu mùa thu không thấy đốm, ảnh có thẻ nhãn che lá. |
+| 7 ảnh cherry powdery mildew và 5 ảnh dâu đã tải sẵn từ trước, chưa kiểm | Loại hết: lá táo gai hoặc loài khác, ảnh hiển vi, 5 trang sách quảng cáo giống dâu. |
+| FieldVitis, nhóm Leaf blight (Isariopsis), 158 ảnh | **Không nhận.** Chỉ có nhãn của nơi đăng chưa xác minh; mẫu 30 ảnh có 7 ảnh không rõ (23% > ngưỡng 20%), nhiều lá cuộn hoặc phồng không giống đốm Isariopsis; 294/555 ảnh FieldVitis lại gần trùng ảnh đã có trong release (theo kiểm của phiên làm việc kia, chưa kiểm lại từng ảnh). |
+| Cà chua đa lớp (717 ảnh, nhãn YOLO) | **Không dùng.** Có mã lớp 0–6 nhưng không có từ điển lớp; xem ảnh cắt từng mã thì mã trùng nhau về hình dạng (một mã là lá khỏe có viền đen), nên không xác định được Target Spot. |
+
+Kết quả: Cherry powdery mildew 0 → 15 ảnh, Strawberry leaf scorch 0 → 30 ảnh. **Cả hai vẫn "thiếu" (< 100)**, chỉ 7 và 19 quan sát độc lập, nên mỗi lớp chỉ có 1 ảnh ở tập thử:
+hai lớp này chủ yếu học từ ảnh PlantVillage, và độ chính xác ngoài đồng của chúng không đo được trên tập thử của release (chỉ PlantWild có 31 ảnh cherry và 35 ảnh dâu, nguồn lạ).
 
 ### Soát lại độc lập trước khi chốt (ảnh nằm trong release, mỗi lớp 18 ảnh)
 
@@ -205,6 +230,7 @@ với nhóm kiểm từng ảnh (mọi ảnh nhận đều đã xem) đây là l
 | iNaturalist: nhóm lá khỏe của Blueberry, Cherry, Peach, Pepper, Soybean, Corn | Mẫu 30 ảnh không đạt quy tắc nhận nhóm: phần lớn là cả bụi cây, hoa, quả, thân cây hoặc cành trụi mùa đông; nhãn "khỏe" chỉ có nghĩa là người đăng không ghi bệnh. Lá ngô khỏe chỉ đạt 86,7% "đúng" (ngưỡng 90%) nên cũng loại, không nới ngưỡng. |
 | Tomato Yellow Leaf Curl (Mendeley Bangladesh) | Mẫu 30 ảnh: 12 ảnh "không rõ" (> 20%), loại cả nhóm. |
 | Thư mục "healthy" của bộ đào Pakistan (`3pmj85snvw`) | Toàn ảnh quả đào trên cây và trong thùng, không phải ảnh lá (mẫu 30/30). |
+| FieldVitis (Zenodo 17307846), Leaf blight / Isariopsis; cà chua đa lớp nhãn YOLO | Xem bảng "Bổ sung đợt 3" ở mục 4: nhãn chưa xác minh hoặc không có từ điển lớp. |
 | Nhóm Early blight, Leaf Mold, Leaf Curl của bộ cà chua ruộng `93h9p62kg4` | Mẫu 30 ảnh không đạt: nhiều lá chỉ cháy mép, hoặc là vết sâu vẽ bùa thay vì mốc lá. |
 | Nho Black Rot và ớt khỏe (nhóm) | Mẫu không đạt 90% "đúng"; chỉ các ảnh đã xem và được đánh dấu "đúng" trong mẫu mới vào (8 và 25 ảnh). |
 
@@ -235,7 +261,8 @@ Trần cụ thể của từng client tính từ phân vùng v4 `label_alpha_0_1
 python scripts/fetch_external_sources.py --source <tên nguồn>        # tải và giải nén
 python scripts/fetch_inaturalist.py ; python scripts/fetch_wikimedia.py   # nguồn tìm kiếm có giấy phép từng ảnh
 python scripts/import_external_source.py --source <tên nguồn>        # chuẩn hóa EXIF/RGB, dHash, ánh xạ nhãn
-tmp/venv-fm/Scripts/python.exe scripts/extract_external_features.py  # DINOv2 cho 7 nguồn nền đồng màu (gộp ảnh cùng lá); chạy một mình, ~6 phút
+tmp/venv-fm/Scripts/python.exe scripts/extract_external_features.py --sources   # DINOv2 cho mọi nguồn (gộp ảnh cùng lá); chạy một mình, khoảng 30 phút; bỏ --sources: chỉ 7 nguồn nền đồng màu, ~6 phút
+python scripts/import_field_candidates.py --candidates-root <thư mục ứng viên>   # nạp ảnh ứng viên đã duyệt (configs/field_candidate_review.json)
 python scripts/build_label_review.py --external --per-class 30       # sinh trang kiểm nhãn + mẫu
 python scripts/make_review_sheets.py                                 # ảnh lưới để xem nhanh
 python scripts/record_review_decisions.py --spec ... --reviewer ...  # đổi kết quả xem thành quyết định

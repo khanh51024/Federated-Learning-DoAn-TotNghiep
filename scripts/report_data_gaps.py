@@ -31,6 +31,7 @@ TARGET_READY = 300
 MIN_SOURCES = 2
 EXT_SOURCES = "data/external/sources"
 EXT_STATUS = "data/label_review_ext/status.json"
+CANDIDATE_STATUS = "data/label_review_cand/status.json"
 QUARANTINE_STATUS = "data/label_review/status.json"
 QUARANTINE_IMAGE_STATUS = "data/label_review_q2/status.json"
 OWN_PHOTOS = "data/own_photos/manifest.jsonl"
@@ -93,7 +94,7 @@ def build_report() -> dict[str, Any]:
     q_ok = _accepted(QUARANTINE_STATUS)
     q_samples_ok = _accepted(QUARANTINE_IMAGE_STATUS, "accepted_samples")
     ext_ok = _accepted(EXT_STATUS)
-    ext_samples_ok = _accepted(EXT_STATUS, "accepted_samples")
+    ext_samples_ok = _accepted(EXT_STATUS, "accepted_samples") | _accepted(CANDIDATE_STATUS, "accepted_samples")
 
     pv_train, pd_train = Counter(), Counter()
     for r in train:

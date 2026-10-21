@@ -61,6 +61,7 @@ V4_DIR = "data/dataset_sources/mixed/pv_pd_v4"
 EXTERNAL_LINK_DIR = "external_v4"
 EXT_SOURCES = "data/external/sources"
 EXT_STATUS = "data/label_review_ext/status.json"
+CANDIDATE_STATUS = "data/label_review_cand/status.json"   # ảnh ứng viên nạp bởi scripts/import_field_candidates.py (nhận từng ảnh)
 QUARANTINE_STATUS = "data/label_review/status.json"
 QUARANTINE_IMAGE_STATUS = "data/label_review_q2/status.json"   # lá cách ly được nhận TỪNG LÁ (scripts/build_quarantine_image_review.py)
 OWN_MANIFEST = "data/own_photos/manifest.jsonl"
@@ -545,7 +546,7 @@ def main() -> int:
 
     # ---- ảnh ngoài đồng sẵn sàng
     ext_ok = accepted_set(EXT_STATUS)
-    ext_samples_ok = accepted_set(EXT_STATUS, "accepted_samples")
+    ext_samples_ok = accepted_set(EXT_STATUS, "accepted_samples") | accepted_set(CANDIDATE_STATUS, "accepted_samples")
     ext_rows: list[dict[str, Any]] = []
     not_ready: Counter[str] = Counter()
     for manifest in sorted(reg.abs_path(EXT_SOURCES).glob("*/manifest.jsonl")):

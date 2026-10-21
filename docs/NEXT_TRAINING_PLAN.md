@@ -143,7 +143,7 @@ trên ảnh bệnh ngoài đồng của PlantWild và đoán thành có bệnh t
 
 ### 5.1 Dữ liệu
 - Release v4 (`mixed_pv_pd_v4`, mô tả ở `docs/DATASET_V4.md`) = v3 cộng ảnh ngoài đồng từ các bộ dữ liệu công khai đã kiểm nhãn, lá PlantDoc cách ly đã được nhận và ảnh tự chụp
-  (`docs/HUONG_DAN_CHUP_ANH.md`). Quy tắc nhận nhóm giữ nguyên: ≥ 90% "đúng" và ≤ 20% "không rõ" trên mẫu 30 ảnh. Release đã qua `scripts/verify_release_contract.py` (11/11 bộ kiểm của nhánh train);
+  (`docs/HUONG_DAN_CHUP_ANH.md`). Quy tắc nhận nhóm giữ nguyên: ≥ 90% "đúng" và ≤ 20% "không rõ" trên mẫu 30 ảnh. Release đã qua `scripts/verify_release_contract.py` (12/12 bộ kiểm của nhánh train, kèm kiểm byte ảnh);
   năm việc cần sửa ở nhánh train trước khi chạy (truyền `--expected-release-sha`, tham số hóa tên release trong `data_selection.py`, ghim `quality_audit_v4.json`, chỉ số chọn checkpoint theo nguồn, preset tăng cường)
   nằm ở `docs/DATASET_V4.md` mục 7.
 - **PlantWild không được dùng để học**: giấy phép CC BY-NC-ND 4.0 và đã khóa làm tập thử ngoài đồng cố định (`artifacts/external_eval_set.json`, manifest SHA-256 `5adba619…`).
