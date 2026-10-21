@@ -1,6 +1,6 @@
 # FedAvg v7: nhận diện cây trồng và bệnh lá trên dữ liệu không đồng nhất
 
-**Phiên bản đã chạy:** Kaggle, seed 42, phân vùng lệch nhãn Dirichlet α = 0,1, năm client mô phỏng. **Mô hình công bố:** checkpoint toàn cục tốt nhất ở vòng 27; theo [log Kaggle](https://www.kaggle.com/code/nguynhongnamkhnh/fedavg-mixed-v7-non-iid-s42/output), phiên chạy kết thúc sớm tại vòng 32/60. [Kết quả và SHA-256](results/20261003/RESULTS.md) · [Đề xuất cải tiến](docs/DE_XUAT_CAI_TIEN.md).
+**Phiên bản đã chạy:** Kaggle, seed 42, phân vùng lệch nhãn Dirichlet α = 0,1, năm client mô phỏng. **Mô hình công bố:** checkpoint toàn cục tốt nhất ở vòng 27; theo log Kaggle (notebook riêng tư, không dẫn link), phiên chạy kết thúc sớm tại vòng 32/60. [Kết quả và SHA-256](results/20261003/RESULTS.md) · [Đề xuất cải tiến](docs/DE_XUAT_CAI_TIEN.md).
 
 > Các tỷ lệ dưới đây đo trên tập **validation của bộ dữ liệu dự án**. Chưa có phép đo chuẩn hóa trên ảnh độc lập ngoài Internet. Tệp `summary.json` đầy đủ theo từng vòng của Kaggle chưa nằm trong nhánh này; biểu đồ mốc vòng không phải đường cong loss/F1.
 
@@ -80,3 +80,29 @@ python training-workflows/kaggle_fedavg/run.py `
 ```
 
 `SOURCE_MANIFEST.json` chốt SHA **mã train**; `results/20261003/artifact_manifest.json` chốt SHA **kết quả**. Không coi validation hoặc legacy diagnostic test là độ chính xác ảnh ngoài mạng.
+
+## Kết quả Q5 (21-10-2026) — `results/20261021_q5/`
+
+Lượt train đầy đủ Q5 của chiến dịch cải thiện, seed 42, release `pv_pd_v3`. Kết quả v7 ở `results/20261003/` vẫn giữ
+nguyên, là kết quả trước đó. Mọi số dưới đây là **tập kiểm thử chung** `legacy_diagnostic_test` (11.015 ảnh: 10.843
+PlantVillage + 172 crop PlantDoc / 96 cảnh / 13 lớp), mở **một lần**. Mỗi nhánh một seed ⇒ **chỉ mô tả**, không
+kết luận thống kê. Luôn đọc cặp *acc toàn tập + acc PlantDoc*, kèm macro-F1 PlantDoc: 98,4% ảnh test là PlantVillage.
+
+Suy luận: một pipeline chung cho mọi checkpoint (`deploy/DEPLOY.md`): xoay EXIF → RGB (alpha dán nền đen) → resize
+224×224 bilinear antialias (ép vuông) → ToTensor → chuẩn hóa ImageNet; xác suất = softmax(logit / T), T trong
+`deploy/temperatures.json` (fit trên tập calibration). Kiểm sha256 trước, rồi `torch.load(..., weights_only=False)` cho
+checkpoint train; hoặc dùng `*_state_dict.pt` với `weights_only=True`. Không có ngưỡng từ chối được bàn giao. Phần trăm
+hiển thị là độ tin cậy dự đoán, không phải accuracy. Chi tiết: `reports/Q6_REPORT_vi.md`, `reports/S4C_REPORT_vi.md`.
+
+FedAvg mô phỏng 5 client trong một tiến trình (`fedavg_mixed_runner.py`), **chưa phải** triển khai Flower. Kaggle T4.
+
+| Kịch bản | Round tốt nhất / đã chạy | T | Acc toàn tập | Acc PV | **Acc PD** | macro-F1 PD | Byte tới round tốt nhất / tổng |
+|---|---:|---:|---:|---:|---:|---:|---|
+| iid | 13 / 23 | 1,09 | 0,9629 | 0,9702 | **0,5000** | 0,5266 | 778 / 1.377 MiB |
+| label α=1,0 | 6 / 23 | 0,84 | 0,9379 | 0,9450 | **0,4884** | 0,5400 | 359 / 1.377 MiB |
+| label α=0,1 | 27 / 32 | 1,15 | 0,9266 | 0,9334 | **0,5000** | 0,5435 | 1.616 / 1.915 MiB |
+
+- Ba kịch bản bàn giao **ngang nhau**; không chọn α nào làm "sản phẩm FL".
+- Khoảng cách Centralized − FedAvg, acc toàn tập: 2,4 → 4,9 → 6,0 pp theo mức non-IID (chủ yếu là PV). Khoảng cách
+  PD ~13–15 pp **đã có ở IID**, không quy cho non-IID (trộn khác optimizer AdamW/SGD và train phân tán).
+- Dừng sớm theo luật đã đăng ký; mỗi lượt client gửi/nhận state_dict 6.275.944 B.

@@ -1,0 +1,21 @@
+{
+  "central": 2.9257905089934164,
+  "fedavg_a01": 1.1481245800486155,
+  "fedavg_a10": 0.8414747101123413,
+  "fedavg_iid": 1.0937566291397958,
+  "local_iid_client_00": 1.3830792592457006,
+  "local_iid_client_01": 1.1333092809989982,
+  "local_iid_client_02": 1.012821381623284,
+  "local_iid_client_03": 1.1383337160892708,
+  "local_iid_client_04": 1.3800966933749086,
+  "local_label_alpha_0_1_client_00": 3.3935615503182537,
+  "local_label_alpha_0_1_client_01": 3.1416685539343323,
+  "local_label_alpha_0_1_client_02": 3.1844633130362965,
+  "local_label_alpha_0_1_client_03": 2.664303651959483,
+  "local_label_alpha_0_1_client_04": 3.2769345223256234,
+  "local_label_alpha_1_0_client_00": 1.8794749506675,
+  "local_label_alpha_1_0_client_01": 1.4442997341908845,
+  "local_label_alpha_1_0_client_02": 1.9541815698187301,
+  "local_label_alpha_1_0_client_03": 1.6113822301708647,
+  "local_label_alpha_1_0_client_04": 1.7555822908172953
+}

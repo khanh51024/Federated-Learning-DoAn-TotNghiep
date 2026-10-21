@@ -1,0 +1,10 @@
+{
+ "cuda": "12.8",
+ "gpu": "Tesla T4",
+ "gpu_count": 2,
+ "job": "fed_mixed_label_a01_s42",
+ "scheme": "label_alpha_0_1",
+ "spent_s": 9221.12884092331,
+ "status": "CONVERGED_EARLY",
+ "torch": "2.11.0+cu128"
+}
