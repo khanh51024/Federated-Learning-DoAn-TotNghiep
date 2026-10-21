@@ -1,4 +1,4 @@
-"""Tăng cường ảnh mạnh cho lần train sau (chưa dùng để train; kiểm khô bằng scripts/preview_augmentations.py).
+"""Tăng cường ảnh mạnh khi train (`robust_v1`: toàn bộ trên CPU; `gpu_v2`: phần CPU ở `get_cpu_train_transform`, phần còn lại ở src/training/gpu_augment.py).
 
 Lý do: các checkpoint đã công bố chỉ thấy RandomHorizontalFlip trên ảnh lá đã cắt gọn (`canonical_v1`), nên gặp ảnh ngoài đồng
 (nghiêng, nền rối, ánh sáng lạ, ảnh nén) thì sai nhiều. Bộ biến đổi này mô phỏng các khác biệt đó nhưng GIỮ NGUYÊN phần chuẩn hóa
@@ -73,6 +73,23 @@ def get_robust_train_transform(image_size: int = IMAGE_SIZE, scale: tuple[float,
         T.Normalize(IMAGENET_MEAN, IMAGENET_STD),
         T.RandomErasing(p=0.25, scale=(0.02, 0.15), value=0),
     ])
+
+
+def get_cpu_train_transform(image_size: int = IMAGE_SIZE, scale: tuple[float, float] = (0.35, 1.0), trivial_augment: bool = False) -> Any:
+    """Phần CPU của công thức `gpu_v2`: cắt-phóng ngẫu nhiên TRƯỚC, rồi thu nhỏ và nén JPEG trên ảnh đã cắt (rẻ hơn 2–3 lần so với làm trên ảnh gốc).
+
+    Đầu ra: tensor uint8 [3, image_size, image_size], CHƯA chuẩn hóa; lật, xoay, màu, mờ, chuẩn hóa, xóa mảng làm ở src/training/gpu_augment.py.
+    `trivial_augment=True`: thêm TrivialAugmentWide (một phép ngẫu nhiên mỗi ảnh, không cần dò tham số) thay cho phần màu và xoay trên GPU."""
+    from torchvision import transforms as T
+
+    steps = [
+        T.RandomResizedCrop((image_size, image_size), scale=scale, ratio=(3 / 4, 4 / 3), interpolation=T.InterpolationMode.BILINEAR, antialias=True),
+        RandomLowResolution(min_side=max(48, image_size * 3 // 8)),
+        RandomJpeg(),
+    ]
+    if trivial_augment:
+        steps.append(T.TrivialAugmentWide(interpolation=T.InterpolationMode.BILINEAR))
+    return T.Compose([*steps, T.PILToTensor()])
 
 
 def get_eval_transform(image_size: int = IMAGE_SIZE) -> Any:

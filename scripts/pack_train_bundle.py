@@ -10,6 +10,7 @@ Không đóng gói PlantWild hay ảnh không phải lá (chỉ dùng để đo,
 
 Chạy (sau khi commit để mã trong tar đúng với HEAD):
     python scripts/pack_train_bundle.py
+    python scripts/pack_train_bundle.py --code-only   # chỉ dựng lại train_code.tar khi dữ liệu không đổi (giữ train_data_v4.tar, kiểm lại SHA release)
 """
 from __future__ import annotations
 
@@ -28,7 +29,7 @@ sys.path.insert(0, str(ROOT))
 from src import registry as reg  # noqa: E402
 
 RELEASE_REL = "mixed/pv_pd_v4"
-CODE_PATHS = ("src", "scripts/train_v4.py", "scripts/remote", "scripts/verify_release_contract.py", "requirements-train.txt")
+CODE_PATHS = ("src", "scripts/train_v4.py", "scripts/summarize_ablation.py", "scripts/remote", "scripts/verify_release_contract.py", "requirements-train.txt")
 CONTRACT_BRANCH = "origin/train-centralized"
 CONTRACT_FILES = ("plant_data_contract/plant_data_contract/integrity.py", "plant_data_contract/plant_data_contract/partitions.py",
                   "plant_data_contract/plant_data_contract/full_gate.py", "training-workflows/shared/data_selection.py")
@@ -46,6 +47,7 @@ def sha256_file(path: Path) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--out", type=Path, default=ROOT / "tmp" / "train_bundle")
+    parser.add_argument("--code-only", action="store_true", help="giữ train_data_v4.tar đã có (release không đổi), chỉ dựng lại train_code.tar")
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
 
@@ -71,6 +73,20 @@ def main() -> int:
     root = reg.abs_path(reg.DATASET_SOURCES_DIR)
     release = root / RELEASE_REL
     release_sha = sha256_file(release / "release_manifest.json")
+    if args.code_only:
+        previous = json.loads((args.out / "bundle.json").read_text(encoding="utf-8"))
+        if previous["release_manifest_sha256"] != release_sha:
+            print(f"[pack] release đã đổi ({previous['release_manifest_sha256'][:12]} -> {release_sha[:12]}): phải đóng gói lại cả dữ liệu", file=sys.stderr)
+            return 1
+        data_tar = args.out / "train_data_v4.tar"
+        if sha256_file(data_tar) != previous["train_data_v4.tar"]["sha256"]:
+            print("[pack] train_data_v4.tar khác SHA trong bundle.json: phải đóng gói lại cả dữ liệu", file=sys.stderr)
+            return 1
+        bundle = {**previous, "git_commit": commit, "data_from_commit": previous.get("data_from_commit", previous["git_commit"]),
+                  "train_code.tar": {"sha256": sha256_file(code_tar), "bytes": code_tar.stat().st_size}}
+        (args.out / "bundle.json").write_text(json.dumps(bundle, indent=1) + "\n", encoding="utf-8")
+        print(f"[pack] chỉ mã: train_code.tar {bundle['train_code.tar']['sha256'][:12]}; dữ liệu giữ nguyên; commit {commit[:12]}")
+        return 0
     images: set[str] = set()
     for split in SPLITS:
         with (release / "manifests" / f"{split}.jsonl").open(encoding="utf-8") as stream:

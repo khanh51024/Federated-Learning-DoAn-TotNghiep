@@ -65,3 +65,55 @@ def test_load_release_refuses_a_different_release_or_an_edited_manifest(tmp_path
     (manifests / "val.jsonl").write_text(json.dumps({"sample_id": "changed"}) + "\n", encoding="utf-8")
     with pytest.raises(SystemExit):
         load_release(tmp_path, sha)
+
+
+def _rows(spec):
+    """spec: [(miền, lớp, số ảnh), ...] -> các dòng manifest tối thiểu."""
+    return [{"source_domain": d, "class_id": c} for d, c, n in spec for _ in range(n)]
+
+
+def test_balanced_sampling_with_power_one_matches_the_domain_weights():
+    from src.training.data import balanced_sampling_weights
+
+    rows = _rows([("plantvillage", 0, 60), ("plantvillage", 1, 30), ("plantdoc", 0, 8), ("plantdoc", 2, 2)])
+    p = np.array(balanced_sampling_weights(rows, 1.0))
+    w = np.array(domain_balanced_weights(rows))
+    assert p.sum() == pytest.approx(1.0)
+    assert np.allclose(p, w / w.sum())                               # cùng phân bố với trọng số mất mát của run mốc
+    assert p[:90].sum() == pytest.approx(0.5)
+
+
+def test_square_root_class_power_lifts_rare_classes_inside_each_domain():
+    from src.training.data import balanced_sampling_weights
+
+    rows = _rows([("plantdoc", 0, 90), ("plantdoc", 1, 10)])
+    p1 = np.array(balanced_sampling_weights(rows, 1.0))
+    ph = np.array(balanced_sampling_weights(rows, 0.5))
+    assert p1[90:].sum() == pytest.approx(0.1)
+    assert ph[90:].sum() == pytest.approx(np.sqrt(10) / (np.sqrt(90) + np.sqrt(10)))   # 0,25 > 0,1
+    assert np.array(balanced_sampling_weights(rows, 0.0))[90:].sum() == pytest.approx(0.5)
+
+
+def test_class_prior_follows_the_sampling_weights():
+    from src.training.data import class_prior
+
+    rows = _rows([("plantdoc", 0, 3), ("plantdoc", 2, 1)])
+    prior = class_prior(rows, [1, 1, 1, 3], num_classes=3)
+    assert prior == pytest.approx([0.5, 0.0, 0.5])
+
+
+def test_logit_adjustment_is_off_at_tau_zero_and_finite_for_absent_classes():
+    from src.training.loop import logit_adjustment
+
+    assert logit_adjustment([0.5, 0.5, 0.0], 0.0) is None
+    adj = logit_adjustment([0.5, 0.5, 0.0], 1.0)
+    assert np.isfinite(adj.numpy()).all() and float(adj[2]) == pytest.approx(np.log(1e-4))
+
+
+def test_weighted_loader_draws_exactly_len_dataset_samples_per_epoch():
+    from src.training.loop import make_loader
+
+    data = list(range(50))
+    loader = make_loader(data, batch_size=10, shuffle=True, workers=0, seed=3, sampling_weights=[0.0] * 25 + [1.0] * 25)
+    drawn = [int(x) for b in loader for x in b]
+    assert len(drawn) == 50 and min(drawn) >= 25                    # số bước mỗi epoch không đổi, chỉ đổi ảnh được chọn

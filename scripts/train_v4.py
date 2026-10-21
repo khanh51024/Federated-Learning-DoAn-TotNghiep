@@ -39,12 +39,18 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from src.training.data import NUM_CLIENTS, ManifestDataset, domain_balanced_weights, load_release, load_shard  # noqa: E402
-from src.training.loop import cosine_lr, make_loader, make_optimizer, predict, train_epoch  # noqa: E402
+from src.training.data import (NUM_CLIENTS, ManifestDataset, balanced_sampling_weights, class_prior, domain_balanced_weights,  # noqa: E402
+                                load_release, load_shard)
+from src.training.loop import cosine_lr, logit_adjustment, make_loader, make_optimizer, predict, train_epoch  # noqa: E402
 from src.training.metrics import summarize  # noqa: E402
 
 CODE_FILES = ("scripts/train_v4.py", "src/training/data.py", "src/training/loop.py", "src/training/metrics.py", "src/data/robust_transforms.py",
-              "src/federated/strategy.py", "src/model/mobilenetv3.py", "src/common/image_io.py")
+              "src/training/gpu_augment.py", "src/federated/strategy.py", "src/model/mobilenetv3.py", "src/common/image_io.py")
+AUG_DESCRIPTION = {
+    "robust_v1": "robust_v1 (src/data/robust_transforms.py)",
+    "gpu_v2": "gpu_v2 (get_cpu_train_transform + src/training/gpu_augment.py)",
+    "gpu_v2_ta": "gpu_v2_ta (get_cpu_train_transform với TrivialAugmentWide + src/training/gpu_augment.py, bỏ phần màu/xoay trên GPU)",
+}
 
 
 def code_fingerprint() -> str:
@@ -88,7 +94,7 @@ def build_model(seed: int) -> Any:
 
 
 def run_name(args: argparse.Namespace) -> str:
-    return f"{args.method}" + (f"_c{args.client}" if args.method == "local" else "") + f"_s{args.seed}"
+    return f"{args.method}" + (f"_c{args.client}" if args.method == "local" else "") + f"_s{args.seed}" + (f"_{args.tag}" if args.tag else "")
 
 
 def save(path: Path, payload: dict[str, Any]) -> None:
@@ -120,11 +126,22 @@ def main() -> int:
     parser.add_argument("--out", type=Path, default=ROOT / "runs" / "v4")
     parser.add_argument("--limit", type=int, default=0, help="chỉ dùng N ảnh mỗi tập (chạy thử); kết quả KHÔNG dùng để báo cáo")
     parser.add_argument("--device", default="auto")
+    parser.add_argument("--aug", choices=tuple(AUG_DESCRIPTION), default="robust_v1",
+                        help="robust_v1: tăng cường toàn bộ trên CPU (run mốc); gpu_v2: phần nặng chạy trên GPU; gpu_v2_ta: như gpu_v2 + TrivialAugmentWide")
+    parser.add_argument("--sampling", choices=("weights", "balanced"), default="weights",
+                        help="weights: trọng số mất mát cân bằng hai miền (run mốc); balanced: lấy mẫu có hoàn lại cân bằng hai miền")
+    parser.add_argument("--class-power", type=float, default=1.0,
+                        help="với --sampling balanced: lớp c được chọn tỉ lệ n_c^p trong miền (1 giữ tỉ lệ, 0,5 căn bậc hai)")
+    parser.add_argument("--logit-adjust", type=float, default=0.0, help="τ của logit adjustment khi học (0 = tắt)")
+    parser.add_argument("--train-size", type=int, default=224, help="cạnh ảnh khi học; đánh giá luôn ở 224 như web")
+    parser.add_argument("--channels-last", action="store_true", help="bố cục bộ nhớ channels_last (nhanh hơn với fp16 trên GPU)")
+    parser.add_argument("--tag", default="", help="hậu tố tên run (ablation)")
     args = parser.parse_args()
 
     import torch
 
-    from src.data.robust_transforms import get_eval_transform, get_robust_train_transform
+    from src.data.robust_transforms import get_cpu_train_transform, get_eval_transform, get_robust_train_transform
+    from src.training.gpu_augment import GpuAugment
     from src.federated.strategy import aggregate_fedavg
     from src.model.mobilenetv3 import get_parameters, set_parameters
 
@@ -155,7 +172,9 @@ def main() -> int:
         "method": args.method, "seed": args.seed, "client": args.client, "scheme": args.scheme if args.method != "centralized" else None,
         "budget": args.budget, "local_epochs": args.local_epochs, "batch_size": args.batch_size, "lr": args.lr, "momentum": args.momentum,
         "weight_decay": args.weight_decay, "label_smoothing": args.label_smoothing, "warmup": args.warmup, "limit": args.limit,
-        "train_transform": "robust_v1 (src/data/robust_transforms.py)", "eval_transform": "canonical_v1", "loss_weighting": "domain_balanced",
+        "train_transform": AUG_DESCRIPTION[args.aug], "train_size": args.train_size, "eval_transform": "canonical_v1",
+        "loss_weighting": "domain_balanced" if args.sampling == "weights" else f"balanced_sampler(class_power={args.class_power})",
+        "logit_adjust_tau": args.logit_adjust, "channels_last": args.channels_last, "tag": args.tag,
         "selection": "mean macro-F1 over val sources with >= 30 images", "release_name": release["meta"]["release_name"],
         "release_manifest_sha256": release["sha256"], "train_sizes": [len(rows) for rows in train_sets], "code_fingerprint": code_fingerprint(),
         "git_commit": git_commit(), "torch": torch.__version__, "device": str(device),
@@ -170,14 +189,37 @@ def main() -> int:
             raise SystemExit(f"{run_dir} đã có lần chạy với cấu hình khác, không chạy tiếp lên đó: {changed}")
     config_path.write_text(json.dumps(config, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
-    train_tf, eval_tf = get_robust_train_transform(), get_eval_transform()
+    eval_tf = get_eval_transform()
+    if args.aug == "robust_v1":
+        train_tf = get_robust_train_transform(args.train_size)
+    else:
+        train_tf = get_cpu_train_transform(args.train_size, trivial_augment=args.aug == "gpu_v2_ta")
+    if args.sampling == "balanced":
+        sampling = [balanced_sampling_weights(rows, args.class_power) for rows in train_sets]
+        weights = [torch.ones(len(rows), dtype=torch.float32) for rows in train_sets]   # cân bằng đã nằm ở bộ lấy mẫu
+        seen_weights = sampling
+    else:
+        sampling = [None] * len(train_sets)
+        weights = [torch.tensor(domain_balanced_weights(rows), dtype=torch.float32) for rows in train_sets]
+        seen_weights = [w.tolist() for w in weights]
+    # logit adjustment theo tần suất lớp mà chính tập học (với FedAvg/Local: shard của client) thực sự đưa vào mất mát
+    adjusts = [logit_adjustment(class_prior(rows, w), args.logit_adjust) for rows, w in zip(train_sets, seen_weights)]
     loaders = [make_loader(ManifestDataset(rows, args.dataset_root, train_tf), args.batch_size, True, args.workers, args.seed * 100 + k,
-                           persistent=args.method == "fedavg") for k, rows in enumerate(train_sets)]
-    weights = [torch.tensor(domain_balanced_weights(rows), dtype=torch.float32) for rows in train_sets]
+                           persistent=args.method == "fedavg", sampling_weights=sampling[k]) for k, rows in enumerate(train_sets)]
     eval_loaders = {name: make_loader(ManifestDataset(rows, args.dataset_root, eval_tf), args.batch_size * 2, False, args.workers, 0)
                     for name, rows in eval_rows.items()}
+    aug_generators: list[Any] = []
+    augments: list[Any] = [None] * len(train_sets)
+    if args.aug != "robust_v1":
+        for k in range(len(train_sets)):
+            generator = torch.Generator(device=device)
+            generator.manual_seed(args.seed * 1000 + k)
+            aug_generators.append(generator)
+            augments[k] = GpuAugment(generator, color=args.aug == "gpu_v2", rotate=args.aug == "gpu_v2")
 
     model = build_model(args.seed).to(device)
+    if args.channels_last:
+        model = model.to(memory_format=torch.channels_last)
     steps_total = args.budget * (args.local_epochs if args.method == "local" else 1)
     optimizer = make_optimizer(model, args.lr, args.momentum, args.weight_decay) if args.method != "fedavg" else None
     scaler = torch.amp.GradScaler("cuda", enabled=device.type == "cuda")
@@ -193,6 +235,8 @@ def main() -> int:
         torch.set_rng_state(state["torch_rng"])
         np.random.set_state(state["numpy_rng"])
         random.setstate(state["python_rng"])
+        for generator, rng in zip(aug_generators, state.get("aug_rng") or []):
+            generator.set_state(rng)
         print(f"[train] {run_dir.name}: chạy tiếp từ bước {start}/{steps_total}")
 
     history = run_dir / "history.jsonl"
@@ -206,7 +250,8 @@ def main() -> int:
                 local = copy.deepcopy(model)
                 local_opt = make_optimizer(local, lr, args.momentum, args.weight_decay)   # trạng thái bộ tối ưu của client làm mới mỗi vòng
                 local_scaler = torch.amp.GradScaler("cuda", enabled=device.type == "cuda")
-                stats = [train_epoch(local, loader, local_opt, local_scaler, device, w, args.label_smoothing) for _ in range(args.local_epochs)]
+                stats = [train_epoch(local, loader, local_opt, local_scaler, device, w, args.label_smoothing, augments[k], adjusts[k], args.channels_last)
+                         for _ in range(args.local_epochs)]
                 updates.append({"weights": get_parameters(local), "num_examples": len(train_sets[k]), "client_id": k})
                 client_stats.append({"client": k, "loss": stats[-1]["loss"], "steps": sum(s["steps"] for s in stats)})
                 del local, local_opt
@@ -215,8 +260,9 @@ def main() -> int:
         else:
             for group in optimizer.param_groups:
                 group["lr"] = lr
-            train_info = train_epoch(model, loaders[0], optimizer, scaler, device, weights[0], args.label_smoothing)
-        val = summarize(predict(model, eval_loaders["val"], device), eval_rows["val"])
+            train_info = train_epoch(model, loaders[0], optimizer, scaler, device, weights[0], args.label_smoothing, augments[0], adjusts[0],
+                                     args.channels_last)
+        val = summarize(predict(model, eval_loaders["val"], device, args.channels_last), eval_rows["val"])
         record = {"step": step, "lr": lr, "train": train_info, "val": val, "seconds": round(time.time() - started, 1)}
         with history.open("a", encoding="utf-8") as stream:
             stream.write(json.dumps(record, ensure_ascii=False) + "\n")
@@ -226,13 +272,13 @@ def main() -> int:
                              "seed": args.seed, "client": args.client, "release_manifest_sha256": release["sha256"], "code_fingerprint": config["code_fingerprint"]})
         save(last_path, {"model_state": model.state_dict(), "optimizer_state": optimizer.state_dict() if optimizer is not None else None,
                          "scaler_state": scaler.state_dict(), "step": step, "best": best, "torch_rng": torch.get_rng_state(),
-                         "numpy_rng": np.random.get_state(), "python_rng": random.getstate()})
+                         "numpy_rng": np.random.get_state(), "python_rng": random.getstate(), "aug_rng": [g.get_state() for g in aug_generators]})
         print(f"[train] {run_dir.name} {step + 1}/{steps_total} lr {lr:.4f} val top1 {val['top1']} chọn {val['selection_score']} "
               f"(tốt nhất {best['score']} ở bước {best['step']}) {record['seconds']}s", flush=True)
 
     state = torch.load(best_path, map_location="cpu", weights_only=False)
     model.load_state_dict(state["model_state"])
-    logits = {name: predict(model, loader, device) for name, loader in eval_loaders.items()}
+    logits = {name: predict(model, loader, device, args.channels_last) for name, loader in eval_loaders.items()}
     np.savez_compressed(run_dir / "logits_best.npz", **logits, **{f"{n}_sample_ids": np.array([r["sample_id"] for r in eval_rows[n]]) for n in eval_rows})
     final = {"run": run_dir.name, "best_step": state["step"], "selection_score": state["selection_score"], "config": config,
              **{name: summarize(logits[name], eval_rows[name]) for name in eval_rows}}

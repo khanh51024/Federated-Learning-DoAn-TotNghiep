@@ -210,6 +210,39 @@ Quy trình:
    gộp theo hạt giống, so với mô hình đang công bố và báo từng ngưỡng ở mục 5.4 (`artifacts/train_v4_results.json`).
 5. Chỉ nhập vào web khi đạt các ngưỡng; hiệu chỉnh lại cổng từ chối ảnh không phải lá cho mô hình mới.
 
+### 5.7 Tối ưu quy trình train (2026-10-21, sau run mốc đầu tiên trên RTX 4080)
+
+**Đo được ở run mốc** (`robust_v1`, Centralized seed 42, 40 epoch):
+- 52–55 giây/epoch; GPU chỉ dùng 14–30%; CPU 8 lõi gần kín, nên tăng từ 10 lên 14 worker chỉ nhanh hơn 6,5%.
+- Đo từng bước trên ảnh thật của release (một luồng): cả chuỗi `robust_v1` tốn 9,6–10,7 ms/ảnh, trong đó ColorJitter 4,2–4,5 ms và GaussianBlur 2,0–2,6 ms. Cạnh dài trung vị của ảnh chỉ 256 px, nên giải mã không phải nghẽn.
+- Đường học: PlantVillage val đạt 98% từ epoch 5. Ảnh ngoài đồng val dừng ở 87–89% từ epoch 7, PlantDoc khoảng 50%, train top-1 lên 97,7%. Điểm yếu là khái quát hóa sang ảnh ngoài đồng, không phải thiếu epoch.
+
+**Thay đổi** (bật bằng cờ, mặc định vẫn là công thức run mốc để tái lập):
+- `--aug gpu_v2`: CPU chỉ cắt-phóng ngẫu nhiên, thu nhỏ và nén JPEG trên ảnh đã cắt (`get_cpu_train_transform`). Lật, xoay, màu, mờ, chuẩn hóa và xóa mảng chạy theo batch trên GPU (`src/training/gpu_augment.py`), cùng xác suất và biên độ, tham số riêng cho từng ảnh, tái lập theo hạt giống. Ảnh lưới so sánh cho thấy mức biến đổi tương đương.
+- `--channels-last`: bố cục bộ nhớ nhanh hơn cho tích chập fp16.
+- `--sampling balanced --class-power p`: lấy mẫu có hoàn lại cân bằng hai miền thay cho trọng số mất mát; trong miền, lớp c tỉ lệ n_c^p (p = 0,5 nâng vừa phải lớp ít ảnh). Mỗi epoch vẫn đúng `len(tập)` ảnh, nên số bước gradient giữa ba cách không đổi.
+- `--logit-adjust τ` ([Menon và cộng sự, 2021](https://arxiv.org/pdf/2007.07314v1)): cộng τ·log(tần suất lớp mà tập học đưa vào mất mát). Với FedAvg và Local-only, tần suất tính trên shard của từng client; suy luận dùng logit gốc.
+- `--train-size 192` ([FixRes](https://arxiv.org/pdf/1906.06423)): học nhỏ hơn mà thử ở 224 như web.
+- `--aug gpu_v2_ta` ([TrivialAugment](https://arxiv.org/pdf/2103.10158)): phương án so sánh cho phần màu/xoay.
+
+**Không dùng để so sánh ba cách:**
+- [Chưng cất tri thức](https://arxiv.org/pdf/2106.05237): mô hình thầy học trên dữ liệu gộp, không công bằng cho FedAvg và Local-only.
+- FedAvgM/FedProx: đổi phương pháp gộp của đồ án; [NIID-Bench](https://arxiv.org/pdf/2102.02079) cho thấy FedProx không hơn FedAvg rõ rệt khi lệch nhãn.
+
+**Chọn công thức bằng ablation ngắn** (`scripts/remote/run_ablation.sh`, Centralized seed 42, chỉ so trên val bằng `scripts/summarize_ablation.py`):
+
+| Mã | Công thức |
+|---|---|
+| A40 | `gpu_v2`, 40 epoch, trọng số như cũ: phải ngang run mốc (±1 điểm) |
+| A | như A40 nhưng 20 epoch |
+| B | A + lấy mẫu cân bằng, p = 1 |
+| C | B với p = 0,5 |
+| D | C + logit adjustment τ = 1 |
+| E | biến thể tốt nhất + học 192 px |
+| F | biến thể tốt nhất + `gpu_v2_ta` |
+
+Chênh dưới 0,5 điểm thì chọn bản rẻ hơn. Đợt chính chạy bằng `RECIPE="..." OUT_DIR=... bash scripts/remote/run_all.sh`.
+
 ### 5.5 Việc đã làm sẵn
 - Tập thử ngoài đồng và công cụ đo: `scripts/build_external_eval_set.py`, `scripts/eval_external_set.py`, `scripts/eval_inference_variants.py`.
 - Bộ tăng cường ảnh và kiểm khô (vẽ lưới ảnh, chạy một batch qua MobileNetV3-Small trên CPU): `src/data/robust_transforms.py`, `scripts/preview_augmentations.py`.

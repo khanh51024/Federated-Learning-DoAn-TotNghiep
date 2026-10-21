@@ -58,6 +58,32 @@ def domain_balanced_weights(rows: list[dict[str, Any]]) -> list[float]:
     return [n / (2 * counts[r["source_domain"] == LAB_DOMAIN]) for r in rows]
 
 
+def balanced_sampling_weights(rows: list[dict[str, Any]], class_power: float = 1.0) -> list[float]:
+    """Xác suất chọn từng ảnh (tổng bằng 1) cho bộ lấy mẫu có hoàn lại thay cho trọng số mất mát.
+
+    Hai miền (phòng thí nghiệm, ngoài đồng) được chọn bằng nhau; trong mỗi miền, lớp c được chọn tỉ lệ với n_c^class_power rồi chia đều cho ảnh
+    của lớp. class_power = 1 cho đúng tỉ lệ của `domain_balanced_weights`; 0,5 (căn bậc hai) nâng vừa phải các lớp ít ảnh; 0 là cân bằng lớp hoàn toàn."""
+    groups: dict[bool, Counter[int]] = {}
+    for r in rows:
+        groups.setdefault(r["source_domain"] == LAB_DOMAIN, Counter())[int(r["class_id"])] += 1
+    mass = {d: sum(n ** class_power for n in counts.values()) for d, counts in groups.items()}
+    out = []
+    for r in rows:
+        d, c = r["source_domain"] == LAB_DOMAIN, int(r["class_id"])
+        n = groups[d][c]
+        out.append((1 / len(groups)) * (n ** class_power / mass[d]) / n)
+    return out
+
+
+def class_prior(rows: list[dict[str, Any]], weights: list[float], num_classes: int = 38) -> list[float]:
+    """Tần suất lớp mà mô hình thực sự thấy khi học (theo xác suất lấy mẫu hoặc trọng số mất mát), tổng bằng 1; dùng cho logit adjustment."""
+    prior = [0.0] * num_classes
+    for r, w in zip(rows, weights):
+        prior[int(r["class_id"])] += w
+    total = sum(prior)
+    return [p / total for p in prior]
+
+
 class ManifestDataset:
     """Ảnh theo manifest; giải mã chuẩn của ứng dụng (xoay EXIF, nền trong suốt thành đen, RGB). Trả (ảnh đã biến đổi, nhãn, chỉ số)."""
 
