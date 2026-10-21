@@ -19,6 +19,7 @@ declare -A FLAGS=(
   [C]="$GPU --budget 20 --sampling balanced --class-power 0.5"
   [D]="$GPU --budget 20 --sampling balanced --class-power 0.5 --logit-adjust 1"
   [A128]="$GPU --budget 20 --batch-size 128 --lr 0.02"                         # batch gấp đôi, lr theo quy tắc tuyến tính: ít bước hơn, nhanh hơn
+  [Abf]="$GPU --budget 20 --amp bf16"                                          # bf16: không GradScaler, bớt một lần đồng bộ mỗi bước
 )
 cd "$CODE"
 . "$WORK/venv/bin/activate"

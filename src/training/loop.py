@@ -60,11 +60,12 @@ def logit_adjustment(prior: list[float], tau: float, floor: float = 1e-4) -> Any
 
 
 def train_epoch(model: Any, loader: Any, optimizer: Any, scaler: Any, device: Any, sample_weights: Any, label_smoothing: float,
-                augment: Any = None, logit_adjust: Any = None, channels_last: bool = False) -> dict[str, float]:
+                augment: Any = None, logit_adjust: Any = None, channels_last: bool = False, amp_dtype: str = "fp16") -> dict[str, float]:
     """Một lượt qua `loader`. Mất mát = cross-entropy (label smoothing) có trọng số từng mẫu, chuẩn hóa theo tổng trọng số của batch.
 
     `augment`: hàm tăng cường chạy trên thiết bị (batch uint8 -> float đã chuẩn hóa, src/training/gpu_augment.py); None khi loader đã trả ảnh chuẩn hóa.
-    `logit_adjust`: vector [38] cộng vào logit trước khi tính mất mát (`logit_adjustment`)."""
+    `logit_adjust`: vector [38] cộng vào logit trước khi tính mất mát (`logit_adjustment`).
+    `amp_dtype`: "fp16" (cần GradScaler, mỗi bước một lần đồng bộ để kiểm tràn số) hoặc "bf16" (không cần GradScaler; truyền scaler đã tắt)."""
     import torch
 
     model.train()
@@ -87,7 +88,7 @@ def train_epoch(model: Any, loader: Any, optimizer: Any, scaler: Any, device: An
         labels = labels.to(device, non_blocking=True)
         weights = sample_weights[index.to(device, non_blocking=True)]
         optimizer.zero_grad(set_to_none=True)
-        with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_amp):
+        with torch.autocast(device_type=device.type, dtype=torch.bfloat16 if amp_dtype == "bf16" else torch.float16, enabled=use_amp):
             logits = model(images)
             trained = logits.float() if adjust is None else logits.float() + adjust
             loss = (criterion(trained, labels) * weights).sum() / weights.sum()
@@ -105,7 +106,7 @@ def train_epoch(model: Any, loader: Any, optimizer: Any, scaler: Any, device: An
             "seconds": round(time.time() - started, 1)}
 
 
-def predict(model: Any, loader: Any, device: Any, channels_last: bool = False) -> np.ndarray:
+def predict(model: Any, loader: Any, device: Any, channels_last: bool = False, amp_dtype: str = "fp16") -> np.ndarray:
     import torch
 
     model.eval()
@@ -116,7 +117,7 @@ def predict(model: Any, loader: Any, device: Any, channels_last: bool = False) -
             images = images.to(device, non_blocking=True)
             if channels_last:
                 images = images.contiguous(memory_format=torch.channels_last)
-            with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_amp):
+            with torch.autocast(device_type=device.type, dtype=torch.bfloat16 if amp_dtype == "bf16" else torch.float16, enabled=use_amp):
                 logits = model(images)
             out[index.numpy()] = logits.float().cpu().numpy()
     return out

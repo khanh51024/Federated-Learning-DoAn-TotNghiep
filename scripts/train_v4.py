@@ -136,6 +136,7 @@ def main() -> int:
     parser.add_argument("--train-size", type=int, default=224, help="cạnh ảnh khi học; đánh giá luôn ở 224 như web")
     parser.add_argument("--channels-last", action="store_true", help="bố cục bộ nhớ channels_last (nhanh hơn với fp16 trên GPU)")
     parser.add_argument("--tag", default="", help="hậu tố tên run (ablation)")
+    parser.add_argument("--amp", choices=("fp16", "bf16"), default="fp16", help="kiểu số khi học trên GPU; bf16 không cần GradScaler (bớt một lần đồng bộ mỗi bước)")
     args = parser.parse_args()
 
     import torch
@@ -174,7 +175,7 @@ def main() -> int:
         "weight_decay": args.weight_decay, "label_smoothing": args.label_smoothing, "warmup": args.warmup, "limit": args.limit,
         "train_transform": AUG_DESCRIPTION[args.aug], "train_size": args.train_size, "eval_transform": "canonical_v1",
         "loss_weighting": "domain_balanced" if args.sampling == "weights" else f"balanced_sampler(class_power={args.class_power})",
-        "logit_adjust_tau": args.logit_adjust, "channels_last": args.channels_last, "tag": args.tag,
+        "logit_adjust_tau": args.logit_adjust, "channels_last": args.channels_last, "tag": args.tag, "amp": args.amp,
         "selection": "mean macro-F1 over val sources with >= 30 images", "release_name": release["meta"]["release_name"],
         "release_manifest_sha256": release["sha256"], "train_sizes": [len(rows) for rows in train_sets], "code_fingerprint": code_fingerprint(),
         "git_commit": git_commit(), "torch": torch.__version__, "device": str(device),
@@ -222,7 +223,8 @@ def main() -> int:
         model = model.to(memory_format=torch.channels_last)
     steps_total = args.budget * (args.local_epochs if args.method == "local" else 1)
     optimizer = make_optimizer(model, args.lr, args.momentum, args.weight_decay) if args.method != "fedavg" else None
-    scaler = torch.amp.GradScaler("cuda", enabled=device.type == "cuda")
+    use_scaler = device.type == "cuda" and args.amp == "fp16"
+    scaler = torch.amp.GradScaler("cuda", enabled=use_scaler)
     start, best = 0, {"score": -1.0, "step": None}
     last_path, best_path = run_dir / "checkpoint_last.pt", run_dir / "checkpoint_best.pt"
     if last_path.is_file():
@@ -249,9 +251,9 @@ def main() -> int:
             for k, (loader, w) in enumerate(zip(loaders, weights)):
                 local = copy.deepcopy(model)
                 local_opt = make_optimizer(local, lr, args.momentum, args.weight_decay)   # trạng thái bộ tối ưu của client làm mới mỗi vòng
-                local_scaler = torch.amp.GradScaler("cuda", enabled=device.type == "cuda")
-                stats = [train_epoch(local, loader, local_opt, local_scaler, device, w, args.label_smoothing, augments[k], adjusts[k], args.channels_last)
-                         for _ in range(args.local_epochs)]
+                local_scaler = torch.amp.GradScaler("cuda", enabled=use_scaler)
+                stats = [train_epoch(local, loader, local_opt, local_scaler, device, w, args.label_smoothing, augments[k], adjusts[k], args.channels_last,
+                                     args.amp) for _ in range(args.local_epochs)]
                 updates.append({"weights": get_parameters(local), "num_examples": len(train_sets[k]), "client_id": k})
                 client_stats.append({"client": k, "loss": stats[-1]["loss"], "steps": sum(s["steps"] for s in stats)})
                 del local, local_opt
@@ -261,8 +263,8 @@ def main() -> int:
             for group in optimizer.param_groups:
                 group["lr"] = lr
             train_info = train_epoch(model, loaders[0], optimizer, scaler, device, weights[0], args.label_smoothing, augments[0], adjusts[0],
-                                     args.channels_last)
-        val = summarize(predict(model, eval_loaders["val"], device, args.channels_last), eval_rows["val"])
+                                     args.channels_last, args.amp)
+        val = summarize(predict(model, eval_loaders["val"], device, args.channels_last, args.amp), eval_rows["val"])
         record = {"step": step, "lr": lr, "train": train_info, "val": val, "seconds": round(time.time() - started, 1)}
         with history.open("a", encoding="utf-8") as stream:
             stream.write(json.dumps(record, ensure_ascii=False) + "\n")
@@ -278,7 +280,7 @@ def main() -> int:
 
     state = torch.load(best_path, map_location="cpu", weights_only=False)
     model.load_state_dict(state["model_state"])
-    logits = {name: predict(model, loader, device, args.channels_last) for name, loader in eval_loaders.items()}
+    logits = {name: predict(model, loader, device, args.channels_last, args.amp) for name, loader in eval_loaders.items()}
     np.savez_compressed(run_dir / "logits_best.npz", **logits, **{f"{n}_sample_ids": np.array([r["sample_id"] for r in eval_rows[n]]) for n in eval_rows})
     final = {"run": run_dir.name, "best_step": state["step"], "selection_score": state["selection_score"], "config": config,
              **{name: summarize(logits[name], eval_rows[name]) for name in eval_rows}}
