@@ -186,6 +186,28 @@ Một đợt train mới chỉ được nhập vào web nếu đồng thời:
 4. tỉ lệ ảnh lá khỏe PlantWild bị đoán thành bệnh giảm xuống dưới 60% (chỉ báo xu hướng, nhãn ngầm định);
 5. kết quả báo ba hạt giống; chênh Centralized và FedAvg đi kèm khoảng tin cậy.
 
+### 5.6 Bộ train v4 và cách chạy trên máy GPU (chuẩn bị 2026-10-21)
+
+Ba bộ chạy cũ ở các nhánh train gắn cứng release v3 và dùng hai công thức khác nhau. Vì vậy đợt train v4 dùng một bộ train thống nhất trong repo này:
+`scripts/train_v4.py` cùng `src/training/`.
+- **Ba cách cùng công thức**: cùng w0 theo hạt giống (ImageNet-1K + đầu 38 lớp); SGD động lượng 0,9, lr 0,01 cosine, khởi động 1 bước; weight decay 1e-4;
+  batch 64; label smoothing 0,1; tăng cường mạnh; trọng số mất mát cân bằng ảnh phòng thí nghiệm với ảnh ngoài đồng.
+- **Cùng số bước gradient**: Centralized 40 epoch = FedAvg 40 vòng × 1 epoch cục bộ trên 5 shard; mỗi Local-only 40 epoch trên shard của mình.
+- **Gộp FedAvg**: bằng `src.federated.strategy.aggregate_fedavg` (hàm đã kiểm chứng ở mục 4.3 của báo cáo 2026-10-21); bộ tối ưu của client làm mới mỗi vòng.
+- **Chọn checkpoint**: theo macro-F1 trung bình giữa các nguồn trên val (mỗi nguồn ≥ 30 ảnh nặng như nhau), không theo một miền.
+- **Checkpoint**: `model_state` của torchvision mobilenet_v3_small 38 lớp, cùng định dạng mô hình đang dùng trên web.
+- **Chạy tiếp được khi bị ngắt** (`checkpoint_last.pt`); run có tệp `DONE` thì bỏ qua.
+
+Quy trình:
+1. Kiểm nhãn người cho các nhóm lá PlantDoc cách ly (`data/label_review/index.html` → `decisions.json`), áp quy tắc nhận nhóm, dựng lại release
+   (`scripts/build_release_v4.py`) và kiểm hợp đồng (`scripts/verify_release_contract.py`).
+2. `python scripts/pack_train_bundle.py`: tạo `train_data_v4.tar` (release + 76.858 ảnh, khoảng 2,1 GB), `train_code.tar` (mã đã commit) và `bundle.json` (SHA-256).
+3. Trên máy GPU: giải nén vào `~/cropfed/{data,code}`, chạy `bash code/scripts/remote/setup_env.sh`, rồi
+   `RELEASE_SHA=<sha> nohup bash code/scripts/remote/run_all.sh &`. Lệnh này chạy 3 hạt giống (42, 123, 2026) × (Centralized, FedAvg, 5 Local-only) = 21 run.
+4. Tải `runs/v4` về rồi chạy `python scripts/eval_trained_v4.py --runs <thư mục>`. Script đo PlantWild ở máy này (không đưa ảnh CC BY-NC-ND lên máy thuê),
+   gộp theo hạt giống, so với mô hình đang công bố và báo từng ngưỡng ở mục 5.4 (`artifacts/train_v4_results.json`).
+5. Chỉ nhập vào web khi đạt các ngưỡng; hiệu chỉnh lại cổng từ chối ảnh không phải lá cho mô hình mới.
+
 ### 5.5 Việc đã làm sẵn
 - Tập thử ngoài đồng và công cụ đo: `scripts/build_external_eval_set.py`, `scripts/eval_external_set.py`, `scripts/eval_inference_variants.py`.
 - Bộ tăng cường ảnh và kiểm khô (vẽ lưới ảnh, chạy một batch qua MobileNetV3-Small trên CPU): `src/data/robust_transforms.py`, `scripts/preview_augmentations.py`.

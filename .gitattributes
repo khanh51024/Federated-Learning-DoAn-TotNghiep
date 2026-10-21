@@ -2,3 +2,5 @@
 scripts/hooks/* text eol=lf
 # Ba tệp hợp đồng của bundle đã ghim SHA-256 theo byte: không để Git đổi LF/CRLF khi checkout (core.autocrlf=true trên Windows)
 artifacts/branch_demo/**/contract/*.py -text
+# Script chạy trên máy GPU Linux: luôn LF (git archive áp dụng core.autocrlf khi xuất)
+scripts/remote/*.sh text eol=lf

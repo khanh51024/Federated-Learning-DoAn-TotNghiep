@@ -1,0 +1,4 @@
+# Thư viện cho scripts/train_v4.py trên máy GPU (torch/torchvision cài riêng theo bản CUDA, xem scripts/remote/setup_env.sh)
+numpy>=2.1,<3
+pillow>=11,<13
+pandas>=2.2,<4

@@ -200,6 +200,9 @@ tmp/venv-fm/Scripts/python.exe scripts/eval_gallery_value.py         # đo giá 
 
 ### Việc cần làm ở nhánh huấn luyện trước khi train trên v4 (phát hiện khi rà soát, chưa sửa vì nằm ngoài repo này)
 
+Đợt train v4 không dùng ba bộ chạy cũ mà dùng bộ train thống nhất `scripts/train_v4.py` (`docs/NEXT_TRAINING_PLAN.md` mục 5.6), bộ này đã xử lý cả năm điểm dưới đây.
+Danh sách chỉ còn cần khi muốn chạy release v4 bằng bộ chạy cũ ở các nhánh train.
+
 1. Truyền `--expected-release-sha <release_manifest_sha256 trong artifacts/release_v4_report.json>`; bộ chạy chỉ ghim mã băm v1–v3.
 2. `training-workflows/shared/data_selection.py` gắn cứng `RELEASE_NAME = "pv_pd_v3"` và đường dẫn `mixed/pv_pd_v3`; cần tham số hóa. `scripts/verify_release_contract.py` đặt tên này trong bộ nhớ để kiểm tra phần còn lại.
 3. Ghim `quality_audit_v4.json` (tên tệp và SHA-256 trong `artifacts/release_v4_report.json`) vào spec huấn luyện, mục `quality_gate`.

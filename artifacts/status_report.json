@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-21T15:01:56",
+      "generated_at": "2026-10-21T15:43:44",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,13 +145,13 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-21T15:02:03",
+      "generated_at": "2026-10-21T15:43:51",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
-      "generated_at": "2026-10-21T15:08:28",
-      "code_fingerprint": "3b37c2480838357045ac7ea8e6daaf783af8ab06741061780eb4974987d4fe28",
+      "generated_at": "2026-10-21T15:50:02",
+      "code_fingerprint": "61a2d7c7cda3a89f11235615ad517a701de7b192e5f99a43a2a9936ba4eae2c1",
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
@@ -180,7 +180,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-21T15:02:01",
+      "generated_at": "2026-10-21T15:43:49",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
@@ -227,7 +227,7 @@
       "id": "no_hardcode",
       "title": "Không hardcode đường dẫn artifact",
       "status": "CHƯA",
-      "detail": "3 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/build_community_sim_features.py:85', 'scripts/evaluate_plantvillage_reference.py:35', 'scripts/simulate_community.py:32']",
+      "detail": "4 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/build_community_sim_features.py:85', 'scripts/eval_trained_v4.py:31', 'scripts/evaluate_plantvillage_reference.py:35', 'scripts/simulate_community.py:32']",
       "unlock": []
     },
     {
@@ -269,7 +269,7 @@
       "id": "full_tests",
       "title": "Full tests pass trên mã nguồn hiện tại",
       "status": "XONG",
-      "detail": "technical_acceptance=pass lúc 2026-10-21T15:08:28 (gồm test mạng, 81 file test) với mã nguồn có dấu vân tay 3b37c2480838; thay mã sau thời điểm này thì phải chạy lại",
+      "detail": "technical_acceptance=pass lúc 2026-10-21T15:50:02 (gồm test mạng, 82 file test) với mã nguồn có dấu vân tay 61a2d7c7cda3; thay mã sau thời điểm này thì phải chạy lại",
       "unlock": []
     },
     {
