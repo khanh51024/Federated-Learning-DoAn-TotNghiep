@@ -157,7 +157,9 @@ def main() -> int:
         return 0
     run_dir.mkdir(parents=True, exist_ok=True)
     device = torch.device("cuda" if args.device == "auto" and torch.cuda.is_available() else ("cpu" if args.device == "auto" else args.device))
-    torch.backends.cudnn.benchmark = True
+    # Tắt dò thuật toán cuDNN: đo trên RTX 4080 (MobileNetV3-Small, channels_last, fp16), mỗi kích thước batch MỚI tốn khoảng 40 giây dò
+    # (batch cuối lẻ của từng client, batch đánh giá...), còn tốc độ ổn định không hơn khi tắt (20,9 so với 19,7 ms/bước).
+    torch.backends.cudnn.benchmark = False
 
     release = load_release(release_dir, args.expected_release_sha)
     if args.method == "centralized":
