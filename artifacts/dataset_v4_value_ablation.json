@@ -1,0 +1,158 @@
+{
+ "evidence": "kNN k=10 (top-1, %) trên đặc trưng DINOv2-small đã lưu; không huấn luyện lớp nào",
+ "release_manifest_sha256": "3b592c44ab0b528bba1308156f0aaa4ed5954371bd3f238b619b713569a491ac",
+ "sets": {
+  "ext_strict": 2304,
+  "ext_healthy": 2741,
+  "pd_val": 269,
+  "pd_test": 172,
+  "v4_field_test": 1932
+ },
+ "gallery_field_images": {
+  "in_sample": 2992,
+  "used": 2992,
+  "skipped_without_features": 0,
+  "plantdoc_in_sample": 906,
+  "by_source": {
+   "hf_plant_pathology_2021": 465,
+   "PlantDoc": 906,
+   "inat_wm_apple___cedar_apple_rust": 1,
+   "inat_apple___healthy": 2,
+   "mendeley_corn_leaf_disease": 346,
+   "inat_grape___black_rot": 15,
+   "mendeley_esca_grape": 220,
+   "mendeley_orange_hlb": 120,
+   "mendeley_potato_ethiopia": 144,
+   "mendeley_potato_bangladesh": 8,
+   "inat_raspberry___healthy": 21,
+   "zenodo_asdid_soybean_healthy": 120,
+   "inat_strawberry___healthy": 1,
+   "mendeley_tomato_bangladesh": 124,
+   "mendeley_tomato_pakistan": 499
+  }
+ },
+ "galleries": {
+  "v3 (PlantVillage 40 mỗi lớp + mọi lá PlantDoc của tập học)": {
+   "ext_strict": 50.3,
+   "ext_healthy": 19.1,
+   "pd_val": 55.4,
+   "pd_test": 53.5,
+   "v4_field_test": 44.6
+  },
+  "v3 + mọi ảnh ngoài-PlantDoc trong mẫu v4": {
+   "ext_strict": 47.1,
+   "ext_healthy": 26.9,
+   "pd_val": 52.8,
+   "pd_test": 48.8,
+   "v4_field_test": 82.1
+  },
+  "v4 như scripts/eval_gallery_value.py (PlantVillage 40 + mẫu ngoài đồng tối đa 120 mỗi lớp)": {
+   "ext_strict": 39.4,
+   "ext_healthy": 31.7,
+   "pd_val": 43.1,
+   "pd_test": 38.4,
+   "v4_field_test": 81.4
+  }
+ },
+ "add_one_source_to_v3": {
+  "hf_plant_pathology_2021": {
+   "ext_strict": 46.7,
+   "ext_healthy": 19.0,
+   "pd_val": 53.9,
+   "pd_test": 51.7,
+   "v4_field_test": 52.6
+  },
+  "inat_apple___healthy": {
+   "ext_strict": 50.3,
+   "ext_healthy": 19.0,
+   "pd_val": 55.4,
+   "pd_test": 53.5,
+   "v4_field_test": 44.6
+  },
+  "inat_grape___black_rot": {
+   "ext_strict": 50.2,
+   "ext_healthy": 19.1,
+   "pd_val": 55.4,
+   "pd_test": 53.5,
+   "v4_field_test": 44.4
+  },
+  "inat_raspberry___healthy": {
+   "ext_strict": 50.3,
+   "ext_healthy": 19.4,
+   "pd_val": 55.4,
+   "pd_test": 53.5,
+   "v4_field_test": 44.6
+  },
+  "inat_strawberry___healthy": {
+   "ext_strict": 50.3,
+   "ext_healthy": 19.2,
+   "pd_val": 55.4,
+   "pd_test": 53.5,
+   "v4_field_test": 44.6
+  },
+  "inat_wm_apple___cedar_apple_rust": {
+   "ext_strict": 50.3,
+   "ext_healthy": 19.1,
+   "pd_val": 55.4,
+   "pd_test": 53.5,
+   "v4_field_test": 44.6
+  },
+  "mendeley_corn_leaf_disease": {
+   "ext_strict": 50.0,
+   "ext_healthy": 19.1,
+   "pd_val": 55.0,
+   "pd_test": 52.9,
+   "v4_field_test": 50.2
+  },
+  "mendeley_esca_grape": {
+   "ext_strict": 49.9,
+   "ext_healthy": 20.6,
+   "pd_val": 55.0,
+   "pd_test": 52.3,
+   "v4_field_test": 52.2
+  },
+  "mendeley_orange_hlb": {
+   "ext_strict": 51.2,
+   "ext_healthy": 17.9,
+   "pd_val": 55.4,
+   "pd_test": 53.5,
+   "v4_field_test": 45.1
+  },
+  "mendeley_potato_bangladesh": {
+   "ext_strict": 50.2,
+   "ext_healthy": 19.1,
+   "pd_val": 55.4,
+   "pd_test": 53.5,
+   "v4_field_test": 44.8
+  },
+  "mendeley_potato_ethiopia": {
+   "ext_strict": 49.8,
+   "ext_healthy": 21.2,
+   "pd_val": 55.4,
+   "pd_test": 53.5,
+   "v4_field_test": 45.9
+  },
+  "mendeley_tomato_bangladesh": {
+   "ext_strict": 50.2,
+   "ext_healthy": 18.8,
+   "pd_val": 55.4,
+   "pd_test": 52.3,
+   "v4_field_test": 46.9
+  },
+  "mendeley_tomato_pakistan": {
+   "ext_strict": 50.9,
+   "ext_healthy": 21.2,
+   "pd_val": 55.0,
+   "pd_test": 54.1,
+   "v4_field_test": 55.7
+  },
+  "zenodo_asdid_soybean_healthy": {
+   "ext_strict": 49.5,
+   "ext_healthy": 22.7,
+   "pd_val": 55.0,
+   "pd_test": 52.9,
+   "v4_field_test": 45.0
+  }
+ },
+ "caveat": "Chẩn đoán, không dùng chọn nguồn. v4_field_test cùng nguồn với thư viện nên chỉ đo nhận cùng nguồn; ext_* và pd_* là nguồn lạ."
+}

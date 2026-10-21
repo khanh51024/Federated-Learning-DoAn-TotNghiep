@@ -10,6 +10,8 @@ Quy tắc nhận nhóm (đặt TRƯỚC khi xem kết quả): nhóm được nh�
 Chạy:
     python scripts/build_label_review.py                 # ghi data/label_review/{index.html,samples.json}
     python scripts/build_label_review.py --per-class 30 --seed 20261012
+    python scripts/build_label_review.py --external      # lấy mẫu từ mọi nguồn ngoài đồng chưa kiểm nhãn (data/external/sources/*/manifest.jsonl)
+                                                         # -> data/label_review_ext/{index.html,samples.json}; nhóm = (nguồn, lớp)
 Mở data/label_review/index.html bằng trình duyệt (không cần máy chủ), bấm kiểm, rồi "Tải kết quả" → decisions.json
 đặt cạnh index.html. Ảnh được nạp trực tiếp từ data/dataset_sources (đường dẫn tương đối); không có gì được gửi đi đâu.
 """
@@ -41,11 +43,16 @@ def select_clean_plantdoc(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
             and r.get("target_class") and int(r.get("class_id", -1)) >= 0]
 
 
-def sample_per_class(rows: list[dict[str, Any]], per_class: int, seed: int) -> dict[str, list[dict[str, Any]]]:
+def group_key(row: dict[str, Any], by_source: bool) -> str:
+    """Khóa nhóm kiểm nhãn: lớp (PlantDoc cách ly) hoặc 'nguồn|lớp' (nguồn ngoài đồng; mỗi nguồn được nhận/loại riêng)."""
+    return f"{row['source_dataset']}|{row['target_class']}" if by_source else row["target_class"]
+
+
+def sample_per_class(rows: list[dict[str, Any]], per_class: int, seed: int, by_source: bool = False) -> dict[str, list[dict[str, Any]]]:
     """Tối đa `per_class` lá mỗi nhóm; sắp theo sample_id trước khi lấy ngẫu nhiên để kết quả không phụ thuộc thứ tự tệp."""
     by_class: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in sorted(rows, key=lambda r: r["sample_id"]):
-        by_class[row["target_class"]].append(row)
+        by_class[group_key(row, by_source)].append(row)
     out: dict[str, list[dict[str, Any]]] = {}
     for name in sorted(by_class):
         items = by_class[name]
@@ -117,7 +124,7 @@ function render() {
     const st = s.done < s.n ? `<span class="status wait">chưa xong (${s.done}/${s.n})</span>`
       : s.ok ? `<span class="status ok">ĐƯỢC NHẬN (${s.dung}/${s.n} đúng)</span>`
       : `<span class="status no">KHÔNG nhận (${s.dung}/${s.n} đúng, ${s.khong_ro} không rõ)</span>`;
-    sec.innerHTML = `<h2>${label(cls.name)} — ${st}</h2><div class="meta">${cls.total} lá bị cách ly · kiểm ${s.n} · trạng thái nhãn: ${cls.mappings.join(", ")}</div><div class="grid"></div>`;
+    sec.innerHTML = `<h2>${cls.title || label(cls.name)} — ${st}</h2><div class="meta">${cls.total} lá bị cách ly · kiểm ${s.n} · trạng thái nhãn: ${cls.mappings.join(", ")}</div><div class="grid"></div>`;
     const grid = sec.querySelector(".grid");
     cls.items.forEach(it => {
       const d = dec[it.id] || "";
@@ -150,8 +157,13 @@ def build_page(sampled: dict[str, list[dict[str, Any]]], totals: dict[str, int],
                seed: int, per_class: int, release_sha: str, images_rel: str) -> str:
     classes = []
     for name, items in sampled.items():
+        title = None
+        if "|" in name:  # nhóm "nguồn|lớp"
+            source, _, cls = name.partition("|")
+            title = f"{source} → {cls.replace('___', ' — ').replace('_', ' ')}"
         classes.append({
             "name": name,
+            "title": title,
             "total": totals[name],
             "mappings": sorted({str(r.get("mapping_status")) for r in items}),
             "items": [{
@@ -168,11 +180,64 @@ def build_page(sampled: dict[str, list[dict[str, Any]]], totals: dict[str, int],
             .replace("__UNSURE__", str(int(ACCEPT_UNSURE_MAX * 100))))
 
 
+EXTERNAL_OUT_DIR = "data/label_review_ext"  # gitignored (data/*)
+PER_IMAGE_PREFIXES = ("inat_",)  # iNaturalist và Wikimedia (inat_wm_): lẫn nhiều ảnh không phải lá/không đúng bệnh, nên kiểm TỪNG ảnh thay vì lấy mẫu 30
+PER_IMAGE_MAX = 150
+EXTERNAL_SOURCES = "data/external/sources"
+
+
+def load_external_rows() -> list[dict[str, Any]]:
+    """Mọi dòng manifest của nguồn ngoài đồng còn `label_review_status == unreviewed` (nhãn cộng đồng hoặc ánh xạ gần đúng)."""
+    rows: list[dict[str, Any]] = []
+    for manifest in sorted(reg.abs_path(EXTERNAL_SOURCES).glob("*/manifest.jsonl")):
+        for line in manifest.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                row = json.loads(line)
+                if row.get("label_review_status") == "unreviewed":
+                    rows.append(row)
+    return rows
+
+
+def build_external(per_class: int, seed: int) -> int:
+    rows = load_external_rows()
+    if not rows:
+        print("[label-review] không có ảnh ngoài đồng nào cần kiểm nhãn (chạy scripts/import_external_source.py trước)", file=sys.stderr)
+        return 1
+    totals: dict[str, int] = defaultdict(int)
+    source_labels: dict[str, str] = {}
+    for row in rows:
+        totals[group_key(row, True)] += 1
+        row["annotation_id"] = row["sample_id"]
+        source_labels[row["sample_id"]] = str(row.get("original_file", ""))
+    # Kiểm từng ảnh chỉ cho nhóm iNaturalist/Wikimedia nhỏ (<= PER_IMAGE_MAX ảnh); nhóm lớn hơn lấy mẫu 30 ảnh theo quy tắc nhận nhóm như nguồn khoa học
+    per_image_rows = [r for r in rows if r["source_dataset"].startswith(PER_IMAGE_PREFIXES) and totals[group_key(r, True)] <= PER_IMAGE_MAX]
+    per_image_ids = {r["sample_id"] for r in per_image_rows}
+    sampled = sample_per_class([r for r in rows if r["sample_id"] not in per_image_ids], per_class, seed, by_source=True)
+    sampled.update(sample_per_class(per_image_rows, PER_IMAGE_MAX, seed, by_source=True))
+    per_image_groups = sorted({group_key(r, True) for r in per_image_rows})
+    out = reg.abs_path(EXTERNAL_OUT_DIR)
+    out.mkdir(parents=True, exist_ok=True)
+    images_rel = "../external/sources"  # data/label_review_ext/../external/sources
+    (out / "index.html").write_text(build_page(sampled, dict(totals), source_labels, seed, per_class, "", images_rel), encoding="utf-8")
+    (out / "samples.json").write_text(json.dumps({
+        "seed": seed, "per_class": per_class, "accept_correct": ACCEPT_CORRECT, "accept_unsure_max": ACCEPT_UNSURE_MAX,
+        "classes": {name: [r["sample_id"] for r in items] for name, items in sampled.items()}, "totals": dict(totals),
+        "per_image_groups": per_image_groups,
+    }, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    n = sum(len(v) for v in sampled.values())
+    print(f"[label-review] {len(sampled)} nhóm (nguồn, lớp), {n} ảnh cần kiểm -> {EXTERNAL_OUT_DIR}/index.html")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--per-class", type=int, default=30)
     parser.add_argument("--seed", type=int, default=20261012)
+    parser.add_argument("--external", action="store_true", help="lấy mẫu từ các nguồn ngoài đồng chưa kiểm nhãn thay cho PlantDoc cách ly")
     args = parser.parse_args()
+
+    if args.external:
+        return build_external(args.per_class, args.seed)
 
     release = reg.abs_path(reg.RELEASE_V3_DIR)
     manifest = release / "manifests" / "quarantine.jsonl"

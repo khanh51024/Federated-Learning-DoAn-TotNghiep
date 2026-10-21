@@ -1,0 +1,292 @@
+# Nguồn ảnh ngoài đồng bổ sung cho release dữ liệu v4 (xem docs/DATASET_V4.md).
+# Mỗi nguồn: cách tải (scripts/fetch_external_sources.py) và cách ánh xạ nhãn sang 38 lớp (scripts/import_external_source.py).
+#
+# label_trust:
+#   expert    nhãn do chuyên gia/nhóm tác giả gán và bộ dữ liệu được công bố cùng bài báo/dữ liệu có DOI
+#   community nhãn cộng đồng (iNaturalist cấp "research"): cần kiểm mẫu trước khi nhận
+# mapping: chỉ ghi cặp KHỚP ĐÚNG NGHĨA. Cặp mơ hồ ghi vào `alias_map` (cần kiểm nhãn mẫu mới được nhận) hoặc bỏ.
+# class_map khóa theo tên thư mục (hoặc tiền tố tên tệp khi `label_from: filename_prefix`), không phân biệt hoa thường.
+sources:
+  mendeley_pepper_bell:
+    title: Pepper Bell Leaf Disease (Mendeley, 9.283 ảnh)
+    kind: mendeley
+    dataset_id: w9drvtxg9g
+    license: CC BY 4.0
+    url: https://data.mendeley.com/datasets/w9drvtxg9g/1
+    label_trust: expert
+    skip: true
+    skip_reason: "đã xem ảnh mẫu: lá rời trên nền xám (kiểu phòng thí nghiệm), một phần là ảnh PlantVillage; không thêm đa dạng ngoài đồng"
+
+  mendeley_tomato_field_unlabeled:
+    title: Tomato leaf diseases (Mendeley 93h9p62kg4, 2.627 ảnh ngoài đồng)
+    kind: mendeley
+    dataset_id: 93h9p62kg4
+    license: CC BY 4.0
+    url: https://data.mendeley.com/datasets/93h9p62kg4
+    skip: true
+    skip_reason: "ảnh nằm chung một thư mục, tên IMG_nnnn.jpg, không có nhãn theo tệp nên không dùng được cho học có giám sát"
+
+  mendeley_tomato_pakistan:
+    title: Tomato Leaf Disease Classification Dataset in Pakistan (ngoài ruộng)
+    kind: mendeley
+    dataset_id: 3mbnb82mxd
+    license: CC BY 4.0
+    url: https://data.mendeley.com/datasets/3mbnb82mxd/1
+    label_trust: expert
+    group_from: aug_prefix          # gần như toàn bộ là ảnh tăng cường ngoại tuyến của tác giả: gom theo ảnh gốc để chia train/test
+    class_map:
+      Tomato_Early_blight: Tomato___Early_blight
+      Tomato_Healthy: Tomato___healthy
+      Tomato_leaf_late_blight: Tomato___Late_blight
+      Tomato_leaf_yellow_curl_virus: Tomato___Tomato_Yellow_Leaf_Curl_Virus
+      Tomato_mold_leaf: Tomato___Leaf_Mold
+      Tomato_septora_leaf_spot: Tomato___Septoria_leaf_spot
+
+  mendeley_tomato_bangladesh:
+    title: Tomato Leaf Disease Classification Dataset (Bangladesh)
+    kind: mendeley
+    dataset_id: jttrv2w27r
+    license: CC BY 4.0
+    url: https://data.mendeley.com/datasets/jttrv2w27r
+    label_trust: expert
+    label_from: filename_prefix
+    class_map:
+      Early Blight: Tomato___Early_blight
+      Healthy: Tomato___healthy
+      Bacteiral Spot: Tomato___Bacterial_spot
+      Late Blight: Tomato___Late_blight
+    alias_map:            # "Curl" = xoăn lá cà chua (virus xoăn vàng lá): gần đúng, cần kiểm nhãn mẫu
+      Curl: Tomato___Tomato_Yellow_Leaf_Curl_Virus
+
+  mendeley_corn_leaf_disease:
+    title: Corn Leaf Disease Classification Dataset (5 lớp, điều kiện ngoài ruộng)
+    kind: mendeley
+    dataset_id: hmkd6nbngr
+    license: CC BY 4.0
+    url: https://data.mendeley.com/datasets/hmkd6nbngr
+    label_trust: expert
+    needs_review: true              # nguồn gốc ảnh hỗn hợp (phần lớn là ảnh tăng cường; "Healthy" là ảnh PlantVillage): kiểm nhãn mẫu trước khi nhận
+    group_from: aug_prefix
+    exclude_name_regex: "^[0-9a-f]{8}-[0-9a-f]{4}-|___"   # ảnh kiểu PlantVillage
+    class_map:
+      Common Rust: Corn_(maize)___Common_rust_
+      Corn Leaf Blight: Corn_(maize)___Northern_Leaf_Blight
+      Gray Leaf Spot: Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot
+
+  mendeley_maize_multiformat:
+    title: Open-Source Multi-Format Maize Leaf Image Dataset (ruộng Bangladesh)
+    kind: mendeley
+    dataset_id: sb4wwjs8bz
+    license: CC BY 4.0
+    url: https://data.mendeley.com/datasets/sb4wwjs8bz
+    label_trust: expert
+    exclude_name_regex: "^aug_"
+
+  mendeley_potato_bangladesh:
+    title: Potato Leaf Disease Dataset (iPhone 15, trạm nghiên cứu Chattogram)
+    kind: mendeley
+    dataset_id: d5b3fzpw3g
+    license: CC BY 4.0
+    url: https://data.mendeley.com/datasets/d5b3fzpw3g/1
+    label_trust: expert
+    exclude_name_regex: "^aug_"      # ảnh tăng cường của chính tác giả: chỉ giữ ảnh gốc
+    class_map:
+      Fungal Late Blight: Potato___Late_blight
+      Healthy: Potato___healthy
+
+  mendeley_potato_ethiopia:
+    title: Potato Leaf (Healthy and Late Blight) - ruộng khoai tây Holeta, Ethiopia (máy ảnh và điện thoại)
+    kind: mendeley
+    dataset_id: v4w72bsts5
+    version: 2
+    files: [Local.rar]
+    license: CC BY 4.0
+    url: https://data.mendeley.com/datasets/v4w72bsts5/2
+    label_trust: expert
+    class_map:
+      Healthy: Potato___healthy
+      Late Blight: Potato___Late_blight
+      Late_Blight: Potato___Late_blight
+
+  mendeley_esca_grape:
+    title: ESCA dataset (vườn nho Ý, 1.770 ảnh)
+    kind: mendeley
+    dataset_id: 89cnxc58kj
+    license: CC BY 4.0
+    url: https://data.mendeley.com/datasets/89cnxc58kj
+    label_trust: expert
+    class_map:
+      esca: Grape___Esca_(Black_Measles)
+      healthy: Grape___healthy
+
+  mendeley_strawberry_detection:
+    title: Strawberry Disease Detection Dataset (Mendeley, có chú thích COCO)
+    kind: mendeley
+    dataset_id: k2ptxmfjhj
+    license: CC BY-NC 4.0
+    url: https://data.mendeley.com/datasets/k2ptxmfjhj/1
+    label_trust: expert
+    skip: true
+    skip_reason: "nhãn nằm trong tệp COCO (nhiều khung mỗi ảnh); không có lớp Leaf scorch; chủ yếu ảnh tăng cường và ảnh quả; không phục vụ lớp nào trong 38 lớp"
+
+  mendeley_orange_hlb:
+    title: Orange Leaves Images Dataset for the Detection of Huanglongbing (nền đã xóa)
+    kind: mendeley
+    dataset_id: jgkh2jxbwt
+    files: ["Database HLB Sanas Final.zip", "Database HLB and Healthy - Final-20250130T195640Z-002.zip"]
+    license: CC BY 4.0
+    url: https://data.mendeley.com/datasets/jgkh2jxbwt
+    label_trust: expert
+    background_removed: true
+    label_from: path_rules
+    path_rules:      # chỉ lớp HLB nằm trong 38 lớp; lá khỏe của cam không có lớp tương ứng nên bỏ
+      - {regex: "visualizations", class: null}
+      - {regex: "HOJAS CON SINTOMAS", class: "Orange___Haunglongbing_(Citrus_greening)"}
+      - {regex: "Symptoms HLB Leaves.preprocessed_images", class: "Orange___Haunglongbing_(Citrus_greening)"}
+
+  hf_plant_pathology_2021:
+    title: Plant Pathology 2021 FGVC8 (táo, vườn thật; 3 mảnh parquet đầu)
+    kind: hf_parquet
+    repo: timm/plant-pathology-2021
+    files:
+      - data/train-00000-of-00030.parquet
+      - data/train-00001-of-00030.parquet
+      - data/train-00002-of-00030.parquet
+      - data/train-00003-of-00030.parquet
+      - data/train-00004-of-00030.parquet
+      - data/train-00005-of-00030.parquet
+      - data/train-00006-of-00030.parquet
+      - data/train-00007-of-00030.parquet
+    label_column: labels
+    label_names: [complex, frog_eye_leaf_spot, healthy, powdery_mildew, rust, scab]
+    license: Apache-2.0 (dữ liệu gốc Kaggle FGVC8, dùng cho nghiên cứu)
+    url: https://huggingface.co/datasets/timm/plant-pathology-2021
+    label_trust: expert
+    class_map:
+      scab: Apple___Apple_scab
+      rust: Apple___Cedar_apple_rust
+      healthy: Apple___healthy
+    alias_map:                 # đốm mắt ếch (Botryosphaeria obtusa) = triệu chứng bệnh thối đen (black rot) trên lá táo: cần kiểm nhãn mẫu
+      frog_eye_leaf_spot: Apple___Black_rot
+    exclude_name_regex: "multi_label"
+
+  wur_tomato_spider_mite:
+    title: Tomato plant spider mite damage images (WUR, nhà kính Bỉ, CC0)
+    kind: fourtu
+    item_uuid: 2f504942-4d23-462f-a3a9-ded817017bbb
+    license: CC0
+    url: https://data.4tu.nl/datasets/2f504942-4d23-462f-a3a9-ded817017bbb
+    label_trust: expert
+    greenhouse: true
+    skip: true
+    skip_reason: "kiểm nhãn mẫu 0/30 dùng được: ảnh ban đêm trong nhà kính, cả cây rất tối, tổn thương nhện đỏ không nhìn thấy"
+    # Ảnh không có nhãn theo tệp: mọi ảnh là cây cà chua có vị trí tổn thương nhện đỏ được chú thích. Ánh xạ "gần đúng" nên phải kiểm nhãn mẫu.
+    label_from: constant
+    constant_class: "Tomato___Spider_mites Two-spotted_spider_mite"
+    constant_status: alias
+
+  zenodo_asdid_soybean_healthy:
+    title: Auburn Soybean Disease Image Dataset (ASDID) - lá khỏe, ruộng Alabama
+    kind: zenodo
+    record_id: 7304859
+    files: [healthy.zip]
+    max_members: 400
+    license: CC0
+    url: https://zenodo.org/records/7304859
+    label_trust: expert
+    class_map:
+      healthy: Soybean___healthy
+
+  mendeley_grape_leaf_18k:
+    title: Grape Leaf dataset for leaf Health Classification and Disease Detection (phần ảnh gốc, nho)
+    kind: mendeley
+    dataset_id: 378c69nwk5
+    license: CC BY 4.0
+    url: https://data.mendeley.com/datasets/378c69nwk5
+    label_trust: expert
+    needs_review: true              # chưa rõ ảnh gốc chụp ngoài vườn hay trên nền: kiểm nhãn mẫu trước khi nhận
+    group_from: aug_prefix
+    exclude_name_regex: "(?i)aug"   # chỉ lấy ảnh gốc (raw); bản tăng cường của tác giả bỏ
+    class_map:                      # Brown Spot / Mites / Downy Mildew không có lớp tương ứng trong 38 lớp nên bỏ
+      Healthy Leaf: Grape___healthy
+      Black Rot: Grape___Black_rot
+
+  mendeley_cherry_kg:
+    title: CherryLeaf-KG (vườn anh đào Kyrgyzstan, iPhone 14, lá cắt 224x224)
+    kind: mendeley
+    dataset_id: wp3b6pz9gc
+    files: ["CherryLeaf-KG.zip"]
+    license: CC BY 4.0
+    url: https://data.mendeley.com/datasets/wp3b6pz9gc
+    label_trust: expert
+    group_from: aug_prefix          # hai thư mục chứa hai bản cắt của cùng một ảnh gốc: gom theo tên tệp
+    class_map:                      # tên lớp tiếng Uzbek; chỉ "Soglom" (khỏe) có lớp tương ứng. Bộ có hai thư mục chép cùng 100 ảnh: nhập dedupe theo SHA
+      soglom: Cherry_(including_sour)___healthy
+      "Soglom - Healthy (Uniform green, disease-free leaf)": Cherry_(including_sour)___healthy
+
+# iNaturalist: ảnh cấp "research", chỉ giữ ảnh có giấy phép mở (khai báo từng ảnh trong inat_metadata.jsonl).
+# api_extra.q: lọc theo từ khóa trong mô tả/thẻ của quan sát (dùng để tách cây chủ khi một tác nhân gây bệnh trên nhiều cây).
+inaturalist:
+  licenses: [cc0, cc-by, cc-by-nc]
+  classes:
+    - {target_class: Apple___Apple_scab, taxa: ["Venturia inaequalis"]}
+    - {target_class: Apple___Black_rot, taxa: ["Botryosphaeria obtusa", "Diplodia seriata", "Botryosphaeria dothidea"], api_extra: {q: apple}}
+    - {target_class: Apple___Cedar_apple_rust, taxa: ["Gymnosporangium juniperi-virginianae"], api_extra: {q: apple}}
+    - {target_class: "Cherry_(including_sour)___Powdery_mildew", taxa: ["Podosphaera clandestina", "Podosphaera tridactyla"]}
+    - {target_class: "Corn_(maize)___Northern_Leaf_Blight", taxa: ["Exserohilum turcicum", "Setosphaeria turcica"]}
+    - {target_class: "Corn_(maize)___Common_rust_", taxa: ["Puccinia sorghi"]}
+    - {target_class: "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot", taxa: ["Cercospora zeae-maydis", "Cercospora zeina"]}
+    - {target_class: Grape___Black_rot, taxa: ["Guignardia bidwellii", "Phyllosticta ampelicida"]}
+    - {target_class: "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)", taxa: ["Pseudocercospora vitis", "Isariopsis clavispora"]}
+    - {target_class: Strawberry___Leaf_scorch, taxa: ["Diplocarpon earlianum", "Diplocarpon earliana"]}
+    - {target_class: Tomato___Leaf_Mold, taxa: ["Passalora fulva", "Fulvia fulva", "Cladosporium fulvum"]}
+    - {target_class: Tomato___Septoria_leaf_spot, taxa: ["Septoria lycopersici"]}
+    - {target_class: Tomato___Target_Spot, taxa: ["Corynespora cassiicola"], api_extra: {q: tomato}}
+    - {target_class: "Tomato___Spider_mites Two-spotted_spider_mite", taxa: ["Tetranychus urticae"], api_extra: {q: tomato}}
+    - {target_class: Tomato___Early_blight, taxa: ["Alternaria solani"], api_extra: {q: tomato}}
+    - {target_class: Potato___Early_blight, taxa: ["Alternaria solani"], api_extra: {q: potato}}
+    - {target_class: Tomato___Late_blight, taxa: ["Phytophthora infestans"], api_extra: {q: tomato}}
+    - {target_class: Potato___Late_blight, taxa: ["Phytophthora infestans"], api_extra: {q: potato}}
+    - {target_class: Tomato___Bacterial_spot, taxa: ["Xanthomonas perforans", "Xanthomonas gardneri", "Xanthomonas vesicatoria"], api_extra: {q: tomato}}
+    - {target_class: "Pepper,_bell___Bacterial_spot", taxa: ["Xanthomonas euvesicatoria", "Xanthomonas vesicatoria"], api_extra: {q: pepper}}
+    - {target_class: Peach___Bacterial_spot, taxa: ["Xanthomonas arboricola"], api_extra: {q: peach}}
+    - {target_class: Squash___Powdery_mildew, taxa: ["Podosphaera xanthii"], api_extra: {q: squash}}
+    - {target_class: "Orange___Haunglongbing_(Citrus_greening)", taxa: ["Candidatus Liberibacter asiaticus"]}
+    # --- lớp "khỏe": ảnh iNaturalist của chính cây trồng (loài trồng), lọc ảnh lá bằng scripts/filter_leaf_photos.py; nhãn "khỏe" là NGẦM ĐỊNH nên bắt buộc kiểm nhãn mẫu ---
+    - {target_class: Apple___healthy, taxa: ["Malus domestica"], max_raw: 1500, leaf_prompt: "an apple tree leaf"}
+    - {target_class: Blueberry___healthy, taxa: ["Vaccinium corymbosum"], max_raw: 1500, leaf_prompt: "a blueberry leaf"}
+    - {target_class: "Cherry_(including_sour)___healthy", taxa: ["Prunus avium", "Prunus cerasus"], max_raw: 1500, leaf_prompt: "a cherry tree leaf"}
+    - {target_class: "Corn_(maize)___healthy", taxa: ["Zea mays"], max_raw: 1500, leaf_prompt: "a corn plant leaf"}
+    - {target_class: Peach___healthy, taxa: ["Prunus persica"], max_raw: 1500, leaf_prompt: "a peach tree leaf"}
+    - {target_class: "Pepper,_bell___healthy", taxa: ["Capsicum annuum"], max_raw: 1500, leaf_prompt: "a bell pepper plant leaf"}
+    - {target_class: Raspberry___healthy, taxa: ["Rubus idaeus"], max_raw: 1500, leaf_prompt: "a raspberry plant leaf"}
+    - {target_class: Soybean___healthy, taxa: ["Glycine max"], max_raw: 1500, leaf_prompt: "a soybean plant leaf"}
+    - {target_class: Strawberry___healthy, taxa: ["Fragaria × ananassa"], max_raw: 1500, leaf_prompt: "a strawberry plant leaf"}
+
+# Wikimedia Commons: từ khóa tìm tệp ảnh; giấy phép mở; luôn kiểm nhãn TỪNG ẢNH (kết quả tìm kiếm lẫn nhiều ảnh không phải ảnh lá).
+wikimedia:
+  classes:
+    - {target_class: Tomato___Target_Spot, queries: ["Corynespora cassiicola tomato leaf", "tomato target spot", "target spot tomato"]}
+    - {target_class: "Tomato___Spider_mites Two-spotted_spider_mite", queries: ["spider mite damage tomato leaf", "Tetranychus urticae tomato", "two-spotted spider mite damage leaf"]}
+    - {target_class: Peach___Bacterial_spot, queries: ["peach bacterial spot leaf", "Xanthomonas arboricola pv. pruni leaf", "bacterial spot peach tree"]}
+    - {target_class: "Pepper,_bell___Bacterial_spot", queries: ["pepper bacterial spot leaf", "Xanthomonas euvesicatoria pepper leaf", "bell pepper bacterial leaf spot"]}
+    - {target_class: "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)", queries: ["Pseudocercospora vitis grape leaf", "Isariopsis clavispora grape", "grape leaf spot Isariopsis"]}
+    - {target_class: Strawberry___Leaf_scorch, queries: ["strawberry leaf scorch", "Diplocarpon earlianum", "Diplocarpon earliana strawberry leaf"]}
+    - {target_class: "Cherry_(including_sour)___Powdery_mildew", queries: ["cherry powdery mildew leaf", "Podosphaera clandestina cherry", "powdery mildew cherry tree leaves"]}
+    - {target_class: Apple___Black_rot, queries: ["apple frogeye leaf spot", "Botryosphaeria obtusa apple leaf", "apple black rot leaf"]}
+    - {target_class: Apple___Cedar_apple_rust, queries: ["cedar apple rust apple leaf", "Gymnosporangium juniperi-virginianae apple leaves", "cedar-apple rust leaf spots"]}
+    - {target_class: Squash___Powdery_mildew, queries: ["powdery mildew squash leaf", "powdery mildew zucchini leaf", "Podosphaera xanthii leaf", "powdery mildew pumpkin leaf"]}
+    - {target_class: "Orange___Haunglongbing_(Citrus_greening)", queries: ["huanglongbing citrus leaf", "citrus greening leaf symptoms", "Candidatus Liberibacter asiaticus leaf blotchy mottle"]}
+    - {target_class: Grape___Black_rot, queries: ["grape black rot leaf", "Guignardia bidwellii leaf lesions", "black rot grapevine leaf"]}
+    - {target_class: "Grape___Esca_(Black_Measles)", queries: ["esca grapevine leaf tiger stripe", "grape esca leaf symptoms"]}
+    - {target_class: Tomato___Leaf_Mold, queries: ["tomato leaf mold", "Passalora fulva tomato leaf", "Cladosporium fulvum tomato"]}
+    - {target_class: Tomato___Tomato_mosaic_virus, queries: ["tomato mosaic virus leaf", "ToMV tomato leaf mottling"]}
+    - {target_class: Tomato___Tomato_Yellow_Leaf_Curl_Virus, queries: ["tomato yellow leaf curl virus", "TYLCV tomato leaves", "whitefly tomato leaf curl"]}
+    - {target_class: Tomato___Septoria_leaf_spot, queries: ["Septoria lycopersici tomato leaf", "tomato septoria leaf spot"]}
+    - {target_class: Tomato___Bacterial_spot, queries: ["tomato bacterial spot leaf", "Xanthomonas perforans tomato leaf"]}
+    - {target_class: Potato___Early_blight, queries: ["potato early blight leaf", "Alternaria solani potato leaf"]}
+    - {target_class: Potato___Late_blight, queries: ["potato late blight leaf", "Phytophthora infestans potato leaf"]}
+    - {target_class: Apple___Apple_scab, queries: ["apple scab leaf", "Venturia inaequalis apple leaf"]}
+    - {target_class: "Corn_(maize)___Common_rust_", queries: ["common rust corn leaf", "Puccinia sorghi maize leaf"]}
+    - {target_class: "Corn_(maize)___Northern_Leaf_Blight", queries: ["northern corn leaf blight", "Exserohilum turcicum maize leaf"]}
+    - {target_class: "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot", queries: ["gray leaf spot corn", "Cercospora zeae-maydis maize leaf"]}

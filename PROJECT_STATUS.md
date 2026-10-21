@@ -1,6 +1,6 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-21 10:38 · sinh tự bởi `scripts/update_status.py`
+> **Cập nhật lúc:** 2026-10-21 13:36 · sinh tự bởi `scripts/update_status.py`
 > **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 3 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
@@ -34,7 +34,7 @@
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
 | 9 | Test không ghi đè artifact đang track | ✅ XONG | test không tham chiếu artifacts/checkpoints/metrics (dùng tmp_path) |
 | 10 | Dependency khai báo một nơi (pyproject = requirements) | ✅ XONG | 17 dependency trùng giữa pyproject.toml và requirements.txt; ghim cũ nằm ở legacy/pyproject.toml |
-| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-21T10:38:48 (gồm test mạng, 73 file test) với mã nguồn có dấu vân tay 13247ee4e367; thay mã sau thời điểm này thì phải chạy lại |
+| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-21T13:36:31 (gồm test mạng, 77 file test) với mã nguồn có dấu vân tay 65ad8ed637bd; thay mã sau thời điểm này thì phải chạy lại |
 | 12 | Kiểm chứng provenance & checkpoint canonical | ⛔ BLOCKED | provenance=unverified; lỗi: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing'] |
 | 13 | Audit leakage theo từng run | ✅ XONG | release mixed_pv_pd_v3: train 37.238 / val 4.613 / calibration 4.225 rời nhau trên 5 khóa (giao nhau tổng = 0); 12 partition đều là tập con train; 46.076 ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train) |
 | 14 | Đánh giá PlantDoc theo từng lớp (từ số công bố) | ✅ XONG | PlantDoc phủ 13/38 lớp; 6 lớp recall<50% (136/269 ảnh); FedAvg tệ hơn Centralized ở 5/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5) |
@@ -397,6 +397,10 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
   không đạt ngưỡng đặt trước; chức năng "chọn loại cây" đã thêm vào trang Chẩn đoán. (4) Trọng số đi qua Flower nguyên từng byte; phép gộp trùng GD tập trung tới 5e-14;
   máy chủ nay kiểm băm chiều client→server; "độ trôi client" trên web tách phần BatchNorm (>98,9%). (5) Tốc độ laptop↔VM Oracle qua Internet: RTT 46,7 ms,
   31–34 MB/s, một vòng 22,8 s (truyền ≈ 0,8 s); gói đo LAN ở `docs/HUONG_DAN_DO_TOC_DO_LAN.md`. Chuẩn bị công thức train mới: `docs/NEXT_TRAINING_PLAN.md` mục 5.
+- 2026-10-21: Dựng release dữ liệu v4 `mixed_pv_pd_v4` (`docs/DATASET_V4.md`), không train. Thêm 19.160 ảnh ngoài đồng từ 10 bộ dữ liệu công khai (CC BY/CC0), iNaturalist và Wikimedia,
+  loại ảnh gần trùng với các tập đã khóa, kiểm rò rỉ bằng 0, phân vùng 5 client không cắt nhóm; nhãn kiểm bằng AI sàng lọc (không phải chuyên gia). 13/38 lớp vẫn dưới 100 ảnh ngoài đồng
+  (cần ảnh tự chụp: `docs/HUONG_DAN_CHUP_ANH.md`). Đo không cần train (kNN DINOv2): ảnh mới nâng nhận cùng nguồn 44,6% → 82,1% và lá khỏe 19,1% → 26,9%, nhưng PlantWild bệnh 50,3% → 47,1%;
+  mục tiêu > 90% chỉ khả thi cho ảnh cùng nguồn (Centralized, FedAvg), không cho ảnh nguồn lạ và không cho Local-only. Chưa train; chưa triển khai.
 <!-- ROADMAP-END -->
 
 ## 8. Cách đồng bộ

@@ -46,3 +46,14 @@ def test_crop_allowed_marks_same_crop_classes():
     classes = ["Apple___scab", "Apple___healthy", "Tomato___blight"]
     allowed = crop_allowed(classes, None, np.array([0, 2]))
     assert allowed.tolist() == [[True, True, False], [False, False, True]]
+
+
+def test_leaf_filter_probability_sums_positive_prompts():
+    import numpy as np
+
+    from scripts.filter_leaf_photos import leaf_probability, prompts_for
+
+    pos, neg = prompts_for("an apple tree leaf")
+    assert all("apple tree leaf" in p for p in pos) and len(neg) >= 8
+    probs = np.array([[0.3, 0.3, 0.2, 0.1, 0.1], [0.05, 0.05, 0.05, 0.5, 0.35]])
+    assert np.allclose(leaf_probability(probs, 3), [0.8, 0.15])

@@ -155,6 +155,17 @@ def build_items(limit: int) -> tuple[dict[str, list[dict[str, Any]]], list[dict[
     return sets, gallery
 
 
+def read_gallery_features_v3(n_eval: int, n_gallery: int) -> tuple[np.ndarray, np.ndarray]:
+    """Đặc trưng DINOv2-small đã lưu của lần đo trước: (ảnh đo [n_eval, d], thư viện v3 [n_gallery, d]); báo lỗi nếu số hàng không khớp."""
+    path = reg.abs_path(NPZ)
+    if not path.is_file():
+        raise SystemExit("thiếu data/reeval/foundation_features.npz: chạy scripts/eval_foundation_models.py trước")
+    feats = np.load(path, allow_pickle=False)["dinov2_small"]
+    if len(feats) != n_eval + n_gallery:
+        raise SystemExit(f"đặc trưng đã lưu có {len(feats)} hàng, cần {n_eval + n_gallery}: chạy lại scripts/eval_foundation_models.py")
+    return feats[:n_eval], feats[n_eval:]
+
+
 # --------------------------------------------------------------------------- trích đặc trưng
 def extract_features(paths: list[Path], threads: int, batch: int = 32) -> dict[str, np.ndarray]:
     import open_clip

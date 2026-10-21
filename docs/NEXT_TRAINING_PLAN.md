@@ -142,7 +142,8 @@ Cập nhật sau đợt đo ở `docs/DANH_GIA_DU_LIEU_MO_HINH_FEDAVG_2026-10-21
 trên ảnh bệnh ngoài đồng của PlantWild và đoán thành có bệnh trong 87–94% ảnh lá khỏe, nên mục tiêu của lần train sau là ảnh ngoài đồng, không phải PlantVillage.
 
 ### 5.1 Dữ liệu
-- Release v4 = v3 cộng các lá PlantDoc đã kiểm nhãn (5.569 lá đang cách ly; quy tắc nhận nhóm ≥ 90% "đúng" và ≤ 20% "không rõ" ở mục 3) và ảnh lá khỏe ngoài đồng.
+- Release v4 (`mixed_pv_pd_v4`, mô tả ở `docs/DATASET_V4.md`) = v3 cộng ảnh ngoài đồng từ các bộ dữ liệu công khai đã kiểm nhãn, lá PlantDoc cách ly đã được nhận và ảnh tự chụp
+  (`docs/HUONG_DAN_CHUP_ANH.md`). Quy tắc nhận nhóm giữ nguyên: ≥ 90% "đúng" và ≤ 20% "không rõ" trên mẫu 30 ảnh. Khi train phải truyền `--expected-release-sha` của v4.
 - **PlantWild không được dùng để học**: giấy phép CC BY-NC-ND 4.0 và đã khóa làm tập thử ngoài đồng cố định (`artifacts/external_eval_set.json`, manifest SHA-256 `5adba619…`).
   Nếu thêm nguồn ảnh mới thì phải loại trùng với manifest này bằng `scripts/build_external_eval_set.py` trước khi học.
 - Cảnh PlantDoc nguyên khung đi qua bộ phát hiện lá (`scripts/train_leaf_detector.py`) để cắt lá; tiêu chí chấp nhận bộ phát hiện giữ như mục 2.
@@ -168,6 +169,12 @@ Hai phương án, nên thử theo thứ tự:
    mô hình cỡ 28 triệu tham số tương ứng khoảng 112 MB mỗi lần truyền, gấp khoảng 18 lần, nên không dùng cho học phân tán trong phạm vi đồ án.
 
 ### 5.4 Ngưỡng chấp nhận (đặt trước khi train)
+Mục tiêu "trên 90%" được tách theo loại ảnh, vì không có cách nào đạt 90% trên ảnh của nguồn chưa từng thấy (nghiên cứu 221 nghìn ảnh: cùng ruộng khoảng 99%, ruộng mới 64–88%;
+PlantWild: baseline tốt nhất đã công bố khoảng 61%):
+- **A (cùng nguồn)**: Centralized và FedAvg ≥ 90% top-1 trên PlantVillage và trên phần ngoài đồng cùng nguồn giữ riêng của v4 (`legacy_diagnostic_test` ngoài đồng, ảnh tự chụp phần thử).
+- **B (nguồn chưa từng thấy)**: PlantWild ≥ 65% top-1; ≥ 90% chỉ khi có điều kiện kèm (top-3, hoặc người dùng chọn đúng loại cây cộng từ chối ảnh mô hình không chắc).
+- **C (Local-only)**: báo kèm trần lý thuyết theo từng client (`artifacts/data_gap_report.json`, mục `local_only_ceiling_top1_percent`); mỗi client chỉ thấy 20–27/38 lớp nên không thể đạt 90% trên cách chia α = 0,1.
+
 Một đợt train mới chỉ được nhập vào web nếu đồng thời:
 1. top-1 trên PlantWild (tầng bệnh) tăng ít nhất 10 điểm so với mô hình hiện có (Centralized ≥ 43,1%, FedAvg ≥ 41,8%) và cận dưới khoảng tin cậy 95% cao hơn mốc cũ;
 2. top-1 PlantDoc tập giữ riêng không giảm quá 2 điểm so với 63,4% (Centralized) và 50,0% (FedAvg);

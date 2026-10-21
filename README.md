@@ -15,6 +15,7 @@ Hệ thống được tổ chức theo cấu trúc **Monorepo hoàn chỉnh**:
 > **Hướng chính thức (một chiều):** train NGOÀI repo (Kaggle/branch) → bundle + manifest + SHA-256 → `scripts/import_branch_demo.py` kiểm hash → `artifacts/registry.json` → web/báo cáo. Máy dev chỉ CPU, không train; engine trong repo là `src/`. Chi tiết: [docs/MODEL_REGISTRY.md](docs/MODEL_REGISTRY.md).
 
 > **Đánh giá dữ liệu, ảnh ngoài đồng và trao đổi trọng số (2026-10-21):** xem [báo cáo](docs/DANH_GIA_DU_LIEU_MO_HINH_FEDAVG_2026-10-21.md); hướng dẫn đo tốc độ hai máy trong LAN: [docs/HUONG_DAN_DO_TOC_DO_LAN.md](docs/HUONG_DAN_DO_TOC_DO_LAN.md).
+> **Release dữ liệu v4 (ảnh ngoài đồng đã kiểm nhãn, chưa train):** [docs/DATASET_V4.md](docs/DATASET_V4.md); hướng dẫn chụp ảnh bổ sung: [docs/HUONG_DAN_CHUP_ANH.md](docs/HUONG_DAN_CHUP_ANH.md).
 
 > **Trạng thái tiến độ:** xem [PROJECT_STATUS.md](PROJECT_STATUS.md) — file thống kê duy nhất, tự sinh bởi `python scripts/update_status.py`. Mọi con số accuracy trong repo phải truy được về `artifacts/registry.json`.
 
