@@ -1,7 +1,7 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-21 21:54 · sinh tự bởi `scripts/update_status.py`
-> **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 3 mục kỹ thuật chưa XONG)
+> **Cập nhật lúc:** 2026-10-21 23:10 · sinh tự bởi `scripts/update_status.py`
+> **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 4 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
 > con số nào trong repo phải truy được về `artifacts/registry.json`. Không sửa tay — chỉ khối Nhật ký cuối file.
@@ -20,7 +20,7 @@
 - Dataset cục bộ để tái lập: `data/partitions_stage2_scratch_v3` — split **38984/4400/10921** (5 clients, seed 42, protocol `stage2_scratch_clean_v3`)
 - Run Kaggle lịch sử: `20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62` — metrics CÓ, **checkpoint KHÔNG còn trên máy**
 
-## 3. Checklist nghiệm thu — XONG 16/22 · CHƯA 3 · BLOCKED 3
+## 3. Checklist nghiệm thu — XONG 15/22 · CHƯA 4 · BLOCKED 3
 
 | # | Hạng mục | Trạng thái | Bằng chứng (máy kiểm) |
 |---|---|---|---|
@@ -34,7 +34,7 @@
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
 | 9 | Test không ghi đè artifact đang track | ✅ XONG | test không tham chiếu artifacts/checkpoints/metrics (dùng tmp_path) |
 | 10 | Dependency khai báo một nơi (pyproject = requirements) | ✅ XONG | 17 dependency trùng giữa pyproject.toml và requirements.txt; ghim cũ nằm ở legacy/pyproject.toml |
-| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-21T21:54:16 (gồm test mạng, 85 file test) với mã nguồn có dấu vân tay 56ef4aff1916; thay mã sau thời điểm này thì phải chạy lại |
+| 11 | Full tests pass trên mã nguồn hiện tại | ⬜ CHƯA | kết quả cũ (2026-10-21T21:54:16) không còn khớp mã nguồn hiện tại — chạy lại --full-gates |
 | 12 | Kiểm chứng provenance & checkpoint canonical | ⛔ BLOCKED | provenance=unverified; lỗi: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing'] |
 | 13 | Audit leakage theo từng run | ✅ XONG | release mixed_pv_pd_v3: train 37.238 / val 4.613 / calibration 4.225 rời nhau trên 5 khóa (giao nhau tổng = 0); 12 partition đều là tập con train; 46.076 ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train) |
 | 14 | Đánh giá PlantDoc theo từng lớp (từ số công bố) | ✅ XONG | PlantDoc phủ 13/38 lớp; 6 lớp recall<50% (136/269 ảnh); FedAvg tệ hơn Centralized ở 5/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5) |
@@ -45,7 +45,7 @@
 | 19 | Khoảng tin cậy theo cụm + McNemar + độ nhạy 'cùng lá' | ✅ XONG | khoảng tin cậy 95% bootstrap theo cụm (cảnh/nhóm lá) — val: PlantDoc Centralized 53.9% [44.2%; 63.1%], Centralized−FedAvg +6.7% [-3.7%; +18.0%], McNemar p=0.0414 / test: PlantDoc Centralized 63.4% [52.9%; 73.7%], Centralized−FedAvg +13.4% [+1.6%; +24.8%], McNemar p=0.00762 |
 | 20 | Chạy multi-seed non-IID (seed 42/123/2026) | ⛔ BLOCKED | chưa có multi-seed THẬT cho protocol đang công bố (mixed PV+PlantDoc, pretrained); chỉ có bản smoke trên ảnh nhiễu ngẫu nhiên |
 | 21 | Đồng bộ báo cáo & artifacts sau khi có run mới | ⛔ BLOCKED | phụ thuộc multi-seed thật |
-| 22 | Release sạch (mọi gate kỹ thuật XONG) | ⬜ CHƯA | còn mục kỹ thuật chưa XONG: ['no_hardcode', 'docs_clean'] |
+| 22 | Release sạch (mọi gate kỹ thuật XONG) | ⬜ CHƯA | còn mục kỹ thuật chưa XONG: ['no_hardcode', 'docs_clean', 'full_tests'] |
 
 ### Việc đang BLOCKED — cần gì và mở khóa bằng lệnh nào
 
@@ -83,7 +83,8 @@ Copy-Item <centralized_best.pt tải về> artifacts/checkpoints/centralized_bes
 
 1. Không hardcode đường dẫn artifact — 4 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/build_community_sim_features.py:85', 'scripts/eval_trained_v4.py:31', 'scripts/evaluate_plantvillage_reference.py:35', 'scripts/simulate_community.py:32']
 2. Dọn tài liệu mâu thuẫn — tài liệu ngoài danh mục: gốc=[] docs=['REPORT_WORD_WEB_2026-10-20.md']
-3. Release sạch (mọi gate kỹ thuật XONG) — còn mục kỹ thuật chưa XONG: ['no_hardcode', 'docs_clean']
+3. Full tests pass trên mã nguồn hiện tại — kết quả cũ (2026-10-21T21:54:16) không còn khớp mã nguồn hiện tại — chạy lại --full-gates
+4. Release sạch (mọi gate kỹ thuật XONG) — còn mục kỹ thuật chưa XONG: ['no_hardcode', 'docs_clean', 'full_tests']
 
 ## 4. Kết quả chuẩn theo họ (không trộn lẫn)
 
@@ -237,7 +238,7 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
 |---|---|---|
 | Provenance checkpoint canonical | **unverified** | lỗi: fedavg_checkpoint_missing, centralized_checkpoint_missing |
 | Pre-demo check | **technical_demo_ready** | artifacts/pre_demo_check.json |
-| Final acceptance | technical **pass** / scientific **blocked** | 4 blocker khoa học |
+| Final acceptance | technical **pass** / scientific **blocked** | 4 blocker khoa học — **CŨ**: mã nguồn đã đổi kể từ lần chạy |
 | Network artifact | **CHƯA CÓ run mạng khoa học (artifact hiện tại là smoke kỹ thuật)** | artifacts/network_artifact_validation.json |
 | Danh mục checkpoint | **complete** | 72 file .pt, vô danh: 0 |
 
