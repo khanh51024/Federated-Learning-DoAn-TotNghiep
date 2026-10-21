@@ -71,6 +71,7 @@ def train_epoch(model: Any, loader: Any, optimizer: Any, scaler: Any, device: An
     criterion = torch.nn.CrossEntropyLoss(reduction="none", label_smoothing=label_smoothing)
     use_amp = device.type == "cuda"
     adjust = logit_adjust.to(device) if logit_adjust is not None else None
+    sample_weights = sample_weights.to(device)                  # một lần mỗi epoch; lấy theo chỉ số trên thiết bị, không chép mỗi bước
     # cộng dồn trên thiết bị, chỉ đọc về CPU cuối epoch: đọc mỗi bước (float(loss), int(...)) buộc CPU chờ GPU và làm chậm vòng học
     total_loss = torch.zeros((), device=device)
     correct = torch.zeros((), device=device, dtype=torch.long)
@@ -84,7 +85,7 @@ def train_epoch(model: Any, loader: Any, optimizer: Any, scaler: Any, device: An
         if channels_last:
             images = images.contiguous(memory_format=torch.channels_last)
         labels = labels.to(device, non_blocking=True)
-        weights = sample_weights[index].to(device, non_blocking=True)
+        weights = sample_weights[index.to(device, non_blocking=True)]
         optimizer.zero_grad(set_to_none=True)
         with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_amp):
             logits = model(images)

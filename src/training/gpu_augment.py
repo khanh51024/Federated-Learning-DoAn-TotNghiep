@@ -37,6 +37,19 @@ class GpuAugment:
         self.brightness, self.contrast, self.saturation, self.hue = (brightness, contrast, saturation, hue) if color else (0.0, 0.0, 0.0, 0.0)
         self.blur_p, self.blur_sigma = blur_p, blur_sigma
         self.erase_p, self.erase_scale, self.erase_ratio = erase_p, erase_scale, erase_ratio
+        self._const: dict[str, Any] = {}
+
+    def _constants(self, device: Any) -> dict[str, torch.Tensor]:
+        """Hằng số trên thiết bị, tạo một lần: chép từ bộ nhớ thường lên GPU ở mỗi batch là một điểm đồng bộ, làm CPU và GPU chờ nhau."""
+        key = str(device)
+        if key not in self._const:
+            self._const[key] = {
+                "mean": torch.tensor(IMAGENET_MEAN, device=device).view(1, 3, 1, 1),
+                "std": torch.tensor(IMAGENET_STD, device=device).view(1, 3, 1, 1),
+                "luma": torch.tensor(_LUMA, device=device).view(1, 3, 1, 1),
+                "rgb2yiq": _RGB2YIQ.to(device), "yiq2rgb": _YIQ2RGB.to(device),
+            }
+        return self._const[key]
 
     def _rand(self, n: int, device: Any) -> torch.Tensor:
         return torch.rand(n, generator=self.g, device=device)
@@ -52,9 +65,8 @@ class GpuAugment:
         x = self._rotate(x)
         x = self._color(x)
         x = self._blur(x)
-        mean = torch.tensor(IMAGENET_MEAN, device=device).view(1, 3, 1, 1)
-        std = torch.tensor(IMAGENET_STD, device=device).view(1, 3, 1, 1)
-        return self._erase((x - mean) / std)
+        const = self._constants(device)
+        return self._erase((x - const["mean"]) / const["std"])
 
     def _rotate(self, x: torch.Tensor) -> torch.Tensor:
         n, device = x.shape[0], x.device
@@ -68,7 +80,8 @@ class GpuAugment:
 
     def _color(self, x: torch.Tensor) -> torch.Tensor:
         n, device = x.shape[0], x.device
-        luma = torch.tensor(_LUMA, device=device).view(1, 3, 1, 1)
+        const = self._constants(device)
+        luma = const["luma"]
         if self.brightness:
             x = (x * self._uniform(n, 1 - self.brightness, 1 + self.brightness, device).view(n, 1, 1, 1)).clamp(0, 1)
         if self.contrast:
@@ -85,7 +98,7 @@ class GpuAugment:
             rot = torch.zeros(n, 3, 3, device=device)
             rot[:, 0, 0] = 1
             rot[:, 1, 1], rot[:, 1, 2], rot[:, 2, 1], rot[:, 2, 2] = cos, -sin, sin, cos
-            m = _YIQ2RGB.to(device) @ rot @ _RGB2YIQ.to(device)          # [n, 3, 3]: RGB -> YIQ, xoay I/Q, -> RGB
+            m = const["yiq2rgb"] @ rot @ const["rgb2yiq"]          # [n, 3, 3]: RGB -> YIQ, xoay I/Q, -> RGB
             x = torch.einsum("nij,njhw->nihw", m, x).clamp(0, 1)
         return x
 
