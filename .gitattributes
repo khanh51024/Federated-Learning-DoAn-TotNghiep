@@ -1,2 +1,5 @@
 * text=auto eol=lf
 configs/central_spec_v3.json -text
+# Q5 result files keep their original bytes (CRLF), see PUSH_INVENTORY sha256
+results/20261021_q5/q6_test_central.json -text
+results/20261021_q5/reports/Q6_RESULTS_test.json -text
