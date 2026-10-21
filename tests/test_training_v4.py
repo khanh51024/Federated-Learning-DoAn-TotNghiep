@@ -117,3 +117,28 @@ def test_weighted_loader_draws_exactly_len_dataset_samples_per_epoch():
     loader = make_loader(data, batch_size=10, shuffle=True, workers=0, seed=3, sampling_weights=[0.0] * 25 + [1.0] * 25)
     drawn = [int(x) for b in loader for x in b]
     assert len(drawn) == 50 and min(drawn) >= 25                    # số bước mỗi epoch không đổi, chỉ đổi ảnh được chọn
+
+
+def test_train_epoch_counts_on_device_and_still_refuses_a_non_finite_loss():
+    import torch
+
+    from src.training.loop import train_epoch
+
+    class Tiny(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.fc = torch.nn.Linear(3 * 4 * 4, 38)
+
+        def forward(self, x):
+            return self.fc(x.flatten(1))
+
+    batches = [(torch.randn(5, 3, 4, 4), torch.tensor([0, 1, 2, 3, 0]), torch.arange(5)) for _ in range(3)]
+    model = Tiny()
+    opt = torch.optim.SGD(model.parameters(), lr=0.01)
+    scaler = torch.amp.GradScaler("cuda", enabled=False)
+    out = train_epoch(model, batches, opt, scaler, torch.device("cpu"), torch.ones(5), 0.1)
+    assert out["steps"] == 3 and out["images"] == 15 and np.isfinite(out["loss"]) and 0 <= out["train_top1"] <= 1
+    with torch.no_grad():
+        model.fc.weight.fill_(float("nan"))
+    with pytest.raises(FloatingPointError):
+        train_epoch(model, batches, opt, scaler, torch.device("cpu"), torch.ones(5), 0.1)

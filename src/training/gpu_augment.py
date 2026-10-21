@@ -94,8 +94,6 @@ class GpuAugment:
         device = x.device
         apply = self._rand(n, device) < self.blur_p
         sigma = self._uniform(n, *self.blur_sigma, device)
-        if not bool(apply.any()):
-            return x
         offsets = torch.arange(-2, 3, device=device, dtype=x.dtype)
         kernel = torch.exp(-(offsets.view(1, 5) ** 2) / (2 * sigma.view(n, 1) ** 2))
         kernel = (kernel / kernel.sum(1, keepdim=True)).repeat_interleave(c, 0)       # [n*c, 5]

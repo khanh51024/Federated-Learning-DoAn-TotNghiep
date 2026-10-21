@@ -71,7 +71,11 @@ def train_epoch(model: Any, loader: Any, optimizer: Any, scaler: Any, device: An
     criterion = torch.nn.CrossEntropyLoss(reduction="none", label_smoothing=label_smoothing)
     use_amp = device.type == "cuda"
     adjust = logit_adjust.to(device) if logit_adjust is not None else None
-    total_loss, correct, seen, steps = 0.0, 0, 0, 0
+    # cộng dồn trên thiết bị, chỉ đọc về CPU cuối epoch: đọc mỗi bước (float(loss), int(...)) buộc CPU chờ GPU và làm chậm vòng học
+    total_loss = torch.zeros((), device=device)
+    correct = torch.zeros((), device=device, dtype=torch.long)
+    finite = torch.ones((), device=device, dtype=torch.bool)
+    seen, steps = 0, 0
     started = time.time()
     for images, labels, index in loader:
         images = images.to(device, non_blocking=True)
@@ -86,16 +90,17 @@ def train_epoch(model: Any, loader: Any, optimizer: Any, scaler: Any, device: An
             logits = model(images)
             trained = logits.float() if adjust is None else logits.float() + adjust
             loss = (criterion(trained, labels) * weights).sum() / weights.sum()
-        if not torch.isfinite(loss):
-            raise FloatingPointError("mất mát không hữu hạn: dừng để không lưu checkpoint hỏng")
         scaler.scale(loss).backward()
         scaler.step(optimizer)
         scaler.update()
-        total_loss += float(loss.detach()) * len(labels)
-        correct += int((logits.argmax(1) == labels).sum())
+        finite &= torch.isfinite(loss.detach())
+        total_loss += loss.detach() * len(labels)
+        correct += (logits.detach().argmax(1) == labels).sum()
         seen += len(labels)
         steps += 1
-    return {"loss": total_loss / max(1, seen), "train_top1": correct / max(1, seen), "steps": steps, "images": seen,
+    if not bool(finite):
+        raise FloatingPointError("mất mát không hữu hạn trong epoch: dừng để không lưu checkpoint hỏng")
+    return {"loss": float(total_loss) / max(1, seen), "train_top1": int(correct) / max(1, seen), "steps": steps, "images": seen,
             "seconds": round(time.time() - started, 1)}
 
 
