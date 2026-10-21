@@ -103,3 +103,15 @@ Mỗi kịch bản 5 client train riêng (không trao đổi model), laptop RTX 
 - `results/20261021_q5/a10/client_02` bị cắt ở round 40 và resume từ checkpoint ⇒ **RESUMED_NOT_BIT_EXACT**.
 - Checkpoint Local-only chọn theo PD-F1 thuần (không sàn PV), khác Centralized/FedAvg ⇒ so sánh chỉ mô tả.
 - Trần 14 h/kịch bản trên laptop (người dùng cho phép); không kịch bản nào chạm trần.
+
+## Nguồn dữ liệu và giấy phép
+
+Repo này **không phân phối lại ảnh**. Repo chỉ chứa code, trọng số model và kết quả; người dùng tự tải dữ liệu từ
+nguồn gốc dưới đây và tuân theo giấy phép của từng nguồn.
+
+- **PlantVillage** — Mohanty, S. P., Hughes, D. P., Salathé, M. (2016). *Using Deep Learning for Image-Based Plant
+  Disease Detection.* Frontiers in Plant Science. DOI [10.3389/fpls.2016.01419](https://doi.org/10.3389/fpls.2016.01419).
+  Repo gốc không có tệp LICENSE; dataset card trên Hugging Face (mohanty) khai giấy phép **CC BY-SA 3.0**.
+- **PlantDoc** — Singh, D., Jain, N., Jain, P., Kayal, P., Kumawat, S., Batra, N. (2020). *PlantDoc: A Dataset for
+  Visual Plant Disease Detection.* CoDS-COMAD 2020. DOI [10.1145/3371158.3371196](https://doi.org/10.1145/3371158.3371196),
+  arXiv:[1911.10317](https://arxiv.org/abs/1911.10317). Giấy phép **CC BY 4.0** (LICENSE.txt trong repo gốc).

@@ -1,1 +1,25 @@
 * text=auto eol=lf
+# Q5 result files keep their original bytes (CRLF), see PUSH_INVENTORY sha256
+results/20261021_q5/iid/client_00/summary.json -text
+results/20261021_q5/iid/client_01/summary.json -text
+results/20261021_q5/iid/client_02/summary.json -text
+results/20261021_q5/iid/client_03/summary.json -text
+results/20261021_q5/iid/client_04/summary.json -text
+results/20261021_q5/a10/client_00/summary.json -text
+results/20261021_q5/a10/client_01/summary.json -text
+results/20261021_q5/a10/client_02/summary.json -text
+results/20261021_q5/a10/client_03/summary.json -text
+results/20261021_q5/a10/client_04/summary.json -text
+results/20261021_q5/a01/client_00/summary.json -text
+results/20261021_q5/a01/client_01/summary.json -text
+results/20261021_q5/a01/client_02/summary.json -text
+results/20261021_q5/a01/client_03/summary.json -text
+results/20261021_q5/a01/client_04/summary.json -text
+results/20261021_q5/iid/RECEIPT.jsonl -text
+results/20261021_q5/iid/GPU_PIN.json -text
+results/20261021_q5/a10/RECEIPT.jsonl -text
+results/20261021_q5/a10/GPU_PIN.json -text
+results/20261021_q5/a01/RECEIPT.jsonl -text
+results/20261021_q5/a01/GPU_PIN.json -text
+results/20261021_q5/LOCAL_RESULT.json -text
+results/20261021_q5/reports/Q6_RESULTS_test.json -text
