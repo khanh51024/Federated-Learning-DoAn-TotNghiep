@@ -1,0 +1,6 @@
+{
+ "cuda": "12.4",
+ "gpu": "NVIDIA GeForce RTX 2050",
+ "pinned_utc": "2026-10-20T17:06:59Z",
+ "torch": "2.6.0+cu124"
+}

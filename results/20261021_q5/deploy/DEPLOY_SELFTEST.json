@@ -1,0 +1,793 @@
+{
+  "deploy_imports_ast": [
+    "hashlib",
+    "pathlib",
+    "torch",
+    "torch",
+    "torchvision.models",
+    "torchvision",
+    "PIL"
+  ],
+  "device": "cpu",
+  "exported_pairs": [
+    {
+      "exported_argmax": 7,
+      "exported_confidence_after_T": 0.9580372209063366,
+      "image": "pv_plain.jpg",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 7,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 28,
+      "exported_confidence_after_T": 0.9632097603467902,
+      "image": "pd_plain.jpg",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 28,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 31,
+      "exported_confidence_after_T": 0.7226088482018345,
+      "image": "pd_exif6.jpg",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 31,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 32,
+      "exported_confidence_after_T": 0.28055889396101014,
+      "image": "pd_exif8.jpg",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 32,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 32,
+      "exported_confidence_after_T": 0.385065917994508,
+      "image": "pd_exif3.jpg",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 32,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 18,
+      "exported_confidence_after_T": 0.559308874556737,
+      "image": "pv_alpha.png",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 18,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 31,
+      "exported_confidence_after_T": 0.584773242608249,
+      "image": "pd_gray.jpg",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 31,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 32,
+      "exported_confidence_after_T": 0.9919703085334562,
+      "image": "pv_cmyk.jpg",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 32,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 31,
+      "exported_confidence_after_T": 0.3222369877762696,
+      "image": "pv_wide.png",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 31,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 25,
+      "exported_confidence_after_T": 0.9999999999168785,
+      "image": "pd_ptrns.png",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 25,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 7,
+      "exported_confidence_after_T": 0.9835839142870809,
+      "image": "pv_plain.jpg",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 7,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 28,
+      "exported_confidence_after_T": 0.8997533785244266,
+      "image": "pd_plain.jpg",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 28,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 2,
+      "exported_confidence_after_T": 0.4794028978001425,
+      "image": "pd_exif6.jpg",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 2,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 2,
+      "exported_confidence_after_T": 0.3280936788982195,
+      "image": "pd_exif8.jpg",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 2,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 20,
+      "exported_confidence_after_T": 0.9517281662733117,
+      "image": "pd_exif3.jpg",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 20,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 19,
+      "exported_confidence_after_T": 0.3280752841244067,
+      "image": "pv_alpha.png",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 19,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 31,
+      "exported_confidence_after_T": 0.9757739284867947,
+      "image": "pd_gray.jpg",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 31,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 32,
+      "exported_confidence_after_T": 0.9688684868077835,
+      "image": "pv_cmyk.jpg",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 32,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 29,
+      "exported_confidence_after_T": 0.27907254691753053,
+      "image": "pv_wide.png",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 29,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 25,
+      "exported_confidence_after_T": 0.9993171318897865,
+      "image": "pd_ptrns.png",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 25,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 7,
+      "exported_confidence_after_T": 0.9520462985745252,
+      "image": "pv_plain.jpg",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 7,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 28,
+      "exported_confidence_after_T": 0.8534178127417129,
+      "image": "pd_plain.jpg",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 28,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 2,
+      "exported_confidence_after_T": 0.61527309867524,
+      "image": "pd_exif6.jpg",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 2,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 0,
+      "exported_confidence_after_T": 0.5245578443379233,
+      "image": "pd_exif8.jpg",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 0,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 20,
+      "exported_confidence_after_T": 0.9312245007632137,
+      "image": "pd_exif3.jpg",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 20,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 20,
+      "exported_confidence_after_T": 0.245693210426402,
+      "image": "pv_alpha.png",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 20,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 31,
+      "exported_confidence_after_T": 0.96168742177137,
+      "image": "pd_gray.jpg",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 31,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 32,
+      "exported_confidence_after_T": 0.9494298720576293,
+      "image": "pv_cmyk.jpg",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 32,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 0,
+      "exported_confidence_after_T": 0.47071582719388533,
+      "image": "pv_wide.png",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 0,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 25,
+      "exported_confidence_after_T": 0.9999358798570941,
+      "image": "pd_ptrns.png",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 25,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 7,
+      "exported_confidence_after_T": 0.7746689730957684,
+      "image": "pv_plain.jpg",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 7,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 29,
+      "exported_confidence_after_T": 0.31895018568495315,
+      "image": "pd_plain.jpg",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 29,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 29,
+      "exported_confidence_after_T": 0.6017042200897282,
+      "image": "pd_exif6.jpg",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 29,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 16,
+      "exported_confidence_after_T": 0.41176816593853105,
+      "image": "pd_exif8.jpg",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 16,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 20,
+      "exported_confidence_after_T": 0.8268146616971848,
+      "image": "pd_exif3.jpg",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 20,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 19,
+      "exported_confidence_after_T": 0.9132454072012359,
+      "image": "pv_alpha.png",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 19,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 31,
+      "exported_confidence_after_T": 0.9860088647605688,
+      "image": "pd_gray.jpg",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 31,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 32,
+      "exported_confidence_after_T": 0.7059355778580265,
+      "image": "pv_cmyk.jpg",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 32,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 8,
+      "exported_confidence_after_T": 0.3580372447497733,
+      "image": "pv_wide.png",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 8,
+      "tensor_equal": true
+    },
+    {
+      "exported_argmax": 25,
+      "exported_confidence_after_T": 0.8678084049774394,
+      "image": "pd_ptrns.png",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 25,
+      "tensor_equal": true
+    }
+  ],
+  "g2_max_abs_dp": 0.0,
+  "g3_negative_controls": {
+    "pd_exif3.jpg": 0.5424047567331413,
+    "pd_exif6.jpg": 0.6333533188051516,
+    "pd_exif8.jpg": 0.25817327001023943,
+    "pv_alpha.png": 0.43900852829692627
+  },
+  "g5_max_abs_dp": 0.0,
+  "gates": {
+    "G1": true,
+    "G2": true,
+    "G3": true,
+    "G4": true,
+    "G5": true
+  },
+  "n_pairs": 40,
+  "pairs": [
+    {
+      "deploy_argmax": 7,
+      "deploy_confidence_after_T": 0.9580372209063366,
+      "image": "pv_plain.jpg",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 7,
+      "reference_confidence_after_T": 0.9580372209063366,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 28,
+      "deploy_confidence_after_T": 0.9632097603467902,
+      "image": "pd_plain.jpg",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 28,
+      "reference_confidence_after_T": 0.9632097603467902,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 31,
+      "deploy_confidence_after_T": 0.7226088482018345,
+      "image": "pd_exif6.jpg",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 31,
+      "reference_confidence_after_T": 0.7226088482018345,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 32,
+      "deploy_confidence_after_T": 0.28055889396101014,
+      "image": "pd_exif8.jpg",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 32,
+      "reference_confidence_after_T": 0.28055889396101014,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 32,
+      "deploy_confidence_after_T": 0.385065917994508,
+      "image": "pd_exif3.jpg",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 32,
+      "reference_confidence_after_T": 0.385065917994508,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 18,
+      "deploy_confidence_after_T": 0.559308874556737,
+      "image": "pv_alpha.png",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 18,
+      "reference_confidence_after_T": 0.559308874556737,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 31,
+      "deploy_confidence_after_T": 0.584773242608249,
+      "image": "pd_gray.jpg",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 31,
+      "reference_confidence_after_T": 0.584773242608249,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 32,
+      "deploy_confidence_after_T": 0.9919703085334562,
+      "image": "pv_cmyk.jpg",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 32,
+      "reference_confidence_after_T": 0.9919703085334562,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 31,
+      "deploy_confidence_after_T": 0.3222369877762696,
+      "image": "pv_wide.png",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 31,
+      "reference_confidence_after_T": 0.3222369877762696,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 25,
+      "deploy_confidence_after_T": 0.9999999999168785,
+      "image": "pd_ptrns.png",
+      "label": "central",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 25,
+      "reference_confidence_after_T": 0.9999999999168785,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 7,
+      "deploy_confidence_after_T": 0.9835839142870809,
+      "image": "pv_plain.jpg",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 7,
+      "reference_confidence_after_T": 0.9835839142870809,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 28,
+      "deploy_confidence_after_T": 0.8997533785244266,
+      "image": "pd_plain.jpg",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 28,
+      "reference_confidence_after_T": 0.8997533785244266,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 2,
+      "deploy_confidence_after_T": 0.4794028978001425,
+      "image": "pd_exif6.jpg",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 2,
+      "reference_confidence_after_T": 0.4794028978001425,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 2,
+      "deploy_confidence_after_T": 0.3280936788982195,
+      "image": "pd_exif8.jpg",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 2,
+      "reference_confidence_after_T": 0.3280936788982195,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 20,
+      "deploy_confidence_after_T": 0.9517281662733117,
+      "image": "pd_exif3.jpg",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 20,
+      "reference_confidence_after_T": 0.9517281662733117,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 19,
+      "deploy_confidence_after_T": 0.3280752841244067,
+      "image": "pv_alpha.png",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 19,
+      "reference_confidence_after_T": 0.3280752841244067,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 31,
+      "deploy_confidence_after_T": 0.9757739284867947,
+      "image": "pd_gray.jpg",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 31,
+      "reference_confidence_after_T": 0.9757739284867947,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 32,
+      "deploy_confidence_after_T": 0.9688684868077835,
+      "image": "pv_cmyk.jpg",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 32,
+      "reference_confidence_after_T": 0.9688684868077835,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 29,
+      "deploy_confidence_after_T": 0.27907254691753053,
+      "image": "pv_wide.png",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 29,
+      "reference_confidence_after_T": 0.27907254691753053,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 25,
+      "deploy_confidence_after_T": 0.9993171318897865,
+      "image": "pd_ptrns.png",
+      "label": "fedavg_iid",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 25,
+      "reference_confidence_after_T": 0.9993171318897865,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 7,
+      "deploy_confidence_after_T": 0.9520462985745252,
+      "image": "pv_plain.jpg",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 7,
+      "reference_confidence_after_T": 0.9520462985745252,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 28,
+      "deploy_confidence_after_T": 0.8534178127417129,
+      "image": "pd_plain.jpg",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 28,
+      "reference_confidence_after_T": 0.8534178127417129,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 2,
+      "deploy_confidence_after_T": 0.61527309867524,
+      "image": "pd_exif6.jpg",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 2,
+      "reference_confidence_after_T": 0.61527309867524,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 0,
+      "deploy_confidence_after_T": 0.5245578443379233,
+      "image": "pd_exif8.jpg",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 0,
+      "reference_confidence_after_T": 0.5245578443379233,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 20,
+      "deploy_confidence_after_T": 0.9312245007632137,
+      "image": "pd_exif3.jpg",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 20,
+      "reference_confidence_after_T": 0.9312245007632137,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 20,
+      "deploy_confidence_after_T": 0.245693210426402,
+      "image": "pv_alpha.png",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 20,
+      "reference_confidence_after_T": 0.245693210426402,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 31,
+      "deploy_confidence_after_T": 0.96168742177137,
+      "image": "pd_gray.jpg",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 31,
+      "reference_confidence_after_T": 0.96168742177137,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 32,
+      "deploy_confidence_after_T": 0.9494298720576293,
+      "image": "pv_cmyk.jpg",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 32,
+      "reference_confidence_after_T": 0.9494298720576293,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 0,
+      "deploy_confidence_after_T": 0.47071582719388533,
+      "image": "pv_wide.png",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 0,
+      "reference_confidence_after_T": 0.47071582719388533,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 25,
+      "deploy_confidence_after_T": 0.9999358798570941,
+      "image": "pd_ptrns.png",
+      "label": "fedavg_a10",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 25,
+      "reference_confidence_after_T": 0.9999358798570941,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 7,
+      "deploy_confidence_after_T": 0.7746689730957684,
+      "image": "pv_plain.jpg",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 7,
+      "reference_confidence_after_T": 0.7746689730957684,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 29,
+      "deploy_confidence_after_T": 0.31895018568495315,
+      "image": "pd_plain.jpg",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 29,
+      "reference_confidence_after_T": 0.31895018568495315,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 29,
+      "deploy_confidence_after_T": 0.6017042200897282,
+      "image": "pd_exif6.jpg",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 29,
+      "reference_confidence_after_T": 0.6017042200897282,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 16,
+      "deploy_confidence_after_T": 0.41176816593853105,
+      "image": "pd_exif8.jpg",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 16,
+      "reference_confidence_after_T": 0.41176816593853105,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 20,
+      "deploy_confidence_after_T": 0.8268146616971848,
+      "image": "pd_exif3.jpg",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 20,
+      "reference_confidence_after_T": 0.8268146616971848,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 19,
+      "deploy_confidence_after_T": 0.9132454072012359,
+      "image": "pv_alpha.png",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 19,
+      "reference_confidence_after_T": 0.9132454072012359,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 31,
+      "deploy_confidence_after_T": 0.9860088647605688,
+      "image": "pd_gray.jpg",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 31,
+      "reference_confidence_after_T": 0.9860088647605688,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 32,
+      "deploy_confidence_after_T": 0.7059355778580265,
+      "image": "pv_cmyk.jpg",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 32,
+      "reference_confidence_after_T": 0.7059355778580265,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 8,
+      "deploy_confidence_after_T": 0.3580372447497733,
+      "image": "pv_wide.png",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 8,
+      "reference_confidence_after_T": 0.3580372447497733,
+      "tensor_equal": true
+    },
+    {
+      "deploy_argmax": 25,
+      "deploy_confidence_after_T": 0.8678084049774394,
+      "image": "pd_ptrns.png",
+      "label": "fedavg_a01",
+      "max_abs_dp": 0.0,
+      "reference_argmax": 25,
+      "reference_confidence_after_T": 0.8678084049774394,
+      "tensor_equal": true
+    }
+  ],
+  "status": "PASS"
+}

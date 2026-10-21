@@ -1,0 +1,44 @@
+{
+  "backend": "local_only",
+  "seed": 42,
+  "device": "cuda:0",
+  "partition_scheme": "label_alpha_0_1",
+  "partial_batches": null,
+  "plantdoc_sampling_ratio": "0.25",
+  "release_manifest_sha256": "6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252",
+  "w0_fingerprint": "eaf9197b42fb39163186a7285f7f1ed4f1e728bd83522260fdc5f0f51c110850",
+  "rounds": 60,
+  "clients": {
+    "client_04": {
+      "n_k": 10075,
+      "class_coverage": {
+        "train_label_count": 24,
+        "missing_class_ids": [
+          1,
+          2,
+          6,
+          7,
+          9,
+          11,
+          16,
+          17,
+          18,
+          22,
+          27,
+          34,
+          35,
+          36
+        ],
+        "validation_seen_label_fraction": 0.717103836982441,
+        "plantdoc_validation_seen_label_fraction": 0.8475836431226765,
+        "plantvillage_validation_seen_label_fraction": 0.7090239410681399
+      },
+      "best_validation": {
+        "round": 46,
+        "plantdoc_macro_f1_supported": 0.18581968155603942,
+        "plantvillage_macro_f1_supported": 0.37523315055143436,
+        "accuracy": 0.532
+      }
+    }
+  }
+}

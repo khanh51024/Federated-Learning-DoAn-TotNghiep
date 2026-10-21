@@ -1,0 +1,239 @@
+{
+ "run_root": "D:\\university\\do-an-tot-nghiep\\experiments\\train-improve-20261015\\q5\\local\\runs_rtx2050",
+ "schemes": {
+  "iid": {
+   "clients": {
+    "client_00": {
+     "best_validation": {
+      "accuracy": 0.9304,
+      "plantdoc_macro_f1_supported": 0.4782353052514744,
+      "plantvillage_macro_f1_supported": 0.9465232683780817,
+      "round": 25
+     },
+     "checkpoint_best_sha256": "a99ca13627d73460edd2ec8b29f47372ae0cce43c7d4c2e5753e49141ba2b278",
+     "class_coverage_train_labels": 38,
+     "flag": null,
+     "n_k": 7473,
+     "segment_starts": 1
+    },
+    "client_01": {
+     "best_validation": {
+      "accuracy": 0.9152,
+      "plantdoc_macro_f1_supported": 0.44922692545377985,
+      "plantvillage_macro_f1_supported": 0.9230650985642206,
+      "round": 9
+     },
+     "checkpoint_best_sha256": "8c14364e3e6967c75f31ae80bd2b779956db77c9b74c9f415ea22efd22ead69a",
+     "class_coverage_train_labels": 38,
+     "flag": null,
+     "n_k": 7474,
+     "segment_starts": 1
+    },
+    "client_02": {
+     "best_validation": {
+      "accuracy": 0.9003,
+      "plantdoc_macro_f1_supported": 0.4715161691000945,
+      "plantvillage_macro_f1_supported": 0.8817525519368349,
+      "round": 7
+     },
+     "checkpoint_best_sha256": "09008714973b5d155afcec13ee16c02a7ae98d2e2a9ca16523e6dd6dbe090202",
+     "class_coverage_train_labels": 38,
+     "flag": null,
+     "n_k": 7436,
+     "segment_starts": 1
+    },
+    "client_03": {
+     "best_validation": {
+      "accuracy": 0.9215,
+      "plantdoc_macro_f1_supported": 0.4576425825760696,
+      "plantvillage_macro_f1_supported": 0.9333450352958949,
+      "round": 11
+     },
+     "checkpoint_best_sha256": "e823d8ef295e445d3b78bf1705b0db8b90de9f2fa88e4c3d52021a00ee8f39a4",
+     "class_coverage_train_labels": 38,
+     "flag": null,
+     "n_k": 7425,
+     "segment_starts": 1
+    },
+    "client_04": {
+     "best_validation": {
+      "accuracy": 0.8751,
+      "plantdoc_macro_f1_supported": 0.4196660558059584,
+      "plantvillage_macro_f1_supported": 0.8668082824642236,
+      "round": 30
+     },
+     "checkpoint_best_sha256": "e559296702a3e6ff4d4f46b6174e3f4efbb668f92ed7bb1f2ba32570925550a9",
+     "class_coverage_train_labels": 38,
+     "flag": null,
+     "n_k": 7430,
+     "segment_starts": 1
+    }
+   },
+   "gpu_mismatch": false,
+   "gpu_pin": {
+    "cuda": "12.4",
+    "gpu": "NVIDIA GeForce RTX 2050",
+    "pinned_utc": "2026-10-20T12:56:44Z",
+    "torch": "2.6.0+cu124"
+   },
+   "gpu_s_logged": 25959.2,
+   "receipt_sha256": "b2c9653b62093480ddf3dfae76518d02eae383c9f54b119e6c51ea7287a28714"
+  },
+  "label_alpha_0_1": {
+   "clients": {
+    "client_00": {
+     "best_validation": {
+      "accuracy": 0.4375,
+      "plantdoc_macro_f1_supported": 0.20114455923980343,
+      "plantvillage_macro_f1_supported": 0.26756952761128006,
+      "round": 32
+     },
+     "checkpoint_best_sha256": "55f2b0d476cd18bda957293fd00869a95cb9ab67050d4bab83c5edff54ce86ae",
+     "class_coverage_train_labels": 23,
+     "flag": null,
+     "n_k": 5434,
+     "segment_starts": 1
+    },
+    "client_01": {
+     "best_validation": {
+      "accuracy": 0.5044,
+      "plantdoc_macro_f1_supported": 0.11671753584367237,
+      "plantvillage_macro_f1_supported": 0.34871781678642394,
+      "round": 37
+     },
+     "checkpoint_best_sha256": "0391db294a87c634a5e6ca9d81a90252f35cc3c17d92c1bae4607d56fc091cd1",
+     "class_coverage_train_labels": 24,
+     "flag": null,
+     "n_k": 7858,
+     "segment_starts": 1
+    },
+    "client_02": {
+     "best_validation": {
+      "accuracy": 0.538,
+      "plantdoc_macro_f1_supported": 0.21018773144279215,
+      "plantvillage_macro_f1_supported": 0.3430743191775756,
+      "round": 43
+     },
+     "checkpoint_best_sha256": "ba2d936eb74e3de33500c8106fbb1edfef7a59fdbe2627211c479c01639be7c4",
+     "class_coverage_train_labels": 20,
+     "flag": null,
+     "n_k": 5376,
+     "segment_starts": 1
+    },
+    "client_03": {
+     "best_validation": {
+      "accuracy": 0.5378,
+      "plantdoc_macro_f1_supported": 0.2564276461564424,
+      "plantvillage_macro_f1_supported": 0.33926285189974964,
+      "round": 11
+     },
+     "checkpoint_best_sha256": "9d94ab2f7452c8940c1b74118a81e934efb96c09920bba5244bb5f91e2764f76",
+     "class_coverage_train_labels": 27,
+     "flag": null,
+     "n_k": 8495,
+     "segment_starts": 1
+    },
+    "client_04": {
+     "best_validation": {
+      "accuracy": 0.532,
+      "plantdoc_macro_f1_supported": 0.18581968155603942,
+      "plantvillage_macro_f1_supported": 0.37523315055143436,
+      "round": 46
+     },
+     "checkpoint_best_sha256": "7ff7a833777dd195b9cdf922ccba088aa706edea8dc4e9d56a9a744dea8eccb0",
+     "class_coverage_train_labels": 24,
+     "flag": null,
+     "n_k": 10075,
+     "segment_starts": 1
+    }
+   },
+   "gpu_mismatch": false,
+   "gpu_pin": {
+    "cuda": "12.4",
+    "gpu": "NVIDIA GeForce RTX 2050",
+    "pinned_utc": "2026-10-20T17:06:59Z",
+    "torch": "2.6.0+cu124"
+   },
+   "gpu_s_logged": 16136.9,
+   "receipt_sha256": "a1599081bd8590ca2cc8accba03f2cfc4f541b080656ddf6c4fd8f88b86f765e"
+  },
+  "label_alpha_1_0": {
+   "clients": {
+    "client_00": {
+     "best_validation": {
+      "accuracy": 0.8259,
+      "plantdoc_macro_f1_supported": 0.3591657864965486,
+      "plantvillage_macro_f1_supported": 0.8017090951591134,
+      "round": 34
+     },
+     "checkpoint_best_sha256": "8047862ba8e5c2cb69f392be9289a53bbdc9f13e9f51dfcdf51d1fa0ef264918",
+     "class_coverage_train_labels": 38,
+     "flag": null,
+     "n_k": 6685,
+     "segment_starts": 1
+    },
+    "client_01": {
+     "best_validation": {
+      "accuracy": 0.7583,
+      "plantdoc_macro_f1_supported": 0.34377473373577894,
+      "plantvillage_macro_f1_supported": 0.6872344815826154,
+      "round": 5
+     },
+     "checkpoint_best_sha256": "524711b93d922fd7ad7704de1d2cdcdc1235796c003477f20329f1bf8eaed614",
+     "class_coverage_train_labels": 38,
+     "flag": null,
+     "n_k": 7956,
+     "segment_starts": 1
+    },
+    "client_02": {
+     "best_validation": {
+      "accuracy": 0.7624,
+      "plantdoc_macro_f1_supported": 0.3577356313330865,
+      "plantvillage_macro_f1_supported": 0.6761531584048422,
+      "round": 25
+     },
+     "checkpoint_best_sha256": "db18380a2ff9a0ad43e6cb82281da35e39cc6f8adc49035ad23374b1077acae6",
+     "class_coverage_train_labels": 37,
+     "flag": "RESUMED_NOT_BIT_EXACT",
+     "n_k": 5643,
+     "segment_starts": 2
+    },
+    "client_03": {
+     "best_validation": {
+      "accuracy": 0.8821,
+      "plantdoc_macro_f1_supported": 0.41636758344412794,
+      "plantvillage_macro_f1_supported": 0.8883202737541904,
+      "round": 34
+     },
+     "checkpoint_best_sha256": "36535ebf4e32da7304cce7605997c229753b65b12857aca902d4d275c930b746",
+     "class_coverage_train_labels": 38,
+     "flag": null,
+     "n_k": 8655,
+     "segment_starts": 1
+    },
+    "client_04": {
+     "best_validation": {
+      "accuracy": 0.7763,
+      "plantdoc_macro_f1_supported": 0.4029840800378623,
+      "plantvillage_macro_f1_supported": 0.7613360889035424,
+      "round": 38
+     },
+     "checkpoint_best_sha256": "536da05b3f2f1c34cc10841cf8722b5e495290650a645e2602940a22e51a8cfb",
+     "class_coverage_train_labels": 38,
+     "flag": null,
+     "n_k": 8299,
+     "segment_starts": 1
+    }
+   },
+   "gpu_mismatch": false,
+   "gpu_pin": {
+    "cuda": "12.4",
+    "gpu": "NVIDIA GeForce RTX 2050",
+    "pinned_utc": "2026-10-20T12:52:16Z",
+    "torch": "2.6.0+cu124"
+   },
+   "gpu_s_logged": 21152.1,
+   "receipt_sha256": "652473ae1375d6ca9a5513ea3a197f79ce9b20c516e84d57e1189fbe04e7312d"
+  }
+ }
+}

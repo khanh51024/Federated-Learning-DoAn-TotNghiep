@@ -77,3 +77,29 @@ python training-workflows/laptop_local_only/launch_local_only.py `
 ```
 
 `run_remaining_clients.py` là hàng đợi gắn với workspace ban đầu, chỉ để truy nguyên phiên chạy; không dùng như launcher di động. `SOURCE_MANIFEST.json` chốt SHA mã train, `results/20261003/artifact_manifest.json` chốt SHA các checkpoint/kết quả.
+
+## Kết quả Q5 (21-10-2026) — `results/20261021_q5/`
+
+Lượt train đầy đủ Q5 của chiến dịch cải thiện, seed 42, release `pv_pd_v3`. Kết quả v7 ở `results/20261003/` vẫn giữ
+nguyên, là kết quả trước đó. Mọi số dưới đây là **tập kiểm thử chung** `legacy_diagnostic_test` (11.015 ảnh: 10.843
+PlantVillage + 172 crop PlantDoc / 96 cảnh / 13 lớp), mở **một lần**. Mỗi nhánh một seed ⇒ **chỉ mô tả**, không
+kết luận thống kê. Luôn đọc cặp *acc toàn tập + acc PlantDoc*, kèm macro-F1 PlantDoc: 98,4% ảnh test là PlantVillage.
+
+Suy luận: một pipeline chung cho mọi checkpoint (`deploy/DEPLOY.md`): xoay EXIF → RGB (alpha dán nền đen) → resize
+224×224 bilinear antialias (ép vuông) → ToTensor → chuẩn hóa ImageNet; xác suất = softmax(logit / T), T trong
+`deploy/temperatures.json` (fit trên tập calibration). Kiểm sha256 trước, rồi `torch.load(..., weights_only=False)` cho
+checkpoint train; hoặc dùng `*_state_dict.pt` với `weights_only=True`. Không có ngưỡng từ chối được bàn giao. Phần trăm
+hiển thị là độ tin cậy dự đoán, không phải accuracy. Chi tiết: `reports/Q6_REPORT_vi.md`, `reports/S4C_REPORT_vi.md`.
+
+Mỗi kịch bản 5 client train riêng (không trao đổi model), laptop RTX 2050. Số chính = trung bình đều 5 client
+(đăng ký trước khi mở test); không báo "client tốt nhất".
+
+| Kịch bản | Acc toàn tập | Acc PD | macro-F1 PD | Min–max acc toàn tập |
+|---|---:|---:|---:|---|
+| iid | 0,9328 | 0,4140 | 0,4286 | 0,902–0,955 |
+| label α=1,0 | 0,8207 | 0,3442 | 0,3844 | 0,775–0,903 |
+| label α=0,1 | 0,5225 | 0,2512 | 0,1946 | 0,453–0,550 |
+
+- `results/20261021_q5/a10/client_02` bị cắt ở round 40 và resume từ checkpoint ⇒ **RESUMED_NOT_BIT_EXACT**.
+- Checkpoint Local-only chọn theo PD-F1 thuần (không sàn PV), khác Centralized/FedAvg ⇒ so sánh chỉ mô tả.
+- Trần 14 h/kịch bản trên laptop (người dùng cho phép); không kịch bản nào chạm trần.

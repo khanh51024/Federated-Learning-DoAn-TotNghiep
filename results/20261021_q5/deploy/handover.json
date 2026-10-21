@@ -1,0 +1,65 @@
+{
+  "checkpoints": [
+    {
+      "accuracy": 0.9867,
+      "label": "central",
+      "path": "experiments/train-improve-20261015/q5/colab/received_20261021/checkpoint_best.pt",
+      "plantdoc_accuracy": 0.6337,
+      "plantdoc_macro_f1_supported": 0.5684617527603952,
+      "plantvillage_accuracy": 0.9923,
+      "role": "web app model (ceiling, fixed in advance)",
+      "round_or_epoch": 22,
+      "sha256": "c45fa9937b636d815ef99f4bd21f078cad86521cf67a5b118f7c64e0a7809998",
+      "state_dict_path": "deploy/central_state_dict.pt",
+      "state_dict_sha256": "b137e983361ca28772dff923199b960f9a3995eb82b30159cfcabb21c8c7e229",
+      "state_key": "model_state",
+      "temperature": 2.9257905089934164
+    },
+    {
+      "accuracy": 0.9629,
+      "label": "fedavg_iid",
+      "path": "experiments/train-improve-20261015/q5/kaggle/output/q5-fedavg-iid-s42-r1/q5_out/fed_mixed_iid_baseline_s42/run/checkpoint_best.pt",
+      "plantdoc_accuracy": 0.5,
+      "plantdoc_macro_f1_supported": 0.5265961769346438,
+      "plantvillage_accuracy": 0.9702,
+      "role": "FedAvg scenario result: iid",
+      "round_or_epoch": 13,
+      "sha256": "bd5a56151904f8b0b7adfd59aa38f63e741ed23ffe9c46b7a4c7a4dadd4cb238",
+      "state_dict_path": "deploy/fedavg_iid_state_dict.pt",
+      "state_dict_sha256": "2ae121416fcf86ccd92f66e8c6fe7f2344875019c746e1125b4aaf94298a04fa",
+      "state_key": "model_state",
+      "temperature": 1.0937566291397958
+    },
+    {
+      "accuracy": 0.9379,
+      "label": "fedavg_a10",
+      "path": "experiments/train-improve-20261015/q5/kaggle/output/q5-fedavg-label-a10-s42-r1/q5_out/fed_mixed_label_a10_q5_s42/run/checkpoint_best.pt",
+      "plantdoc_accuracy": 0.4884,
+      "plantdoc_macro_f1_supported": 0.5399892836687104,
+      "plantvillage_accuracy": 0.945,
+      "role": "FedAvg scenario result: label alpha 1.0",
+      "round_or_epoch": 6,
+      "sha256": "085701c3d19d3106167d4eb8a7d943880e5077e07b0766b5f1a8409937d58e42",
+      "state_dict_path": "deploy/fedavg_a10_state_dict.pt",
+      "state_dict_sha256": "e8ea722cb485ea5a96bf8de3ddf6f2a566dd095186dbee317f9c1683047944cc",
+      "state_key": "model_state",
+      "temperature": 0.8414747101123413
+    },
+    {
+      "accuracy": 0.9266,
+      "label": "fedavg_a01",
+      "path": "experiments/train-improve-20261015/q5/kaggle/output/q5-fedavg-label-a01-s42-r1/q5_out/fed_mixed_label_a01_s42/run/checkpoint_best.pt",
+      "plantdoc_accuracy": 0.5,
+      "plantdoc_macro_f1_supported": 0.5435203450513425,
+      "plantvillage_accuracy": 0.9334,
+      "role": "FedAvg scenario result: label alpha 0.1",
+      "round_or_epoch": 27,
+      "sha256": "2031d4d291b69c391065febe5e6a7c0da7d91e25a8efd8490ffac24d77c74941",
+      "state_dict_path": "deploy/fedavg_a01_state_dict.pt",
+      "state_dict_sha256": "f59fa40b74cd58ec2316c4a28509e6fb10ae6390bd692e51560372cd7d50f8e8",
+      "state_key": "model_state",
+      "temperature": 1.1481245800486155
+    }
+  ],
+  "schema_version": 1
+}

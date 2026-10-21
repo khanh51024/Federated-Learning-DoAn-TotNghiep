@@ -1,0 +1,29 @@
+{
+  "backend": "local_only",
+  "seed": 42,
+  "device": "cuda:0",
+  "partition_scheme": "iid",
+  "partial_batches": null,
+  "plantdoc_sampling_ratio": "0.25",
+  "release_manifest_sha256": "6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252",
+  "w0_fingerprint": "eaf9197b42fb39163186a7285f7f1ed4f1e728bd83522260fdc5f0f51c110850",
+  "rounds": 60,
+  "clients": {
+    "client_03": {
+      "n_k": 7425,
+      "class_coverage": {
+        "train_label_count": 38,
+        "missing_class_ids": [],
+        "validation_seen_label_fraction": 1.0,
+        "plantdoc_validation_seen_label_fraction": 1.0,
+        "plantvillage_validation_seen_label_fraction": 1.0
+      },
+      "best_validation": {
+        "round": 11,
+        "plantdoc_macro_f1_supported": 0.4576425825760696,
+        "plantvillage_macro_f1_supported": 0.9333450352958949,
+        "accuracy": 0.9215
+      }
+    }
+  }
+}

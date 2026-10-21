@@ -7,10 +7,32 @@ from PIL import Image, ImageOps
 
 def normalize_exif_orientation(image: Image.Image) -> Image.Image:
     """Transpose image according to EXIF orientation tag and strip orientation."""
-    try:
-        return ImageOps.exif_transpose(image)
-    except Exception:
-        return image
+    return ImageOps.exif_transpose(image)
+
+
+def validate_bbox_xyxy(image_width, image_height, bbox_xyxy, overflow_tolerance_px=1.0):
+    """Validate post-EXIF float XYXY; permit only <=1px boundary rounding.
+
+    Return clipped display XYXY. The caller must retain the raw box separately.
+    Invalid geometry raises ValueError and is never repaired into a tiny crop.
+    """
+    if image_width <= 0 or image_height <= 0:
+        raise ValueError("Invalid image frame")
+    if not math.isfinite(overflow_tolerance_px) or overflow_tolerance_px < 0:
+        raise ValueError("Invalid overflow tolerance")
+    if len(bbox_xyxy) != 4:
+        raise ValueError("Expected four XYXY coordinates")
+    xmin, ymin, xmax, ymax = map(float, bbox_xyxy)
+    if not all(math.isfinite(v) for v in (xmin, ymin, xmax, ymax)):
+        raise ValueError("Nonfinite box")
+    if xmax <= xmin or ymax <= ymin:
+        raise ValueError("Empty or reversed box")
+    if max(-xmin, -ymin, xmax-image_width, ymax-image_height) > overflow_tolerance_px:
+        raise ValueError("Box exceeds boundary tolerance")
+    clipped = (max(0.0, xmin), max(0.0, ymin), min(float(image_width), xmax), min(float(image_height), ymax))
+    if clipped[2] <= clipped[0] or clipped[3] <= clipped[1]:
+        raise ValueError("Box has no overlap with frame")
+    return clipped
 
 
 def crop_bounding_box(
@@ -30,9 +52,13 @@ def crop_bounding_box(
     Returns:
         (left, top, right, bottom) integer coordinates clamped to image boundaries.
     """
-    xmin, ymin, xmax, ymax = bbox_xyxy
-    box_w = max(0.0, xmax - xmin)
-    box_h = max(0.0, ymax - ymin)
+    validate_bbox_xyxy(image_width, image_height, bbox_xyxy)
+    # Expand the raw float box, then round and clip. Display clipping is separate.
+    xmin, ymin, xmax, ymax = map(float, bbox_xyxy)
+    if not math.isfinite(margin_ratio) or margin_ratio < 0:
+        raise ValueError("Invalid margin ratio")
+    box_w = xmax - xmin
+    box_h = ymax - ymin
 
     dx = box_w * margin_ratio
     dy = box_h * margin_ratio
@@ -42,15 +68,8 @@ def crop_bounding_box(
     right = min(image_width, int(math.ceil(xmax + dx)))
     bottom = min(image_height, int(math.ceil(ymax + dy)))
 
-    # Ensure non-empty crop
-    if right <= left:
-        right = min(image_width, left + 1)
-        if right <= left and left > 0:
-            left = right - 1
-    if bottom <= top:
-        bottom = min(image_height, top + 1)
-        if bottom <= top and top > 0:
-            top = bottom - 1
+    if right <= left or bottom <= top:
+        raise ValueError("Empty crop")
 
     return left, top, right, bottom
 
