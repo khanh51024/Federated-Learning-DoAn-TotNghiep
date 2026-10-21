@@ -16,11 +16,21 @@ với ảnh PlantVillage nhưng chỉ còn 33,1% (Centralized) và 31,8% (FedAvg
 2. **Chỉ nhận nhãn có cơ sở**: nhãn `trusted` (do nhóm tác giả bộ dữ liệu gán, có DOI) hoặc nhóm (nguồn, lớp) đã qua kiểm nhãn mẫu.
    Quy tắc nhận nhóm đặt trước khi xem kết quả: mẫu 30 ảnh, "đúng" ≥ 90% và "không rõ" ≤ 20%. Nhóm nhỏ (nguồn tìm kiếm Wikimedia, iNaturalist nhóm ≤ 150 ảnh) kiểm **từng ảnh**.
 3. **Loại ảnh gần trùng** (dHash 64 bit, Hamming ≤ 6, cả bản lật ngang) với PlantVillage, cảnh và lá PlantDoc của v3, PlantWild và phần thử ảnh tự chụp.
-4. **Gộp nhóm gần trùng giữa các nguồn** (Hamming ≤ 4) vào cùng một `group_id` để chia train/val/test theo nhóm, không theo ảnh.
-   Nhóm gần trùng mà mang **hai nhãn khác nhau** bị bỏ hẳn (nhãn mâu thuẫn).
-5. **Chia 70/10/10/10** (train, val, calibration, legacy_diagnostic_test) theo mã băm của nhóm; PlantVillage train giới hạn 800 ảnh mỗi lớp.
+4. **Gộp nhóm để chia train/val/test theo nhóm, không theo ảnh**:
+   - ảnh gần trùng giữa các nguồn (Hamming ≤ 4) vào cùng một `group_id`;
+   - ảnh CÙNG nguồn và CÙNG lớp gần nhau (Hamming ≤ 10, tính cả bản lật ngang) vào cùng nhóm;
+   - ảnh cùng nguồn chụp liên tiếp trong 60 giây (mốc giờ trong tên tệp như `20250404_154210`, mỗi phiên tối đa 10 phút) vào cùng nhóm, để các lần chụp liên tiếp của một lá
+     không rơi vào cả train lẫn test (phát hiện khi rà soát: trước đó 8% ảnh thử của bộ ngô, 34% của cà chua Bangladesh có ảnh học gần trùng trong 10 bit);
+   - ảnh đã xóa nền (bộ HLB) có dHash chỉ phản ánh nền đen nên không gộp theo dHash, chỉ gộp theo phiên chụp;
+   - hai ảnh gần trùng (Hamming ≤ 4) mang **hai nhãn khác nhau**: ít nhất một nhãn sai, bỏ **cả hai ảnh đó** (không bỏ cả nhóm), không bao giờ gộp hai lớp vào một nhóm.
+   Cổng rò rỉ: tỉ lệ ảnh có ảnh cùng nguồn, cùng lớp, trong 10 bit ở split khác phải ≤ 2% (kết quả: 0).
+5. **Chia 70/10/10/10** (train, val, calibration, legacy_diagnostic_test) theo mã băm của nhóm. PlantVillage train giữ đủ (không giới hạn, `--pv-cap 0`); cân bằng giữa
+   ảnh phòng thí nghiệm và ảnh ngoài đồng làm lúc train bằng trọng số lấy mẫu (xem `docs/NEXT_TRAINING_PLAN.md` mục 5.2).
 6. **Ghi nguồn thật ở `source_dataset`**; `source_domain` của mọi ảnh ngoài đồng là `"plantdoc"` vì bộ chạy huấn luyện hiện chỉ biết hai miền (`plantvillage`, `plantdoc`).
 7. Phân vùng 5 client chia theo nhóm: `label_alpha_0_1` (Dirichlet α = 0,1) và `iid` (chỉ để minh họa trần của Local-only).
+8. **Đúng hợp đồng của bộ chạy huấn luyện**: `partition_shard_hashes` khóa theo tên tệp (`client_00.jsonl`), có `partition_spec_v4.json` (trạng thái PASS, SHA từng shard, thống kê
+   entropy và JS theo bit như v3) và `quality_audit_v4.json` (cổng rò rỉ trước khi train đầy đủ). `scripts/verify_release_contract.py` chạy các bộ kiểm của nhánh `origin/train-centralized`
+   trên release và hiện đạt 11/11. Lần dựng đầu thiếu hai tệp trên và khóa shard sai, nên bộ chạy sẽ từ chối release; lỗi này phát hiện khi rà soát và đã sửa.
 
 ## 3. Nguồn dữ liệu và giấy phép
 
@@ -28,14 +38,14 @@ Cấu hình ở `configs/external_sources.yaml`; mỗi ảnh mang giấy phép t
 
 | Nguồn | Giấy phép | Ảnh đã nhập | Vào release (train / val / calib / test) | Kiểm nhãn |
 |---|---|---:|---|---|
-| [Tomato Leaf Disease Classification Dataset in Pakistan (ngoài ruộng)](https://data.mendeley.com/datasets/3mbnb82mxd/1) | CC BY 4.0 | 4697 | 2920 / 490 / 436 / 365 | nhãn của tác giả bộ dữ liệu |
-| [Tomato Leaf Disease Classification Dataset (Bangladesh)](https://data.mendeley.com/datasets/jttrv2w27r) | CC BY 4.0 | 1367 | 774 / 104 / 87 / 108 | nhãn của tác giả bộ dữ liệu |
-| [Corn Leaf Disease Classification Dataset (5 lớp, điều kiện ngoài ruộng)](https://data.mendeley.com/datasets/hmkd6nbngr) | CC BY 4.0 | 8737 | 4891 / 809 / 732 / 828 | mẫu 30/nhóm: nhận 3/3 nhóm |
+| [Tomato Leaf Disease Classification Dataset in Pakistan (ngoài ruộng)](https://data.mendeley.com/datasets/3mbnb82mxd/1) | CC BY 4.0 | 4697 | 2949 / 458 / 395 / 417 | nhãn của tác giả bộ dữ liệu |
+| [Tomato Leaf Disease Classification Dataset (Bangladesh)](https://data.mendeley.com/datasets/jttrv2w27r) | CC BY 4.0 | 1367 | 870 / 73 / 60 / 77 | nhãn của tác giả bộ dữ liệu |
+| [Corn Leaf Disease Classification Dataset (5 lớp, điều kiện ngoài ruộng)](https://data.mendeley.com/datasets/hmkd6nbngr) | CC BY 4.0 | 8737 | 4619 / 748 / 1176 / 717 | mẫu 30/nhóm: nhận 3/3 nhóm |
 | [Open-Source Multi-Format Maize Leaf Image Dataset (ruộng Bangladesh)](https://data.mendeley.com/datasets/sb4wwjs8bz) | CC BY 4.0 | 0 | 0 / 0 / 0 / 0 | chưa tải |
-| [Potato Leaf Disease Dataset (iPhone 15, trạm nghiên cứu Chattogram)](https://data.mendeley.com/datasets/d5b3fzpw3g/1) | CC BY 4.0 | 24 | 16 / 2 / 3 / 3 | nhãn của tác giả bộ dữ liệu |
-| [Potato Leaf (Healthy and Late Blight) - ruộng khoai tây Holeta, Ethiopia (máy ảnh và điện thoại)](https://data.mendeley.com/datasets/v4w72bsts5/2) | CC BY 4.0 | 429 | 288 / 39 / 54 / 41 | nhãn của tác giả bộ dữ liệu |
-| [ESCA dataset (vườn nho Ý, 1.770 ảnh)](https://data.mendeley.com/datasets/89cnxc58kj) | CC BY 4.0 | 1770 | 1231 / 172 / 180 / 187 | nhãn của tác giả bộ dữ liệu |
-| [Orange Leaves Images Dataset for the Detection of Huanglongbing (nền đã xóa)](https://data.mendeley.com/datasets/jgkh2jxbwt) | CC BY 4.0 | 465 | 306 / 54 / 47 / 38 | nhãn của tác giả bộ dữ liệu |
+| [Potato Leaf Disease Dataset (iPhone 15, trạm nghiên cứu Chattogram)](https://data.mendeley.com/datasets/d5b3fzpw3g/1) | CC BY 4.0 | 24 | 18 / 2 / 3 / 1 | nhãn của tác giả bộ dữ liệu |
+| [Potato Leaf (Healthy and Late Blight) - ruộng khoai tây Holeta, Ethiopia (máy ảnh và điện thoại)](https://data.mendeley.com/datasets/v4w72bsts5/2) | CC BY 4.0 | 429 | 282 / 38 / 58 / 44 | nhãn của tác giả bộ dữ liệu |
+| [ESCA dataset (vườn nho Ý, 1.770 ảnh)](https://data.mendeley.com/datasets/89cnxc58kj) | CC BY 4.0 | 1770 | 1230 / 173 / 180 / 187 | nhãn của tác giả bộ dữ liệu |
+| [Orange Leaves Images Dataset for the Detection of Huanglongbing (nền đã xóa)](https://data.mendeley.com/datasets/jgkh2jxbwt) | CC BY 4.0 | 465 | 268 / 14 / 100 / 63 | nhãn của tác giả bộ dữ liệu |
 | [Plant Pathology 2021 FGVC8 (táo, vườn thật; 3 mảnh parquet đầu)](https://huggingface.co/datasets/timm/plant-pathology-2021) | Apache-2.0 (dữ liệu gốc Kaggle FGVC8, dùng cho nghiên cứu) | 3464 | 2404 / 352 / 366 / 337 | nhãn của tác giả bộ dữ liệu |
 | [Auburn Soybean Disease Image Dataset (ASDID) - lá khỏe, ruộng Alabama](https://zenodo.org/records/7304859) | CC0 | 199 | 143 / 21 / 21 / 14 | nhãn của tác giả bộ dữ liệu |
 | [Grape Leaf dataset for leaf Health Classification and Disease Detection (phần ảnh gốc, nho)](https://data.mendeley.com/datasets/378c69nwk5) | CC BY 4.0 | 0 | 0 / 0 / 0 / 0 | chưa tải |
@@ -45,25 +55,28 @@ Cấu hình ở `configs/external_sources.yaml`; mỗi ảnh mang giấy phép t
 
 ## 4. Số liệu release
 
-Release `mixed_pv_pd_v4`, SHA-256 của `release_manifest.json`: `cc5356bd2e867678c043c5df9ae18aa35dcf76d361402c89e8f8796e6db585c8`.
+Release `mixed_pv_pd_v4`, SHA-256 của `release_manifest.json`: `7c90d9661d1ebecb0dabe3d8035ce3ed0483218e910f8146e441eb7ab874f729`.
 
 | Tập | Ảnh |
 |---|---:|
-| train | 39232 |
-| validation | 6680 |
-| calibration | 6220 |
-| legacy_diagnostic_test | 12974 |
+| train | 50779 |
+| validation | 6516 |
+| calibration | 6653 |
+| legacy_diagnostic_test | 12910 |
 | cách ly (quarantine) | 5505 |
 
-- Ảnh ngoài đồng thêm vào: 19160; lá PlantDoc cách ly được nhận lại: 592; ảnh tự chụp: 0.
-- PlantVillage train: 35123 → giới hạn 800 ảnh mỗi lớp.
-- Loại 2010 ảnh gần trùng với các tập đã khóa/PlantVillage; bỏ 47 ảnh thuộc 12 nhóm gần trùng có nhãn mâu thuẫn.
+- Ảnh ngoài đồng thêm vào: 19175; lá PlantDoc cách ly được nhận lại: 592; ảnh tự chụp: 0.
+- PlantVillage train giữ đủ 35123 ảnh (không giới hạn; cân bằng miền làm lúc train).
+- Loại 2010 ảnh gần trùng với các tập đã khóa/PlantVillage; bỏ 32 ảnh có ảnh gần trùng (Hamming ≤ 4) mang nhãn khác.
+- Nhóm ngoài đồng: 9425 nhóm cho 19175 ảnh (nhóm lớn nhất 461 ảnh); 636 cặp ảnh chụp liên tiếp được gộp.
+- Rò rỉ cùng nguồn và cùng lớp (cổng ≤ 2%): ảnh có ảnh gần trùng ở split khác ≤ 10 bit: 0; chỉ báo cáo, không gộp: ≤ 14 bit: 4277 (22,3% ảnh ngoài đồng).
 - Kiểm rò rỉ giữa bốn tập: 0 giao nhau theo `group_id`, `parent_scene_id`, `byte_sha256`, `sample_id`, `image_id`.
-- Phân vùng `label_alpha_0_1`: số ảnh mỗi client [5494, 9616, 10638, 8113, 5371], rời nhau và hợp bằng đúng tập train, 0 nhóm bị chia cho nhiều client.
-- Phân vùng `iid`: số ảnh mỗi client [7866, 7874, 7837, 7848, 7807], rời nhau và hợp bằng đúng tập train, 0 nhóm bị chia cho nhiều client.
+- `quality_audit_v4.json`: PASS (băm lại mọi tệp ảnh, 0 lệch byte; 0 ảnh trùng byte trong cùng split), SHA-256 `9b23575e6f95aa1764253ee8bc8f2102bad2c550304bec058b3a465afb6c8e68`; `partition_spec_v4.json`: label_alpha_0_1 PASS, iid PASS, SHA-256 `58fed86412e5c906f62e4a253c8f6cf7efd488f1ddbe371ef2fc73e25c3ae8fa`.
+- `scripts/verify_release_contract.py` chạy các bộ kiểm của nhánh huấn luyện trên release này: 11/11 qua (`artifacts/release_v4_contract_check.json`).
+- Phân vùng `label_alpha_0_1`: số ảnh mỗi client [6286, 13131, 9519, 11087, 10756], rời nhau và hợp bằng đúng tập train, 0 nhóm bị chia cho nhiều client.
+- Phân vùng `iid`: số ảnh mỗi client [10188, 10168, 10161, 10116, 10146], rời nhau và hợp bằng đúng tập train, 0 nhóm bị chia cho nhiều client.
 
-Số ảnh ngoài đồng đã kiểm nhãn (dùng để học) theo lớp, từ `artifacts/data_gap_report.json`. Số này đếm **trước** khi loại ảnh gần trùng với tập đã khóa và trước khi chia split,
-nên cao hơn số ảnh thực vào tập học (bảng mục 3); ảnh tăng cường ngoại tuyến của tác giả cũng được đếm từng ảnh:
+Số ảnh ngoài đồng đã kiểm nhãn (dùng để học) theo lớp, từ `artifacts/data_gap_report.json`:
 
 | Lớp | PlantVillage train | Ngoài đồng sẵn sàng | Số nguồn | Trạng thái |
 |---|---:|---:|---:|---|
@@ -111,26 +124,28 @@ Tóm tắt: 14 lớp đạt mục tiêu, 11 lớp đủ tối thiểu, 13 lớp 
 ### Đo giá trị dữ liệu khi chưa train
 
 `scripts/eval_gallery_value.py` đo kNN (k = 10, top-1 %) trên đặc trưng DINOv2-small đóng băng, không huấn luyện lớp nào; `scripts/ablate_gallery_value.py` tách tác động từng phần trên đặc trưng đã lưu
-(`artifacts/dataset_v4_value.json`, `artifacts/dataset_v4_value_ablation.json`). Số đo ứng với bản dựng có SHA-256 `3b592c44ab0b528bba1308156f0aaa4ed5954371bd3f238b619b713569a491ac`, **trước khi** thêm CherryLeaf-KG (200 ảnh lá anh đào khỏe, không nằm trong phép đo).
+(`artifacts/dataset_v4_value.json`, `artifacts/dataset_v4_value_ablation.json`). Số đo ứng với bản dựng có SHA-256 `7c90d9661d1ebecb0dabe3d8035ce3ed0483218e910f8146e441eb7ab874f729` (hai tệp kết quả đều ghi SHA này).
 
 | Tập đo | n | Thư viện v3 | v3 + ảnh mới | v4 (như đã đo) |
 |---|---:|---:|---:|---:|
-| PlantWild bệnh (nguồn lạ) | 2304 | 50,3 | 47,1 | 39,4 |
-| PlantWild lá khỏe (nguồn lạ, nhãn ngầm định) | 2741 | 19,1 | 26,9 | 31,7 |
-| PlantDoc kiểm tra (nguồn lạ) | 269 | 55,4 | 52,8 | 43,1 |
-| PlantDoc giữ riêng (nguồn lạ) | 172 | 53,5 | 48,8 | 38,4 |
-| Ngoài đồng cùng nguồn (v4_field_test) | 1932 | 44,6 | 82,1 | 81,4 |
+| PlantWild bệnh (nguồn lạ) | 2304 | 50,3 | 46,9 | 40,4 |
+| PlantWild lá khỏe (nguồn lạ, nhãn ngầm định) | 2741 | 19,1 | 30,2 | 35,1 |
+| PlantDoc kiểm tra (nguồn lạ) | 269 | 55,4 | 52,4 | 43,5 |
+| PlantDoc giữ riêng (nguồn lạ) | 172 | 53,5 | 48,8 | 40,7 |
+| Ngoài đồng cùng nguồn (v4_field_test) | 1895 | 41,1 | 80,0 | 80,6 |
 
-- "v3" = PlantVillage 40 ảnh mỗi lớp + mọi lá PlantDoc của tập học (2.115). "v3 + ảnh mới" = v3 giữ nguyên rồi thêm ảnh ngoài đồng mới (mẫu tối đa 120 ảnh mỗi lớp, 2086 ảnh).
-  "v4 (như đã đo)" = PlantVillage 40 + mẫu ngoài đồng tối đa 120 ảnh mỗi lớp (gồm cả PlantDoc), nên chỉ còn 906 lá PlantDoc.
-- **Mức giảm ở "v4 (như đã đo)" phần lớn do trần 120 ảnh mỗi lớp làm mất lá PlantDoc (2.115 → 906), không phải do nguồn mới**: giữ đủ lá PlantDoc rồi thêm ảnh mới thì PlantWild bệnh chỉ còn 47,1% (v3: 50,3%).
-- Ảnh mới **giúp** nhận cùng nguồn (44,6% → 82,1%) và nhận lá khỏe (19,1% → 26,9%; lá khỏe PlantWild là điểm yếu lớn nhất ở báo cáo 2026-10-21).
-- Ảnh mới **chưa giúp** nhận bệnh ở nguồn lạ trong phép đo này: PlantWild bệnh giảm 3,2 điểm và PlantDoc giảm 2,6–4,7 điểm. Riêng Plant Pathology 2021 đã kéo PlantWild bệnh xuống 46,7%, tức cả mức giảm có thể quy cho nguồn này. Giải thích khả dĩ, chưa kiểm chứng: 465 ảnh táo đồng nhất lấn át các lớp táo trong kNN
+- "v3" = PlantVillage 40 ảnh mỗi lớp + mọi lá PlantDoc của tập học (2.115). "v3 + ảnh mới" = v3 giữ nguyên rồi thêm ảnh ngoài đồng mới (mẫu tối đa 120 ảnh mỗi lớp, 2207 ảnh).
+  "v4 (như đã đo)" = PlantVillage 40 + mẫu ngoài đồng tối đa 120 ảnh mỗi lớp (gồm cả PlantDoc), nên chỉ còn 905 lá PlantDoc.
+- **Mức giảm ở "v4 (như đã đo)" phần lớn do trần 120 ảnh mỗi lớp làm mất lá PlantDoc (2.115 → 905), không phải do nguồn mới**: giữ đủ lá PlantDoc rồi thêm ảnh mới thì PlantWild bệnh chỉ còn 46,9% (v3: 50,3%).
+- Ảnh mới **giúp** nhận cùng nguồn (41,1% → 80,0%) và nhận lá khỏe (19,1% → 30,2%; lá khỏe PlantWild là điểm yếu lớn nhất ở báo cáo 2026-10-21).
+  Riêng 120 ảnh lá anh đào khỏe của CherryLeaf-KG đã nâng lá khỏe PlantWild từ 19,1% lên 23,6%.
+- Ảnh mới **chưa giúp** nhận bệnh ở nguồn lạ trong phép đo này: PlantWild bệnh giảm 3,4 điểm và PlantDoc giảm 3,0–4,7 điểm.
+  Riêng Plant Pathology 2021 đã kéo PlantWild bệnh xuống 46,7%, tức gần như cả mức giảm có thể quy cho nguồn này. Giải thích khả dĩ, chưa kiểm chứng: 465 ảnh táo đồng nhất lấn át các lớp táo trong kNN
   (kNN trên đặc trưng đóng băng ưu tiên láng giềng cùng nguồn). Chưa kết luận được cho mô hình huấn luyện có cân bằng theo nguồn; chỉ phép train mới trả lời.
-- Số ngoài đồng cùng nguồn (82%) **không** chứng minh được mục tiêu > 90% cho ảnh bất kỳ: tập đó cùng nguồn và cùng bộ ảnh tăng cường với thư viện.
+- Tập "cùng nguồn" (1895 ảnh) đã loại rò rỉ chụp liên tiếp (nhóm theo phiên chụp và theo ảnh gần trùng cùng nguồn): lần dựng đầu (chưa gộp theo phiên chụp) cho 82,1% trên một tập đo khác, chênh khoảng 2 điểm; chưa quy riêng được mức chênh đó cho rò rỉ.
+  Dù vậy 80% **không** chứng minh được mục tiêu > 90% cho ảnh bất kỳ: đây là kNN, và tập đo vẫn cùng nguồn, cùng bộ ảnh tăng cường với thư viện.
 - Bài học cho lần train: không giới hạn lá PlantDoc, cân bằng theo nguồn (trọng số mất mát hoặc lấy mẫu), và báo riêng nguồn lạ.
 - Phân tích theo từng nguồn là chẩn đoán trên tập thử đã khóa, **không** dùng để chọn nguồn (chọn theo PlantWild là học trên tập thử).
-- Lần chạy đo thứ hai bị hệ thống dừng vì thiếu bộ nhớ; kết quả lấy từ lần chạy đầu đã hoàn tất. Chưa đo lại trên bản dựng có CherryLeaf-KG.
 
 ## 5. Vì sao không dùng một số nguồn
 
@@ -154,7 +169,9 @@ Bảng nói trước những gì khả thi, để không hứa quá mức. Căn 
 |---|---|---|---|
 | Centralized | > 90%: đã đạt (99,2%) | > 90% khả thi nếu mỗi lớp có ≥ 100–300 ảnh ngoài đồng từ ≥ 2 nguồn | > 90% top-1: **không thực tế**. Mục tiêu 65–75% top-1; > 90% chỉ khi có điều kiện kèm (top-3, chọn loại cây, hoặc chỉ tính ảnh mô hình tự tin) |
 | FedAvg | > 90% khả thi nếu cấu hình công bằng (93,3% hiện có, run Kaggle cũ 99,09%) | thấp hơn Centralized vài điểm khi dữ liệu lệch nhãn (α = 0,1) | như Centralized, trừ vài điểm |
-| Local-only | **không thể** với cách chia α = 0,1: trần 65–80% | **không thể**: trần 47–96% tùy client | **không thể**: trần 50–79% |
+| Local-only | **không thể** với cách chia α = 0,1 | **không thể** | **không thể** |
+
+Trần cụ thể của từng client tính từ phân vùng v4 `label_alpha_0_1` (mỗi client chỉ thấy 19–26/38 lớp) nằm ở `artifacts/data_gap_report.json`, mục `local_only_ceiling_top1_percent`.
 
 - Mỗi client Local-only chỉ thấy 20–27/38 lớp nên không thể đoán đúng lớp chưa từng học; đây là điều thí nghiệm muốn chứng minh. Muốn Local-only cao thì phải chia IID (phân vùng `iid` có sẵn trong release để minh họa), khi đó bài toán non-IID mất ý nghĩa.
 - Bằng chứng cho cột ảnh nguồn chưa từng thấy: nghiên cứu 221 nghìn ảnh cho khoảng 99% khi cùng ruộng và 64–88% khi ruộng mới; baseline tốt nhất đã công bố trên PlantWild khoảng 61%.
@@ -175,10 +192,17 @@ python scripts/build_label_review.py --external --per-class 30       # sinh tran
 python scripts/make_review_sheets.py                                 # ảnh lưới để xem nhanh
 python scripts/record_review_decisions.py --spec ... --reviewer ...  # đổi kết quả xem thành quyết định
 python scripts/apply_label_review.py --samples data/label_review_ext/samples.json --decisions ...
-python scripts/build_release_v4.py --pv-cap 800 --seed 20261022      # dựng release + kiểm rò rỉ
-python scripts/report_data_gaps.py                                   # lớp nào còn thiếu ảnh
+python scripts/build_release_v4.py --seed 20261022                   # dựng release, kiểm rò rỉ, ghi partition_spec_v4.json và quality_audit_v4.json
+python scripts/verify_release_contract.py                            # chạy các bộ kiểm của nhánh huấn luyện trên release (thêm --images: kiểm cả byte và giải mã)
+python scripts/report_data_gaps.py                                   # lớp nào còn thiếu ảnh, trần Local-only
 tmp/venv-fm/Scripts/python.exe scripts/eval_gallery_value.py         # đo giá trị dữ liệu bằng kNN, không train
 ```
 
-Khi huấn luyện trên v4 phải truyền `--expected-release-sha <release_manifest_sha256 trong artifacts/release_v4_report.json>`, vì bộ chạy chỉ ghim mã băm v1–v3.
-Bộ tăng cường ảnh mạnh (`src/data/robust_transforms.py`) chưa nằm trong danh sách preset của bộ chạy; lúc train cần thêm preset vào `plant_data_contract/transforms.py`.
+### Việc cần làm ở nhánh huấn luyện trước khi train trên v4 (phát hiện khi rà soát, chưa sửa vì nằm ngoài repo này)
+
+1. Truyền `--expected-release-sha <release_manifest_sha256 trong artifacts/release_v4_report.json>`; bộ chạy chỉ ghim mã băm v1–v3.
+2. `training-workflows/shared/data_selection.py` gắn cứng `RELEASE_NAME = "pv_pd_v3"` và đường dẫn `mixed/pv_pd_v3`; cần tham số hóa. `scripts/verify_release_contract.py` đặt tên này trong bộ nhớ để kiểm tra phần còn lại.
+3. Ghim `quality_audit_v4.json` (tên tệp và SHA-256 trong `artifacts/release_v4_report.json`) vào spec huấn luyện, mục `quality_gate`.
+4. Bộ chạy chọn checkpoint theo `plantdoc_macro_f1_supported` của miền `plantdoc`. Ở v4 mọi ảnh ngoài đồng mang miền `plantdoc`, nên chỉ số này không còn chỉ đo PlantDoc mà trộn mọi nguồn ngoài đồng (nhiều ảnh là bản tăng cường của tác giả), và tiêu chí chọn đổi nghĩa so với v3.
+   Cần tính chỉ số theo `source_dataset` và chọn theo macro-F1 cân bằng giữa các nguồn.
+5. Thêm preset tăng cường mạnh (`src/data/robust_transforms.py`) vào `plant_data_contract/transforms.py`, và lấy mẫu cân bằng giữa ảnh phòng thí nghiệm với ảnh ngoài đồng.

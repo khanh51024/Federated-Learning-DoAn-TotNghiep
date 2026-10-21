@@ -34,6 +34,8 @@ EXT_STATUS = "data/label_review_ext/status.json"
 QUARANTINE_STATUS = "data/label_review/status.json"
 OWN_PHOTOS = "data/own_photos/manifest.jsonl"
 PLANTWILD_MANIFEST = "data/external/plantwild_overlap_manifest.json"
+V4_PARTITION_SPEC = "data/dataset_sources/mixed/pv_pd_v4/partition_spec_v4.json"
+CEILING_SCHEME = "label_alpha_0_1"
 
 
 def _jsonl(path: Path) -> list[dict[str, Any]]:
@@ -58,9 +60,18 @@ def readiness(ready: int, sources: int) -> str:
     return "thieu"
 
 
-def local_only_ceilings(classes: list[str], counts_by_set: dict[str, Counter[str]]) -> dict[str, Any]:
-    """Trần top-1 của từng client Local-only trên mỗi tập đo: tỉ lệ ảnh thuộc lớp mà shard của client có ảnh."""
-    shards = json.loads(reg.abs_path(reg.CLIENT_SHARD_COUNTS_JSON).read_text(encoding="utf-8"))["clients"]
+def shards_from_partition_spec(spec: dict[str, Any], classes: list[str], scheme: str = CEILING_SCHEME) -> dict[str, Any]:
+    """Số ảnh mỗi lớp của từng client, đọc từ client_stats của partition_spec_v4.json: {client: {"per_class": {tên lớp: số ảnh}}}."""
+    stats = spec["scenarios"][scheme]["client_stats"]
+    return {client: {"per_class": {classes[int(i)]: n for i, n in s["class_histogram"].items()}} for client, s in stats.items()}
+
+
+def local_only_ceilings(classes: list[str], counts_by_set: dict[str, Counter[str]], shards: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Trần top-1 của từng client Local-only trên mỗi tập đo: tỉ lệ ảnh thuộc lớp mà shard của client có ảnh.
+
+    `shards` mặc định là phân vùng của v3 (artifacts/client_shard_class_counts.json); build_report() truyền phân vùng của v4 nếu release v4 đã dựng."""
+    if shards is None:
+        shards = json.loads(reg.abs_path(reg.CLIENT_SHARD_COUNTS_JSON).read_text(encoding="utf-8"))["clients"]
     out: dict[str, Any] = {}
     for client, info in shards.items():
         seen = {name for name, count in info["per_class"].items() if (count if isinstance(count, int) else sum(count.values())) > 0}
@@ -122,6 +133,9 @@ def build_report() -> dict[str, Any]:
         for r in json.loads(wild.read_text(encoding="utf-8"))["samples"]:
             plantwild[r["target_class"]] += 1
 
+    spec_path = reg.abs_path(V4_PARTITION_SPEC)
+    ceiling_shards = shards_from_partition_spec(json.loads(spec_path.read_text(encoding="utf-8")), classes) if spec_path.is_file() else None
+
     per_class = []
     for name in classes:
         sources: set[str] = set()
@@ -149,7 +163,8 @@ def build_report() -> dict[str, Any]:
         "thresholds": {"min_ready": MIN_READY, "target_ready": TARGET_READY, "min_sources": MIN_SOURCES},
         "summary": {"classes": len(classes), **dict(summary), "total_field_ready": sum(c["field_ready"] for c in per_class)},
         "classes": per_class,
-        "local_only_ceiling_top1_percent": local_only_ceilings(classes, counts_by_set),
+        "local_only_ceiling_top1_percent": local_only_ceilings(classes, counts_by_set, ceiling_shards),
+        "local_only_ceiling_source": "partition_spec_v4.json (label_alpha_0_1, release v4)" if ceiling_shards else "client_shard_class_counts.json (release v3)",
         "note": "field_ready chỉ đếm ảnh ngoài đồng đã qua kiểm nhãn hoặc nhãn khoa học tin cậy; PlantWild không được đếm vào học (chỉ để thử).",
     }
 

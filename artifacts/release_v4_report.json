@@ -1,21 +1,77 @@
 {
  "release": "mixed_pv_pd_v4",
- "release_manifest_sha256": "cc5356bd2e867678c043c5df9ae18aa35dcf76d361402c89e8f8796e6db585c8",
+ "release_manifest_sha256": "7c90d9661d1ebecb0dabe3d8035ce3ed0483218e910f8146e441eb7ab874f729",
  "counts": {
-  "train_samples": 39232,
-  "validation_samples": 6680,
-  "calibration_samples": 6220,
-  "legacy_diagnostic_test_samples": 12974,
-  "num_scene_groups": 31647,
+  "train_samples": 50779,
+  "validation_samples": 6516,
+  "calibration_samples": 6653,
+  "legacy_diagnostic_test_samples": 12910,
+  "num_scene_groups": 32756,
   "detection_images": 2556,
   "detection_annotations": 8908,
-  "total_classification_samples": 70611,
+  "total_classification_samples": 82363,
   "quarantined_samples": 5505,
-  "external_images_added": 19160,
+  "external_images_added": 19175,
   "own_photos": 0,
   "plantdoc_quarantine_promoted": 592,
   "plantvillage_train_before_cap": 35123,
-  "pv_cap_per_class": 800
+  "pv_cap_per_class": 0
+ },
+ "partition_spec_sha256": "58fed86412e5c906f62e4a253c8f6cf7efd488f1ddbe371ef2fc73e25c3ae8fa",
+ "quality_audit_sha256": "9b23575e6f95aa1764253ee8bc8f2102bad2c550304bec058b3a465afb6c8e68",
+ "quality_audit_status": "PASS",
+ "partition_status": {
+  "label_alpha_0_1": "PASS",
+  "iid": "PASS"
+ },
+ "same_source_leakage": {
+  "hamming_le_10": {
+   "images": 0,
+   "fraction": 0.0,
+   "by_source": {}
+  },
+  "hamming_le_14": {
+   "images": 4277,
+   "fraction": 0.2231,
+   "by_source": {
+    "hf_plant_pathology_2021": 217,
+    "mendeley_cherry_kg": 11,
+    "mendeley_corn_leaf_disease": 3183,
+    "mendeley_esca_grape": 53,
+    "mendeley_potato_ethiopia": 93,
+    "mendeley_tomato_bangladesh": 415,
+    "mendeley_tomato_pakistan": 301,
+    "zenodo_asdid_soybean_healthy": 4
+   }
+  }
+ },
+ "ext_groups": {
+  "groups": 9425,
+  "images": 19175,
+  "largest": [
+   {
+    "group_id": "mendeley_corn_leaf_disease:Corn_(maize)___Common_rust_:20250404_154540",
+    "images": 461
+   },
+   {
+    "group_id": "mendeley_tomato_bangladesh:000c64f2fde4380a",
+    "images": 175
+   },
+   {
+    "group_id": "mendeley_orange_hlb:00e94e9236ac105f",
+    "images": 105
+   },
+   {
+    "group_id": "mendeley_corn_leaf_disease:Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot:Corn_Gray_Spot (116)",
+    "images": 100
+   },
+   {
+    "group_id": "mendeley_tomato_bangladesh:044297ae489ce482",
+    "images": 89
+   }
+  ],
+  "session_links": 636,
+  "background_removed_images_without_dhash_grouping": 445
  },
  "reference": {
   "reference_images": 71166,
@@ -35,11 +91,12 @@
   }
  },
  "dropped_label_conflict": {
-  "groups": 12,
-  "images": 47,
+  "images": 32,
+  "images_in_conflicting_pairs": 32,
+  "residual_mixed_class_groups": 0,
   "by_source": {
-   "mendeley_tomato_bangladesh": 30,
-   "mendeley_tomato_pakistan": 17
+   "mendeley_tomato_bangladesh": 23,
+   "mendeley_tomato_pakistan": 9
   }
  },
  "waiting_label_review": {
@@ -128,8 +185,8 @@
  "partitions": {
   "label_alpha_0_1": {
    "clients": 5,
-   "samples": 39232,
-   "unique_samples": 39232,
+   "samples": 50779,
+   "unique_samples": 50779,
    "disjoint": true,
    "subset_of_train": true,
    "union_equals_train": true,
@@ -143,24 +200,24 @@
     "num_clients": 5,
     "seed": 42,
     "min_samples_per_client": 10,
-    "client_size_min": 5371,
+    "client_size_min": 6286,
     "min_size_satisfied": true,
     "conserved": true,
-    "input_items": 39232,
-    "output_items": 39232
+    "input_items": 50779,
+    "output_items": 50779
    },
    "n_k": [
-    5494,
-    9616,
-    10638,
-    8113,
-    5371
+    6286,
+    13131,
+    9519,
+    11087,
+    10756
    ]
   },
   "iid": {
    "clients": 5,
-   "samples": 39232,
-   "unique_samples": 39232,
+   "samples": 50779,
+   "unique_samples": 50779,
    "disjoint": true,
    "subset_of_train": true,
    "union_equals_train": true,
@@ -173,18 +230,18 @@
     "num_clients": 5,
     "seed": 42,
     "min_samples_per_client": 10,
-    "client_size_min": 7807,
+    "client_size_min": 10116,
     "min_size_satisfied": true,
     "conserved": true,
-    "input_items": 39232,
-    "output_items": 39232
+    "input_items": 50779,
+    "output_items": 50779
    },
    "n_k": [
-    7866,
-    7874,
-    7837,
-    7848,
-    7807
+    10188,
+    10168,
+    10161,
+    10116,
+    10146
    ]
   }
  },
@@ -197,16 +254,16 @@
    "inat_strawberry___healthy": 4,
    "inat_wm_apple___cedar_apple_rust": 7,
    "mendeley_cherry_kg": 138,
-   "mendeley_corn_leaf_disease": 4891,
-   "mendeley_esca_grape": 1231,
-   "mendeley_orange_hlb": 306,
-   "mendeley_potato_bangladesh": 16,
-   "mendeley_potato_ethiopia": 288,
-   "mendeley_tomato_bangladesh": 774,
-   "mendeley_tomato_pakistan": 2920,
+   "mendeley_corn_leaf_disease": 4619,
+   "mendeley_esca_grape": 1230,
+   "mendeley_orange_hlb": 268,
+   "mendeley_potato_bangladesh": 18,
+   "mendeley_potato_ethiopia": 282,
+   "mendeley_tomato_bangladesh": 870,
+   "mendeley_tomato_pakistan": 2949,
    "zenodo_asdid_soybean_healthy": 143,
    "plantdoc": 2668,
-   "plantvillage": 23386
+   "plantvillage": 35123
   },
   "val": {
    "hf_plant_pathology_2021": 352,
@@ -214,13 +271,13 @@
    "inat_raspberry___healthy": 5,
    "inat_wm_apple___cedar_apple_rust": 1,
    "mendeley_cherry_kg": 16,
-   "mendeley_corn_leaf_disease": 809,
-   "mendeley_esca_grape": 172,
-   "mendeley_orange_hlb": 54,
+   "mendeley_corn_leaf_disease": 748,
+   "mendeley_esca_grape": 173,
+   "mendeley_orange_hlb": 14,
    "mendeley_potato_bangladesh": 2,
-   "mendeley_potato_ethiopia": 39,
-   "mendeley_tomato_bangladesh": 104,
-   "mendeley_tomato_pakistan": 490,
+   "mendeley_potato_ethiopia": 38,
+   "mendeley_tomato_bangladesh": 73,
+   "mendeley_tomato_pakistan": 458,
    "zenodo_asdid_soybean_healthy": 21,
    "plantdoc": 269,
    "plantvillage": 4344
@@ -231,13 +288,13 @@
    "inat_raspberry___healthy": 7,
    "inat_wm_apple___cedar_apple_rust": 2,
    "mendeley_cherry_kg": 18,
-   "mendeley_corn_leaf_disease": 732,
+   "mendeley_corn_leaf_disease": 1176,
    "mendeley_esca_grape": 180,
-   "mendeley_orange_hlb": 47,
+   "mendeley_orange_hlb": 100,
    "mendeley_potato_bangladesh": 3,
-   "mendeley_potato_ethiopia": 54,
-   "mendeley_tomato_bangladesh": 87,
-   "mendeley_tomato_pakistan": 436,
+   "mendeley_potato_ethiopia": 58,
+   "mendeley_tomato_bangladesh": 60,
+   "mendeley_tomato_pakistan": 395,
    "zenodo_asdid_soybean_healthy": 21,
    "plantdoc": 330,
    "plantvillage": 3934
@@ -250,13 +307,13 @@
    "inat_strawberry___healthy": 3,
    "inat_wm_apple___cedar_apple_rust": 2,
    "mendeley_cherry_kg": 27,
-   "mendeley_corn_leaf_disease": 828,
+   "mendeley_corn_leaf_disease": 717,
    "mendeley_esca_grape": 187,
-   "mendeley_orange_hlb": 38,
-   "mendeley_potato_bangladesh": 3,
-   "mendeley_potato_ethiopia": 41,
-   "mendeley_tomato_bangladesh": 108,
-   "mendeley_tomato_pakistan": 365,
+   "mendeley_orange_hlb": 63,
+   "mendeley_potato_bangladesh": 1,
+   "mendeley_potato_ethiopia": 44,
+   "mendeley_tomato_bangladesh": 77,
+   "mendeley_tomato_pakistan": 417,
    "zenodo_asdid_soybean_healthy": 14,
    "plantdoc": 172,
    "plantvillage": 10843
@@ -282,13 +339,13 @@
    "legacy_diagnostic_test": 94
   },
   "Apple___healthy": {
-   "train": 1581,
+   "train": 1860,
    "val": 243,
    "calibration": 215,
    "legacy_diagnostic_test": 443
   },
   "Blueberry___healthy": {
-   "train": 800,
+   "train": 983,
    "val": 121,
    "calibration": 98,
    "legacy_diagnostic_test": 300
@@ -306,22 +363,22 @@
    "legacy_diagnostic_test": 196
   },
   "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
-   "train": 1802,
-   "val": 260,
-   "calibration": 244,
-   "legacy_diagnostic_test": 332
+   "train": 1829,
+   "val": 258,
+   "calibration": 234,
+   "legacy_diagnostic_test": 317
   },
   "Corn_(maize)___Common_rust_": {
-   "train": 2313,
-   "val": 361,
-   "calibration": 338,
-   "legacy_diagnostic_test": 509
+   "train": 1989,
+   "val": 298,
+   "calibration": 792,
+   "legacy_diagnostic_test": 442
   },
   "Corn_(maize)___Northern_Leaf_Blight": {
-   "train": 2664,
-   "val": 417,
+   "train": 2689,
+   "val": 421,
    "calibration": 361,
-   "legacy_diagnostic_test": 539
+   "legacy_diagnostic_test": 510
   },
   "Corn_(maize)___healthy": {
    "train": 756,
@@ -336,7 +393,7 @@
    "legacy_diagnostic_test": 246
   },
   "Grape___Esca_(Black_Measles)": {
-   "train": 1422,
+   "train": 1518,
    "val": 192,
    "calibration": 190,
    "legacy_diagnostic_test": 371
@@ -348,19 +405,19 @@
    "legacy_diagnostic_test": 216
   },
   "Grape___healthy": {
-   "train": 1042,
-   "val": 121,
+   "train": 1041,
+   "val": 122,
    "calibration": 146,
    "legacy_diagnostic_test": 178
   },
   "Orange___Haunglongbing_(Citrus_greening)": {
-   "train": 1106,
-   "val": 492,
-   "calibration": 418,
-   "legacy_diagnostic_test": 1141
+   "train": 3863,
+   "val": 452,
+   "calibration": 471,
+   "legacy_diagnostic_test": 1166
   },
   "Peach___Bacterial_spot": {
-   "train": 800,
+   "train": 1510,
    "val": 184,
    "calibration": 138,
    "legacy_diagnostic_test": 459
@@ -378,7 +435,7 @@
    "legacy_diagnostic_test": 200
   },
   "Pepper,_bell___healthy": {
-   "train": 800,
+   "train": 921,
    "val": 118,
    "calibration": 144,
    "legacy_diagnostic_test": 295
@@ -390,16 +447,16 @@
    "legacy_diagnostic_test": 211
   },
   "Potato___Late_blight": {
-   "train": 851,
+   "train": 852,
    "val": 106,
-   "calibration": 137,
+   "calibration": 136,
    "legacy_diagnostic_test": 214
   },
   "Potato___healthy": {
-   "train": 352,
-   "val": 49,
-   "calibration": 46,
-   "legacy_diagnostic_test": 69
+   "train": 347,
+   "val": 48,
+   "calibration": 51,
+   "legacy_diagnostic_test": 70
   },
   "Raspberry___healthy": {
    "train": 257,
@@ -408,13 +465,13 @@
    "legacy_diagnostic_test": 74
   },
   "Soybean___healthy": {
-   "train": 943,
+   "train": 3438,
    "val": 428,
    "calibration": 391,
    "legacy_diagnostic_test": 1032
   },
   "Squash___Powdery_mildew": {
-   "train": 989,
+   "train": 1365,
    "val": 171,
    "calibration": 179,
    "legacy_diagnostic_test": 373
@@ -432,52 +489,52 @@
    "legacy_diagnostic_test": 95
   },
   "Tomato___Bacterial_spot": {
-   "train": 1104,
-   "val": 198,
-   "calibration": 182,
-   "legacy_diagnostic_test": 444
+   "train": 1689,
+   "val": 193,
+   "calibration": 181,
+   "legacy_diagnostic_test": 445
   },
   "Tomato___Early_blight": {
-   "train": 1488,
-   "val": 184,
-   "calibration": 161,
-   "legacy_diagnostic_test": 294
+   "train": 1548,
+   "val": 166,
+   "calibration": 136,
+   "legacy_diagnostic_test": 284
   },
   "Tomato___Late_blight": {
-   "train": 1399,
-   "val": 203,
-   "calibration": 185,
-   "legacy_diagnostic_test": 423
+   "train": 1847,
+   "val": 184,
+   "calibration": 176,
+   "legacy_diagnostic_test": 424
   },
   "Tomato___Leaf_Mold": {
-   "train": 1498,
+   "train": 1511,
    "val": 224,
-   "calibration": 226,
+   "calibration": 213,
    "legacy_diagnostic_test": 306
   },
   "Tomato___Septoria_leaf_spot": {
-   "train": 1576,
-   "val": 274,
-   "calibration": 190,
-   "legacy_diagnostic_test": 434
+   "train": 1929,
+   "val": 257,
+   "calibration": 184,
+   "legacy_diagnostic_test": 449
   },
   "Tomato___Spider_mites Two-spotted_spider_mite": {
-   "train": 802,
+   "train": 1098,
    "val": 132,
    "calibration": 112,
    "legacy_diagnostic_test": 336
   },
   "Tomato___Target_Spot": {
-   "train": 800,
+   "train": 911,
    "val": 112,
    "calibration": 100,
    "legacy_diagnostic_test": 281
   },
   "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
-   "train": 1137,
-   "val": 481,
-   "calibration": 475,
-   "legacy_diagnostic_test": 1125
+   "train": 3779,
+   "val": 469,
+   "calibration": 489,
+   "legacy_diagnostic_test": 1149
   },
   "Tomato___Tomato_mosaic_virus": {
    "train": 393,
@@ -486,10 +543,10 @@
    "legacy_diagnostic_test": 111
   },
   "Tomato___healthy": {
-   "train": 1810,
-   "val": 318,
-   "calibration": 244,
-   "legacy_diagnostic_test": 453
+   "train": 2109,
+   "val": 326,
+   "calibration": 216,
+   "legacy_diagnostic_test": 443
   }
  }
 }

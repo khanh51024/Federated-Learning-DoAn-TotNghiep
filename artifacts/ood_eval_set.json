@@ -1,0 +1,26 @@
+{
+ "manifest_sha256": "59d4aaa6293d1b9550c76145d1ad36aa4c5c20d43b442ff7c222667f5abf0cb2",
+ "counts": {
+  "general": 1285,
+  "other_leaf": 228
+ },
+ "total": 1513,
+ "licenses": [
+  "CC BY 2.0",
+  "CC BY 2.0 fr",
+  "CC BY 2.5",
+  "CC BY 3.0",
+  "CC BY 4.0",
+  "CC BY-SA 1.0",
+  "CC BY-SA 2.0",
+  "CC BY-SA 2.0 fr",
+  "CC BY-SA 2.5",
+  "CC BY-SA 2.5 ca",
+  "CC BY-SA 3.0",
+  "CC BY-SA 3.0 de",
+  "CC BY-SA 3.0 ee",
+  "CC BY-SA 4.0",
+  "CC0",
+  "Public domain"
+ ]
+}

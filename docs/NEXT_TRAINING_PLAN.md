@@ -143,7 +143,9 @@ trên ảnh bệnh ngoài đồng của PlantWild và đoán thành có bệnh t
 
 ### 5.1 Dữ liệu
 - Release v4 (`mixed_pv_pd_v4`, mô tả ở `docs/DATASET_V4.md`) = v3 cộng ảnh ngoài đồng từ các bộ dữ liệu công khai đã kiểm nhãn, lá PlantDoc cách ly đã được nhận và ảnh tự chụp
-  (`docs/HUONG_DAN_CHUP_ANH.md`). Quy tắc nhận nhóm giữ nguyên: ≥ 90% "đúng" và ≤ 20% "không rõ" trên mẫu 30 ảnh. Khi train phải truyền `--expected-release-sha` của v4.
+  (`docs/HUONG_DAN_CHUP_ANH.md`). Quy tắc nhận nhóm giữ nguyên: ≥ 90% "đúng" và ≤ 20% "không rõ" trên mẫu 30 ảnh. Release đã qua `scripts/verify_release_contract.py` (11/11 bộ kiểm của nhánh train);
+  năm việc cần sửa ở nhánh train trước khi chạy (truyền `--expected-release-sha`, tham số hóa tên release trong `data_selection.py`, ghim `quality_audit_v4.json`, chỉ số chọn checkpoint theo nguồn, preset tăng cường)
+  nằm ở `docs/DATASET_V4.md` mục 7.
 - **PlantWild không được dùng để học**: giấy phép CC BY-NC-ND 4.0 và đã khóa làm tập thử ngoài đồng cố định (`artifacts/external_eval_set.json`, manifest SHA-256 `5adba619…`).
   Nếu thêm nguồn ảnh mới thì phải loại trùng với manifest này bằng `scripts/build_external_eval_set.py` trước khi học.
 - Cảnh PlantDoc nguyên khung đi qua bộ phát hiện lá (`scripts/train_leaf_detector.py`) để cắt lá; tiêu chí chấp nhận bộ phát hiện giữ như mục 2.
@@ -152,7 +154,7 @@ trên ảnh bệnh ngoài đồng của PlantWild và đoán thành có bệnh t
 | Hạng mục | Hiện tại | Đề xuất |
 |---|---|---|
 | Tăng cường ảnh | chỉ lật ngang | `src/data/robust_transforms.py` (cắt-phóng ngẫu nhiên, xoay, đổi màu, mờ, nén JPEG, độ phân giải thấp, xóa mảng); suy luận vẫn `canonical_v1` |
-| Lấy mẫu | có hoàn lại, một ảnh lặp tới 14 lần mỗi epoch | không hoàn lại; cân bằng miền bằng trọng số mất mát hoặc trọng số lớp |
+| Lấy mẫu | có hoàn lại, một ảnh lặp tới 14 lần mỗi epoch | không hoàn lại; v4 giữ đủ 35.123 ảnh PlantVillage (khoảng 69% tập học), nên cân bằng ảnh phòng thí nghiệm với ảnh ngoài đồng (và giữa các nguồn) bằng trọng số lấy mẫu |
 | Hàm mất mát | cross-entropy | thêm label smoothing 0,1 để giảm độ tin cậy quá cao khi sai |
 | Chọn checkpoint | macro-F1 PlantDoc trên chính tập kiểm tra | giữ nguyên quy tắc đã ghi trước, chọn chỉ trên tập kiểm tra; báo tập giữ riêng và PlantWild đúng một lần |
 | So sánh Centralized và FedAvg | AdamW so với SGD không động lượng, 83 epoch so với 27 vòng | cùng họ bộ tối ưu (SGD động lượng 0,9) và cùng số bước gradient: số epoch của Centralized = số vòng × số epoch cục bộ của FedAvg |
@@ -173,7 +175,9 @@ Mục tiêu "trên 90%" được tách theo loại ảnh, vì không có cách n
 PlantWild: baseline tốt nhất đã công bố khoảng 61%):
 - **A (cùng nguồn)**: Centralized và FedAvg ≥ 90% top-1 trên PlantVillage và trên phần ngoài đồng cùng nguồn giữ riêng của v4 (`legacy_diagnostic_test` ngoài đồng, ảnh tự chụp phần thử).
 - **B (nguồn chưa từng thấy)**: PlantWild ≥ 65% top-1; ≥ 90% chỉ khi có điều kiện kèm (top-3, hoặc người dùng chọn đúng loại cây cộng từ chối ảnh mô hình không chắc).
-- **C (Local-only)**: báo kèm trần lý thuyết theo từng client (`artifacts/data_gap_report.json`, mục `local_only_ceiling_top1_percent`); mỗi client chỉ thấy 20–27/38 lớp nên không thể đạt 90% trên cách chia α = 0,1.
+- **C (Local-only)**: báo kèm trần lý thuyết theo từng client (`artifacts/data_gap_report.json`, mục `local_only_ceiling_top1_percent`, tính từ phân vùng v4); mỗi client chỉ thấy 19–26/38 lớp nên không thể đạt 90% trên cách chia α = 0,1.
+- **D (ảnh không phải lá)**: cổng từ chối phải loại ≥ 90% ảnh `general` ở ngưỡng nhận ≥ 95% ảnh lá (`docs/CONG_TU_CHOI_ANH_KHONG_PHAI_LA.md`). Xác suất lớn nhất của mô hình hiện có không đạt (loại 7,6–8,4%);
+  kNN trên đặc trưng DINOv2-small đạt (loại 93,0%). Mô hình mới và thư viện mới phải hiệu chỉnh ngưỡng lại trên nửa hiệu chỉnh rồi báo trên nửa báo cáo.
 
 Một đợt train mới chỉ được nhập vào web nếu đồng thời:
 1. top-1 trên PlantWild (tầng bệnh) tăng ít nhất 10 điểm so với mô hình hiện có (Centralized ≥ 43,1%, FedAvg ≥ 41,8%) và cận dưới khoảng tin cậy 95% cao hơn mốc cũ;

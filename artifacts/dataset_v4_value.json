@@ -1,6 +1,6 @@
 {
  "evidence": "kNN trên đặc trưng DINOv2-small đóng băng; không huấn luyện lớp nào",
- "release_manifest_sha256": "3b592c44ab0b528bba1308156f0aaa4ed5954371bd3f238b619b713569a491ac",
+ "release_manifest_sha256": "7c90d9661d1ebecb0dabe3d8035ce3ed0483218e910f8146e441eb7ab874f729",
  "gallery": {
   "v3": {
    "plantvillage_per_class": 40,
@@ -8,7 +8,7 @@
   },
   "v4": {
    "plantvillage_per_class": 40,
-   "field_images": 2992,
+   "field_images": 3112,
    "field_cap_per_class": 120,
    "field_per_class": {
     "Apple___Apple_scab": 120,
@@ -17,7 +17,7 @@
     "Apple___healthy": 120,
     "Blueberry___healthy": 0,
     "Cherry_(including_sour)___Powdery_mildew": 0,
-    "Cherry_(including_sour)___healthy": 0,
+    "Cherry_(including_sour)___healthy": 120,
     "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": 120,
     "Corn_(maize)___Common_rust_": 120,
     "Corn_(maize)___Northern_Leaf_Blight": 120,
@@ -79,19 +79,19 @@
    },
    "gallery_v4": {
     "k1": {
-     "top1": 38.54,
-     "top3": 53.26,
-     "top1_oracle_crop": 50.13
+     "top1": 38.85,
+     "top3": 53.52,
+     "top1_oracle_crop": 50.09
     },
     "k5": {
-     "top1": 39.58,
-     "top3": 68.45,
-     "top1_oracle_crop": 49.96
+     "top1": 40.28,
+     "top3": 68.4,
+     "top1_oracle_crop": 50.13
     },
     "k10": {
-     "top1": 39.41,
-     "top3": 72.87,
-     "top1_oracle_crop": 49.18
+     "top1": 40.41,
+     "top3": 72.48,
+     "top1_oracle_crop": 50.0
     }
    }
   },
@@ -116,19 +116,19 @@
    },
    "gallery_v4": {
     "k1": {
-     "top1": 27.84,
-     "top3": 27.84,
-     "top1_oracle_crop": 61.44
+     "top1": 30.57,
+     "top3": 30.57,
+     "top1_oracle_crop": 65.89
     },
     "k5": {
-     "top1": 31.08,
-     "top3": 43.34,
-     "top1_oracle_crop": 67.17
+     "top1": 34.44,
+     "top3": 47.28,
+     "top1_oracle_crop": 71.4
     },
     "k10": {
-     "top1": 31.67,
-     "top3": 46.37,
-     "top1_oracle_crop": 69.68
+     "top1": 35.1,
+     "top3": 50.71,
+     "top1_oracle_crop": 73.59
     }
    }
   },
@@ -153,19 +153,19 @@
    },
    "gallery_v4": {
     "k1": {
-     "top1": 42.75,
-     "top3": 48.7,
-     "top1_oracle_crop": 52.04
+     "top1": 43.49,
+     "top3": 49.44,
+     "top1_oracle_crop": 52.42
     },
     "k5": {
-     "top1": 43.49,
-     "top3": 69.52,
+     "top1": 43.87,
+     "top3": 69.89,
      "top1_oracle_crop": 52.79
     },
     "k10": {
-     "top1": 43.12,
-     "top3": 72.49,
-     "top1_oracle_crop": 50.93
+     "top1": 43.49,
+     "top3": 71.75,
+     "top1_oracle_crop": 51.3
     }
    }
   },
@@ -195,51 +195,51 @@
      "top1_oracle_crop": 41.86
     },
     "k5": {
-     "top1": 35.47,
-     "top3": 69.77,
-     "top1_oracle_crop": 43.6
+     "top1": 36.05,
+     "top3": 70.93,
+     "top1_oracle_crop": 44.19
     },
     "k10": {
-     "top1": 38.37,
+     "top1": 40.7,
      "top3": 77.33,
-     "top1_oracle_crop": 44.19
+     "top1_oracle_crop": 45.35
     }
    }
   },
   "v4_field_test": {
-   "n": 1932,
+   "n": 1895,
    "gallery_v3": {
     "k1": {
-     "top1": 45.7,
-     "top3": 52.12,
-     "top1_oracle_crop": 48.45
+     "top1": 43.32,
+     "top3": 49.87,
+     "top1_oracle_crop": 46.44
     },
     "k5": {
-     "top1": 45.08,
-     "top3": 68.58,
-     "top1_oracle_crop": 47.72
+     "top1": 41.53,
+     "top3": 65.44,
+     "top1_oracle_crop": 44.27
     },
     "k10": {
-     "top1": 44.62,
-     "top3": 72.41,
-     "top1_oracle_crop": 46.79
+     "top1": 41.11,
+     "top3": 69.02,
+     "top1_oracle_crop": 43.91
     }
    },
    "gallery_v4": {
     "k1": {
-     "top1": 78.16,
-     "top3": 82.14,
-     "top1_oracle_crop": 78.31
+     "top1": 77.1,
+     "top3": 81.16,
+     "top1_oracle_crop": 77.26
     },
     "k5": {
-     "top1": 80.75,
-     "top3": 95.19,
-     "top1_oracle_crop": 80.95
+     "top1": 80.0,
+     "top3": 94.2,
+     "top1_oracle_crop": 80.16
     },
     "k10": {
-     "top1": 81.42,
-     "top3": 97.0,
-     "top1_oracle_crop": 81.52
+     "top1": 80.63,
+     "top3": 96.36,
+     "top1_oracle_crop": 80.84
     }
    }
   }

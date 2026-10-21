@@ -1,0 +1,61 @@
+{
+ "release": "D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\data\\dataset_sources\\mixed\\pv_pd_v4",
+ "branch": "origin/train-centralized",
+ "checks": [
+  {
+   "name": "verify_release_integrity[label_alpha_0_1]",
+   "ok": true,
+   "detail": "PASS"
+  },
+  {
+   "name": "verify_release_integrity[iid]",
+   "ok": true,
+   "detail": "PASS"
+  },
+  {
+   "name": "verify_manifest_records_contract",
+   "ok": true,
+   "detail": "PASS"
+  },
+  {
+   "name": "verify_partition_directory[label_alpha_0_1]",
+   "ok": true,
+   "detail": "PASS"
+  },
+  {
+   "name": "verify_partition_audit[label_alpha_0_1]",
+   "ok": true,
+   "detail": "PASS"
+  },
+  {
+   "name": "verify_partition_directory[iid]",
+   "ok": true,
+   "detail": "PASS"
+  },
+  {
+   "name": "verify_partition_audit[iid]",
+   "ok": true,
+   "detail": "IID_VERIFIED_BY_UNION"
+  },
+  {
+   "name": "verify_full_data_gate",
+   "ok": true,
+   "detail": "PASS"
+  },
+  {
+   "name": "data_selection.inspect_dataset[full]",
+   "ok": true,
+   "detail": "train=50779"
+  },
+  {
+   "name": "data_selection.inspect_dataset[label_alpha_0_1]",
+   "ok": true,
+   "detail": "train=50779 shards=[6286, 13131, 9519, 11087, 10756]"
+  },
+  {
+   "name": "data_selection.inspect_dataset[iid]",
+   "ok": true,
+   "detail": "train=50779 shards=[10188, 10168, 10161, 10116, 10146]"
+  }
+ ]
+}

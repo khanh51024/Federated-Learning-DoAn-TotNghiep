@@ -5,31 +5,41 @@ data/dataset_sources/mixed/pv_pd_v4/ có đúng cấu trúc mà runner huấn lu
     release_manifest.json  taxonomy.json  label_mapping.csv  annotations/detection.json  audits/
     manifests/{train,val,calibration,legacy_diagnostic_test,quarantine,scene_groups}.jsonl
     partitions/{label_alpha_0_1,iid}/client_00..04.jsonl   (5 client, chia theo nhóm; bộ chia v3: src/data/dirichlet_split.py)
+    partition_spec_v4.json (kiểm toán phân vùng, bộ chạy đọc), quality_audit_v4.json (cổng rò rỉ trước khi train đầy đủ, ghim SHA trong spec huấn luyện)
 Ảnh ngoài đồng mới được nối cứng (hardlink) vào data/dataset_sources/external_v4/ để dùng chung một --dataset-root.
 
 Quy tắc (đặt trước, ghi vào release_manifest.json):
   * Ảnh ngoài đồng chỉ vào release khi: nhãn `trusted`, hoặc nhóm (nguồn, lớp) được nhận ở data/label_review_ext/status.json.
   * Loại ảnh gần trùng (dHash 64 bit, Hamming <= 6, cả bản lật ngang) với: PlantVillage, cảnh và lá PlantDoc của v3, PlantWild (tập thử khóa) và phần thử ảnh tự chụp.
   * Ảnh gần trùng giữa các nguồn (Hamming <= 4) được gộp CÙNG MỘT nhóm để chia train/test cùng phía.
+  * Trong CÙNG MỘT nguồn và CÙNG MỘT lớp, ảnh Hamming <= `--same-source-hamming` (mặc định 10, tính cả bản lật ngang) và ảnh chụp liên tiếp trong `--session-seconds` giây
+    (mốc giờ trong tên tệp, ví dụ 20250404_154210) cũng gộp cùng nhóm: ảnh chụp liên tiếp của một lá không được rơi vào cả train lẫn test.
+    Ảnh đã xóa nền (capture_note "nền đã xóa") có dHash gần như chỉ phản ánh nền đen nên KHÔNG gộp theo dHash, chỉ gộp theo phiên chụp.
+  * Hai ảnh gần trùng (Hamming <= 4, mọi nguồn) mang hai nhãn khác nhau: ít nhất một nhãn sai, bỏ CẢ HAI ảnh đó (không bỏ cả nhóm). Cổng rò rỉ: tỉ lệ ảnh có ảnh cùng nguồn, cùng lớp, Hamming <= `--same-source-hamming`
+    ở split khác phải <= 2% (nhóm hóa ở trên nên thực tế bằng 0; cổng bắt lỗi dựng).
   * Chia ảnh ngoài đồng theo nhóm bằng mã băm cố định: 70% train, 10% val, 10% calibration, 10% legacy_diagnostic_test.
-  * PlantVillage train bị giới hạn `--pv-cap` ảnh mỗi lớp (chọn theo mã băm); PlantVillage val/calibration/test giữ nguyên để so với số cũ.
+  * PlantVillage train giữ nguyên (mặc định); `--pv-cap N` > 0 giới hạn N ảnh mỗi lớp (chọn theo mã băm). Cân bằng miền nên làm lúc train bằng trọng số lấy mẫu.
   * Lá PlantDoc cách ly chỉ vào khi nhóm lớp được nhận ở data/label_review/status.json; giữ nguyên split dự kiến của v3.
   * Ảnh tự chụp: split theo cây (scripts/check_own_photos.py); phần thử vào legacy_diagnostic_test.
   * source_domain của mọi ảnh ngoài đồng = "plantdoc" (runner chỉ biết hai miền); nguồn thật ở `source_dataset`.
 
 Chạy:
     python scripts/build_release_v4.py                 # dựng và kiểm rò rỉ; ghi artifacts/release_v4_report.json
-    python scripts/build_release_v4.py --pv-cap 800 --seed 20261022
+    python scripts/build_release_v4.py --seed 20261022
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+import math
 import os
+import re
 import shutil
 import sys
 from collections import Counter, defaultdict
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -50,6 +60,14 @@ OWN_MANIFEST = "data/own_photos/manifest.jsonl"
 DHASH_CACHE = "data/external/dhash_cache.npz"
 DUP_HAMMING = 6
 GROUP_MERGE_HAMMING = 4
+SAME_SOURCE_HAMMING = 10        # ảnh cùng nguồn gần nhau tới mức này (dHash, cả bản lật) phải cùng phía train/test
+INFORMATIONAL_HAMMING = 14      # chỉ báo cáo: mức gần trùng lỏng hơn
+SESSION_SECONDS = 60            # ảnh cùng nguồn chụp cách nhau tối đa từng này giây tính là một phiên chụp
+SESSION_MAX_SECONDS = 600       # một phiên không kéo dài quá mức này (tránh nhóm khổng lồ khi chụp liên tục cả giờ)
+LEAK_GATE = 0.02                # tỉ lệ ảnh thử có ảnh học cùng nguồn trong SAME_SOURCE_HAMMING
+PARTITION_SEED = 42
+JS_LABEL_SKEW_MIN = 0.2         # phân vùng lệch nhãn phải thật sự lệch (JS bit so với phân bố toàn cục)
+JS_IID_MAX = 0.05
 SPLIT_FRACTIONS = (("train", 0.70), ("val", 0.80), ("calibration", 0.90), ("legacy_diagnostic_test", 1.00))
 SPLIT_FILES = ("train", "val", "calibration", "legacy_diagnostic_test", "quarantine")
 NUM_CLIENTS = 5
@@ -76,8 +94,15 @@ def min_hamming(queries: np.ndarray, refs: np.ndarray, chunk: int = 256) -> np.n
     return out
 
 
-def merge_near_duplicate_groups(hashes: np.ndarray, groups: list[str], max_hamming: int) -> list[str]:
-    """Union-find: ảnh có Hamming <= max_hamming (bất kể nguồn) gộp nhóm. Trả group_id mới (đại diện = nhóm nhỏ nhất theo thứ tự chữ)."""
+def merge_near_duplicate_groups(hashes: np.ndarray, groups: list[str], max_hamming: int, *, sources: list[str] | None = None,
+                                same_source_max_hamming: int | None = None, flipped: np.ndarray | None = None,
+                                links: list[tuple[int, int]] | tuple[()] = (), classes: list[int] | None = None,
+                                conflicts: set[int] | None = None) -> list[str]:
+    """Union-find: ảnh có Hamming <= max_hamming (bất kể nguồn) gộp nhóm. Trả group_id mới (đại diện = nhóm nhỏ nhất theo thứ tự chữ).
+
+    Tùy chọn: hai ảnh có CÙNG khóa trong `sources` (ở build là "nguồn|lớp") gộp nhóm từ Hamming <= same_source_max_hamming; nếu có `flipped` (dHash bản lật ngang)
+    thì lấy khoảng cách nhỏ hơn giữa bản gốc và bản lật. `links` là các cặp chỉ số ảnh buộc phải cùng nhóm (ví dụ cùng phiên chụp).
+    Nếu có `classes`: hai ảnh khác lớp KHÔNG bao giờ gộp nhóm; cặp khác lớp mà Hamming <= max_hamming là nhãn mâu thuẫn, chỉ số của cả hai được thêm vào `conflicts`."""
     parent = {g: g for g in set(groups)}
 
     def find(x: str) -> str:
@@ -86,19 +111,70 @@ def merge_near_duplicate_groups(hashes: np.ndarray, groups: list[str], max_hammi
             x = parent[x]
         return x
 
+    def union(a: str, b: str) -> None:
+        a, b = find(a), find(b)
+        if a != b:
+            keep, drop = sorted((a, b))
+            parent[drop] = keep
+
+    src_ids = np.unique(np.array(sources), return_inverse=True)[1] if sources is not None else None
     for start in range(0, len(hashes), 256):
         block = hashes[start:start + 256]
         dist = np.bitwise_count(np.bitwise_xor(block[:, None], hashes[None, :]))
-        rows, cols = np.nonzero(dist <= max_hamming)
+        base = dist <= max_hamming
+        mask = base
+        if src_ids is not None and same_source_max_hamming is not None:
+            same = src_ids[start:start + 256, None] == src_ids[None, :]
+            if flipped is not None:
+                dist = np.minimum(dist, np.bitwise_count(np.bitwise_xor(flipped[start:start + 256][:, None], hashes[None, :])))
+            mask = mask | (same & (dist <= same_source_max_hamming))
+        rows, cols = np.nonzero(mask)
         for r, c in zip(rows.tolist(), cols.tolist()):
             i = start + r
             if i == c:
                 continue
-            a, b = find(groups[i]), find(groups[c])
-            if a != b:
-                keep, drop = sorted((a, b))
-                parent[drop] = keep
+            if classes is not None and classes[i] != classes[c]:
+                if conflicts is not None and base[r, c]:
+                    conflicts.update((i, c))
+                continue
+            union(groups[i], groups[c])
+    for i, j in links:
+        union(groups[i], groups[j])
     return [find(g) for g in groups]
+
+
+_CAPTURE_TIME = re.compile(r"(?<!\d)(20\d{2})(\d{2})(\d{2})[_-]?(\d{2})(\d{2})(\d{2})(?!\d)")
+
+
+def capture_time(name: str) -> float | None:
+    """Mốc chụp (giây, UTC giả định) lấy từ tên tệp dạng 20250404_154210 hoặc 20250404-154210; None nếu không có hoặc không hợp lệ."""
+    m = _CAPTURE_TIME.search(name)
+    if not m:
+        return None
+    try:
+        return datetime(*(int(g) for g in m.groups()), tzinfo=timezone.utc).timestamp()
+    except ValueError:
+        return None
+
+
+def session_links(sources: list[str], names: list[str], seconds: float, max_seconds: float) -> list[tuple[int, int]]:
+    """Cặp chỉ số ảnh liên tiếp cùng nguồn cách nhau <= `seconds` giây, mỗi phiên dài tối đa `max_seconds` giây kể từ ảnh đầu."""
+    by_source: dict[str, list[tuple[float, int]]] = defaultdict(list)
+    for i, (source, name) in enumerate(zip(sources, names)):
+        t = capture_time(name)
+        if t is not None:
+            by_source[source].append((t, i))
+    links: list[tuple[int, int]] = []
+    for items in by_source.values():
+        items.sort()
+        start, previous = items[0][0], items[0]
+        for t, i in items[1:]:
+            if t - previous[0] <= seconds and t - start <= max_seconds:
+                links.append((previous[1], i))
+            else:
+                start = t
+            previous = (t, i)
+    return links
 
 
 def conflicting_groups(classes: list[int], groups: list[str]) -> set[str]:
@@ -144,7 +220,9 @@ def build_scene_groups(rows_by_split: dict[str, list[dict[str, Any]]]) -> list[d
 
 
 def cap_per_class(rows: list[dict[str, Any]], cap: int, seed: int) -> list[dict[str, Any]]:
-    """Giữ tối đa `cap` dòng mỗi lớp, chọn theo mã băm cố định (không phụ thuộc thứ tự)."""
+    """Giữ tối đa `cap` dòng mỗi lớp, chọn theo mã băm cố định (không phụ thuộc thứ tự). cap <= 0: giữ hết."""
+    if cap <= 0:
+        return sorted(rows, key=lambda r: r["sample_id"])
     by_class: dict[int, list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
         by_class[int(row["class_id"])].append(row)
@@ -153,6 +231,118 @@ def cap_per_class(rows: list[dict[str, Any]], cap: int, seed: int) -> list[dict[
         items = sorted(items, key=lambda r: hashlib.sha256(f"{seed}|{r['sample_id']}".encode()).hexdigest())
         kept.extend(items[:cap])
     return sorted(kept, key=lambda r: r["sample_id"])
+
+
+def class_counts(rows: list[dict[str, Any]], num_classes: int = 38) -> list[int]:
+    counts = [0] * num_classes
+    for r in rows:
+        counts[int(r["class_id"])] += 1
+    return counts
+
+
+def shannon_entropy_bits(counts: list[int]) -> float:
+    total = sum(counts)
+    return -sum(c / total * math.log2(c / total) for c in counts if c) if total else 0.0
+
+
+def js_divergence_bits(p_counts: list[int], q_counts: list[int]) -> float:
+    """Jensen-Shannon (log2, tối đa 1) giữa hai phân bố lớp; cùng quy ước với partition_spec_v4.json của v3."""
+    p_total, q_total = sum(p_counts), sum(q_counts)
+    if not p_total or not q_total:
+        return 0.0
+    out = 0.0
+    for a, b in zip(p_counts, q_counts):
+        p, q = a / p_total, b / q_total
+        m = (p + q) / 2
+        if p:
+            out += 0.5 * p * math.log2(p / m)
+        if q:
+            out += 0.5 * q * math.log2(q / m)
+    return out
+
+
+def build_partition_spec(release_name: str, release_sha: str, train_rows: list[dict[str, Any]], schemes: dict[str, dict[str, Any]],
+                         num_scene_groups: int, num_classes: int = 38) -> dict[str, Any]:
+    """partition_spec_v4.json theo định dạng của v3 (bộ chạy đọc: plant_data_contract.partitions.verify_partition_audit, training-workflows/shared/data_selection.py).
+
+    `schemes[tên] = {"shards": {client_00: rows}, "shard_sha256": {client_00: sha}, "metadata": {...}, "structural_ok": bool}`.
+    status PASS khi cấu trúc đạt (rời nhau, hợp bằng train, không cắt nhóm) và độ lệch đúng loại: lệch nhãn JS >= 0,2; IID JS <= 0,05."""
+    global_counts = class_counts(train_rows, num_classes)
+    scenarios: dict[str, Any] = {}
+    for scheme, info in schemes.items():
+        stats: dict[str, Any] = {}
+        for client, rows in info["shards"].items():
+            counts = class_counts(rows, num_classes)
+            domains = Counter(r["source_domain"] for r in rows)
+            stats[client] = {
+                "n_k": len(rows), "num_groups": len({r["group_id"] for r in rows}), "shard_sha256": info["shard_sha256"][client],
+                "supported_classes": sum(1 for c in counts if c), "shannon_entropy": round(shannon_entropy_bits(counts), 4),
+                "js_divergence_to_global": round(js_divergence_bits(counts, global_counts), 4), "source_histogram": dict(domains),
+                "source_dataset_histogram": dict(Counter(r["source_dataset"] for r in rows)),
+                "class_histogram": {str(i): c for i, c in enumerate(counts)},
+                "plantdoc_ratio": round(domains.get("plantdoc", 0) / len(rows), 4) if rows else 0.0,
+            }
+        sizes = [s["n_k"] for s in stats.values()]
+        mean_js = sum(s["js_divergence_to_global"] for s in stats.values()) / len(stats)
+        skewed = info["metadata"]["skew_type"] == "label_dirichlet"
+        ok = bool(info["structural_ok"]) and (mean_js >= JS_LABEL_SKEW_MIN if skewed else mean_js <= JS_IID_MAX)
+        scenarios[scheme] = {
+            "scenario": scheme, "status": "PASS" if ok else "FAIL", "seed": PARTITION_SEED, "num_clients": len(stats), "total_samples": len(train_rows),
+            "min_client_samples": min(sizes), "max_client_samples": max(sizes), "mean_client_samples": round(sum(sizes) / len(sizes), 1),
+            "mean_entropy": round(sum(s["shannon_entropy"] for s in stats.values()) / len(stats), 4), "mean_js_divergence": round(mean_js, 4),
+            "shard_hashes": {f"{client}.jsonl": s["shard_sha256"] for client, s in stats.items()}, "client_stats": stats, "metadata": info["metadata"],
+        }
+    num_clients = {s["num_clients"] for s in scenarios.values()}
+    return {"spec_version": "4.0.0", "release_name": release_name, "release_manifest_sha256": release_sha, "seed": PARTITION_SEED,
+            "num_clients": num_clients.pop() if len(num_clients) == 1 else None, "n_train_samples": len(train_rows),
+            "num_scene_groups": num_scene_groups, "scenarios": scenarios}
+
+
+def min_hamming_to_other_split(direct: np.ndarray, flipped: np.ndarray, sources: list[str], splits: list[str], chunk: int = 256) -> np.ndarray:
+    """Với mỗi ảnh: Hamming nhỏ nhất (bản gốc hoặc bản lật) tới ảnh CÙNG khóa `sources` ("nguồn|lớp" ở build) nằm ở split KHÁC; 64 nếu không có ảnh nào như vậy."""
+    out = np.full(len(direct), 64, dtype=np.int64)
+    src, spl = np.array(sources), np.array(splits)
+    for source in np.unique(src):
+        idx = np.nonzero(src == source)[0]
+        h, f, s = direct[idx], flipped[idx], spl[idx]
+        for start in range(0, len(idx), chunk):
+            block = slice(start, start + chunk)
+            d = np.minimum(np.bitwise_count(np.bitwise_xor(h[block][:, None], h[None, :])),
+                           np.bitwise_count(np.bitwise_xor(f[block][:, None], h[None, :]))).astype(np.int64)
+            out[idx[block]] = np.where(s[block][:, None] != s[None, :], d, 64).min(axis=1)
+    return out
+
+
+def verify_image_bytes(rows: list[dict[str, Any]], root: Path, workers: int) -> tuple[int, list[str]]:
+    """Băm lại từng tệp ảnh đang nằm trong release và so với byte_sha256 của manifest. Trả (số tệp khác nhau đã kiểm, danh sách tệp lệch hoặc thiếu)."""
+    unique = list({r["relative_path"]: r for r in rows}.values())
+
+    def check(r: dict[str, Any]) -> str | None:
+        try:
+            return None if sha256_file(root / r["relative_path"]) == r["byte_sha256"] else r["relative_path"]
+        except OSError:
+            return r["relative_path"]
+
+    with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
+        bad = [name for name in pool.map(check, unique) if name]
+    return len(unique), bad
+
+
+def build_quality_audit(release_name: str, release_sha: str, rows_by_split: dict[str, list[dict[str, Any]]], overlaps: dict[str, dict[str, int]],
+                        files_checked: int, bad_files: list[str], near_duplicate: dict[str, Any], inherited: dict[str, Any]) -> dict[str, Any]:
+    """quality_audit_v4.json: cổng rò rỉ mà plant_data_contract.full_gate.verify_full_data_gate đòi trước khi train đầy đủ (ghim SHA tệp này trong spec huấn luyện)."""
+    within = sum(len(rows) - len({r["byte_sha256"] for r in rows}) for rows in rows_by_split.values())
+    flat = {f"{pair.replace('__', '/')}/{key}": n for pair, counts in overlaps.items() for key, n in counts.items()}
+    scene_leaks = sum(n for k, n in flat.items() if k.endswith(("/group_id", "/parent_scene_id")))
+    unresolved = int(near_duplicate["unresolved_duplicate_candidates"])
+    ok = not bad_files and unresolved == 0 and within == 0 and not any(flat.values())
+    return {
+        "release_name": release_name, "release_manifest_sha256": release_sha, "status": "PASS" if ok else "FAIL",
+        "current_bytes_verified": not bad_files, "active_records_verified": files_checked, "bytes_mismatches": bad_files[:10],
+        "unresolved_duplicate_candidates": unresolved, "within_split_duplicate_rows": within, "confirmed_or_critical_scene_leakages": scene_leaks,
+        "exact_cross_split_overlaps": flat, "near_duplicate_audit": near_duplicate, "inherited_from_v3": inherited,
+        "generated_by": "scripts/build_release_v4.py",
+    }
 
 
 # --------------------------------------------------------------------------- I/O
@@ -233,7 +423,9 @@ def load_reference_hashes(v3_rows: list[dict[str, Any]], own_test: list[dict[str
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--pv-cap", type=int, default=800)
+    parser.add_argument("--pv-cap", type=int, default=0, help="giới hạn ảnh PlantVillage train mỗi lớp; 0 = giữ đủ (cân bằng miền làm lúc train)")
+    parser.add_argument("--same-source-hamming", type=int, default=SAME_SOURCE_HAMMING)
+    parser.add_argument("--session-seconds", type=float, default=SESSION_SECONDS)
     parser.add_argument("--seed", type=int, default=20261022)
     parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--no-link", action="store_true", help="không tạo liên kết ảnh (chỉ thử dựng manifest)")
@@ -285,17 +477,28 @@ def main() -> int:
     is_dup = (np.minimum(d_direct, d_flip) <= DUP_HAMMING)
     dup_by_source = Counter(r["source_dataset"] for r, d in zip(ext_rows, is_dup) if d)
     kept_rows = [r for r, d in zip(ext_rows, is_dup) if not d]
-    kept_hashes = direct[~is_dup]
+    kept_hashes, kept_flip = direct[~is_dup], flipped[~is_dup]
     print(f"[v4] loại {int(is_dup.sum())} ảnh gần trùng với tập khóa/PlantVillage: {dict(dup_by_source)}", flush=True)
 
     # ---- gộp nhóm gần trùng giữa các nguồn, chia split theo nhóm
-    merged = merge_near_duplicate_groups(kept_hashes, [r["group_id"] for r in kept_rows], GROUP_MERGE_HAMMING)
-    # Hai ảnh gần như giống hệt nhau mà mang hai nhãn khác nhau: ít nhất một nhãn sai -> bỏ cả nhóm (nhãn mâu thuẫn), không đoán nhãn nào đúng.
-    conflict_groups = conflicting_groups([int(r["class_id"]) for r in kept_rows], merged)
-    conflict_by_source = Counter(r["source_dataset"] for r, g in zip(kept_rows, merged) if g in conflict_groups)
-    print(f"[v4] bỏ {sum(conflict_by_source.values())} ảnh thuộc {len(conflict_groups)} nhóm gần trùng có nhãn mâu thuẫn: {dict(conflict_by_source)}", flush=True)
+    session_keys = [f"{r['source_dataset']}|{r['class_id']}" for r in kept_rows]
+    no_background = [r.get("capture_note") == "nền đã xóa" for r in kept_rows]   # dHash của ảnh xóa nền chỉ phản ánh nền đen: không dùng để gộp
+    dhash_keys = [f"{k}|nobg|{i}" if bg else k for i, (k, bg) in enumerate(zip(session_keys, no_background))]
+    links = session_links(session_keys, [Path(r.get("original_file", "")).name for r in kept_rows], args.session_seconds, SESSION_MAX_SECONDS)
+    conflict_pairs: set[int] = set()
+    merged = merge_near_duplicate_groups(kept_hashes, [r["group_id"] for r in kept_rows], GROUP_MERGE_HAMMING, sources=dhash_keys,
+                                         same_source_max_hamming=args.same_source_hamming, flipped=kept_flip, links=links,
+                                         classes=[int(r["class_id"]) for r in kept_rows], conflicts=conflict_pairs)
+    # Hai ảnh gần như giống hệt nhau mà mang hai nhãn khác nhau: ít nhất một nhãn sai -> bỏ cả hai ảnh đó, không đoán nhãn nào đúng.
+    # `conflicting_groups` còn lại là lưới an toàn: nhóm có hai lớp (không xảy ra khi gộp theo lớp) cũng bị bỏ hẳn.
+    residual_groups = conflicting_groups([int(r["class_id"]) for r in kept_rows], merged)
+    dropped = conflict_pairs | {i for i, g in enumerate(merged) if g in residual_groups}
+    conflict_by_source = Counter(kept_rows[i]["source_dataset"] for i in dropped)
+    print(f"[v4] bỏ {len(dropped)} ảnh có ảnh gần trùng mang nhãn khác ({len(conflict_pairs)} ảnh theo cặp, {len(residual_groups)} nhóm còn lẫn lớp): {dict(conflict_by_source)}", flush=True)
     ext_out: list[dict[str, Any]] = []
-    for r, group in ((r, g) for r, g in zip(kept_rows, merged) if g not in conflict_groups):
+    keep_idx = [i for i in range(len(merged)) if i not in dropped]
+    for i in keep_idx:
+        r, group = kept_rows[i], merged[i]
         split = split_for_group(group, args.seed)
         link_rel = f"{EXTERNAL_LINK_DIR}/{r['source_dataset']}/{r['target_class']}/{r['byte_sha256'][:16]}.jpg"
         if not args.no_link:
@@ -356,6 +559,25 @@ def main() -> int:
         print(f"[v4] sample_id trùng: {dup_ids[:5]}", file=sys.stderr)
         return 2
 
+    # ---- cổng rò rỉ cùng nguồn: ảnh gần trùng (cả bản lật) nằm ở split khác
+    ext_split_of = {r["sample_id"]: r["split"] for r in ext_out}
+    min_dist = min_hamming_to_other_split(kept_hashes[keep_idx], kept_flip[keep_idx], [dhash_keys[i] for i in keep_idx],
+                                          [ext_split_of[kept_rows[i]["sample_id"]] for i in keep_idx])
+    leak = {}
+    for limit in (args.same_source_hamming, INFORMATIONAL_HAMMING):
+        hit = min_dist <= limit
+        by_src = Counter(kept_rows[i]["source_dataset"] for i, h in zip(keep_idx, hit) if h)
+        leak[f"hamming_le_{limit}"] = {"images": int(hit.sum()), "fraction": round(float(hit.mean()), 4) if len(hit) else 0.0, "by_source": dict(by_src)}
+    unresolved = leak[f"hamming_le_{args.same_source_hamming}"]["images"]
+    group_sizes = Counter(r["group_id"] for r in ext_out)
+    group_stats = {"groups": len(group_sizes), "images": len(ext_out), "largest": [{"group_id": g, "images": n} for g, n in group_sizes.most_common(5)],
+                   "session_links": len(links), "background_removed_images_without_dhash_grouping": sum(no_background[i] for i in keep_idx)}
+    print(f"[v4] nhóm ngoài đồng: {group_stats['groups']} cho {group_stats['images']} ảnh; lớn nhất {group_stats['largest'][0]['images'] if group_sizes else 0}; "
+          f"ảnh còn gần trùng cùng nguồn ở split khác: Hamming<={args.same_source_hamming}: {unresolved}, <={INFORMATIONAL_HAMMING}: {leak[f'hamming_le_{INFORMATIONAL_HAMMING}']['images']}", flush=True)
+    if leak[f"hamming_le_{args.same_source_hamming}"]["fraction"] > LEAK_GATE:
+        print(f"[v4] RÒ RỈ CÙNG NGUỒN vượt {LEAK_GATE:.0%}: {leak}", file=sys.stderr)
+        return 2
+
     # ---- ghi release
     (v4 / "manifests").mkdir(parents=True, exist_ok=True)
     hashes: dict[str, str] = {name: write_jsonl(v4 / "manifests" / f"{name}.jsonl", out[name]) for name in SPLIT_FILES}
@@ -372,6 +594,7 @@ def main() -> int:
     # ---- phân vùng 5 client trên train (theo nhóm)
     shard_hashes: dict[str, dict[str, str]] = {}
     audits: dict[str, Any] = {}
+    spec_inputs: dict[str, dict[str, Any]] = {}
     train_ids = {r["sample_id"] for r in out["train"]}
     for scheme, scenario, alpha in (("label_alpha_0_1", "label_skew", 0.1), ("iid", "iid", 1.0)):
         # Bộ chia theo lớp: một nhóm có ảnh thuộc nhiều lớp (vài cảnh PlantDoc của v3) được xếp trọn vào lớp chiếm đa số để không bị chia cho nhiều client.
@@ -379,15 +602,21 @@ def main() -> int:
         shards, diag = partition(groups_by_class, scenario, NUM_CLIENTS, alpha=alpha, seed=42)
         shard_hashes[scheme] = {}
         shard_rows: dict[str, list[dict[str, Any]]] = {}
+        shard_sha: dict[str, str] = {}
         for client in range(NUM_CLIENTS):
             rows = sorted(shards[client], key=lambda r: r["sample_id"])
             name = f"client_{client:02d}"
-            shard_hashes[scheme][name] = write_jsonl(v4 / "partitions" / scheme / f"{name}.jsonl", rows)
+            shard_sha[name] = write_jsonl(v4 / "partitions" / scheme / f"{name}.jsonl", rows)
+            shard_hashes[scheme][f"{name}.jsonl"] = shard_sha[name]  # bộ chạy so khóa với tên tệp, có đuôi .jsonl
             shard_rows[name] = rows
         audits[scheme] = {**audit_partition(shard_rows, train_ids), "diagnostics": diag,
                           "n_k": [len(shard_rows[f"client_{c:02d}"]) for c in range(NUM_CLIENTS)]}
+        a = audits[scheme]
+        spec_inputs[scheme] = {"shards": shard_rows, "shard_sha256": shard_sha,
+                               "structural_ok": bool(a["disjoint"] and a["union_equals_train"] and a["groups_split_across_clients"] == 0),
+                               "metadata": {"skew_type": "label_dirichlet", "alpha_label": alpha} if scenario == "label_skew" else {"skew_type": "iid"}}
     for scheme, a in audits.items():
-        if not (a["disjoint"] and a["union_equals_train"] and a["groups_split_across_clients"] == 0):
+        if not spec_inputs[scheme]["structural_ok"]:
             print(f"[v4] phân vùng {scheme} không đạt: {a}", file=sys.stderr)
             return 2
 
@@ -409,23 +638,46 @@ def main() -> int:
         "detection_json_sha256": sha256_file(v4 / "annotations" / "detection.json"), "group_graph_sha256": hashes["scene_groups"],
         "repair_ledger_sha256": sha256_file(v4 / "audits" / "release_repair_ledger.json"),
         "split_sha256": sha256_bytes(json.dumps(groups, sort_keys=True).encode()),
-        "rules": {"dedup_hamming_max": DUP_HAMMING, "group_merge_hamming_max": GROUP_MERGE_HAMMING, "external_split": dict(SPLIT_FRACTIONS), "seed": args.seed,
+        "rules": {"dedup_hamming_max": DUP_HAMMING, "group_merge_hamming_max": GROUP_MERGE_HAMMING, "same_source_hamming_max": args.same_source_hamming,
+                  "session_seconds": args.session_seconds, "external_split": dict(SPLIT_FRACTIONS), "seed": args.seed,
                   "locked_tests": "PlantVillage/PlantDoc v3 (val, legacy_diagnostic_test), PlantWild, ảnh tự chụp phần thử"},
     }
     (v4 / "release_manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    release_sha = sha256_file(v4 / "release_manifest.json")
+    spec = build_partition_spec(RELEASE_NAME, release_sha, out["train"], spec_inputs, len(scene_groups))
+    (v4 / "partition_spec_v4.json").write_text(json.dumps(spec, ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    failed_scenarios = [name for name, s in spec["scenarios"].items() if s["status"] != "PASS"]
+    if failed_scenarios:
+        print(f"[v4] phân vùng không đạt tiêu chí độ lệch: { {n: spec['scenarios'][n]['mean_js_divergence'] for n in failed_scenarios} }", file=sys.stderr)
+    all_rows = [r for name in ("train", "val", "calibration", "legacy_diagnostic_test") for r in out[name]]
+    print(f"[v4] băm lại {len({r['relative_path'] for r in all_rows})} tệp ảnh để kiểm byte_sha256 ...", flush=True)
+    files_checked, bad_files = verify_image_bytes(all_rows, dataset_root, args.workers)
+    audit = build_quality_audit(
+        RELEASE_NAME, release_sha, {name: out[name] for name in ("train", "val", "calibration", "legacy_diagnostic_test")}, overlaps, files_checked, bad_files,
+        {"same_source_hamming": args.same_source_hamming, "session_seconds": args.session_seconds, "unresolved_duplicate_candidates": unresolved,
+         "cross_split_same_source": leak, "groups": group_stats, "dropped_label_conflict_images": len(dropped)},
+        {"release_manifest_sha256": manifest["derived_from_release_manifest_sha256"],
+         "quality_audit_sha256": sha256_file(v3 / "quality_audit_v3.json") if (v3 / "quality_audit_v3.json").is_file() else None})
+    (v4 / "quality_audit_v4.json").write_text(json.dumps(audit, ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
     (v4 / "dataset_card.md").write_text(
         "# Mixed PlantVillage–PlantDoc v4\n\nv3 cộng ảnh ngoài đồng đã kiểm nhãn, lá PlantDoc cách ly đã được nhận và ảnh tự chụp. "
         "Xem docs/DATASET_V4.md. Ảnh ngoài đồng nối cứng vào external_v4/; source_domain=plantdoc nghĩa là \"ngoài đồng\".\n", encoding="utf-8")
     report = {
-        "release": RELEASE_NAME, "release_manifest_sha256": sha256_file(v4 / "release_manifest.json"), "counts": manifest["counts"],
+        "release": RELEASE_NAME, "release_manifest_sha256": release_sha, "counts": manifest["counts"],
+        "partition_spec_sha256": sha256_file(v4 / "partition_spec_v4.json"), "quality_audit_sha256": sha256_file(v4 / "quality_audit_v4.json"),
+        "quality_audit_status": audit["status"], "partition_status": {n: s["status"] for n, s in spec["scenarios"].items()},
+        "same_source_leakage": leak, "ext_groups": group_stats,
         "reference": ref_info, "removed_near_duplicates": {"total": int(is_dup.sum()), "by_source": dict(dup_by_source)},
-        "dropped_label_conflict": {"groups": len(conflict_groups), "images": sum(conflict_by_source.values()), "by_source": dict(conflict_by_source)},
+        "dropped_label_conflict": {"images": len(dropped), "images_in_conflicting_pairs": len(conflict_pairs), "residual_mixed_class_groups": len(residual_groups),
+                                   "by_source": dict(conflict_by_source)},
         "waiting_label_review": dict(not_ready), "overlaps": overlaps, "partitions": audits, "by_source": by_source,
         "by_class": {c: {n: sum(1 for r in out[n] if r["target_class"] == c) for n in ("train", "val", "calibration", "legacy_diagnostic_test")} for c in classes},
     }
     reg.abs_path(reg.RELEASE_V4_REPORT_JSON).write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     print(f"[v4] xong: {counts}; ảnh ngoài đồng thêm {len(ext_out)}, lá PlantDoc cách ly nhận lại {len(promoted)}, ảnh tự chụp {len(own_rows)}")
-    return 0
+    print(f"[v4] quality_audit: {audit['status']} (byte lệch {len(bad_files)}, within_split_dup {audit['within_split_duplicate_rows']}, unresolved {unresolved}); "
+          f"partition: { {n: s['status'] for n, s in spec['scenarios'].items()} }; SHA release {release_sha}")
+    return 0 if audit["status"] == "PASS" and not failed_scenarios else 2
 
 
 if __name__ == "__main__":

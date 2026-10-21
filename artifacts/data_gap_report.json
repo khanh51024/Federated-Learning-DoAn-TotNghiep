@@ -981,35 +981,36 @@
  ],
  "local_only_ceiling_top1_percent": {
   "client_00": {
-   "classes_seen": 23,
-   "plantvillage_val": 65.3,
-   "plantdoc_val": 62.5,
-   "plantwild": 67.9
+   "classes_seen": 19,
+   "plantvillage_val": 54.4,
+   "plantdoc_val": 62.1,
+   "plantwild": 38.8
   },
   "client_01": {
-   "classes_seen": 24,
-   "plantvillage_val": 72.4,
-   "plantdoc_val": 57.2,
-   "plantwild": 60.6
+   "classes_seen": 26,
+   "plantvillage_val": 78.5,
+   "plantdoc_val": 84.4,
+   "plantwild": 75.0
   },
   "client_02": {
    "classes_seen": 20,
-   "plantvillage_val": 66.0,
-   "plantdoc_val": 47.2,
-   "plantwild": 60.0
+   "plantvillage_val": 44.5,
+   "plantdoc_val": 48.7,
+   "plantwild": 40.4
   },
   "client_03": {
-   "classes_seen": 27,
-   "plantvillage_val": 79.5,
-   "plantdoc_val": 95.9,
-   "plantwild": 74.4
-  },
-  "client_04": {
    "classes_seen": 24,
    "plantvillage_val": 70.9,
-   "plantdoc_val": 84.8,
-   "plantwild": 68.7
+   "plantdoc_val": 76.2,
+   "plantwild": 59.7
+  },
+  "client_04": {
+   "classes_seen": 22,
+   "plantvillage_val": 60.3,
+   "plantdoc_val": 63.6,
+   "plantwild": 60.2
   }
  },
+ "local_only_ceiling_source": "partition_spec_v4.json (label_alpha_0_1, release v4)",
  "note": "field_ready chỉ đếm ảnh ngoài đồng đã qua kiểm nhãn hoặc nhãn khoa học tin cậy; PlantWild không được đếm vào học (chỉ để thử)."
 }
