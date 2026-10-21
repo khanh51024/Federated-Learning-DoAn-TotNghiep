@@ -72,6 +72,7 @@ MODEL_WEIGHT_COMPARISON_JSON = "artifacts/model_weight_comparison.json"  # scrip
 AGGREGATION_EQUIVALENCE_JSON = "artifacts/aggregation_equivalence.json"  # scripts/aggregation_equivalence.py (FedSGD trùng GD tập trung, client drift)
 EXTERNAL_EVAL_RESULTS_JSON = "artifacts/external_eval_results.json"  # scripts/eval_external_set.py (7 mô hình trên PlantWild đã loại ảnh trùng)
 NETWORK_SPEEDTEST_DIR = "artifacts/network_speedtest"  # scripts/summarize_network_speedtest.py (đo tốc độ FedAvg giữa hai máy; KHÔNG phải độ chính xác)
+FOUNDATION_MODEL_EVAL_JSON = "artifacts/foundation_model_eval.json"  # scripts/eval_foundation_models.py (BioCLIP, DINOv2: zero-shot và kNN, không huấn luyện)
 QUARANTINED_EVAL_JSON = "artifacts/quarantined_plantdoc_eval.json"  # scripts/eval_quarantined_plantdoc.py (lá PlantDoc bị cách ly, nhãn CHƯA kiểm)
 LABEL_SCREENING_JSON = "artifacts/label_screening.json"  # scripts/record_label_screening.py (sàng lọc nhãn bằng mắt do AI làm, KHÔNG phải chuyên gia)
 ERROR_GALLERY_DIR = "web/static/samples/errors"

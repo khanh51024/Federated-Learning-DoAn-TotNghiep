@@ -1,0 +1,196 @@
+{
+ "evidence": "đo cục bộ trên CPU; không huấn luyện lớp nào (zero-shot và kNN trên đặc trưng đóng băng)",
+ "models": {
+  "bioclip": "hf-hub:imageomics/bioclip",
+  "dinov2_small": "facebook/dinov2-small"
+ },
+ "gallery": {
+  "plantdoc_train_leaves": 2115,
+  "plantvillage_per_class": 40,
+  "total": 3635,
+  "seed": 20261020
+ },
+ "k_values": [
+  1,
+  5,
+  10
+ ],
+ "external_manifest_sha256": "5adba619df55e4b0cb9f94565fecd67cc3307acab0141e5c64391db93d91b5db",
+ "prompts_example": {
+  "Apple___Apple_scab": [
+   "a photo of a apple leaf with apple scab.",
+   "apple plant disease: apple scab."
+  ],
+  "Apple___Black_rot": [
+   "a photo of a apple leaf with black rot.",
+   "apple plant disease: black rot."
+  ],
+  "Apple___Cedar_apple_rust": [
+   "a photo of a apple leaf with cedar apple rust.",
+   "apple plant disease: cedar apple rust."
+  ]
+ },
+ "caveat": "Không so trực tiếp với MobileNetV3 về công bằng: mô hình nền có số tham số lớn hơn nhiều và được tiền huấn luyện trên dữ liệu rất khác; đây là mốc tham khảo, không thay mô hình của đồ án. Thư viện kNN dùng ảnh PlantDoc/PlantVillage đã nằm trong tập học của MobileNetV3.",
+ "sets": {
+  "ext_strict": {
+   "n": 2304,
+   "methods": {
+    "bioclip_zero_shot": {
+     "top1": 35.59,
+     "top3": 60.42,
+     "top1_oracle_crop": 52.26
+    },
+    "bioclip_knn_k1": {
+     "top1": 39.45,
+     "top3": 52.65,
+     "top1_oracle_crop": 59.16
+    },
+    "bioclip_knn_k5": {
+     "top1": 41.71,
+     "top3": 64.32,
+     "top1_oracle_crop": 59.77
+    },
+    "bioclip_knn_k10": {
+     "top1": 42.32,
+     "top3": 67.06,
+     "top1_oracle_crop": 59.81
+    },
+    "dinov2_small_knn_k1": {
+     "top1": 46.05,
+     "top3": 56.34,
+     "top1_oracle_crop": 58.29
+    },
+    "dinov2_small_knn_k5": {
+     "top1": 48.96,
+     "top3": 70.83,
+     "top1_oracle_crop": 59.64
+    },
+    "dinov2_small_knn_k10": {
+     "top1": 50.3,
+     "top3": 73.31,
+     "top1_oracle_crop": 60.07
+    }
+   }
+  },
+  "ext_healthy": {
+   "n": 2741,
+   "methods": {
+    "bioclip_zero_shot": {
+     "top1": 25.83,
+     "top3": 49.4,
+     "top1_oracle_crop": 59.54
+    },
+    "bioclip_knn_k1": {
+     "top1": 14.45,
+     "top3": 14.45,
+     "top1_oracle_crop": 46.22
+    },
+    "bioclip_knn_k5": {
+     "top1": 16.02,
+     "top3": 23.9,
+     "top1_oracle_crop": 46.48
+    },
+    "bioclip_knn_k10": {
+     "top1": 16.27,
+     "top3": 25.98,
+     "top1_oracle_crop": 46.19
+    },
+    "dinov2_small_knn_k1": {
+     "top1": 15.72,
+     "top3": 15.72,
+     "top1_oracle_crop": 49.65
+    },
+    "dinov2_small_knn_k5": {
+     "top1": 17.8,
+     "top3": 26.85,
+     "top1_oracle_crop": 54.43
+    },
+    "dinov2_small_knn_k10": {
+     "top1": 19.08,
+     "top3": 30.35,
+     "top1_oracle_crop": 56.99
+    }
+   }
+  },
+  "pd_val": {
+   "n": 269,
+   "methods": {
+    "bioclip_zero_shot": {
+     "top1": 20.07,
+     "top3": 33.83,
+     "top1_oracle_crop": 31.6
+    },
+    "bioclip_knn_k1": {
+     "top1": 47.21,
+     "top3": 52.42,
+     "top1_oracle_crop": 61.34
+    },
+    "bioclip_knn_k5": {
+     "top1": 49.07,
+     "top3": 72.49,
+     "top1_oracle_crop": 65.06
+    },
+    "bioclip_knn_k10": {
+     "top1": 49.81,
+     "top3": 74.72,
+     "top1_oracle_crop": 66.54
+    },
+    "dinov2_small_knn_k1": {
+     "top1": 52.42,
+     "top3": 56.51,
+     "top1_oracle_crop": 60.97
+    },
+    "dinov2_small_knn_k5": {
+     "top1": 53.9,
+     "top3": 74.72,
+     "top1_oracle_crop": 63.94
+    },
+    "dinov2_small_knn_k10": {
+     "top1": 55.39,
+     "top3": 77.7,
+     "top1_oracle_crop": 65.8
+    }
+   }
+  },
+  "pd_test": {
+   "n": 172,
+   "methods": {
+    "bioclip_zero_shot": {
+     "top1": 23.84,
+     "top3": 47.09,
+     "top1_oracle_crop": 35.47
+    },
+    "bioclip_knn_k1": {
+     "top1": 48.26,
+     "top3": 51.16,
+     "top1_oracle_crop": 54.07
+    },
+    "bioclip_knn_k5": {
+     "top1": 52.91,
+     "top3": 78.49,
+     "top1_oracle_crop": 58.14
+    },
+    "bioclip_knn_k10": {
+     "top1": 55.23,
+     "top3": 80.81,
+     "top1_oracle_crop": 62.21
+    },
+    "dinov2_small_knn_k1": {
+     "top1": 41.86,
+     "top3": 44.77,
+     "top1_oracle_crop": 51.74
+    },
+    "dinov2_small_knn_k5": {
+     "top1": 47.09,
+     "top3": 75.0,
+     "top1_oracle_crop": 53.49
+    },
+    "dinov2_small_knn_k10": {
+     "top1": 53.49,
+     "top3": 78.49,
+     "top1_oracle_crop": 62.79
+    }
+   }
+  }
+ }
+}

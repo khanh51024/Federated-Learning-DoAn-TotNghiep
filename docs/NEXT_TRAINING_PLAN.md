@@ -161,8 +161,11 @@ trên ảnh bệnh ngoài đồng của PlantWild và đoán thành có bệnh t
 Phép đo ở mục 4.3 của báo cáo cho thấy phép gộp không gây sai số và chênh lệch với tập trung đến từ số bước cục bộ cùng độ lệch dữ liệu; vì vậy nên thử E nhỏ và FedAvgM trước khi tăng số client.
 
 ### 5.3 Backbone
-Giữ MobileNetV3-Small cho so sánh ba phương pháp (một lần truyền 6,3 MB). Thêm một mô hình trần chỉ huấn luyện tập trung (ConvNeXt-Tiny hoặc EfficientNet-B0) để biết giới hạn của dữ liệu;
-mô hình cỡ 28 triệu tham số tương ứng khoảng 112 MB mỗi lần truyền, gấp khoảng 18 lần, nên không dùng cho học phân tán trong phạm vi đồ án.
+Số đo thật (`artifacts/foundation_model_eval.json`): trên ảnh bệnh PlantWild, DINOv2-small đóng băng với kNN đạt 50,3% top-1 và BioCLIP zero-shot 35,6%, so với 33,1% của MobileNetV3-Small Centralized đã huấn luyện.
+Hai phương án, nên thử theo thứ tự:
+1. **Backbone đóng băng của mô hình nền, chỉ học phần đầu phân loại** (DINOv2-small, 384 chiều × 38 lớp ≈ 14,6 nghìn tham số, khoảng 58 KB mỗi lần truyền). Đây là hướng rẻ nhất cho học phân tán và đã có hạ tầng tương tự ở học cộng đồng trong trình duyệt. Chưa huấn luyện thử.
+2. Giữ MobileNetV3-Small cho so sánh ba phương pháp với công thức ở mục 5.2 (một lần truyền 6,3 MB), thêm một mô hình trần chỉ huấn luyện tập trung (ConvNeXt-Tiny hoặc EfficientNet-B0) để biết giới hạn của dữ liệu;
+   mô hình cỡ 28 triệu tham số tương ứng khoảng 112 MB mỗi lần truyền, gấp khoảng 18 lần, nên không dùng cho học phân tán trong phạm vi đồ án.
 
 ### 5.4 Ngưỡng chấp nhận (đặt trước khi train)
 Một đợt train mới chỉ được nhập vào web nếu đồng thời:

@@ -16,18 +16,20 @@ Ngày lập: 2026-10-21. Phạm vi: ba nhánh huấn luyện `train-local-only`,
    không vượt ngưỡng chấp nhận đặt trước. Biện pháp hiệu quả nhất là để người dùng chọn loại cây: top-1 của Centralized tăng từ 7,6 đến 13,3 điểm và của FedAvg
    từ 10,4 đến 21,2 điểm trên các tập PlantDoc, và tăng khoảng 25 điểm trên ảnh PlantWild (33,1% lên 58,5% với Centralized). Chức năng này đã được thêm vào trang
    Chẩn đoán.
-4. **Nguyên nhân chính nằm ở dữ liệu và cách huấn luyện, không nằm ở đường truyền hay phép gộp trọng số.** Dữ liệu huấn luyện
+4. **Mô hình nền mạnh hơn có số đo thật.** Không huấn luyện thêm lớp nào, DINOv2-small với kNN trên thư viện 3.635 ảnh (PlantDoc cộng PlantVillage) đạt 50,3% top-1 trên ảnh bệnh
+   PlantWild, so với 33,1% của Centralized; BioCLIP zero-shot đạt 35,6% mà không dùng ảnh huấn luyện nào. Trên ảnh lá khỏe ngoài vườn mọi cách đều yếu (tối đa 25,8% với BioCLIP zero-shot).
+5. **Nguyên nhân chính nằm ở dữ liệu và cách huấn luyện, không nằm ở đường truyền hay phép gộp trọng số.** Dữ liệu huấn luyện
    lệch về ảnh phòng thí nghiệm, tăng cường ảnh chỉ có lật ngang, ảnh PlantDoc bị học thuộc (độ chính xác 99,7% trên ảnh đã học,
    53,9% trên ảnh kiểm tra), và đã tồn tại một lỗi giải mã ảnh trên web (không xoay theo EXIF) nay đã được sửa.
-5. **Trọng số gửi qua lại giữa server và client không bị thay đổi.** Cả 244 tensor của bảy mô hình đi qua đường tuần tự hóa của
+6. **Trọng số gửi qua lại giữa server và client không bị thay đổi.** Cả 244 tensor của bảy mô hình đi qua đường tuần tự hóa của
    Flower và giao thức protobuf mà không khác một byte nào. Phép gộp float64 so với float32 làm 38,2% phần tử trọng số lệch tối đa
    3,8·10⁻⁶ và không đổi dự đoán của ảnh nào trong 4.613 ảnh kiểm tra. Nếu trọng số bị nén thì phép kiểm phát hiện được: float16 đổi dự đoán
    6 ảnh, bfloat16 đổi 71 ảnh, int8 làm độ chính xác tụt còn 2,8%.
-6. **Khoảng cách giữa FedAvg và Centralized không do việc truyền hay gộp trọng số.** Với FedSGD, mô hình gộp trùng gradient descent
+7. **Khoảng cách giữa FedAvg và Centralized không do việc truyền hay gộp trọng số.** Với FedSGD, mô hình gộp trùng gradient descent
    tập trung tới 4,9·10⁻¹⁴ (float64). Chênh lệch chỉ xuất hiện khi mỗi client chạy nhiều bước cục bộ trên dữ liệu lệch nhãn và tăng
    khi α giảm. Hai checkpoint đã công bố còn khác nhau ở bộ tối ưu (AdamW so với SGD không động lượng), nên khoảng cách trọng số
    58% giữa chúng gồm cả phần do cấu hình.
-7. **Tốc độ giữa hai máy**: laptop và VM Oracle qua Internet có độ trễ khứ hồi 46,7 ms, băng thông 31 đến 34 MB/s mỗi chiều. Một vòng
+8. **Tốc độ giữa hai máy**: laptop và VM Oracle qua Internet có độ trễ khứ hồi 46,7 ms, băng thông 31 đến 34 MB/s mỗi chiều. Một vòng
    FedAvg mất 22,8 giây, trong đó truyền trọng số chiếm khoảng 0,8 giây (3,4%) và phần còn lại là thời gian tính của máy chậm nhất.
 
 ## 2. Bộ dữ liệu và ba nhánh huấn luyện
@@ -143,19 +145,41 @@ nhất, độ chính xác là 37,2%, 43,6% và 53,3% (so với 33,1% khi trả l
 `src/common/image_io.py::to_rgb` nay áp dụng đúng quy tắc huấn luyện ở bốn nơi (tải lên, Grad-CAM, suy luận đã công bố, dự đoán cộng đồng), có sáu kiểm thử trong
 `tests/test_image_io.py`, gồm kiểm thử gọi hai lần không xoay hai lần. Ba thư mục ảnh thử `D:\demo*` không mang thẻ EXIF nên không bị ảnh hưởng; lỗi chỉ tác động tới ảnh chụp dọc từ điện thoại.
 
-### 3.5 Phương pháp mạnh hơn và khuyến nghị
+### 3.5 Phương pháp mạnh hơn: số đo thật và số công bố
 
-Các số dưới đây là số công bố của các nghiên cứu khác, không phải kết quả đo trên mô hình của đề tài:
+**Số đo thật** (`scripts/eval_foundation_models.py` → `artifacts/foundation_model_eval.json`; không huấn luyện lớp nào; cùng các tập và cùng khóa SHA-256 PlantWild như trên).
+BioCLIP zero-shot so ảnh với câu mô tả 38 lớp. kNN bỏ phiếu k láng giềng cosin trên đặc trưng đóng băng, thư viện tham chiếu gồm 2.115 lá PlantDoc trong tập học và 40 ảnh PlantVillage mỗi lớp.
+Cột "chọn đúng cây" chỉ xét lớp cùng loại cây với nhãn thật (cận trên, như mục 3.3).
+
+| Phương pháp (top-1 %) | PlantWild bệnh | chọn đúng cây | PlantWild lá khỏe (nhãn ngầm định) | PlantDoc cắt, kiểm tra | PlantDoc cắt, giữ riêng |
+|---|---|---|---|---|---|
+| MobileNetV3-Small Centralized (đã huấn luyện, 1,5 triệu tham số) | 33,07 | 58,46 | 2,77 | 53,90 | 63,37 |
+| MobileNetV3-Small FedAvg | 31,81 | 56,29 | 2,23 | 47,21 | 50,00 |
+| BioCLIP zero-shot (ViT-B/16, không ảnh huấn luyện) | 35,59 | 52,26 | 25,83 | 20,07 | 23,84 |
+| BioCLIP + kNN, k=10 | 42,32 | 59,81 | 16,27 | 49,81 | 55,23 |
+| DINOv2-small + kNN, k=1 | 46,05 | 58,29 | 15,72 | 52,42 | 41,86 |
+| DINOv2-small + kNN, k=10 | **50,30** | 60,07 | 19,08 | **55,39** | 53,49 |
+
+Đọc kết quả:
+- Một bộ đặc trưng đóng băng cỡ 22 triệu tham số (DINOv2-small) kết hợp kNN trên thư viện nhỏ vượt MobileNetV3 đã huấn luyện đầy đủ 17 điểm trên ảnh bệnh ngoài đồng, và tương đương hoặc hơn trên PlantDoc kiểm tra.
+  Khi cả hai đều biết đúng loại cây, khoảng cách thu hẹp còn 1,6 điểm (60,07% so với 58,46%): phần lớn lợi thế của mô hình nền nằm ở việc phân biệt loại cây.
+- BioCLIP zero-shot không dùng ảnh huấn luyện nào mà vẫn đạt 35,6% trên PlantWild, cao hơn MobileNetV3, nhưng chỉ đạt 20–24% trên ảnh PlantDoc đã cắt (ảnh nhỏ, bị cắt sát lá), nên kết quả không đồng đều giữa các nguồn ảnh.
+- Với ảnh lá khỏe ngoài vườn, mọi phương pháp đều yếu (16–26%); BioCLIP zero-shot tốt nhất vì không phụ thuộc thư viện không có lá khỏe ngoài đồng. MobileNetV3 chỉ đạt 2–3% vì gần như luôn đoán thành có bệnh.
+- Thư viện kNN dùng ảnh PlantDoc và PlantVillage cũng nằm trong tập học của MobileNetV3, nên so sánh theo cùng nguồn dữ liệu; hai mô hình nền khác MobileNetV3 ở số tham số và dữ liệu tiền huấn luyện nên đây là mốc tham khảo, không thay mô hình của đề tài.
+- Hàm ý cho học phân tán: nếu dùng đặc trưng đóng băng của một mô hình nền thì chỉ cần học và gửi phần đầu phân loại (384 chiều × 38 lớp ≈ 14,6 nghìn tham số, khoảng 58 KB mỗi lần truyền, nhỏ hơn bản MobileNetV3 đầy đủ 6,3 MB hơn 100 lần). Đây là giả thuyết chưa huấn luyện thử.
+
+**Số công bố của các nghiên cứu khác** (không phải kết quả đo trên mô hình của đề tài):
 
 | Hướng | Mốc công bố | Nhận xét cho đề tài |
 |---|---|---|
 | Bộ phân loại ViT/ConvNeXt tinh chỉnh trên ảnh ngoài đồng | PlantDoc 72–94% tùy bài | cần huấn luyện lại; kích thước mô hình lớn hơn nhiều, ảnh hưởng tới lượng trọng số truyền qua mạng |
 | Hai tầng: tìm lá bằng bộ phát hiện rồi phân loại | PlantDoc 78,5% (YOLO + ECA-NFNet) | `scripts/train_leaf_detector.py` đã có; kế hoạch cần GPU |
-| Mô hình nền (BioCLIP) không huấn luyện thêm | khoảng 28% trên PlantDoc theo một bản chép lại bảng của bài báo (chưa đối chiếu với bài gốc) | không phải giải pháp trực tiếp |
+| Mô hình nền (BioCLIP) không huấn luyện thêm | khoảng 28% trên PlantDoc theo một bản chép lại bảng của bài báo (chưa đối chiếu với bài gốc); đề tài đo được 20–24% trên PlantDoc cắt và 35,6% trên PlantWild | xem số đo thật ở trên |
 | Thêm dữ liệu ngoài đồng đã kiểm nhãn | PlantVillage cộng ảnh PlantDoc cắt cho kết quả tổng quát hóa tốt hơn rõ rệt theo nhiều nghiên cứu | khả thi nhất: 5.569 lá PlantDoc đang cách ly và PlantWild |
 
-Khuyến nghị theo thứ tự ưu tiên khi có máy huấn luyện: (1) dựng release dữ liệu mới có ảnh ngoài đồng đã kiểm nhãn và lá khỏe; (2) dùng bộ tăng cường mạnh `src/data/robust_transforms.py`
-(đã kiểm khô bằng `scripts/preview_augmentations.py`); (3) dùng lấy mẫu không lặp và làm mượt nhãn; (4) so sánh công bằng ba phương pháp với cùng họ bộ tối ưu và cùng ngân sách; (5) ba hạt giống ngẫu nhiên;
+Khuyến nghị theo thứ tự ưu tiên: (0) cân nhắc dùng đặc trưng đóng băng của mô hình nền (DINOv2-small) làm backbone và chỉ học phần đầu phân loại, vì số đo thật cho thấy hướng này vượt MobileNetV3 trên ảnh ngoài đồng và cho phép truyền rất ít byte;
+khi có máy huấn luyện: (1) dựng release dữ liệu mới có ảnh ngoài đồng đã kiểm nhãn và lá khỏe; (2) dùng bộ tăng cường mạnh `src/data/robust_transforms.py`
+(đã kiểm khô bằng `scripts/preview_augmentations.py`); (3) dùng lấy mẫu không lặp và làm trơn nhãn (label smoothing); (4) so sánh công bằng ba phương pháp với cùng họ bộ tối ưu và cùng ngân sách; (5) ba hạt giống ngẫu nhiên;
 (6) dùng tập PlantWild đã khóa mã băm làm tập thử ngoài đồng cố định. Chi tiết và ngưỡng chấp nhận nằm ở `docs/NEXT_TRAINING_PLAN.md`.
 
 ## 4. Trọng số trao đổi giữa server và client
@@ -261,7 +285,7 @@ Một lỗi đo đạc có sẵn được sửa trong đợt này: đồng hồ 
 
 ## 6. Hạn chế
 
-- Các tập PlantDoc nhỏ (269 và 172 ảnh cắt; 113 và 95 cảnh nguyên khung), khoảng tin cậy rộng; kết quả của biến thể suy luận không đủ sức để kết luận về mức tăng dưới 3–4 điểm.
+- Các tập PlantDoc nhỏ (269 và 172 ảnh cắt; 113 và 95 cảnh nguyên khung), khoảng tin cậy rộng; kết quả của biến thể suy luận không đủ sức để kết luận về mức tăng dưới 3–4 điểm. Phép đo mô hình nền chưa có khoảng tin cậy theo cụm.
 - PlantWild được lấy từ ảnh Internet như PlantDoc; phép loại ảnh trùng chỉ dùng dHash 64 bit, so với cảnh PlantDoc nguyên khung (không so với từng lá đã cắt), và không bắt ảnh bị lật, xoay hoặc cắt xén,
   nên ảnh trùng vẫn có thể còn sót và kết quả trên PlantWild có thể cao hơn thực tế. Ảnh trùng giữa hai lớp khác nhau của PlantWild giữ lại bản đầu tiên.
 - Nhãn "lá khỏe" của PlantWild là nhãn ngầm định; chỉ tầng ảnh bệnh (nhãn đã được chuyên gia nông nghiệp rà soát ở bản 2) được dùng để nêu độ chính xác.
@@ -280,6 +304,7 @@ Không thực hiện trong đợt này theo yêu cầu. Danh mục, cấu hình 
 python scripts/eval_inference_variants.py                         # mục 3.3
 python scripts/build_external_eval_set.py --download-scenes       # mục 3.1, dựng tập PlantWild đã loại ảnh trùng
 python scripts/eval_external_set.py                               # mục 3.1, đo bảy mô hình
+tmp/venv-fm/Scripts/python.exe scripts/eval_foundation_models.py # mục 3.5, BioCLIP và DINOv2 (môi trường riêng có open_clip, transformers)
 python scripts/audit_weight_exchange.py                           # mục 4.1, 4.2
 python scripts/compare_model_weights.py                           # mục 4.4
 python scripts/aggregation_equivalence.py                         # mục 4.3
