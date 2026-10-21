@@ -32,6 +32,7 @@ MIN_SOURCES = 2
 EXT_SOURCES = "data/external/sources"
 EXT_STATUS = "data/label_review_ext/status.json"
 QUARANTINE_STATUS = "data/label_review/status.json"
+QUARANTINE_IMAGE_STATUS = "data/label_review_q2/status.json"
 OWN_PHOTOS = "data/own_photos/manifest.jsonl"
 PLANTWILD_MANIFEST = "data/external/plantwild_overlap_manifest.json"
 V4_PARTITION_SPEC = "data/dataset_sources/mixed/pv_pd_v4/partition_spec_v4.json"
@@ -90,6 +91,7 @@ def build_report() -> dict[str, Any]:
     test = _jsonl(release / "manifests" / f"{reg.HOLDOUT_SPLIT}.jsonl")
     quarantine = _jsonl(release / "manifests" / "quarantine.jsonl")
     q_ok = _accepted(QUARANTINE_STATUS)
+    q_samples_ok = _accepted(QUARANTINE_IMAGE_STATUS, "accepted_samples")
     ext_ok = _accepted(EXT_STATUS)
     ext_samples_ok = _accepted(EXT_STATUS, "accepted_samples")
 
@@ -101,7 +103,7 @@ def build_report() -> dict[str, Any]:
     for r in quarantine:
         if r.get("source_domain") == "plantdoc" and r.get("quarantine_status") == "clean" and r.get("target_class") and int(r.get("class_id", -1)) >= 0:
             pd_quarantine[r["target_class"]] += 1
-            if r["target_class"] in q_ok:
+            if r["target_class"] in q_ok or r["sample_id"] in q_samples_ok:
                 pd_quarantine_ready[r["target_class"]] += 1
 
     ext_ready: dict[str, Counter[str]] = defaultdict(Counter)

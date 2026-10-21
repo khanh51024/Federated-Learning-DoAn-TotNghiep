@@ -136,3 +136,31 @@ def test_merge_never_joins_different_classes_and_reports_conflicting_pairs():
     assert out[0] != out[1] and conflicts == {0, 1}           # khác lớp: không gộp nhóm, báo cả hai ảnh là nhãn mâu thuẫn
     same = merge_near_duplicate_groups(h, ["a", "b", "c"], 4, classes=[1, 1, 1], conflicts=conflicts)
     assert same[0] == same[1] and same[2] == "c" and conflicts == {0, 1}
+
+
+def test_per_image_limits_lower_the_merge_threshold_for_uniform_background_sources_only():
+    h = np.array([0, 0xFF, 0xFFFF << 32, (0xFFFF << 32) ^ 0xFF], dtype=np.uint64)   # hai cặp (0,1) và (2,3), mỗi cặp cách nhau 8 bit
+    groups = ["a", "b", "c", "d"]
+    sources = ["s", "s", "t", "t"]
+    wide = merge_near_duplicate_groups(h, groups, 4, sources=sources, same_source_limits=np.array([10, 10, 10, 10]))
+    assert wide[0] == wide[1] and wide[2] == wide[3]                 # ngưỡng 10 nối chuỗi (cặp khoảng cách 8)
+    narrow = merge_near_duplicate_groups(h, groups, 4, sources=sources, same_source_limits=np.array([4, 4, 10, 10]))
+    assert narrow[0] != narrow[1] and narrow[2] == narrow[3]         # nguồn s hạ ngưỡng xuống 4 nên không nối; nguồn t giữ 10
+    mixed = merge_near_duplicate_groups(h, groups, 4, sources=["s", "s", "s", "s"], same_source_limits=np.array([4, 10, 10, 10]))
+    assert mixed[0] != mixed[1]                                      # cặp dùng ngưỡng nhỏ hơn của hai ảnh
+
+
+def test_feature_links_connect_only_similar_images_with_the_same_key():
+    from scripts.build_release_v4 import cross_split_feature_pairs, feature_links
+
+    feats = np.array([[1, 0, 0], [0.99, 0.1, 0], [0, 1, 0], [1, 0.02, 0], [0.98, 0.15, 0]], dtype=np.float32)
+    keys = ["a", "a", "a", "b", "a"]
+    valid = np.array([True, True, True, True, True])
+    assert feature_links(keys, feats, valid, 0.998) == [(1, 4)]                       # cosine (1,4) ~0,9988; (0,1) ~0,9949; (0,4) ~0,9885
+    assert sorted(feature_links(keys, feats, valid, 0.99)) == [(0, 1), (1, 4)]
+    links = feature_links(keys, feats, valid, 0.95)
+    assert (0, 1) in links and (0, 4) in links and (1, 4) in links    # cùng khóa a
+    assert all(keys[i] == keys[j] for i, j in links) and (0, 3) not in links      # khóa b không nối với a dù giống hệt
+    assert feature_links(keys, feats, np.array([True, False, True, True, True]), 0.95) == [(0, 4)]   # ảnh không có đặc trưng bị bỏ qua
+    assert cross_split_feature_pairs(keys, feats, valid, ["train", "test", "train", "train", "train"], 0.95) == 2
+    assert cross_split_feature_pairs(keys, feats, valid, ["train"] * 5, 0.95) == 0

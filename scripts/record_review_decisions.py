@@ -42,8 +42,9 @@ def main() -> int:
     parser.add_argument("--spec", required=True)
     parser.add_argument("--reviewer", default="ai_screening")
     parser.add_argument("--out", required=True)
+    parser.add_argument("--review-dir", default=REVIEW_DIR, help="thư mục chứa samples.json (mặc định bộ kiểm ngoài đồng)")
     args = parser.parse_args()
-    samples = json.loads((reg.abs_path(REVIEW_DIR) / "samples.json").read_text(encoding="utf-8"))
+    samples = json.loads((reg.abs_path(args.review_dir) / "samples.json").read_text(encoding="utf-8"))
     spec = json.loads(Path(args.spec).read_text(encoding="utf-8"))
     decisions = build_decisions(samples, spec)
     payload = {"reviewer": args.reviewer, "note": "sàng lọc bằng mắt qua ảnh lưới; không phải kiểm của chuyên gia" if args.reviewer == "ai_screening" else "",

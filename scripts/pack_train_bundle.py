@@ -3,7 +3,8 @@
 Tạo trong `--out` (mặc định tmp/train_bundle/):
   train_data_v4.tar   dataset_sources/mixed/pv_pd_v4/ (manifest, phân vùng, partition_spec, quality_audit...) + MỌI ảnh mà train/val/calibration/
                       legacy_diagnostic_test tham chiếu, giữ nguyên đường dẫn tương đối (giải nén ra thư mục X thì --dataset-root X/dataset_sources)
-  train_code.tar      `git archive HEAD` của src/, scripts/train_v4.py, scripts/remote/, requirements-train.txt, kèm CODE_VERSION (mã commit)
+  train_code.tar      `git archive HEAD` của src/, scripts/train_v4.py, scripts/remote/, requirements-train.txt, kèm CODE_VERSION (mã commit) và
+                      train_contract/ (bản chép 4 tệp kiểm của nhánh train để scripts/verify_release_contract.py chạy không cần git)
   bundle.json         SHA-256 hai tệp tar, SHA release, số ảnh, mã commit
 Không đóng gói PlantWild hay ảnh không phải lá (chỉ dùng để đo, đo ở máy này sau khi tải checkpoint về).
 
@@ -27,7 +28,10 @@ sys.path.insert(0, str(ROOT))
 from src import registry as reg  # noqa: E402
 
 RELEASE_REL = "mixed/pv_pd_v4"
-CODE_PATHS = ("src", "scripts/train_v4.py", "scripts/remote", "requirements-train.txt")
+CODE_PATHS = ("src", "scripts/train_v4.py", "scripts/remote", "scripts/verify_release_contract.py", "requirements-train.txt")
+CONTRACT_BRANCH = "origin/train-centralized"
+CONTRACT_FILES = ("plant_data_contract/plant_data_contract/integrity.py", "plant_data_contract/plant_data_contract/partitions.py",
+                  "plant_data_contract/plant_data_contract/full_gate.py", "training-workflows/shared/data_selection.py")
 SPLITS = ("train", "val", "calibration", "legacy_diagnostic_test")
 
 
@@ -58,6 +62,11 @@ def main() -> int:
         info = tarfile.TarInfo("CODE_VERSION")
         info.size = len(commit) + 1
         target.addfile(info, io.BytesIO((commit + "\n").encode()))
+        for rel in CONTRACT_FILES:
+            blob = subprocess.check_output(["git", "show", f"{CONTRACT_BRANCH}:{rel}"], cwd=ROOT)
+            entry = tarfile.TarInfo(f"train_contract/{Path(rel).name}")
+            entry.size = len(blob)
+            target.addfile(entry, io.BytesIO(blob))
 
     root = reg.abs_path(reg.DATASET_SOURCES_DIR)
     release = root / RELEASE_REL

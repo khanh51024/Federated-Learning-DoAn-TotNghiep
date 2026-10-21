@@ -1,6 +1,6 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-21 15:50 · sinh tự bởi `scripts/update_status.py`
+> **Cập nhật lúc:** 2026-10-21 17:31 · sinh tự bởi `scripts/update_status.py`
 > **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 3 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
@@ -34,7 +34,7 @@
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
 | 9 | Test không ghi đè artifact đang track | ✅ XONG | test không tham chiếu artifacts/checkpoints/metrics (dùng tmp_path) |
 | 10 | Dependency khai báo một nơi (pyproject = requirements) | ✅ XONG | 17 dependency trùng giữa pyproject.toml và requirements.txt; ghim cũ nằm ở legacy/pyproject.toml |
-| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-21T15:50:02 (gồm test mạng, 82 file test) với mã nguồn có dấu vân tay 61a2d7c7cda3; thay mã sau thời điểm này thì phải chạy lại |
+| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-21T17:31:01 (gồm test mạng, 84 file test) với mã nguồn có dấu vân tay e81fcf7d42ba; thay mã sau thời điểm này thì phải chạy lại |
 | 12 | Kiểm chứng provenance & checkpoint canonical | ⛔ BLOCKED | provenance=unverified; lỗi: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing'] |
 | 13 | Audit leakage theo từng run | ✅ XONG | release mixed_pv_pd_v3: train 37.238 / val 4.613 / calibration 4.225 rời nhau trên 5 khóa (giao nhau tổng = 0); 12 partition đều là tập con train; 46.076 ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train) |
 | 14 | Đánh giá PlantDoc theo từng lớp (từ số công bố) | ✅ XONG | PlantDoc phủ 13/38 lớp; 6 lớp recall<50% (136/269 ảnh); FedAvg tệ hơn Centralized ở 5/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5) |
@@ -406,6 +406,11 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
   (ngô 8%, cà chua Bangladesh 34% ảnh thử có ảnh học gần trùng trong 10 bit): nay gộp nhóm theo phiên chụp và ảnh gần trùng cùng nguồn, cùng lớp; cổng rò rỉ = 0; bỏ giới hạn PlantVillage 800 ảnh/lớp.
   Cổng từ chối ảnh không phải lá (`docs/CONG_TU_CHOI_ANH_KHONG_PHAI_LA.md`, 1.513 ảnh Wikimedia): xác suất lớn nhất của mô hình hiện có chỉ loại 7,6–8,4% ảnh không phải lá; kNN trên DINOv2-small
   loại 93,0% ở ngưỡng nhận 95,5% ảnh lá (đạt chỉ tiêu đặt trước), loại lá của loài khác chỉ 41,6%. Chưa đưa vào web; chưa đo RAM trên VM.
+- 2026-10-21 (bộ train v4 + bù dữ liệu đợt 2): bộ train thống nhất `scripts/train_v4.py` cho ba cách (cùng công thức, cùng số bước), đóng gói chạy máy GPU,
+  đánh giá sau train `scripts/eval_trained_v4.py`. Người dùng không kiểm nhãn được nên bù dữ liệu bằng 6 bộ ngoài đồng mới (ngô khỏe, cà chua ruộng có 307 ảnh nhện đỏ, ớt, đào, nho)
+  và kiểm từng lá PlantDoc cách ly (nhận 475/750 lá; AI sàng lọc, không phải chuyên gia). Lớp thiếu ảnh ngoài đồng còn 5/38 (không có nguồn công khai). Chưa train.
+- 2026-10-21 (soát lại dữ liệu đợt 2 trước khi commit): phát hiện và sửa hai lỗi gộp nhóm ở lá đặt trên nền đồng màu (ngưỡng dHash 10 nối chuỗi thành nhóm 916 ảnh, 47% ảnh ớt rơi vào test;
+  cùng một lá chụp xoay nằm ở cả train lẫn test). Nay: ngưỡng dHash 4 cho các nguồn đó, gộp ảnh cùng lá theo cosine DINOv2 >= 0,95, cổng cân bằng split, soát lại 18 ảnh mỗi lớp mới: qua.
 <!-- ROADMAP-END -->
 
 ## 8. Cách đồng bộ

@@ -6,10 +6,10 @@
  },
  "summary": {
   "classes": 38,
-  "dat_muc_tieu": 14,
-  "du_toi_thieu": 11,
-  "thieu": 13,
-  "total_field_ready": 24033
+  "dat_muc_tieu": 16,
+  "du_toi_thieu": 17,
+  "thieu": 5,
+  "total_field_ready": 26484
  },
  "classes": [
   {
@@ -124,14 +124,16 @@
   {
    "class": "Blueberry___healthy",
    "pv_train": 983,
-   "field_ready": 0,
-   "field_sources": [],
-   "status": "thieu",
-   "missing_to_target": 300,
+   "field_ready": 145,
+   "field_sources": [
+    "plantdoc_quarantine"
+   ],
+   "status": "du_toi_thieu",
+   "missing_to_target": 155,
    "parts": {
     "plantdoc_v3": 0,
     "plantdoc_quarantine_total": 830,
-    "plantdoc_quarantine_ready": 0,
+    "plantdoc_quarantine_ready": 145,
     "external_ready": {},
     "external_pending_review": 300,
     "own_photos_train": 0
@@ -194,9 +196,10 @@
   {
    "class": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
    "pv_train": 332,
-   "field_ready": 2426,
+   "field_ready": 2514,
    "field_sources": [
     "mendeley_corn_leaf_disease",
+    "mendeley_maize_bd_healthy",
     "plantdoc_v3"
    ],
    "status": "dat_muc_tieu",
@@ -206,7 +209,8 @@
     "plantdoc_quarantine_total": 0,
     "plantdoc_quarantine_ready": 0,
     "external_ready": {
-     "mendeley_corn_leaf_disease": 2375
+     "mendeley_corn_leaf_disease": 2375,
+     "mendeley_maize_bd_healthy": 88
     },
     "external_pending_review": 0,
     "own_photos_train": 0
@@ -221,9 +225,10 @@
   {
    "class": "Corn_(maize)___Common_rust_",
    "pv_train": 769,
-   "field_ready": 3120,
+   "field_ready": 3254,
    "field_sources": [
     "mendeley_corn_leaf_disease",
+    "mendeley_maize_bd_healthy",
     "plantdoc_v3"
    ],
    "status": "dat_muc_tieu",
@@ -233,7 +238,8 @@
     "plantdoc_quarantine_total": 0,
     "plantdoc_quarantine_ready": 0,
     "external_ready": {
-     "mendeley_corn_leaf_disease": 3024
+     "mendeley_corn_leaf_disease": 3024,
+     "mendeley_maize_bd_healthy": 134
     },
     "external_pending_review": 1,
     "own_photos_train": 0
@@ -274,15 +280,21 @@
   {
    "class": "Corn_(maize)___healthy",
    "pv_train": 756,
-   "field_ready": 0,
-   "field_sources": [],
-   "status": "thieu",
-   "missing_to_target": 300,
+   "field_ready": 316,
+   "field_sources": [
+    "mendeley_ccmt_ghana_maize_healthy",
+    "mendeley_maize_bd_healthy"
+   ],
+   "status": "dat_muc_tieu",
+   "missing_to_target": 0,
    "parts": {
     "plantdoc_v3": 0,
     "plantdoc_quarantine_total": 0,
     "plantdoc_quarantine_ready": 0,
-    "external_ready": {},
+    "external_ready": {
+     "mendeley_ccmt_ghana_maize_healthy": 204,
+     "mendeley_maize_bd_healthy": 112
+    },
     "external_pending_review": 299,
     "own_photos_train": 0
    },
@@ -296,21 +308,23 @@
   {
    "class": "Grape___Black_rot",
    "pv_train": 772,
-   "field_ready": 93,
+   "field_ready": 101,
    "field_sources": [
     "inat_grape___black_rot",
+    "mendeley_grape_leaf_18k",
     "plantdoc_v3"
    ],
-   "status": "thieu",
-   "missing_to_target": 207,
+   "status": "du_toi_thieu",
+   "missing_to_target": 199,
    "parts": {
     "plantdoc_v3": 74,
     "plantdoc_quarantine_total": 0,
     "plantdoc_quarantine_ready": 0,
     "external_ready": {
-     "inat_grape___black_rot": 19
+     "inat_grape___black_rot": 19,
+     "mendeley_grape_leaf_18k": 8
     },
-    "external_pending_review": 41,
+    "external_pending_review": 566,
     "own_photos_train": 0
    },
    "tests": {
@@ -424,16 +438,20 @@
   {
    "class": "Peach___Bacterial_spot",
    "pv_train": 1510,
-   "field_ready": 0,
-   "field_sources": [],
+   "field_ready": 22,
+   "field_sources": [
+    "mendeley_peach_pakistan"
+   ],
    "status": "thieu",
-   "missing_to_target": 300,
+   "missing_to_target": 278,
    "parts": {
     "plantdoc_v3": 0,
     "plantdoc_quarantine_total": 0,
     "plantdoc_quarantine_ready": 0,
-    "external_ready": {},
-    "external_pending_review": 10,
+    "external_ready": {
+     "mendeley_peach_pakistan": 22
+    },
+    "external_pending_review": 43,
     "own_photos_train": 0
    },
    "tests": {
@@ -446,16 +464,18 @@
   {
    "class": "Peach___healthy",
    "pv_train": 228,
-   "field_ready": 0,
-   "field_sources": [],
-   "status": "thieu",
-   "missing_to_target": 300,
+   "field_ready": 117,
+   "field_sources": [
+    "plantdoc_quarantine"
+   ],
+   "status": "du_toi_thieu",
+   "missing_to_target": 183,
    "parts": {
     "plantdoc_v3": 0,
     "plantdoc_quarantine_total": 568,
-    "plantdoc_quarantine_ready": 0,
+    "plantdoc_quarantine_ready": 117,
     "external_ready": {},
-    "external_pending_review": 261,
+    "external_pending_review": 614,
     "own_photos_train": 0
    },
    "tests": {
@@ -468,15 +488,19 @@
   {
    "class": "Pepper,_bell___Bacterial_spot",
    "pv_train": 626,
-   "field_ready": 0,
-   "field_sources": [],
-   "status": "thieu",
-   "missing_to_target": 300,
+   "field_ready": 436,
+   "field_sources": [
+    "mendeley_chilli_bd"
+   ],
+   "status": "du_toi_thieu",
+   "missing_to_target": 0,
    "parts": {
     "plantdoc_v3": 0,
     "plantdoc_quarantine_total": 255,
     "plantdoc_quarantine_ready": 0,
-    "external_ready": {},
+    "external_ready": {
+     "mendeley_chilli_bd": 436
+    },
     "external_pending_review": 79,
     "own_photos_train": 0
    },
@@ -490,16 +514,21 @@
   {
    "class": "Pepper,_bell___healthy",
    "pv_train": 921,
-   "field_ready": 0,
-   "field_sources": [],
-   "status": "thieu",
-   "missing_to_target": 300,
+   "field_ready": 113,
+   "field_sources": [
+    "mendeley_chilli_bd",
+    "plantdoc_quarantine"
+   ],
+   "status": "du_toi_thieu",
+   "missing_to_target": 187,
    "parts": {
     "plantdoc_v3": 0,
     "plantdoc_quarantine_total": 320,
-    "plantdoc_quarantine_ready": 0,
-    "external_ready": {},
-    "external_pending_review": 300,
+    "plantdoc_quarantine_ready": 88,
+    "external_ready": {
+     "mendeley_chilli_bd": 25
+    },
+    "external_pending_review": 720,
     "own_photos_train": 0
    },
    "tests": {
@@ -593,16 +622,17 @@
   {
    "class": "Raspberry___healthy",
    "pv_train": 236,
-   "field_ready": 35,
+   "field_ready": 160,
    "field_sources": [
-    "inat_raspberry___healthy"
+    "inat_raspberry___healthy",
+    "plantdoc_quarantine"
    ],
-   "status": "thieu",
-   "missing_to_target": 265,
+   "status": "du_toi_thieu",
+   "missing_to_target": 140,
    "parts": {
     "plantdoc_v3": 0,
     "plantdoc_quarantine_total": 550,
-    "plantdoc_quarantine_ready": 0,
+    "plantdoc_quarantine_ready": 125,
     "external_ready": {
      "inat_raspberry___healthy": 35
     },
@@ -718,9 +748,10 @@
   {
    "class": "Tomato___Bacterial_spot",
    "pv_train": 1379,
-   "field_ready": 335,
+   "field_ready": 711,
    "field_sources": [
     "mendeley_tomato_bangladesh",
+    "mendeley_tomato_field_unlabeled",
     "plantdoc_v3"
    ],
    "status": "dat_muc_tieu",
@@ -730,7 +761,8 @@
     "plantdoc_quarantine_total": 0,
     "plantdoc_quarantine_ready": 0,
     "external_ready": {
-     "mendeley_tomato_bangladesh": 117
+     "mendeley_tomato_bangladesh": 117,
+     "mendeley_tomato_field_unlabeled": 376
     },
     "external_pending_review": 74,
     "own_photos_train": 0
@@ -761,7 +793,7 @@
      "mendeley_tomato_bangladesh": 524,
      "mendeley_tomato_pakistan": 541
     },
-    "external_pending_review": 1,
+    "external_pending_review": 205,
     "own_photos_train": 0
    },
    "tests": {
@@ -774,9 +806,10 @@
   {
    "class": "Tomato___Late_blight",
    "pv_train": 1221,
-   "field_ready": 800,
+   "field_ready": 961,
    "field_sources": [
     "mendeley_tomato_bangladesh",
+    "mendeley_tomato_field_unlabeled",
     "mendeley_tomato_pakistan",
     "plantdoc_v3"
    ],
@@ -788,6 +821,7 @@
     "plantdoc_quarantine_ready": 0,
     "external_ready": {
      "mendeley_tomato_bangladesh": 112,
+     "mendeley_tomato_field_unlabeled": 161,
      "mendeley_tomato_pakistan": 525
     },
     "external_pending_review": 3,
@@ -817,7 +851,7 @@
     "external_ready": {
      "mendeley_tomato_pakistan": 1086
     },
-    "external_pending_review": 2,
+    "external_pending_review": 68,
     "own_photos_train": 0
    },
    "tests": {
@@ -857,17 +891,20 @@
   {
    "class": "Tomato___Spider_mites Two-spotted_spider_mite",
    "pv_train": 1096,
-   "field_ready": 2,
+   "field_ready": 309,
    "field_sources": [
+    "mendeley_tomato_field_unlabeled",
     "plantdoc_v3"
    ],
-   "status": "thieu",
-   "missing_to_target": 298,
+   "status": "dat_muc_tieu",
+   "missing_to_target": 0,
    "parts": {
     "plantdoc_v3": 2,
     "plantdoc_quarantine_total": 0,
     "plantdoc_quarantine_ready": 0,
-    "external_ready": {},
+    "external_ready": {
+     "mendeley_tomato_field_unlabeled": 307
+    },
     "external_pending_review": 2,
     "own_photos_train": 0
    },
@@ -916,7 +953,7 @@
     "external_ready": {
      "mendeley_tomato_pakistan": 639
     },
-    "external_pending_review": 241,
+    "external_pending_review": 635,
     "own_photos_train": 0
    },
    "tests": {
@@ -953,9 +990,10 @@
   {
    "class": "Tomato___healthy",
    "pv_train": 1063,
-   "field_ready": 1557,
+   "field_ready": 1660,
    "field_sources": [
     "mendeley_tomato_bangladesh",
+    "mendeley_tomato_field_unlabeled",
     "mendeley_tomato_pakistan"
    ],
    "status": "dat_muc_tieu",
@@ -966,6 +1004,7 @@
     "plantdoc_quarantine_ready": 0,
     "external_ready": {
      "mendeley_tomato_bangladesh": 380,
+     "mendeley_tomato_field_unlabeled": 103,
      "mendeley_tomato_pakistan": 1177
     },
     "external_pending_review": 0,
@@ -981,34 +1020,34 @@
  ],
  "local_only_ceiling_top1_percent": {
   "client_00": {
-   "classes_seen": 19,
-   "plantvillage_val": 54.4,
-   "plantdoc_val": 62.1,
-   "plantwild": 38.8
+   "classes_seen": 24,
+   "plantvillage_val": 63.8,
+   "plantdoc_val": 52.0,
+   "plantwild": 59.6
   },
   "client_01": {
-   "classes_seen": 26,
-   "plantvillage_val": 78.5,
-   "plantdoc_val": 84.4,
-   "plantwild": 75.0
+   "classes_seen": 21,
+   "plantvillage_val": 51.1,
+   "plantdoc_val": 56.5,
+   "plantwild": 54.0
   },
   "client_02": {
    "classes_seen": 20,
-   "plantvillage_val": 44.5,
-   "plantdoc_val": 48.7,
-   "plantwild": 40.4
+   "plantvillage_val": 64.9,
+   "plantdoc_val": 69.5,
+   "plantwild": 58.2
   },
   "client_03": {
-   "classes_seen": 24,
-   "plantvillage_val": 70.9,
-   "plantdoc_val": 76.2,
-   "plantwild": 59.7
+   "classes_seen": 22,
+   "plantvillage_val": 50.7,
+   "plantdoc_val": 43.9,
+   "plantwild": 56.2
   },
   "client_04": {
-   "classes_seen": 22,
-   "plantvillage_val": 60.3,
-   "plantdoc_val": 63.6,
-   "plantwild": 60.2
+   "classes_seen": 23,
+   "plantvillage_val": 48.3,
+   "plantdoc_val": 75.8,
+   "plantwild": 64.5
   }
  },
  "local_only_ceiling_source": "partition_spec_v4.json (label_alpha_0_1, release v4)",

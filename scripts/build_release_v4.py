@@ -15,6 +15,12 @@ Quy tắc (đặt trước, ghi vào release_manifest.json):
   * Trong CÙNG MỘT nguồn và CÙNG MỘT lớp, ảnh Hamming <= `--same-source-hamming` (mặc định 10, tính cả bản lật ngang) và ảnh chụp liên tiếp trong `--session-seconds` giây
     (mốc giờ trong tên tệp, ví dụ 20250404_154210) cũng gộp cùng nhóm: ảnh chụp liên tiếp của một lá không được rơi vào cả train lẫn test.
     Ảnh đã xóa nền (capture_note "nền đã xóa") có dHash gần như chỉ phản ánh nền đen nên KHÔNG gộp theo dHash, chỉ gộp theo phiên chụp.
+    Nguồn lá đặt trên nền đồng màu (giấy trắng, giấy xanh) có dHash phản ánh nền nhiều hơn lá, nên ngưỡng 10 nối chuỗi nhiều lá khác nhau thành một nhóm
+    khổng lồ (đo được: nhóm 916 ảnh ở cà chua ruộng, 294 ở cà chua Bangladesh): nguồn đó khai `same_source_hamming: 4` trong configs/external_sources.yaml.
+  * Cùng MỘT lá chụp nhiều lần (xoay lá trên nền giấy, đổi góc) không nhận ra bằng dHash: ảnh cùng nguồn, cùng lớp có độ tương tự cosine của đặc trưng DINOv2
+    >= `--feature-threshold` (data/external/dino_features.npz, scripts/extract_external_features.py) cũng gộp cùng nhóm. Đo được ở cà chua ruộng: một lá
+    chụp xoay 5-10 lần rơi cả vào train lẫn test.
+  * Cổng cân bằng split: mỗi cặp (nguồn, lớp) có >= 100 ảnh phải có test <= 35% và train >= 40%; nhóm lớn nhất > 25% cặp đó chỉ cảnh báo.
   * Hai ảnh gần trùng (Hamming <= 4, mọi nguồn) mang hai nhãn khác nhau: ít nhất một nhãn sai, bỏ CẢ HAI ảnh đó (không bỏ cả nhóm). Cổng rò rỉ: tỉ lệ ảnh có ảnh cùng nguồn, cùng lớp, Hamming <= `--same-source-hamming`
     ở split khác phải <= 2% (nhóm hóa ở trên nên thực tế bằng 0; cổng bắt lỗi dựng).
   * Chia ảnh ngoài đồng theo nhóm bằng mã băm cố định: 70% train, 10% val, 10% calibration, 10% legacy_diagnostic_test.
@@ -56,15 +62,22 @@ EXTERNAL_LINK_DIR = "external_v4"
 EXT_SOURCES = "data/external/sources"
 EXT_STATUS = "data/label_review_ext/status.json"
 QUARANTINE_STATUS = "data/label_review/status.json"
+QUARANTINE_IMAGE_STATUS = "data/label_review_q2/status.json"   # lá cách ly được nhận TỪNG LÁ (scripts/build_quarantine_image_review.py)
 OWN_MANIFEST = "data/own_photos/manifest.jsonl"
 DHASH_CACHE = "data/external/dhash_cache.npz"
 DUP_HAMMING = 6
 GROUP_MERGE_HAMMING = 4
+FEATURE_CACHE = "data/external/dino_features.npz"
+FEATURE_THRESHOLD = 0.95        # cosine DINOv2 tối thiểu để coi hai ảnh cùng nguồn, cùng lớp là cùng một lá: xem tay 6 cặp mỗi dải, >= 0,95 đều là một lá; 0,92 trở xuống bắt đầu nối lá khác nhau và dồn cả lớp vào một nhóm
 SAME_SOURCE_HAMMING = 10        # ảnh cùng nguồn gần nhau tới mức này (dHash, cả bản lật) phải cùng phía train/test
 INFORMATIONAL_HAMMING = 14      # chỉ báo cáo: mức gần trùng lỏng hơn
 SESSION_SECONDS = 60            # ảnh cùng nguồn chụp cách nhau tối đa từng này giây tính là một phiên chụp
 SESSION_MAX_SECONDS = 600       # một phiên không kéo dài quá mức này (tránh nhóm khổng lồ khi chụp liên tục cả giờ)
 LEAK_GATE = 0.02                # tỉ lệ ảnh thử có ảnh học cùng nguồn trong SAME_SOURCE_HAMMING
+BALANCE_MIN_IMAGES = 100        # cổng cân bằng split chỉ xét cặp (nguồn, lớp) có từng này ảnh trở lên
+BALANCE_MAX_TEST = 0.35
+BALANCE_MIN_TRAIN = 0.40
+BALANCE_WARN_GROUP = 0.25
 PARTITION_SEED = 42
 JS_LABEL_SKEW_MIN = 0.2         # phân vùng lệch nhãn phải thật sự lệch (JS bit so với phân bố toàn cục)
 JS_IID_MAX = 0.05
@@ -97,12 +110,13 @@ def min_hamming(queries: np.ndarray, refs: np.ndarray, chunk: int = 256) -> np.n
 def merge_near_duplicate_groups(hashes: np.ndarray, groups: list[str], max_hamming: int, *, sources: list[str] | None = None,
                                 same_source_max_hamming: int | None = None, flipped: np.ndarray | None = None,
                                 links: list[tuple[int, int]] | tuple[()] = (), classes: list[int] | None = None,
-                                conflicts: set[int] | None = None) -> list[str]:
+                                conflicts: set[int] | None = None, same_source_limits: np.ndarray | None = None) -> list[str]:
     """Union-find: ảnh có Hamming <= max_hamming (bất kể nguồn) gộp nhóm. Trả group_id mới (đại diện = nhóm nhỏ nhất theo thứ tự chữ).
 
     Tùy chọn: hai ảnh có CÙNG khóa trong `sources` (ở build là "nguồn|lớp") gộp nhóm từ Hamming <= same_source_max_hamming; nếu có `flipped` (dHash bản lật ngang)
     thì lấy khoảng cách nhỏ hơn giữa bản gốc và bản lật. `links` là các cặp chỉ số ảnh buộc phải cùng nhóm (ví dụ cùng phiên chụp).
-    Nếu có `classes`: hai ảnh khác lớp KHÔNG bao giờ gộp nhóm; cặp khác lớp mà Hamming <= max_hamming là nhãn mâu thuẫn, chỉ số của cả hai được thêm vào `conflicts`."""
+    Nếu có `classes`: hai ảnh khác lớp KHÔNG bao giờ gộp nhóm; cặp khác lớp mà Hamming <= max_hamming là nhãn mâu thuẫn, chỉ số của cả hai được thêm vào `conflicts`.
+    `same_source_limits` (mỗi ảnh một ngưỡng) thay `same_source_max_hamming`: cặp cùng khóa dùng ngưỡng nhỏ hơn của hai ảnh."""
     parent = {g: g for g in set(groups)}
 
     def find(x: str) -> str:
@@ -123,11 +137,13 @@ def merge_near_duplicate_groups(hashes: np.ndarray, groups: list[str], max_hammi
         dist = np.bitwise_count(np.bitwise_xor(block[:, None], hashes[None, :]))
         base = dist <= max_hamming
         mask = base
-        if src_ids is not None and same_source_max_hamming is not None:
+        if src_ids is not None and (same_source_max_hamming is not None or same_source_limits is not None):
             same = src_ids[start:start + 256, None] == src_ids[None, :]
             if flipped is not None:
                 dist = np.minimum(dist, np.bitwise_count(np.bitwise_xor(flipped[start:start + 256][:, None], hashes[None, :])))
-            mask = mask | (same & (dist <= same_source_max_hamming))
+            limit = (np.minimum(same_source_limits[start:start + 256, None], same_source_limits[None, :]) if same_source_limits is not None
+                     else same_source_max_hamming)
+            mask = mask | (same & (dist <= limit))
         rows, cols = np.nonzero(mask)
         for r, c in zip(rows.tolist(), cols.tolist()):
             i = start + r
@@ -231,6 +247,77 @@ def cap_per_class(rows: list[dict[str, Any]], cap: int, seed: int) -> list[dict[
         items = sorted(items, key=lambda r: hashlib.sha256(f"{seed}|{r['sample_id']}".encode()).hexdigest())
         kept.extend(items[:cap])
     return sorted(kept, key=lambda r: r["sample_id"])
+
+
+def feature_links(keys: list[str], feats: np.ndarray, valid: np.ndarray, threshold: float, chunk: int = 512) -> list[tuple[int, int]]:
+    """Cặp chỉ số (i < j) có CÙNG khóa trong `keys` ("nguồn|lớp") và cosine của đặc trưng >= threshold; ảnh có valid[i] = False bị bỏ qua.
+
+    Dùng làm `links` của merge_near_duplicate_groups để gộp các ảnh chụp lại cùng một lá. Chuẩn hóa L2 ở đây nên đặc trưng đầu vào không cần chuẩn hóa trước."""
+    by_key: dict[str, list[int]] = defaultdict(list)
+    for i, key in enumerate(keys):
+        if valid[i]:
+            by_key[key].append(i)
+    links: list[tuple[int, int]] = []
+    for idx in by_key.values():
+        if len(idx) < 2:
+            continue
+        sub = feats[idx].astype(np.float32)
+        sub /= np.linalg.norm(sub, axis=1, keepdims=True).clip(1e-12)
+        for start in range(0, len(idx), chunk):
+            sim = sub[start:start + chunk] @ sub.T
+            rows, cols = np.nonzero(sim >= threshold)
+            for r, c in zip(rows.tolist(), cols.tolist()):
+                if start + r < c:
+                    links.append((idx[start + r], idx[c]))
+    return links
+
+
+def cross_split_feature_pairs(keys: list[str], feats: np.ndarray, valid: np.ndarray, splits: list[str], threshold: float) -> int:
+    """Số cặp cùng khóa, cosine >= threshold nhưng ở hai split khác nhau (phải bằng 0 sau khi đã gộp nhóm)."""
+    return sum(1 for i, j in feature_links(keys, feats, valid, threshold) if splits[i] != splits[j])
+
+
+def load_feature_cache(path: Path) -> dict[str, np.ndarray]:
+    data = np.load(path, allow_pickle=False)
+    return {str(k): v for k, v in zip(data["keys"], data["feats"])}
+
+
+def promote_quarantine(rows: list[dict[str, Any]], class_ok: set[str], sample_ok: set[str]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Tách lá PlantDoc cách ly của v3 thành (được nhận, còn cách ly). Một lá được nhận khi lớp của nó được nhận cả nhóm HOẶC chính lá đó được duyệt riêng
+    (`accepted_samples` của scripts/build_quarantine_image_review.py); lá giữ nguyên split và nhóm cảnh của v3, chỉ đổi cờ supervised_eligible và label_trust."""
+    promoted, kept = [], []
+    for r in rows:
+        usable = (r.get("source_domain") == "plantdoc" and r.get("quarantine_status") == "clean" and r.get("target_class")
+                  and int(r.get("class_id", -1)) >= 0 and (r["target_class"] in class_ok or r["sample_id"] in sample_ok)
+                  and r.get("split") in ("train", "val", "calibration", "legacy_diagnostic_test"))
+        if usable:
+            promoted.append({**r, "supervised_eligible": True, "label_trust": "reviewed_quarantine"})
+        else:
+            kept.append(r)
+    return promoted, kept
+
+
+def split_balance(rows: list[dict[str, Any]], min_images: int = BALANCE_MIN_IMAGES, max_test: float = BALANCE_MAX_TEST,
+                  min_train: float = BALANCE_MIN_TRAIN, warn_group: float = BALANCE_WARN_GROUP) -> dict[str, Any]:
+    """Tỉ lệ split của từng cặp (nguồn, lớp) ngoài đồng có >= min_images ảnh. `violations`: test > max_test hoặc train < min_train (dừng dựng);
+    `warnings`: một nhóm chiếm > warn_group số ảnh của cặp (có thể là phiên chụp thật). Ảnh một nhóm luôn cùng split, nên nhóm khổng lồ làm tỉ lệ lệch."""
+    pairs: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for r in rows:
+        pairs[(r["source_dataset"], r["target_class"])].append(r)
+    stats, violations, warnings = {}, [], []
+    for (source, target), items in sorted(pairs.items()):
+        n = len(items)
+        if n < min_images:
+            continue
+        shares = {name: sum(1 for r in items if r["split"] == name) / n for name in ("train", "val", "calibration", "legacy_diagnostic_test")}
+        biggest = Counter(r["group_id"] for r in items).most_common(1)[0][1] / n
+        key = f"{source}|{target}"
+        stats[key] = {"images": n, **{k: round(v, 3) for k, v in shares.items()}, "largest_group_share": round(biggest, 3)}
+        if shares["legacy_diagnostic_test"] > max_test or shares["train"] < min_train:
+            violations.append(key)
+        elif biggest > warn_group:
+            warnings.append(key)
+    return {"pairs": stats, "violations": violations, "warnings": warnings}
 
 
 def class_counts(rows: list[dict[str, Any]], num_classes: int = 38) -> list[int]:
@@ -426,6 +513,9 @@ def main() -> int:
     parser.add_argument("--pv-cap", type=int, default=0, help="giới hạn ảnh PlantVillage train mỗi lớp; 0 = giữ đủ (cân bằng miền làm lúc train)")
     parser.add_argument("--same-source-hamming", type=int, default=SAME_SOURCE_HAMMING)
     parser.add_argument("--session-seconds", type=float, default=SESSION_SECONDS)
+    parser.add_argument("--feature-cache", default=FEATURE_CACHE)
+    parser.add_argument("--feature-threshold", type=float, default=FEATURE_THRESHOLD)
+    parser.add_argument("--no-features", action="store_true", help="không gộp theo đặc trưng DINOv2 (chỉ để thử; release thật phải gộp)")
     parser.add_argument("--seed", type=int, default=20261022)
     parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--no-link", action="store_true", help="không tạo liên kết ảnh (chỉ thử dựng manifest)")
@@ -485,9 +575,30 @@ def main() -> int:
     no_background = [r.get("capture_note") == "nền đã xóa" for r in kept_rows]   # dHash của ảnh xóa nền chỉ phản ánh nền đen: không dùng để gộp
     dhash_keys = [f"{k}|nobg|{i}" if bg else k for i, (k, bg) in enumerate(zip(session_keys, no_background))]
     links = session_links(session_keys, [Path(r.get("original_file", "")).name for r in kept_rows], args.session_seconds, SESSION_MAX_SECONDS)
+    session_link_count = len(links)
+    feature_cos: dict[str, Any] = {"enabled": False}
+    kept_feats = kept_valid = None
+    if not args.no_features:
+        cache_path = reg.abs_path(args.feature_cache)
+        if not cache_path.is_file():
+            raise SystemExit(f"thiếu {cache_path}: chạy tmp/venv-fm/Scripts/python.exe scripts/extract_external_features.py (hoặc --no-features để thử)")
+        cache = load_feature_cache(cache_path)
+        kept_valid = np.array([r["sample_id"] in cache for r in kept_rows])
+        kept_feats = np.stack([cache.get(r["sample_id"], np.zeros(384, np.float16)) for r in kept_rows])
+        links = links + feature_links(session_keys, kept_feats, kept_valid, args.feature_threshold)
+        feature_cos = {"enabled": True, "threshold": args.feature_threshold, "images_without_features": int((~kept_valid).sum()),
+                       "links": len(links) - session_link_count}
+        print(f"[v4] gộp theo đặc trưng DINOv2 (cosine >= {args.feature_threshold}): {feature_cos['links']} cặp; ảnh thiếu đặc trưng {feature_cos['images_without_features']}", flush=True)
+    import yaml
+
+    source_cfg = yaml.safe_load(reg.abs_path("configs/external_sources.yaml").read_text(encoding="utf-8"))["sources"]
+    limits = np.array([int(source_cfg.get(r["source_dataset"], {}).get("same_source_hamming", args.same_source_hamming)) for r in kept_rows], dtype=np.int64)
+    lowered = Counter(r["source_dataset"] for r, lim in zip(kept_rows, limits) if lim != args.same_source_hamming)
+    if lowered:
+        print(f"[v4] ngưỡng gộp cùng nguồn hạ xuống (nền đồng màu): { {s: int(source_cfg[s]['same_source_hamming']) for s in lowered} }", flush=True)
     conflict_pairs: set[int] = set()
     merged = merge_near_duplicate_groups(kept_hashes, [r["group_id"] for r in kept_rows], GROUP_MERGE_HAMMING, sources=dhash_keys,
-                                         same_source_max_hamming=args.same_source_hamming, flipped=kept_flip, links=links,
+                                         flipped=kept_flip, links=links, same_source_limits=limits,
                                          classes=[int(r["class_id"]) for r in kept_rows], conflicts=conflict_pairs)
     # Hai ảnh gần như giống hệt nhau mà mang hai nhãn khác nhau: ít nhất một nhãn sai -> bỏ cả hai ảnh đó, không đoán nhãn nào đúng.
     # `conflicting_groups` còn lại là lưới an toàn: nhóm có hai lớp (không xảy ra khi gộp theo lớp) cũng bị bỏ hẳn.
@@ -513,15 +624,8 @@ def main() -> int:
 
     # ---- lá PlantDoc cách ly đã được nhận
     q_ok = accepted_set(QUARANTINE_STATUS)
-    promoted: list[dict[str, Any]] = []
-    still_quarantined: list[dict[str, Any]] = []
-    for r in v3_rows["quarantine"]:
-        usable = (r.get("source_domain") == "plantdoc" and r.get("quarantine_status") == "clean" and r.get("target_class")
-                  and int(r.get("class_id", -1)) >= 0 and r["target_class"] in q_ok and r.get("split") in ("train", "val", "calibration", "legacy_diagnostic_test"))
-        if usable:
-            promoted.append({**r, "supervised_eligible": True, "label_trust": "reviewed_quarantine"})
-        else:
-            still_quarantined.append(r)
+    q_samples_ok = accepted_set(QUARANTINE_IMAGE_STATUS, "accepted_samples")
+    promoted, still_quarantined = promote_quarantine(v3_rows["quarantine"], q_ok, q_samples_ok)
 
     # ---- ảnh tự chụp
     own_rows = [{"sample_id": r["sample_id"], "relative_path": r["relative_path"], "original_path": r.get("original_file", ""), "byte_sha256": r["byte_sha256"],
@@ -564,18 +668,34 @@ def main() -> int:
     min_dist = min_hamming_to_other_split(kept_hashes[keep_idx], kept_flip[keep_idx], [dhash_keys[i] for i in keep_idx],
                                           [ext_split_of[kept_rows[i]["sample_id"]] for i in keep_idx])
     leak = {}
-    for limit in (args.same_source_hamming, INFORMATIONAL_HAMMING):
-        hit = min_dist <= limit
+    for label, bound in ((str(args.same_source_hamming), limits[keep_idx]), (str(INFORMATIONAL_HAMMING), INFORMATIONAL_HAMMING)):
+        hit = min_dist <= bound   # ngưỡng của từng ảnh (nguồn nền đồng màu dùng ngưỡng thấp hơn); mức báo cáo 14 bit dùng chung
         by_src = Counter(kept_rows[i]["source_dataset"] for i, h in zip(keep_idx, hit) if h)
-        leak[f"hamming_le_{limit}"] = {"images": int(hit.sum()), "fraction": round(float(hit.mean()), 4) if len(hit) else 0.0, "by_source": dict(by_src)}
+        leak[f"hamming_le_{label}"] = {"images": int(hit.sum()), "fraction": round(float(hit.mean()), 4) if len(hit) else 0.0, "by_source": dict(by_src)}
+    if kept_feats is not None:
+        split_of_kept = [ext_split_of.get(r["sample_id"], "dropped") for r in kept_rows]
+        feature_cos["cross_split_pairs"] = cross_split_feature_pairs(
+            [k if s != "dropped" else f"dropped|{i}" for i, (k, s) in enumerate(zip(session_keys, split_of_kept))], kept_feats, kept_valid, split_of_kept, args.feature_threshold)
+        leak["feature_cosine"] = feature_cos
+        print(f"[v4] cặp ảnh cùng lá (cosine >= {args.feature_threshold}) nằm ở hai split khác nhau: {feature_cos['cross_split_pairs']}", flush=True)
+        if feature_cos["cross_split_pairs"]:
+            print("[v4] RÒ RỈ THEO ĐẶC TRƯNG: còn ảnh cùng lá ở hai split", file=sys.stderr)
+            return 2
     unresolved = leak[f"hamming_le_{args.same_source_hamming}"]["images"]
     group_sizes = Counter(r["group_id"] for r in ext_out)
     group_stats = {"groups": len(group_sizes), "images": len(ext_out), "largest": [{"group_id": g, "images": n} for g, n in group_sizes.most_common(5)],
-                   "session_links": len(links), "background_removed_images_without_dhash_grouping": sum(no_background[i] for i in keep_idx)}
+                   "session_links": session_link_count, "background_removed_images_without_dhash_grouping": sum(no_background[i] for i in keep_idx)}
     print(f"[v4] nhóm ngoài đồng: {group_stats['groups']} cho {group_stats['images']} ảnh; lớn nhất {group_stats['largest'][0]['images'] if group_sizes else 0}; "
           f"ảnh còn gần trùng cùng nguồn ở split khác: Hamming<={args.same_source_hamming}: {unresolved}, <={INFORMATIONAL_HAMMING}: {leak[f'hamming_le_{INFORMATIONAL_HAMMING}']['images']}", flush=True)
     if leak[f"hamming_le_{args.same_source_hamming}"]["fraction"] > LEAK_GATE:
         print(f"[v4] RÒ RỈ CÙNG NGUỒN vượt {LEAK_GATE:.0%}: {leak}", file=sys.stderr)
+        return 2
+
+    balance = split_balance(ext_out)
+    print(f"[v4] cân bằng split: {len(balance['pairs'])} cặp (nguồn, lớp) >= {BALANCE_MIN_IMAGES} ảnh; vi phạm {balance['violations']}; cảnh báo nhóm lớn {balance['warnings']}", flush=True)
+    if balance["violations"]:
+        print(f"[v4] TỈ LỆ SPLIT LỆCH (test > {BALANCE_MAX_TEST:.0%} hoặc train < {BALANCE_MIN_TRAIN:.0%}): "
+              f"{ {k: balance['pairs'][k] for k in balance['violations']} }", file=sys.stderr)
         return 2
 
     # ---- ghi release
@@ -638,7 +758,7 @@ def main() -> int:
         "detection_json_sha256": sha256_file(v4 / "annotations" / "detection.json"), "group_graph_sha256": hashes["scene_groups"],
         "repair_ledger_sha256": sha256_file(v4 / "audits" / "release_repair_ledger.json"),
         "split_sha256": sha256_bytes(json.dumps(groups, sort_keys=True).encode()),
-        "rules": {"dedup_hamming_max": DUP_HAMMING, "group_merge_hamming_max": GROUP_MERGE_HAMMING, "same_source_hamming_max": args.same_source_hamming,
+        "rules": {"feature_threshold": None if args.no_features else args.feature_threshold, "dedup_hamming_max": DUP_HAMMING, "group_merge_hamming_max": GROUP_MERGE_HAMMING, "same_source_hamming_max": args.same_source_hamming,
                   "session_seconds": args.session_seconds, "external_split": dict(SPLIT_FRACTIONS), "seed": args.seed,
                   "locked_tests": "PlantVillage/PlantDoc v3 (val, legacy_diagnostic_test), PlantWild, ảnh tự chụp phần thử"},
     }
@@ -666,7 +786,7 @@ def main() -> int:
         "release": RELEASE_NAME, "release_manifest_sha256": release_sha, "counts": manifest["counts"],
         "partition_spec_sha256": sha256_file(v4 / "partition_spec_v4.json"), "quality_audit_sha256": sha256_file(v4 / "quality_audit_v4.json"),
         "quality_audit_status": audit["status"], "partition_status": {n: s["status"] for n, s in spec["scenarios"].items()},
-        "same_source_leakage": leak, "ext_groups": group_stats,
+        "same_source_leakage": leak, "ext_groups": group_stats, "split_balance": balance,
         "reference": ref_info, "removed_near_duplicates": {"total": int(is_dup.sum()), "by_source": dict(dup_by_source)},
         "dropped_label_conflict": {"images": len(dropped), "images_in_conflicting_pairs": len(conflict_pairs), "residual_mixed_class_groups": len(residual_groups),
                                    "by_source": dict(conflict_by_source)},

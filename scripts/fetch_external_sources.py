@@ -6,6 +6,8 @@ Mỗi nguồn tải vào data/external/sources/<id>/raw/ (gitignored). Ghi `fetc
 
 Các loại nguồn (`kind`):
   mendeley   : dataset_id Mendeley Data; tải gói zip công khai (có tên thư mục = nhãn). `files` tùy chọn để chỉ tải một số tệp.
+               `files` + `zip_member_regex` (+ `max_members`): chỉ đọc các thành viên khớp trong tệp zip bằng HTTP Range, giữ đường dẫn thư mục.
+               `folder_regex` (+ `exclude_name_regex`): bộ để ảnh rời theo thư mục; chỉ tải tệp có đường dẫn thư mục khớp, lưu raw/<thư mục>/<tệp>.
   zenodo     : record_id + files (khóa tệp); dùng khi bộ quá lớn: `zip_members_prefix` + `max_members` đọc từng phần tệp zip bằng HTTP Range
                thay vì tải hết (ASDID có tệp zip 7 GB).
   url        : một hoặc nhiều URL trực tiếp (`urls`).
@@ -89,8 +91,8 @@ def http_json(url: str) -> Any:
 class RemoteZip(io.RawIOBase):
     """Tệp zip ở xa đọc bằng HTTP Range: chỉ tải mục lục và các thành viên cần, không tải cả tệp hàng GB."""
 
-    def __init__(self, url: str):
-        self.url = url
+    def __init__(self, url: str, refresh: Any = None):
+        self.url, self.refresh = url, refresh   # refresh(): URL mới khi URL ký sẵn (S3 của Mendeley) hết hạn giữa chừng
         request = urllib.request.Request(url, method="HEAD", headers={"User-Agent": USER_AGENT})
         with urllib.request.urlopen(request, timeout=60) as response:
             self.size = int(response.headers["Content-Length"])
@@ -114,13 +116,22 @@ class RemoteZip(io.RawIOBase):
     _block = b""
 
     def _fetch(self, start: int, length: int) -> bytes:
-        request = urllib.request.Request(self.url, headers={"User-Agent": USER_AGENT, "Range": f"bytes={start}-{start + length - 1}"})
-        for attempt in range(3):
+        """Một khúc đúng `length` byte; khúc thiếu (kết nối đứt, URL hết hạn trả trang lỗi) bị coi là lỗi và thử lại, không đưa vào zipfile."""
+        for attempt in range(5):
+            request = urllib.request.Request(self.url, headers={"User-Agent": USER_AGENT, "Range": f"bytes={start}-{start + length - 1}"})
             try:
                 with urllib.request.urlopen(request, timeout=120) as response:
-                    return response.read()
+                    data = response.read()
+                if response.status == 206 and len(data) == length:
+                    return data
             except Exception:  # noqa: BLE001
-                time.sleep(2 * (attempt + 1))
+                pass
+            if self.refresh is not None:
+                try:
+                    self.url = self.refresh()
+                except Exception:  # noqa: BLE001
+                    pass
+            time.sleep(2 * (attempt + 1))
         raise RuntimeError(f"Range lỗi: {self.url}")
 
     def read(self, size: int = -1) -> bytes:
@@ -148,7 +159,17 @@ def fetch_mendeley(spec: dict[str, Any], raw: Path) -> list[dict[str, Any]]:
     meta = http_json(f"https://data.mendeley.com/public-api/datasets/{spec['dataset_id']}")
     records = [{"api_license": (meta.get("data_licence") or {}).get("short_name"), "api_name": meta.get("name"), "api_doi": (meta.get("doi") or {}).get("id")}]
     wanted = spec.get("files")
-    if wanted:  # tải riêng một số tệp (bộ chứa vài zip lớn)
+    if spec.get("folder_regex"):
+        records.extend(fetch_mendeley_folders(spec, raw))
+    elif wanted and spec.get("zip_member_regex"):
+        for entry in meta["files"]:
+            if entry["filename"] in wanted:
+                def fresh_url(name: str = entry["filename"]) -> str:
+                    again = http_json(f"https://data.mendeley.com/public-api/datasets/{spec['dataset_id']}")
+                    return next(e["content_details"]["download_url"] for e in again["files"] if e["filename"] == name)
+
+                records.append(extract_remote_members(entry["content_details"]["download_url"], entry["filename"], spec, raw, refresh=fresh_url))
+    elif wanted:  # tải riêng một số tệp (bộ chứa vài zip lớn)
         for entry in meta["files"]:
             if entry["filename"] in wanted:
                 url = entry["content_details"]["download_url"]
@@ -159,6 +180,62 @@ def fetch_mendeley(spec: dict[str, Any], raw: Path) -> list[dict[str, Any]]:
         size = http_get(f"https://data.mendeley.com/public-api/zip/{spec['dataset_id']}/download/{spec.get('version', 1)}", zip_path)
         records.append({"file": zip_path.name, "bytes": size, "sha256": sha256_file(zip_path)})
     return records
+
+
+def extract_remote_members(url: str, name: str, spec: dict[str, Any], raw: Path, refresh: Any = None) -> dict[str, Any]:
+    """Đọc mục lục tệp zip ở xa, lấy các ảnh có đường dẫn khớp `zip_member_regex` (cách đều, tối đa `max_members` mỗi thư mục), giữ thư mục làm nhãn."""
+    import re
+
+    pattern = re.compile(spec["zip_member_regex"])
+    limit = int(spec.get("max_members") or 0)
+    with zipfile.ZipFile(RemoteZip(url, refresh)) as archive:
+        members = [m for m in archive.namelist() if m.lower().endswith((".jpg", ".jpeg", ".png")) and pattern.search(m)]
+        by_dir: dict[str, list[str]] = {}
+        for m in members:
+            by_dir.setdefault(m.rsplit("/", 1)[0], []).append(m)
+        chosen = []
+        for items in by_dir.values():
+            step = max(1, len(items) // limit) if limit else 1
+            chosen.extend(items[::step][:limit] if limit else items)
+        taken: set[str] = set()
+        for member in chosen:
+            target = safe_member_path(raw, member, taken)
+            if not target.exists():
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(archive.read(member))
+    return {"file": name, "url": url, "members_matching": len(members), "members_extracted": len(chosen), "partial_read_by_range": True,
+            "zip_member_regex": spec["zip_member_regex"]}
+
+
+def fetch_mendeley_folders(spec: dict[str, Any], raw: Path) -> list[dict[str, Any]]:
+    """Bộ Mendeley để ảnh rời: dựng đường dẫn thư mục từ API, tải song song các tệp ảnh có thư mục khớp `folder_regex`."""
+    import re
+    from concurrent.futures import ThreadPoolExecutor
+
+    dataset, version = spec["dataset_id"], spec.get("version", 1)
+    meta = http_json(f"https://data.mendeley.com/public-api/datasets/{dataset}")
+    folders = {f["id"]: f for f in http_json(f"https://data.mendeley.com/public-api/datasets/{dataset}/folders/{version}")}
+
+    def folder_path(fid: str | None) -> str:
+        parts = []
+        while fid in folders:
+            parts.append(folders[fid]["name"])
+            fid = folders[fid].get("parent_id")
+        return "/".join(reversed(parts))
+
+    keep, skip = re.compile(spec["folder_regex"]), re.compile(spec["exclude_name_regex"]) if spec.get("exclude_name_regex") else None
+    jobs = []
+    for entry in meta["files"]:
+        path = folder_path(entry.get("folder_id"))
+        name = entry["filename"]
+        if keep.search(path) and name.lower().endswith((".jpg", ".jpeg", ".png")) and not (skip and skip.search(name)):
+            jobs.append((entry["content_details"]["download_url"], raw.joinpath(*[p.rstrip(" .") or "_" for p in path.split("/")], name), path))
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        sizes = list(pool.map(lambda job: http_get(job[0], job[1]), jobs))
+    by_folder: dict[str, int] = {}
+    for _, _, path in jobs:
+        by_folder[path] = by_folder.get(path, 0) + 1
+    return [{"folder_regex": spec["folder_regex"], "files": len(jobs), "bytes": sum(sizes), "by_folder": by_folder}]
 
 
 def fetch_zenodo(spec: dict[str, Any], raw: Path) -> list[dict[str, Any]]:

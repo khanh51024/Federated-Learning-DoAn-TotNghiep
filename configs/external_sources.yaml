@@ -18,13 +18,24 @@ sources:
     skip_reason: "đã xem ảnh mẫu: lá rời trên nền xám (kiểu phòng thí nghiệm), một phần là ảnh PlantVillage; không thêm đa dạng ngoài đồng"
 
   mendeley_tomato_field_unlabeled:
-    title: Tomato leaf diseases (Mendeley 93h9p62kg4, 2.627 ảnh ngoài đồng)
+    title: Tomato leaf diseases (Mendeley 93h9p62kg4, ruộng Khagan Bangladesh, iPhone 11, nhãn của chuyên gia)
     kind: mendeley
     dataset_id: 93h9p62kg4
     license: CC BY 4.0
     url: https://data.mendeley.com/datasets/93h9p62kg4
-    skip: true
-    skip_reason: "ảnh nằm chung một thư mục, tên IMG_nnnn.jpg, không có nhãn theo tệp nên không dùng được cho học có giám sát"
+    label_trust: expert
+    same_source_hamming: 4          # lá trên nền đồng màu: dHash phản ánh nền, ngưỡng 10 nối chuỗi nhiều lá khác nhau thành một nhóm
+    needs_review: true              # gói zip công khai làm phẳng thư mục (lần trước tưởng không có nhãn); API thư mục còn giữ lớp: tải theo thư mục rồi kiểm mẫu
+    folder_regex: '^Tomato Leaf/(Spider Mites|Bacterial Spot|Early Blight|Late Blight|Healthy|Leaf Mold|Tomato Leaf Curl Virus)$'
+    class_map:                      # "Cercospora leaf mold" là bệnh mốc đen (Pseudocercospora), khác Leaf Mold (Passalora fulva): bỏ
+      Spider Mites: Tomato___Spider_mites Two-spotted_spider_mite
+      Bacterial Spot: Tomato___Bacterial_spot
+      Early Blight: Tomato___Early_blight
+      Late Blight: Tomato___Late_blight
+      Healthy: Tomato___healthy
+      Leaf Mold: Tomato___Leaf_Mold
+    alias_map:
+      Tomato Leaf Curl Virus: Tomato___Tomato_Yellow_Leaf_Curl_Virus
 
   mendeley_tomato_pakistan:
     title: Tomato Leaf Disease Classification Dataset in Pakistan (ngoài ruộng)
@@ -49,6 +60,7 @@ sources:
     license: CC BY 4.0
     url: https://data.mendeley.com/datasets/jttrv2w27r
     label_trust: expert
+    same_source_hamming: 4          # lá trên nền đồng màu: dHash phản ánh nền, ngưỡng 10 nối chuỗi nhiều lá khác nhau thành một nhóm
     label_from: filename_prefix
     class_map:
       Early Blight: Tomato___Early_blight
@@ -137,6 +149,7 @@ sources:
     license: CC BY 4.0
     url: https://data.mendeley.com/datasets/jgkh2jxbwt
     label_trust: expert
+    same_source_hamming: 4          # lá trên nền đồng màu: dHash phản ánh nền, ngưỡng 10 nối chuỗi nhiều lá khác nhau thành một nhóm
     background_removed: true
     label_from: path_rules
     path_rules:      # chỉ lớp HLB nằm trong 38 lớp; lá khỏe của cam không có lớp tương ứng nên bỏ
@@ -204,12 +217,12 @@ sources:
     license: CC BY 4.0
     url: https://data.mendeley.com/datasets/378c69nwk5
     label_trust: expert
+    same_source_hamming: 4          # lá trên nền đồng màu: dHash phản ánh nền, ngưỡng 10 nối chuỗi nhiều lá khác nhau thành một nhóm
     needs_review: true              # chưa rõ ảnh gốc chụp ngoài vườn hay trên nền: kiểm nhãn mẫu trước khi nhận
-    group_from: aug_prefix
-    exclude_name_regex: "(?i)aug"   # chỉ lấy ảnh gốc (raw); bản tăng cường của tác giả bỏ
+    files: ["Grape_Leaves_Disease_Dataset.zip"]
+    zip_member_regex: "^Process_Images/Disease_Leaves/Black_Rot/"   # chỉ ảnh gốc Black Rot (590); lá khỏe nho đã đủ; bản tăng cường của tác giả bỏ
     class_map:                      # Brown Spot / Mites / Downy Mildew không có lớp tương ứng trong 38 lớp nên bỏ
-      Healthy Leaf: Grape___healthy
-      Black Rot: Grape___Black_rot
+      Black_Rot: Grape___Black_rot
 
   mendeley_cherry_kg:
     title: CherryLeaf-KG (vườn anh đào Kyrgyzstan, iPhone 14, lá cắt 224x224)
@@ -223,6 +236,60 @@ sources:
     class_map:                      # tên lớp tiếng Uzbek; chỉ "Soglom" (khỏe) có lớp tương ứng. Bộ có hai thư mục chép cùng 100 ảnh: nhập dedupe theo SHA
       soglom: Cherry_(including_sour)___healthy
       "Soglom - Healthy (Uniform green, disease-free leaf)": Cherry_(including_sour)___healthy
+
+  mendeley_peach_pakistan:
+    title: Peach plant diseases in field images (Pakistan; lá và quả đào ngoài vườn)
+    kind: mendeley
+    dataset_id: 3pmj85snvw
+    files: ["Peach_Dataset.zip"]
+    zip_member_regex: "^Peach_Dataset/(healthy|bacterial spot)/"
+    license: CC BY 4.0
+    url: https://data.mendeley.com/datasets/3pmj85snvw
+    label_trust: expert
+    needs_review: true              # bộ có cả ảnh quả; tên tệp trong thư mục "bacterial spot" là "nutrient dificiency (n)": phải kiểm nhãn
+    class_map:
+      healthy: Peach___healthy
+      bacterial spot: Peach___Bacterial_spot
+
+  mendeley_maize_bd_healthy:
+    title: Open-Source Multi-Format Maize Leaf Image Dataset (ruộng Bangladesh, ảnh gốc đã chuyển JPEG)
+    kind: mendeley
+    dataset_id: sb4wwjs8bz
+    folder_regex: 'Converted raw Images/(7\. Healthy Leaf|2\. Common Rust|3\. Gray Leaf Spot)$'
+    license: CC BY 4.0
+    url: https://data.mendeley.com/datasets/sb4wwjs8bz
+    label_trust: expert
+    class_map:                      # "Corn Leaf Blight" không phân biệt bắc/nam nên bỏ
+      7. Healthy Leaf: Corn_(maize)___healthy
+      2. Common Rust: Corn_(maize)___Common_rust_
+      3. Gray Leaf Spot: Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot
+
+  mendeley_ccmt_ghana_maize_healthy:
+    title: CCMT Dataset for Crop Pest and Disease Detection (trang trại Ghana; chỉ ảnh gốc lá ngô khỏe)
+    kind: mendeley
+    dataset_id: bwh3zbpkpv
+    folder_regex: "^Raw Data/CCMT Dataset/Maize/healthy$"
+    license: CC BY 4.0
+    url: https://data.mendeley.com/datasets/bwh3zbpkpv
+    label_trust: expert
+    class_map:
+      healthy: Corn_(maize)___healthy
+
+  mendeley_chilli_bd:
+    title: Chilli Leaf Disease Image Dataset (ruộng ớt Bangladesh, điện thoại)
+    kind: mendeley
+    dataset_id: tm3v4zmh7c
+    files: ["Healthy_Leaf.zip", "Bacterial_Spot.zip"]
+    zip_member_regex: "."
+    max_members: 450                # lấy cách đều tối đa 450 ảnh mỗi lớp
+    license: CC BY 4.0
+    url: https://data.mendeley.com/datasets/tm3v4zmh7c
+    label_trust: expert
+    same_source_hamming: 4          # lá trên nền đồng màu: dHash phản ánh nền, ngưỡng 10 nối chuỗi nhiều lá khác nhau thành một nhóm
+    needs_review: true              # ớt cay và ớt chuông cùng loài Capsicum annuum, cùng tác nhân đốm vi khuẩn (Xanthomonas): ánh xạ gần đúng, kiểm mẫu
+    alias_map:
+      Healthy_Leaf: Pepper,_bell___healthy
+      Bacterial_Spot: Pepper,_bell___Bacterial_spot
 
 # iNaturalist: ảnh cấp "research", chỉ giữ ảnh có giấy phép mở (khai báo từng ảnh trong inat_metadata.jsonl).
 # api_extra.q: lọc theo từ khóa trong mô tả/thẻ của quan sát (dùng để tách cây chủ khi một tác nhân gây bệnh trên nhiều cây).

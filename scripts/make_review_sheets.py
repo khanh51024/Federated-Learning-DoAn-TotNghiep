@@ -40,10 +40,10 @@ def load_rows() -> dict[str, dict[str, Any]]:
     return rows
 
 
-def make_sheet(ids: list[str], rows: dict[str, dict[str, Any]], title: str, out: Path, number_from: int = 1) -> None:
+def make_sheet(ids: list[str], rows: dict[str, dict[str, Any]], title: str, out: Path, number_from: int = 1, base: Path | None = None) -> None:
     from PIL import Image, ImageDraw
 
-    base = reg.abs_path(EXT_SOURCES)
+    base = base or reg.abs_path(EXT_SOURCES)
     rows_n = (len(ids) + COLS - 1) // COLS
     sheet = Image.new("RGB", (COLS * TILE, rows_n * TILE + 24), (245, 245, 240))
     draw = ImageDraw.Draw(sheet)

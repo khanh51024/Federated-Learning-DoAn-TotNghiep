@@ -12,6 +12,8 @@ trong bộ nhớ, nên không cần checkout nhánh và không chép mã vào re
 
 Chạy:
     python scripts/verify_release_contract.py [--release data/dataset_sources/mixed/pv_pd_v4] [--branch origin/train-centralized] [--images]
+    python scripts/verify_release_contract.py --release D/dataset_sources/mixed/pv_pd_v4 --dataset-root D/dataset_sources --contract-dir train_contract --images
+        (chạy trên gói đã giải nén ngoài repo: không cần git; `train_contract/` do scripts/pack_train_bundle.py đóng kèm)
 Mã thoát 0 = mọi kiểm tra qua; 1 = có kiểm tra không qua.
 """
 from __future__ import annotations
@@ -41,11 +43,16 @@ NUM_CLIENTS = 5
 SCHEMES = ("label_alpha_0_1", "iid")
 
 
-def load_branch_module(branch: str, path: str) -> dict[str, Any]:
-    """Chạy một tệp .py của nhánh `branch` trong không gian tên riêng (các tệp này chỉ import thư viện chuẩn) và trả không gian tên đó."""
-    source = subprocess.check_output(["git", "show", f"{branch}:{path}"], cwd=ROOT).decode("utf-8")
+def load_branch_module(branch: str, path: str, contract_dir: Path | None = None) -> dict[str, Any]:
+    """Chạy một tệp .py của nhánh `branch` (hoặc bản chép trong `contract_dir`) trong không gian tên riêng (các tệp này chỉ import thư viện chuẩn) và trả không gian tên đó."""
+    if contract_dir is not None:
+        source = (contract_dir / Path(path).name).read_text(encoding="utf-8")
+        label = str(contract_dir / Path(path).name)
+    else:
+        source = subprocess.check_output(["git", "show", f"{branch}:{path}"], cwd=ROOT).decode("utf-8")
+        label = f"{branch}:{path}"
     namespace: dict[str, Any] = {"__name__": f"branch_{Path(path).stem}", "__file__": path}
-    exec(compile(source, f"{branch}:{path}", "exec"), namespace)  # noqa: S102 - mã của chính repo này, chỉ đọc
+    exec(compile(source, label, "exec"), namespace)  # noqa: S102 - mã của chính repo này, chỉ đọc
     return namespace
 
 
@@ -97,12 +104,16 @@ def main() -> int:
     parser.add_argument("--release", default=DEFAULT_RELEASE)
     parser.add_argument("--branch", default=DEFAULT_BRANCH)
     parser.add_argument("--images", action="store_true", help="kiểm cả byte và khả năng giải mã của mọi ảnh (chậm)")
+    parser.add_argument("--dataset-root", default=None, help="thư mục chứa mixed/<release> và ảnh (mặc định data/dataset_sources của repo)")
+    parser.add_argument("--contract-dir", default=None, help="thư mục chứa bản chép các tệp kiểm của nhánh train (thay cho git show)")
     parser.add_argument("--json-out", default=None)
     args = parser.parse_args()
 
-    release = reg.abs_path(args.release)
-    modules = {name: load_branch_module(args.branch, path) for name, path in MODULE_FILES.items()}
-    results = run_checks(release, modules, args.images, reg.abs_path(reg.DATASET_SOURCES_DIR))
+    release = Path(args.release) if Path(args.release).is_absolute() else reg.abs_path(args.release)
+    contract_dir = Path(args.contract_dir).resolve() if args.contract_dir else None
+    modules = {name: load_branch_module(args.branch, path, contract_dir) for name, path in MODULE_FILES.items()}
+    dataset_root = Path(args.dataset_root).resolve() if args.dataset_root else reg.abs_path(reg.DATASET_SOURCES_DIR)
+    results = run_checks(release, modules, args.images, dataset_root)
     for name, ok, detail in results:
         print(f"[{'PASS' if ok else 'FAIL'}] {name}: {detail}")
     failed = [name for name, ok, _ in results if not ok]
