@@ -857,6 +857,9 @@ def build_artifact_catalog(models: list[dict[str, Any]]) -> tuple[list[dict[str,
         elif rel.startswith(reg.MODEL_BUNDLES_PREFIX + "/"):
             add("model_bundles_inactive", reg.ROLE_HISTORICAL,
                 "Gói mô hình dựng từ run train_v4 nhưng không phải gói web đang dùng (artifacts/active_bundle.json); giữ để lùi hoặc thay lại", rel)
+        elif rel.startswith(bundle.LEGACY_DIR + "/"):
+            add("branch_demo_inactive", reg.ROLE_HISTORICAL,
+                "Gói mô hình cũ (Centralized v6, FedAvg v7, Local 00-04 từ ba nhánh train) không phải gói web đang dùng; giữ để lùi (swap_web_models.py --rollback)", rel)
         elif rel.startswith(reg.TRAIN_V4_RUNS_PREFIX):
             add("train_v4_runs", reg.ROLE_TECHNICAL_DEMO,
                 "Checkpoint đợt train v4 (scripts/train_v4.py, máy GPU thuê) chưa đánh giá/promote — số liệu chỉ dùng sau scripts/eval_trained_v4.py", rel)

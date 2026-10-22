@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 4 mục kỹ thuật chưa XONG)",
+  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 5 mục kỹ thuật chưa XONG)",
   "canonical_run_id": "20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62",
   "dataset_truth": {
     "source": "data/partitions_stage2_scratch_v3/suite.json",
@@ -122,18 +122,18 @@
     "smoke": 3
   },
   "web_visible_models": [
-    "demo_centralized_v6",
-    "demo_fedavg_v7",
-    "demo_local_00",
-    "demo_local_01",
-    "demo_local_02",
-    "demo_local_03",
-    "demo_local_04",
+    "web_centralized",
+    "web_fedavg",
+    "web_local_00",
+    "web_local_01",
+    "web_local_02",
+    "web_local_03",
+    "web_local_04",
     "plantvillage_traced_reference"
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-22T12:05:52",
+      "generated_at": "2026-10-22T13:28:58",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,7 +145,7 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-22T12:05:53",
+      "generated_at": "2026-10-22T13:29:00",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
@@ -180,7 +180,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-22T12:05:56",
+      "generated_at": "2026-10-22T13:29:02",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
@@ -234,7 +234,7 @@
       "id": "docs_clean",
       "title": "Dọn tài liệu mâu thuẫn",
       "status": "CHƯA",
-      "detail": "tài liệu ngoài danh mục: gốc=[] docs=['REPORT_WORD_WEB_2026-10-20.md']",
+      "detail": "tài liệu ngoài danh mục: gốc=[] docs=['REPORT_WORD_WEB_2026-10-20.md', 'THAY_MO_HINH_WEB.md']",
       "unlock": []
     },
     {
@@ -247,8 +247,8 @@
     {
       "id": "protocol",
       "title": "Chốt một protocol khoa học cho mỗi thí nghiệm",
-      "status": "XONG",
-      "detail": "mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md",
+      "status": "CHƯA",
+      "detail": "docs/EXPERIMENT_PROTOCOL.md chưa nêu protocol: ['mixed_pv_pd_v4_pretrained_seed42_validation']",
       "unlock": []
     },
     {
@@ -290,49 +290,49 @@
       "id": "leakage",
       "title": "Audit leakage theo từng run",
       "status": "XONG",
-      "detail": "release mixed_pv_pd_v3: train 37.238 / val 4.613 / calibration 4.225 rời nhau trên 5 khóa (giao nhau tổng = 0); 12 partition đều là tập con train; 46.076 ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train)",
+      "detail": "release mixed_pv_pd_v4: train 52.464 / val 6.746 / calibration 7.005 rời nhau trên 5 khóa (giao nhau tổng = 0); 2 partition đều là tập con train; 66.215 ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train)",
       "unlock": []
     },
     {
       "id": "per_class",
       "title": "Đánh giá PlantDoc theo từng lớp (từ số công bố)",
       "status": "XONG",
-      "detail": "PlantDoc phủ 13/38 lớp; 6 lớp recall<50% (136/269 ảnh); FedAvg tệ hơn Centralized ở 5/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5)",
+      "detail": "PlantDoc phủ 13/38 lớp; 8 lớp recall<50% (204/269 ảnh); FedAvg tệ hơn Centralized ở 9/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5)",
       "unlock": []
     },
     {
       "id": "reeval",
       "title": "Tái đánh giá cục bộ trên ảnh validation (xác nhận số công bố)",
       "status": "XONG",
-      "detail": "4.613 ảnh validation tái đo trên CPU: Centralized v6 và FedAvg v7 khớp TUYỆT ĐỐI số công bố (số ảnh đúng, macro-F1, crop accuracy, recall theo lớp); tổng 10/14 phép so khớp tuyệt đối; 4 phép so của Local-only lệch ≤1 ảnh: Local 01/plantdoc (+0 ảnh), Local 01/plantvillage (+0 ảnh), Local 03/plantvillage (+1 ảnh), Local 04/plantvillage (-1 ảnh) — chưa rõ nguyên nhân, phù hợp sai số số học (ảnh sát ngưỡng)",
+      "detail": "6.746 ảnh validation tái đo trên CPU: Centralized v4b và FedAvg v4b khớp TUYỆT ĐỐI số ghi trong gói (số ảnh đúng, macro-F1, crop accuracy, recall theo lớp); tổng 21/21 phép so khớp tuyệt đối",
       "unlock": []
     },
     {
       "id": "confident_errors",
       "title": "Phân tích lỗi confidence cao (mức tổng hợp, từ số công bố)",
       "status": "XONG",
-      "detail": "mức tổng hợp từ metrics công bố — Centralized v6: 77/269 ảnh PlantDoc sai với confidence>0.9 (62% số lỗi); FedAvg v7: 41/269 ảnh PlantDoc sai với confidence>0.9 (29% số lỗi) (xem mục 5)",
+      "detail": "mức tổng hợp từ metrics công bố — Centralized v4b: 8/269 ảnh PlantDoc sai với confidence>0.9 (7% số lỗi); FedAvg v4b: 0/269 ảnh PlantDoc sai với confidence>0.9 (0% số lỗi) (xem mục 5)",
       "unlock": []
     },
     {
       "id": "calibration",
       "title": "Phân tích từng ảnh sai tự tin + đo calibration (ECE)",
       "status": "XONG",
-      "detail": "FedAvg v7: ECE PlantDoc 0.295 → 0.261 sau temperature scaling (T=1.1488, fit trên 4.225 ảnh calibration tách biệt val); 100 ảnh validation sai với confidence ≥ 0,9 đã liệt kê từng ảnh. UI hiển thị softmax thô kèm xác suất đã hiệu chuẩn (T)",
+      "detail": "FedAvg v4b: ECE PlantDoc 0.077 → 0.245 sau temperature scaling (T=0.5588, fit trên 7.005 ảnh calibration tách biệt val); 1 ảnh validation sai với confidence ≥ 0,9 đã liệt kê từng ảnh. UI hiển thị softmax thô kèm xác suất đã hiệu chuẩn (T)",
       "unlock": []
     },
     {
       "id": "holdout",
       "title": "Đánh giá trên tập test giữ riêng (không dùng để chọn checkpoint)",
       "status": "XONG",
-      "detail": "11.015 ảnh legacy_diagnostic_test (không dùng để chọn checkpoint): Centralized v6 PV 99.23% / PD 63.37%; FedAvg v7 PV 93.34% / PD 50.00%; Centralized so với số tự ghi trong summary.json: plantdoc khớp, plantvillage khớp",
+      "detail": "13.101 ảnh legacy_diagnostic_test (không dùng để chọn checkpoint): Centralized v4b PV 99.32% / PD 59.88%; FedAvg v4b PV 96.84% / PD 40.12%; Centralized so với số tự ghi trong summary.json: plantdoc +2 ảnh, plantvillage +13 ảnh, field_other không suy ra được số ảnh đúng",
       "unlock": []
     },
     {
       "id": "statistics",
       "title": "Khoảng tin cậy theo cụm + McNemar + độ nhạy 'cùng lá'",
       "status": "XONG",
-      "detail": "khoảng tin cậy 95% bootstrap theo cụm (cảnh/nhóm lá) — val: PlantDoc Centralized 53.9% [44.2%; 63.1%], Centralized−FedAvg +6.7% [-3.7%; +18.0%], McNemar p=0.0414 | test: PlantDoc Centralized 63.4% [52.9%; 73.7%], Centralized−FedAvg +13.4% [+1.6%; +24.8%], McNemar p=0.00762",
+      "detail": "khoảng tin cậy 95% bootstrap theo cụm (cảnh/nhóm lá) — val: PlantDoc Centralized 56.5% [47.4%; 66.0%], Centralized−FedAvg +19.0% [+11.2%; +26.9%], McNemar p=5.19e-09 | test: PlantDoc Centralized 59.9% [51.1%; 68.7%], Centralized−FedAvg +19.8% [+10.9%; +29.8%], McNemar p=1.21e-05",
       "unlock": []
     },
     {
@@ -358,7 +358,7 @@
       "id": "release",
       "title": "Release sạch (mọi gate kỹ thuật XONG)",
       "status": "CHƯA",
-      "detail": "còn mục kỹ thuật chưa XONG: ['no_hardcode', 'docs_clean', 'full_tests']",
+      "detail": "còn mục kỹ thuật chưa XONG: ['no_hardcode', 'docs_clean', 'protocol', 'full_tests']",
       "unlock": []
     }
   ],

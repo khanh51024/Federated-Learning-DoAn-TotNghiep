@@ -102,7 +102,7 @@ function heatmapTable(shards, pvRecall, view) {
   return `<table class="heat-table"><thead><tr><th scope="col">Nhóm</th>${head}</tr></thead><tbody>${rows.join("")}</tbody></table>`;
 }
 
-// ───────── Trình xem 12 cách chia của release (chỉ dữ liệu) ─────────
+// ───────── Trình xem các cách chia của release (chỉ dữ liệu) ─────────
 const FAMILY_ORDER = ["iid", "label", "quantity", "feature", "mixed"];
 
 function schemeLabel(name, scheme) {
@@ -318,8 +318,8 @@ export async function mount() {
     </div>`}
 
     <details class="panel panel-fold mt-4" id="scheme-explorer">
-      <summary>Xem 12 cách chia dữ liệu có sẵn</summary>
-      <p class="panel-desc mt-2">Bộ dữ liệu dựng sẵn 12 cách chia cho 5 client: IID, lệch nhãn, lệch số lượng, lệch nguồn ảnh và kết hợp.
+      <summary>Xem các cách chia dữ liệu có sẵn</summary>
+      <p class="panel-desc mt-2">Release dựng sẵn các cách chia cho 5 client (số lượng và loại — IID, lệch nhãn... — tùy release).
         Đây <b>chỉ là dữ liệu</b> — mọi kết quả trên web là của cách chia lệch nhãn α = 0,1; các cách chia khác chưa được huấn luyện.</p>
       <div class="mt-3" id="scheme-explorer-body"><div class="skeleton skeleton-block"></div></div>
     </details>

@@ -89,7 +89,7 @@ function renderMetricNote() {
   const base = status.base_metrics?.accuracy;
   setText(byId("comm-metric-note"),
     `Phiên bản ${status.version}: độ chính xác giám sát ${pct(status.metrics.accuracy)}` +
-    (status.version > 0 ? ` (mô hình gốc FedAvg v7: ${pct(base)})` : " (mô hình gốc FedAvg v7)") +
+    (status.version > 0 ? ` (mô hình gốc FedAvg: ${pct(base)})` : " (mô hình gốc FedAvg)") +
     `, trên ${fmtInt(status.metrics.count)} ảnh validation (đã dùng để chọn mô hình gốc) nên chỉ để theo dõi từng vòng; số đo mức báo cáo là mô phỏng ở chương 4.`);
 }
 
@@ -868,7 +868,7 @@ function poll() {
 const SIM_LABEL = { iid: "Ảnh bất kỳ", three_groups: "Mỗi người 3 nhóm", one_group: "Mỗi người 1 nhóm", plantdoc_only: "Chỉ ảnh ngoài đồng" };
 const signedPoints = value => (value === null || value === undefined ? "—" : `${value > 0 ? "+" : value < 0 ? "−" : ""}${fmtNum(Math.abs(value), 1)}`);
 
-/** Số đo của thí nghiệm mô phỏng (chương 4.5): độ chính xác của mô hình chung so với FedAvg v7 gốc, theo kịch bản và số người mỗi vòng. */
+/** Số đo của thí nghiệm mô phỏng (chương 4.5): độ chính xác của mô hình chung so với FedAvg gốc, theo kịch bản và số người mỗi vòng. */
 async function renderSimulation() {
   const box = byId("comm-sim-body");
   let sim = null;
@@ -879,7 +879,7 @@ async function renderSimulation() {
     const run = sim.runs.find(r => r.gate && r.scenario === sc && r.k === k);
     return `<td class="mono">${run ? signedPoints(run.final_delta_mean_points.accuracy) : "—"}</td>`;
   }).join("")}</tr>`).join("");
-  box.innerHTML = `<p class="field-hint">Điểm phần trăm so với FedAvg v7 gốc (${fmtPct(sim.base_test.accuracy, 1)} trên ${fmtInt(sim.test.images)} ảnh test giữ riêng) sau ${sim.rounds} vòng, trung bình ${sim.seeds.length} lần chạy. K là số người mỗi vòng.</p>
+  box.innerHTML = `<p class="field-hint">Điểm phần trăm so với FedAvg gốc (${fmtPct(sim.base_test.accuracy, 1)} trên ${fmtInt(sim.test.images)} ảnh test giữ riêng) sau ${sim.rounds} vòng, trung bình ${sim.seeds.length} lần chạy. K là số người mỗi vòng.</p>
     <div tabindex="0" role="group" aria-label="Bảng kết quả mô phỏng, cuộn được bằng phím mũi tên" class="table-responsive mt-2">
       <table class="data-table"><thead><tr><th scope="col">Người tham gia</th>${ks.map(k => `<th scope="col">K = ${k}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
     <p class="field-hint mt-2">Dữ liệu người tham gia đủ đa dạng thì tăng khoảng 1 đến 2 điểm; mỗi người một nhóm bệnh thì cần K lớn; ảnh ngoài đồng gần như không tăng vì phần trích đặc trưng bị đóng băng. Chi tiết, đường theo vòng và đối chứng không cổng: <a href="#ket-qua">chương 4, mục 4.5</a>.</p>`;

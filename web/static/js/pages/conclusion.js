@@ -6,12 +6,12 @@ const LOCALS = ["local_00", "local_01", "local_02", "local_03", "local_04"];
 
 function baseLimits(seed) {
   return [
-    ["Mới có một kịch bản và một lần chạy", `Mới thử mức lệch dữ liệu α = 0,1 với seed ${seed ?? "—"}, chưa đủ để nói kết quả ổn định khi điều kiện thay đổi (chương 2 liệt kê 12 cách chia, nhưng chỉ α = 0,1 có mô hình).`],
+    ["Mới có một kịch bản", `Mới thử mức lệch dữ liệu α = 0,1; các trang chi tiết hiển thị hạt giống ${seed ?? "—"} (bảng ba hạt giống ở trang Kết quả cho thấy độ dao động giữa các lần chạy), chưa đủ để nói kết quả ổn định khi mức lệch thay đổi (chương 2 liệt kê các cách chia của release, nhưng chỉ α = 0,1 có mô hình).`],
     ["Chưa có kiểm thử thực địa độc lập", "PlantVillage là ảnh chụp trong phòng; PlantDoc là ảnh ngoài đồng nhưng chỉ phủ một phần các nhóm và không có lá khỏe. Cả tập kiểm tra lẫn tập giữ riêng đều lấy từ cùng bộ dữ liệu."],
     ["Chỉ nhận ảnh một chiếc lá đã cắt", "Mô hình không tự tìm lá trong ảnh toàn cây; ảnh khác kiểu sẽ cho kết quả kém dù xác suất dự đoán hiển thị vẫn cao."],
     ["Xác suất dự đoán chỉ được hiệu chuẩn một phần", "Web hiện cả xác suất gốc và xác suất đã hiệu chuẩn. Việc hiệu chuẩn học trên ảnh chủ yếu là PlantVillage nên với ảnh ngoài đồng mô hình vẫn gán xác suất cao hơn độ chính xác thực (xem chương 4, mục 4.4)."],
     ["Chưa thử nghiệm client lỗi hay bị tấn công", "Máy chủ có cơ chế kiểm tra bản cập nhật (chạy thử ở Phụ lục kỹ thuật), nhưng chưa có thí nghiệm đo độ chính xác nên chưa kết luận được."],
-    ["FedAvg v7 chưa chạy lại qua Flower", "Kết quả v7 dùng runner in_process_simulation; checkpoint lưu lịch sử 27 vòng, còn mốc hoàn tất vòng 32 được ghi trong RESULTS.md. Vòng 28–32 chưa có log để phân tích. Phiên Flower trên web dùng ảnh nhiễu, chỉ kiểm tra hệ thống; Local-only chưa có lịch sử từng vòng và thời gian chạy."],
+    ["FedAvg chưa chạy lại qua Flower", "Kết quả FedAvg dùng runner in_process_simulation (5 client mô phỏng trong một tiến trình). Lịch sử từng vòng được ghi đủ, nhưng độ lệch ‖Δ‖₂ của từng client chưa được ghi và số byte là kích thước mô hình, không phải lưu lượng đo trên mạng. Phiên Flower trên web dùng ảnh nhiễu, chỉ kiểm tra hệ thống; Local-only chưa có lịch sử từng vòng trong báo cáo."],
     ["Chênh lệch miền dữ liệu là vấn đề của dữ liệu", "Mô hình Centralized đạt rất cao trên PlantVillage nhưng thấp hơn nhiều trên PlantDoc, nên khoảng cách này không riêng của học liên kết. Mohanty và cộng sự (2016) cũng ghi nhận độ chính xác giảm mạnh khi ảnh được chụp trong điều kiện khác; Noyan (2022) chỉ ra PlantVillage có thiên lệch khi chụp."],
     ["BatchNorm trong học liên kết", "MobileNetV3 có lớp BatchNorm; khi đặc trưng giữa các client khác nhau, việc lấy trung bình cả thống kê BatchNorm có thể gây hại (FedBN, Li và cộng sự 2021). Đồ án chưa thử nghiệm FedBN nên đây là giả thuyết cần kiểm chứng."],
     ["Nhãn PlantDoc chưa được chuyên gia rà soát, chưa đo độ công bằng giữa client", "Nhãn PlantDoc được ánh xạ về 38 nhóm của PlantVillage mà chưa có chuyên gia rà lại. Chưa có số liệu độ chính xác của FedAvg trên dữ liệu từng client, nên chưa đánh giá được tính công bằng giữa các client."],
@@ -28,14 +28,22 @@ function evaluationLimits(summary) {
   const sel = st?.selection_effect;
   if (sel?.available) {
     const central = (summary?.holdout?.models || []).find(m => m.model_id === "centralized");
-    const pdTest = central?.plantdoc?.top1;
-    const pdVal = sel.chosen_plantdoc_accuracy;
+    // gói train_v4 chỉ ghi Macro-F1 PlantDoc theo epoch; gói cũ ghi độ chính xác: so đúng loại số với tập giữ riêng
+    const macro = sel.value_kind === "macro_f1";
+    const what = macro ? "Macro-F1" : "độ chính xác";
+    const pdTest = macro ? central?.plantdoc?.macro_f1 : central?.plantdoc?.top1;
+    const pdVal = sel.chosen_plantdoc_value;
     const observed = pdTest === undefined || pdTest === null ? ""
       : pdTest >= pdVal
-        ? ` Khi chấm lại trên tập giữ riêng, Centralized đạt ${fmtPct(pdTest)} trên ảnh ngoài đồng (tập kiểm tra: ${fmtPct(pdVal)}) — chưa thấy con số bị đẩy lên, nhưng tập giữ riêng chỉ có ${fmtInt(summary.holdout.counts_by_source?.plantdoc)} ảnh ngoài đồng.`
-        : ` Khi chấm lại trên tập giữ riêng, Centralized chỉ đạt ${fmtPct(pdTest)} trên ảnh ngoài đồng (tập kiểm tra: ${fmtPct(pdVal)}) — phù hợp với thiên lệch do cách chọn.`;
+        ? ` Khi chấm lại trên tập giữ riêng, Centralized đạt ${what} ${fmtPct(pdTest)} trên ảnh ngoài đồng (tập kiểm tra: ${fmtPct(pdVal)}) — chưa thấy con số bị đẩy lên, nhưng tập giữ riêng chỉ có ${fmtInt(summary.holdout.counts_by_source?.plantdoc)} ảnh ngoài đồng.`
+        : ` Khi chấm lại trên tập giữ riêng, Centralized chỉ đạt ${what} ${fmtPct(pdTest)} trên ảnh ngoài đồng (tập kiểm tra: ${fmtPct(pdVal)}) — phù hợp với thiên lệch do cách chọn.`;
+    const why = macro ? "theo trung bình Macro-F1 của các nguồn ảnh"
+      : `vì có điểm PlantDoc ${sel.chosen_rank_among_epochs === 1 ? "cao nhất" : `hạng ${fmtInt(sel.chosen_rank_among_epochs)}`}`;
+    const fed = sel.fedavg?.available
+      ? ` FedAvg được chọn ở vòng ${fmtInt(sel.fedavg.chosen_epoch)}/${fmtInt(sel.fedavg.epochs)} bằng cùng cách (${what} PlantDoc ${fmtPct(sel.fedavg.chosen_plantdoc_value)}; vòng cuối ${fmtPct(sel.fedavg.last_plantdoc_value)}).`
+      : "";
     out.push(["Mô hình được chọn dựa trên chính tập kiểm tra",
-      `Phiên bản Centralized được chọn ở epoch ${fmtInt(sel.chosen_epoch)}/${fmtInt(sel.epochs)} vì có điểm PlantDoc ${sel.chosen_rank_among_epochs === 1 ? "cao nhất" : `hạng ${fmtInt(sel.chosen_rank_among_epochs)}`} trên tập kiểm tra (${fmtPct(pdVal)}; epoch cuối ${fmtPct(sel.last_plantdoc_accuracy)}), nên số ở tập này có thể hơi đẹp hơn thực tế. Tập giữ riêng (chương 4) không dùng để chọn nên không bị thiên lệch đó.${observed}`]);
+      `Phiên bản Centralized được chọn ở epoch ${fmtInt(sel.chosen_epoch)}/${fmtInt(sel.epochs)} ${why} trên tập kiểm tra (${what} PlantDoc ${fmtPct(pdVal)}; epoch cuối ${fmtPct(sel.last_plantdoc_value)}), nên số ở tập này có thể hơi đẹp hơn thực tế. Tập giữ riêng (chương 4) không dùng để chọn nên không bị thiên lệch đó.${observed}${fed}`]);
   }
   const test = st?.splits?.test?.available ? st.splits.test.by_source : null;
   const pd = test?.plantdoc;
@@ -68,8 +76,8 @@ function evaluationLimits(summary) {
         `Với cùng các ảnh PlantDoc, đưa cả khung ảnh vào thay vì ảnh đã cắt theo khung lá: FedAvg giảm từ ${fmtPct(fCropV, 1)} xuống ${fmtPct(fFullV, 1)} trên tập kiểm tra và từ ${fmtPct(fCropT, 1)} xuống ${fmtPct(fFullT, 1)} trên tập giữ riêng; Centralized từ ${fmtPct(cCropV, 1)} xuống ${fmtPct(cFullV, 1)} và từ ${fmtPct(cCropT, 1)} xuống ${fmtPct(cFullT, 1)}. Phép đo dùng ${fmtInt(ff.splits.val.scenes)} + ${fmtInt(ff.splits.test.scenes)} cảnh (loại ${fmtInt(ff.excluded_scenes)} cảnh không còn ở kho công khai) nên khoảng dao động còn rộng. Web chưa có bước tự tìm và cắt lá: hãy tải ảnh chụp một chiếc lá.`]);
     }
   }
-  out.push(["So sánh Centralized và FedAvg chưa hoàn toàn công bằng",
-    "Các cách học hiện khác bộ tối ưu và số bước huấn luyện; FedAvg dừng sớm. Vì vậy chưa tách được ảnh hưởng của cách học khỏi ảnh hưởng của thiết lập. Cần huấn luyện lại cùng điều kiện, nhiều seed trước khi kết luận hai cách tương đương."]);
+  out.push(["Công thức huấn luyện được chọn trên Centralized",
+    "Ba cách dùng chung một công thức và cùng số bước gradient, nhưng các thiết lập chung (kích thước batch, tốc độ học, tăng cường) được chọn bằng thử nghiệm ngắn chỉ trên Centralized. FedAvg trên dữ liệu lệch nhãn có thể cần tốc độ học khác; chưa dò riêng nên khoảng cách Centralized − FedAvg có thể bị phóng đại một phần."]);
   return out;
 }
 
@@ -109,8 +117,8 @@ function answersHtml(evidence) {
 }
 
 const FUTURE = [
-  ["Chạy lặp lại nhiều lần", "Chạy nhiều seed và nhiều mức lệch dữ liệu (không chỉ α = 0,1) để biết kết quả có ổn định không. Cần GPU."],
-  ["Đối chiếu v7 trên Flower", "Dùng cùng release, W0, phân hoạch và cấu hình v7; lưu đủ log, đối chiếu checkpoint vòng 27 với runner hiện tại, rồi đo mạng thật riêng."],
+  ["Chạy lặp lại nhiều lần", "Chạy nhiều mức lệch dữ liệu (không chỉ α = 0,1) để biết kết quả có ổn định khi điều kiện thay đổi không, và dò riêng tốc độ học cho FedAvg. Cần GPU."],
+  ["Đối chiếu FedAvg trên Flower", "Dùng cùng release, W0, phân hoạch và cấu hình; lưu đủ log, đối chiếu checkpoint với runner hiện tại, rồi đo mạng thật riêng."],
   ["Thuật toán chịu non-IID", "Thử FedProx, SCAFFOLD và FedBN trên cùng phân hoạch; đây là kế hoạch, chưa có kết quả để khẳng định cải thiện."],
   ["Huấn luyện cùng điều kiện", "Cho Centralized, FedAvg và Local-only cùng bộ tối ưu và số bước, rồi so sánh lại."],
   ["Kiểm thử ngoài đồng", "Thu thêm ảnh ngoài đồng phủ đủ các nhóm bệnh, giữ riêng một tập chưa từng dùng để chọn mô hình."],
@@ -136,7 +144,7 @@ export async function mount() {
     <section class="panel report-section mt-4" aria-labelledby="c-limits">
       ${sectionHead("5.2", "Hạn chế", { id: "c-limits", lead: "Những gì nghiên cứu chưa làm được" })}
       <div class="viewer-limits mt-3">
-        <article><h4>Chưa đánh giá qua nhiều lần chạy</h4><p>Một kịch bản, một seed; các client là phân vùng giả lập.</p></article>
+        <article><h4>Chưa đánh giá qua nhiều kịch bản</h4><p>Một mức lệch dữ liệu (α = 0,1), ba hạt giống; các client là phân vùng giả lập.</p></article>
         <article><h4>Chưa có kiểm thử độc lập trong điều kiện thực tế</h4><p>Ảnh ngoài đồng hiện có chỉ phủ một phần nhóm lá; kết quả chưa đại diện cho triển khai thực tế.</p></article>
         <article><h4>Cần ảnh một lá đã cắt</h4><p>Web chưa tự tìm lá trên ảnh toàn cây. Xác suất dự đoán cao vẫn có thể sai.</p></article>
       </div>
@@ -153,9 +161,9 @@ export async function mount() {
     <section class="panel report-section mt-4" aria-labelledby="c-progress">
       ${sectionHead("5.4", "Tiến độ và nguồn tham khảo", { id: "c-progress" })}
       <div tabindex="0" role="region" aria-label="Tiến độ theo giai đoạn" class="table-responsive mt-3"><table class="data-table wrap-head"><thead><tr><th scope="col">Giai đoạn</th><th scope="col">Đã có</th><th scope="col">Còn thiếu</th></tr></thead><tbody>
-        <tr><th scope="row">Mốc so sánh</th><td>Centralized v6, FedAvg v7 và 5 Local-only v7; cùng validation; đánh giá bổ sung legacy test</td><td>Đối chứng cùng bộ tối ưu và ngân sách</td></tr>
-        <tr><th scope="row">Non-IID</th><td>12 phân hoạch; kết quả huấn luyện α = 0,1, seed 42</td><td>Huấn luyện nhiều α và nhiều seed</td></tr>
-        <tr><th scope="row">Flower</th><td>Mã legacy và phiên localhost dùng ảnh nhiễu trên web</td><td>Chạy lại v7 trên Flower và đối chiếu runner</td></tr>
+        <tr><th scope="row">Mốc so sánh</th><td>Centralized, FedAvg và 5 Local-only; cùng công thức, cùng số bước gradient, cùng validation; đánh giá bổ sung trên tập test giữ riêng</td><td>Đối chứng cùng bộ tối ưu và ngân sách</td></tr>
+        <tr><th scope="row">Non-IID</th><td>Các phân hoạch của release; kết quả huấn luyện α = 0,1, hạt giống ${seed ?? "—"} hiển thị (3 hạt giống đã chạy)</td><td>Huấn luyện nhiều α</td></tr>
+        <tr><th scope="row">Flower</th><td>Mã legacy và phiên localhost dùng ảnh nhiễu trên web</td><td>Chạy lại FedAvg trên Flower và đối chiếu runner</td></tr>
         <tr><th scope="row">Thuật toán và client</th><td>MobileNetV3-Small; học lớp cuối trong demo cộng đồng</td><td>FedProx / SCAFFOLD / FedBN, lượng tử hóa, thử nhiều máy và client thật</td></tr>
         <tr><th scope="row">Đánh giá triển khai</th><td>Phân tích lỗi, hiệu chuẩn, phép đo ảnh toàn cảnh trên dữ liệu hiện có</td><td>Tập thực địa mới, nhãn được chuyên gia duyệt, test cuối cùng được niêm phong</td></tr>
       </tbody></table></div>

@@ -199,41 +199,58 @@ def analyze_split(rows: list[dict[str, Any]], logits: dict[str, np.ndarray], bes
     return out
 
 
-def selection_effect() -> dict[str, Any]:
-    """Centralized: checkpoint chọn theo macro-F1 PlantDoc trên chính val; so với epoch cuối và cực đại."""
-    summary = json.loads(reg.abs_path(f"{reg.DEMO_BUNDLE_DIR}/centralized/summary.json").read_text(encoding="utf-8"))
+def _selection_block(model_id: str) -> dict[str, Any]:
+    """Checkpoint của một mô hình được chọn trên chính validation: so điểm PlantDoc ở lần được chọn với lần cuối và cực đại.
+
+    Gói cũ ghi accuracy PlantDoc theo epoch (quality.by_source); gói train_v4 chỉ ghi macro-F1 PlantDoc theo epoch/vòng nên dùng số đó (`value_kind`)."""
+    from src import bundle
+
+    directory = model_id
+    summary = json.loads(reg.abs_path(f"{reg.DEMO_BUNDLE_DIR}/{directory}/summary.json").read_text(encoding="utf-8"))
     history = summary.get("history") or []
+    selected = summary.get("best_epoch", summary.get("best_round"))
     points = []
+    kind = None
     for entry in history:
         pd = ((entry.get("quality") or {}).get("by_source") or {}).get("plantdoc") or {}
-        count = pd.get("count")
-        if not count:
+        if pd.get("count"):
+            count = pd["count"]
+            value, kind_now = (count - int(pd.get("wrong_crop_count", 0)) - int(pd.get("right_crop_wrong_disease_count", 0))) / count, "accuracy"
+        elif entry.get("plantdoc_macro_f1_supported") is not None:
+            value, kind_now = float(entry["plantdoc_macro_f1_supported"]), "macro_f1"
+        else:
             continue
-        correct = count - int(pd.get("wrong_crop_count", 0)) - int(pd.get("right_crop_wrong_disease_count", 0))
-        points.append({"epoch": int(entry["epoch"]), "plantdoc_accuracy": correct / count,
-                       "plantdoc_macro_f1": entry.get("plantdoc_macro_f1_supported"),
-                       "eligible": bool(entry.get("quality_eligible")), "is_best": bool(entry.get("is_best"))})
-    if not points:
-        return {"available": False, "reason": "summary.json không có lịch sử PlantDoc theo epoch"}
-    best_epoch = int(summary.get("best_epoch"))
-    chosen = next(p for p in points if p["epoch"] == best_epoch)
-    last = points[-1]
-    eligible = [p for p in points if p["eligible"]]
-    rank = 1 + sum(1 for p in points if p["plantdoc_accuracy"] > chosen["plantdoc_accuracy"])
+        kind = kind or kind_now
+        points.append({"epoch": int(entry.get("epoch", entry.get("round"))), "value": value, "is_best": bool(entry.get("is_best"))})
+    if not points or selected is None:
+        return {"available": False, "reason": "summary.json không có lịch sử PlantDoc theo epoch/vòng"}
+    chosen = next((p for p in points if p["epoch"] == int(selected)), None)
+    if chosen is None:
+        return {"available": False, "reason": "epoch/vòng được chọn không nằm trong lịch sử"}
+    training = (bundle.load_manifest(reg.abs_path(reg.DEMO_BUNDLE_DIR)).get("training") or {}).get(model_id) or {}
     return {
         "available": True,
-        "model": "centralized",
-        "selection_metric": "macro-F1 PlantDoc trên validation (trong các epoch đạt ngưỡng F1 PlantVillage)",
+        "model": model_id,
+        "value_kind": kind,
+        "selection_metric": str(training.get("selection") or "macro-F1 PlantDoc trên validation (trong các epoch đạt ngưỡng F1 PlantVillage)"),
         "epochs": len(points),
-        "chosen_epoch": best_epoch,
-        "chosen_plantdoc_accuracy": chosen["plantdoc_accuracy"],
-        "last_epoch": last["epoch"],
-        "last_plantdoc_accuracy": last["plantdoc_accuracy"],
-        "max_plantdoc_accuracy": max(p["plantdoc_accuracy"] for p in points),
-        "eligible_range": [min(p["plantdoc_accuracy"] for p in eligible), max(p["plantdoc_accuracy"] for p in eligible)] if eligible else None,
-        "chosen_rank_among_epochs": rank,
-        "fedavg_note": "Bundle FedAvg v7 không công bố lịch sử từng vòng nên không đo được hiệu ứng chọn của nó.",
+        "chosen_epoch": chosen["epoch"],
+        "chosen_plantdoc_value": chosen["value"],
+        "last_epoch": points[-1]["epoch"],
+        "last_plantdoc_value": points[-1]["value"],
+        "max_plantdoc_value": max(p["value"] for p in points),
+        "chosen_rank_among_epochs": 1 + sum(1 for p in points if p["value"] > chosen["value"]),
     }
+
+
+def selection_effect() -> dict[str, Any]:
+    """Centralized (và FedAvg khi gói ghi lịch sử từng vòng): checkpoint chọn trên chính val; so với epoch cuối và cực đại."""
+    central = _selection_block("centralized")
+    if not central.get("available"):
+        return central
+    fedavg = _selection_block("fedavg")
+    note = "" if fedavg.get("available") else "Bundle FedAvg không công bố lịch sử từng vòng nên không đo được hiệu ứng chọn của nó."
+    return {**central, "fedavg": fedavg, "fedavg_note": note}
 
 
 def build_report(rng_seed: int = SEED) -> dict[str, Any]:
@@ -332,8 +349,8 @@ def main() -> int:
                   f"FedAvg {f['estimate']:.4f} [{f['low']:.4f}, {f['high']:.4f}] | McNemar p={pair['p_value']:.3g}")
     sel = report["selection_effect"]
     if sel.get("available"):
-        print(f"[statistics] chọn checkpoint Centralized: epoch {sel['chosen_epoch']} PD {sel['chosen_plantdoc_accuracy']:.4f} "
-              f"(hạng {sel['chosen_rank_among_epochs']}/{sel['epochs']}), epoch cuối {sel['last_plantdoc_accuracy']:.4f}")
+        print(f"[statistics] chọn checkpoint Centralized: epoch {sel['chosen_epoch']} PD ({sel['value_kind']}) {sel['chosen_plantdoc_value']:.4f} "
+              f"(hạng {sel['chosen_rank_among_epochs']}/{sel['epochs']}), epoch cuối {sel['last_plantdoc_value']:.4f}")
     print(f"[statistics] wrote {reg.STATISTICS_JSON}")
     return 0
 

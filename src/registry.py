@@ -99,6 +99,7 @@ QUARANTINED_EVAL_JSON = "artifacts/quarantined_plantdoc_eval.json"  # scripts/ev
 LABEL_SCREENING_JSON = "artifacts/label_screening.json"  # scripts/record_label_screening.py (sàng lọc nhãn bằng mắt do AI làm, KHÔNG phải chuyên gia)
 ERROR_GALLERY_DIR = "web/static/samples/errors"
 ERROR_GALLERY_CATALOG_JSON = f"{ERROR_GALLERY_DIR}/catalog.json"  # scripts/build_error_gallery.py
+TRAIN_V4_RESULTS_JSON = "artifacts/train_v4_results.json"  # scripts/eval_trained_v4.py (21 run: 3 hạt giống × Centralized, FedAvg, 5 Local-only; PlantWild đo ở máy này)
 TRAINING_PROTOCOL_REPORT_JSON = "artifacts/training_protocol_report.json"  # scripts/report_training_protocol.py
 STATISTICS_JSON = "artifacts/statistics_report.json"  # scripts/report_statistics.py (khoảng tin cậy theo cụm, McNemar)
 PARTITION_SCHEMES_JSON = "artifacts/partition_schemes_class_counts.json"  # scripts/report_partition_schemes.py

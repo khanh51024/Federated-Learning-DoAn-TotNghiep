@@ -1,7 +1,7 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-22 12:05 · sinh tự bởi `scripts/update_status.py`
-> **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 4 mục kỹ thuật chưa XONG)
+> **Cập nhật lúc:** 2026-10-22 13:29 · sinh tự bởi `scripts/update_status.py`
+> **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 5 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
 > con số nào trong repo phải truy được về `artifacts/registry.json`. Không sửa tay — chỉ khối Nhật ký cuối file.
@@ -9,7 +9,7 @@
 ## 1. Hướng chính thức
 
 - **Luồng một chiều:** train ngoài repo (Kaggle/branch) -> bundle + manifest + SHA-256 -> import/kiểm hash -> registry -> status/web/báo cáo
-- **Kết quả hiện hành:** họ `published_demo`, protocol `mixed_pv_pd_v3_pretrained_seed42_validation`.
+- **Kết quả hiện hành:** họ `published_demo`, protocol `mixed_pv_pd_v4_pretrained_seed42_validation`.
 - **Engine trong repo:** `src/` (Flower demo, evaluator, web). Pipeline Kaggle cũ nằm ở `legacy/` — chỉ để tra cứu/tái lập lịch sử.
 - **Máy này:** CPU, không train; chỉ nhận kết quả đã train rồi kiểm hash + test.
 
@@ -20,7 +20,7 @@
 - Dataset cục bộ để tái lập: `data/partitions_stage2_scratch_v3` — split **38984/4400/10921** (5 clients, seed 42, protocol `stage2_scratch_clean_v3`)
 - Run Kaggle lịch sử: `20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62` — metrics CÓ, **checkpoint KHÔNG còn trên máy**
 
-## 3. Checklist nghiệm thu — XONG 15/22 · CHƯA 4 · BLOCKED 3
+## 3. Checklist nghiệm thu — XONG 14/22 · CHƯA 5 · BLOCKED 3
 
 | # | Hạng mục | Trạng thái | Bằng chứng (máy kiểm) |
 |---|---|---|---|
@@ -29,23 +29,23 @@
 | 3 | Một engine train (pipeline cũ gom vào legacy/) | ✅ XONG | engine duy nhất là src/; pipeline Kaggle/stage* nằm trong legacy/ (chạy riêng: pytest legacy/tests) |
 | 4 | Web tách router/service, inference đi một cửa | ✅ XONG | app.py chỉ mount router; inference chỉ đi qua web/services/model_service.py (cổng web_visible) |
 | 5 | Không hardcode đường dẫn artifact | ⬜ CHƯA | 8 chỗ hardcode đường dẫn artifacts/ (quét AST): ['src/bundle.py:19', 'src/bundle.py:20', 'src/bundle.py:21', 'scripts/build_community_sim_features.py:88', 'scripts/eval_trained_v4.py:31'] |
-| 6 | Dọn tài liệu mâu thuẫn | ⬜ CHƯA | tài liệu ngoài danh mục: gốc=[] docs=['REPORT_WORD_WEB_2026-10-20.md'] |
+| 6 | Dọn tài liệu mâu thuẫn | ⬜ CHƯA | tài liệu ngoài danh mục: gốc=[] docs=['REPORT_WORD_WEB_2026-10-20.md', 'THAY_MO_HINH_WEB.md'] |
 | 7 | Số liệu trong docs không mâu thuẫn artifact | ✅ XONG | không còn số liệu mâu thuẫn đã biết (97,12, 97.12...) và không ghi tĩnh kết quả test trong README/docs |
-| 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
+| 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ⬜ CHƯA | docs/EXPERIMENT_PROTOCOL.md chưa nêu protocol: ['mixed_pv_pd_v4_pretrained_seed42_validation'] |
 | 9 | Test không ghi đè artifact đang track | ✅ XONG | test không tham chiếu artifacts/checkpoints/metrics (dùng tmp_path) |
 | 10 | Dependency khai báo một nơi (pyproject = requirements) | ✅ XONG | 17 dependency trùng giữa pyproject.toml và requirements.txt; ghim cũ nằm ở legacy/pyproject.toml |
 | 11 | Full tests pass trên mã nguồn hiện tại | ⬜ CHƯA | kết quả cũ (2026-10-21T21:54:16) không còn khớp mã nguồn hiện tại — chạy lại --full-gates |
 | 12 | Kiểm chứng provenance & checkpoint canonical | ⛔ BLOCKED | provenance=unverified; lỗi: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing'] |
-| 13 | Audit leakage theo từng run | ✅ XONG | release mixed_pv_pd_v3: train 37.238 / val 4.613 / calibration 4.225 rời nhau trên 5 khóa (giao nhau tổng = 0); 12 partition đều là tập con train; 46.076 ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train) |
-| 14 | Đánh giá PlantDoc theo từng lớp (từ số công bố) | ✅ XONG | PlantDoc phủ 13/38 lớp; 6 lớp recall<50% (136/269 ảnh); FedAvg tệ hơn Centralized ở 5/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5) |
-| 15 | Tái đánh giá cục bộ trên ảnh validation (xác nhận số công bố) | ✅ XONG | 4.613 ảnh validation tái đo trên CPU: Centralized v6 và FedAvg v7 khớp TUYỆT ĐỐI số công bố (số ảnh đúng, macro-F1, crop accuracy, recall theo lớp); tổng 10/14 phép so khớp tuyệt đối; 4 phép so của Local-only lệch ≤1 ảnh: Local 01/plantdoc (+0 ảnh), Local 01/plantvillage (+0 ảnh), Local 03/plantvillage (+1 ảnh), Local 04/plantvillage (-1 ảnh) — chưa rõ nguyên nhân, phù hợp sai số số học (ảnh sát ngưỡng) |
-| 16 | Phân tích lỗi confidence cao (mức tổng hợp, từ số công bố) | ✅ XONG | mức tổng hợp từ metrics công bố — Centralized v6: 77/269 ảnh PlantDoc sai với confidence>0.9 (62% số lỗi); FedAvg v7: 41/269 ảnh PlantDoc sai với confidence>0.9 (29% số lỗi) (xem mục 5) |
-| 17 | Phân tích từng ảnh sai tự tin + đo calibration (ECE) | ✅ XONG | FedAvg v7: ECE PlantDoc 0.295 → 0.261 sau temperature scaling (T=1.1488, fit trên 4.225 ảnh calibration tách biệt val); 100 ảnh validation sai với confidence ≥ 0,9 đã liệt kê từng ảnh. UI hiển thị softmax thô kèm xác suất đã hiệu chuẩn (T) |
-| 18 | Đánh giá trên tập test giữ riêng (không dùng để chọn checkpoint) | ✅ XONG | 11.015 ảnh legacy_diagnostic_test (không dùng để chọn checkpoint): Centralized v6 PV 99.23% / PD 63.37%; FedAvg v7 PV 93.34% / PD 50.00%; Centralized so với số tự ghi trong summary.json: plantdoc khớp, plantvillage khớp |
-| 19 | Khoảng tin cậy theo cụm + McNemar + độ nhạy 'cùng lá' | ✅ XONG | khoảng tin cậy 95% bootstrap theo cụm (cảnh/nhóm lá) — val: PlantDoc Centralized 53.9% [44.2%; 63.1%], Centralized−FedAvg +6.7% [-3.7%; +18.0%], McNemar p=0.0414 / test: PlantDoc Centralized 63.4% [52.9%; 73.7%], Centralized−FedAvg +13.4% [+1.6%; +24.8%], McNemar p=0.00762 |
+| 13 | Audit leakage theo từng run | ✅ XONG | release mixed_pv_pd_v4: train 52.464 / val 6.746 / calibration 7.005 rời nhau trên 5 khóa (giao nhau tổng = 0); 2 partition đều là tập con train; 66.215 ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train) |
+| 14 | Đánh giá PlantDoc theo từng lớp (từ số công bố) | ✅ XONG | PlantDoc phủ 13/38 lớp; 8 lớp recall<50% (204/269 ảnh); FedAvg tệ hơn Centralized ở 9/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5) |
+| 15 | Tái đánh giá cục bộ trên ảnh validation (xác nhận số công bố) | ✅ XONG | 6.746 ảnh validation tái đo trên CPU: Centralized v4b và FedAvg v4b khớp TUYỆT ĐỐI số ghi trong gói (số ảnh đúng, macro-F1, crop accuracy, recall theo lớp); tổng 21/21 phép so khớp tuyệt đối |
+| 16 | Phân tích lỗi confidence cao (mức tổng hợp, từ số công bố) | ✅ XONG | mức tổng hợp từ metrics công bố — Centralized v4b: 8/269 ảnh PlantDoc sai với confidence>0.9 (7% số lỗi); FedAvg v4b: 0/269 ảnh PlantDoc sai với confidence>0.9 (0% số lỗi) (xem mục 5) |
+| 17 | Phân tích từng ảnh sai tự tin + đo calibration (ECE) | ✅ XONG | FedAvg v4b: ECE PlantDoc 0.077 → 0.245 sau temperature scaling (T=0.5588, fit trên 7.005 ảnh calibration tách biệt val); 1 ảnh validation sai với confidence ≥ 0,9 đã liệt kê từng ảnh. UI hiển thị softmax thô kèm xác suất đã hiệu chuẩn (T) |
+| 18 | Đánh giá trên tập test giữ riêng (không dùng để chọn checkpoint) | ✅ XONG | 13.101 ảnh legacy_diagnostic_test (không dùng để chọn checkpoint): Centralized v4b PV 99.32% / PD 59.88%; FedAvg v4b PV 96.84% / PD 40.12%; Centralized so với số tự ghi trong summary.json: plantdoc +2 ảnh, plantvillage +13 ảnh, field_other không suy ra được số ảnh đúng |
+| 19 | Khoảng tin cậy theo cụm + McNemar + độ nhạy 'cùng lá' | ✅ XONG | khoảng tin cậy 95% bootstrap theo cụm (cảnh/nhóm lá) — val: PlantDoc Centralized 56.5% [47.4%; 66.0%], Centralized−FedAvg +19.0% [+11.2%; +26.9%], McNemar p=5.19e-09 / test: PlantDoc Centralized 59.9% [51.1%; 68.7%], Centralized−FedAvg +19.8% [+10.9%; +29.8%], McNemar p=1.21e-05 |
 | 20 | Chạy multi-seed non-IID (seed 42/123/2026) | ⛔ BLOCKED | chưa có multi-seed THẬT cho protocol đang công bố (mixed PV+PlantDoc, pretrained); chỉ có bản smoke trên ảnh nhiễu ngẫu nhiên |
 | 21 | Đồng bộ báo cáo & artifacts sau khi có run mới | ⛔ BLOCKED | phụ thuộc multi-seed thật |
-| 22 | Release sạch (mọi gate kỹ thuật XONG) | ⬜ CHƯA | còn mục kỹ thuật chưa XONG: ['no_hardcode', 'docs_clean', 'full_tests'] |
+| 22 | Release sạch (mọi gate kỹ thuật XONG) | ⬜ CHƯA | còn mục kỹ thuật chưa XONG: ['no_hardcode', 'docs_clean', 'protocol', 'full_tests'] |
 
 ### Việc đang BLOCKED — cần gì và mở khóa bằng lệnh nào
 
@@ -82,25 +82,26 @@ Copy-Item <centralized_best.pt tải về> artifacts/checkpoints/centralized_bes
 ### Việc làm được ngay (chưa BLOCKED)
 
 1. Không hardcode đường dẫn artifact — 8 chỗ hardcode đường dẫn artifacts/ (quét AST): ['src/bundle.py:19', 'src/bundle.py:20', 'src/bundle.py:21', 'scripts/build_community_sim_features.py:88', 'scripts/eval_trained_v4.py:31']
-2. Dọn tài liệu mâu thuẫn — tài liệu ngoài danh mục: gốc=[] docs=['REPORT_WORD_WEB_2026-10-20.md']
-3. Full tests pass trên mã nguồn hiện tại — kết quả cũ (2026-10-21T21:54:16) không còn khớp mã nguồn hiện tại — chạy lại --full-gates
-4. Release sạch (mọi gate kỹ thuật XONG) — còn mục kỹ thuật chưa XONG: ['no_hardcode', 'docs_clean', 'full_tests']
+2. Dọn tài liệu mâu thuẫn — tài liệu ngoài danh mục: gốc=[] docs=['REPORT_WORD_WEB_2026-10-20.md', 'THAY_MO_HINH_WEB.md']
+3. Chốt một protocol khoa học cho mỗi thí nghiệm — docs/EXPERIMENT_PROTOCOL.md chưa nêu protocol: ['mixed_pv_pd_v4_pretrained_seed42_validation']
+4. Full tests pass trên mã nguồn hiện tại — kết quả cũ (2026-10-21T21:54:16) không còn khớp mã nguồn hiện tại — chạy lại --full-gates
+5. Release sạch (mọi gate kỹ thuật XONG) — còn mục kỹ thuật chưa XONG: ['no_hardcode', 'docs_clean', 'protocol', 'full_tests']
 
 ## 4. Kết quả chuẩn theo họ (không trộn lẫn)
 
 ### Hiện hành — bundle đã kiểm hash (pretrained, mixed PV+PlantDoc)
 
-_Checkpoint pretrained mixed PlantVillage+PlantDoc (protocol mixed_pv_pd_v3_pretrained_seed42_validation), hash-verified khi import. Dùng cho demo web/inference, KHÔNG phải kết quả khoa học của protocol GĐ2 scratch._
+_Checkpoint pretrained mixed PlantVillage+PlantDoc (protocol mixed_pv_pd_v4_pretrained_seed42_validation), hash-verified khi import. Dùng cho demo web/inference, KHÔNG phải kết quả khoa học của protocol GĐ2 scratch._
 
 | Model | Nhãn | Checkpoint | Số liệu chính | Nguồn số liệu |
 |---|---|---|---|---|
-| Centralized v6 (published demo) | Demo (hash-verified, pretrained mixed PV+PlantDoc) (web: ✅) | ✅ có, hash ok | PlantDoc 53.90% (n=269); PlantVillage 99.22% (n=4344) | artifacts/branch_demo/20261003/centralized/validation_metrics.json |
-| FedAvg v7 (published demo) | Demo (hash-verified, pretrained mixed PV+PlantDoc) (web: ✅) | ✅ có, hash ok | PlantDoc 47.21% (n=269); PlantVillage 93.12% (n=4344) | artifacts/branch_demo/20261003/fedavg/validation_metrics.json |
-| Local-only client 00 (published demo) | Demo (hash-verified, pretrained mixed PV+PlantDoc) (web: ✅) | ✅ có, hash ok | PlantDoc 25.65% (n=269); PlantVillage 44.89% (n=4344) | artifacts/branch_demo/20261003/local/client_00/validation_metrics.json |
-| Local-only client 01 (published demo) | Demo (hash-verified, pretrained mixed PV+PlantDoc) (web: ✅) | ✅ có, hash ok | PlantDoc 25.28% (n=269); PlantVillage 52.00% (n=4344) | artifacts/branch_demo/20261003/local/client_01/validation_metrics.json |
-| Local-only client 02 (published demo) | Demo (hash-verified, pretrained mixed PV+PlantDoc) (web: ✅) | ✅ có, hash ok | PlantDoc 29.00% (n=269); PlantVillage 55.34% (n=4344) | artifacts/branch_demo/20261003/local/client_02/validation_metrics.json |
-| Local-only client 03 (published demo) | Demo (hash-verified, pretrained mixed PV+PlantDoc) (web: ✅) | ✅ có, hash ok | PlantDoc 26.77% (n=269); PlantVillage 55.46% (n=4344) | artifacts/branch_demo/20261003/local/client_03/validation_metrics.json |
-| Local-only client 04 (published demo) | Demo (hash-verified, pretrained mixed PV+PlantDoc) (web: ✅) | ✅ có, hash ok | PlantDoc 21.19% (n=269); PlantVillage 55.18% (n=4344) | artifacts/branch_demo/20261003/local/client_04/validation_metrics.json |
+| Centralized v4b (mô hình web, đã đánh giá lại cục bộ) | Mô hình web (hash-verified, đánh giá lại cục bộ) (web: ✅) | ✅ có, hash ok | PlantDoc 56.51% (n=269); PlantVillage 99.54% (n=4344) | artifacts/model_bundles/v4b_s42/centralized/validation_metrics.json |
+| FedAvg v4b (mô hình web, đã đánh giá lại cục bộ) | Mô hình web (hash-verified, đánh giá lại cục bộ) (web: ✅) | ✅ có, hash ok | PlantDoc 37.55% (n=269); PlantVillage 96.71% (n=4344) | artifacts/model_bundles/v4b_s42/fedavg/validation_metrics.json |
+| Local-only client 00 (mô hình web, đã đánh giá lại cục bộ) | Mô hình web (hash-verified, đánh giá lại cục bộ) (web: ✅) | ✅ có, hash ok | PlantDoc 21.56% (n=269); PlantVillage 51.82% (n=4344) | artifacts/model_bundles/v4b_s42/local/client_00/validation_metrics.json |
+| Local-only client 01 (mô hình web, đã đánh giá lại cục bộ) | Mô hình web (hash-verified, đánh giá lại cục bộ) (web: ✅) | ✅ có, hash ok | PlantDoc 17.10% (n=269); PlantVillage 48.85% (n=4344) | artifacts/model_bundles/v4b_s42/local/client_01/validation_metrics.json |
+| Local-only client 02 (mô hình web, đã đánh giá lại cục bộ) | Mô hình web (hash-verified, đánh giá lại cục bộ) (web: ✅) | ✅ có, hash ok | PlantDoc 29.74% (n=269); PlantVillage 29.24% (n=4344) | artifacts/model_bundles/v4b_s42/local/client_02/validation_metrics.json |
+| Local-only client 03 (mô hình web, đã đánh giá lại cục bộ) | Mô hình web (hash-verified, đánh giá lại cục bộ) (web: ✅) | ✅ có, hash ok | PlantDoc 27.14% (n=269); PlantVillage 53.02% (n=4344) | artifacts/model_bundles/v4b_s42/local/client_03/validation_metrics.json |
+| Local-only client 04 (mô hình web, đã đánh giá lại cục bộ) | Mô hình web (hash-verified, đánh giá lại cục bộ) (web: ✅) | ✅ có, hash ok | PlantDoc 7.43% (n=269); PlantVillage 55.57% (n=4344) | artifacts/model_bundles/v4b_s42/local/client_04/validation_metrics.json |
 
 ### Lịch sử — Kaggle scratch, PlantVillage thuần (chỉ còn metrics)
 
@@ -145,8 +146,8 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
 
 | Nhóm | Số file | Vai trò | Mô tả |
 |---|---|---|---|
+| `branch_demo_inactive` | 7 | historical | Gói mô hình cũ (Centralized v6, FedAvg v7, Local 00-04 từ ba nhánh train) không phải gói web đang dùng; giữ để lùi (swap_web_models.py --rollback) |
 | `kaggle_run_lfs_pointer` | 6 | historical | Checkpoint run Kaggle canonical: chỉ còn con trỏ Git-LFS, bytes thật KHÔNG có trên máy (repo không có remote) — cần tải lại từ Kaggle |
-| `model_bundles_inactive` | 7 | historical | Gói mô hình dựng từ run train_v4 nhưng không phải gói web đang dùng (artifacts/active_bundle.json); giữ để lùi hoặc thay lại |
 | `report_experiments_smoke` | 36 | quarantined | Run report_experiments mode=smoke (ảnh nhiễu ngẫu nhiên, accuracy 0.0263) — cấm dùng trong luận văn |
 | `train_v4_runs` | 21 | technical_demo | Checkpoint đợt train v4 (scripts/train_v4.py, máy GPU thuê) chưa đánh giá/promote — số liệu chỉ dùng sau scripts/eval_trained_v4.py |
 | `web_runs` | 15 | technical_demo | Checkpoint từ run do web khởi động (smoke Flower hoặc demo huấn luyện); chưa có bằng chứng khoa học |
@@ -155,82 +156,82 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
 
 | Model | PlantVillage | PlantDoc | Chênh | Đúng cây (PlantDoc) | Sai mà confidence > 0.9 |
 |---|---|---|---|---|---|
-| Centralized v6 | 99.22% | 53.9% | 45.32 điểm | 78.81% | 98 |
-| FedAvg v7 | 93.12% | 47.21% | 45.91 điểm | 75.46% | 100 |
+| Centralized v4b | 99.54% | 56.51% | 43.03 điểm | 80.3% | 10 |
+| FedAvg v4b | 96.71% | 37.55% | 59.16 điểm | 67.66% | 1 |
 
 - Audit ảnh ngoài (không có nhãn, chỉ dự đoán): 4 ảnh; Centralized và FedAvg **bất đồng trên 2/4** ảnh. Đây không phải accuracy.
-- Nhầm lẫn lớn nhất của FedAvg v7 (metrics công bố): Grape___Black_rot → Grape___Esca_(Black_Measles) (55 ảnh); Tomato___Early_blight → Tomato___Late_blight (21 ảnh); Tomato___Bacterial_spot → Tomato___Early_blight (20 ảnh)
+- Nhầm lẫn lớn nhất của FedAvg v4b (metrics ghi trong gói): Corn_(maize)___Northern_Leaf_Blight → Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot (52 ảnh); Tomato___Late_blight → Tomato___Early_blight (24 ảnh); Tomato___Septoria_leaf_spot → Tomato___Early_blight (22 ảnh)
 - Nhận định: khoảng cách PlantVillage↔PlantDoc ~45 điểm ở cả hai phương pháp ⇒ vấn đề là tổng quát hóa giữa miền dữ liệu, không phải riêng frontend. Chưa đủ bằng chứng để kết luận nguyên nhân (thiếu dữ liệu, nhãn, hay chiến lược train).
 - Số liệu trên là số công bố của bundle; đã **tái đánh giá cục bộ** (bảng dưới) và chấm thêm trên tập test giữ riêng.
 
-**Vì sao Local-only sai: số ảnh train mỗi client có cho từng lớp cà chua (partition `label_alpha_0_1`, tổng 37.238 ảnh):**
+**Vì sao Local-only sai: số ảnh train mỗi client có cho từng lớp cà chua (partition `label_alpha_0_1`, tổng 52.464 ảnh):**
 
 | Lớp | c00 | c01 | c02 | c03 | c04 | Cả 5 |
 |---|---:|---:|---:|---:|---:|---:|
-| Bacterial_spot | 14 | 0 | 1549 | 17 | 17 | 1597 |
-| Early_blight | 0 | 2 | 0 | 0 | 792 | 794 |
-| Late_blight | 521 | 203 | 175 | 22 | 463 | 1384 |
-| Leaf_Mold | 3 | 393 | 46 | 351 | 39 | 832 |
-| Septoria_leaf_spot | 6 | 1258 | 0 | 11 | 180 | 1455 |
-| Spider_mites Two-spotted_spider_mite | 0 | 4 | 0 | 0 | 1094 | 1098 |
-| Target_Spot | 878 | 0 | 32 | 1 | 0 | 911 |
-| Tomato_Yellow_Leaf_Curl_Virus | 0 | 548 | 39 | 2881 | 0 | 3468 |
-| Tomato_mosaic_virus | 0 | 0 | 377 | 16 | 0 | 393 |
-| healthy | 0 | 47 | 122 | 881 | 13 | 1063 |
+| Bacterial_spot | 4 | 355 | 36 | 4 | 1624 | 2023 |
+| Early_blight | 0 | 0 | 3 | 738 | 779 | 1520 |
+| Late_blight | 1951 | 0 | 0 | 0 | 27 | 1978 |
+| Leaf_Mold | 0 | 1507 | 0 | 4 | 0 | 1511 |
+| Septoria_leaf_spot | 0 | 0 | 1826 | 53 | 46 | 1925 |
+| Spider_mites Two-spotted_spider_mite | 0 | 83 | 69 | 0 | 1134 | 1286 |
+| Target_Spot | 258 | 646 | 4 | 0 | 3 | 911 |
+| Tomato_Yellow_Leaf_Curl_Virus | 3776 | 0 | 4 | 6 | 1 | 3787 |
+| Tomato_mosaic_virus | 0 | 129 | 251 | 0 | 13 | 393 |
+| healthy | 0 | 2028 | 1 | 0 | 94 | 2123 |
 
 - Mỗi lớp bệnh dồn gần như vào một client; Local-only không nhận ra bệnh mà shard của nó không có ảnh (khớp recall công bố, vd. Bacterial_spot: c02 có 1.549 ảnh và đạt 99%, bốn client còn lại 0%). Đây là minh họa trực tiếp cho giá trị của FedAvg.
 
-**Tái đánh giá CỤC BỘ trên CPU (4.613 ảnh validation; calibration 4.225 ảnh tách biệt val):**
+**Tái đánh giá CỤC BỘ trên CPU (6.746 ảnh validation; calibration 7.005 ảnh tách biệt val):**
 
 | Model | PlantVillage | PlantDoc | Khớp số công bố | ECE PV (thô → TS) | ECE PlantDoc (thô → TS) | T |
 |---|---:|---:|---|---:|---:|---:|
-| Centralized v6 | 99.22% | 53.90% | PV tuyệt đối, PD tuyệt đối | 0.006 → 0.010 | 0.370 → 0.187 | 2.9264 |
-| FedAvg v7 | 93.12% | 47.21% | PV tuyệt đối, PD tuyệt đối | 0.013 → 0.019 | 0.295 → 0.261 | 1.1488 |
-| Local 00 | 44.89% | 25.65% | PV tuyệt đối, PD tuyệt đối | 0.419 → 0.063 | 0.543 → 0.087 | 3.3933 |
-| Local 01 | 52.00% | 25.28% | PV +0 ảnh, PD +0 ảnh | 0.335 → 0.064 | 0.625 → 0.217 | 3.1411 |
-| Local 02 | 55.34% | 29.00% | PV tuyệt đối, PD tuyệt đối | 0.327 → 0.100 | 0.578 → 0.169 | 3.1841 |
-| Local 03 | 55.48% | 26.77% | PV +1 ảnh, PD tuyệt đối | 0.270 → 0.115 | 0.510 → 0.116 | 2.6643 |
-| Local 04 | 55.16% | 21.19% | PV -1 ảnh, PD tuyệt đối | 0.333 → 0.082 | 0.625 → 0.183 | 3.2764 |
+| Centralized v4b | 99.54% | 56.51% | PV tuyệt đối, PD tuyệt đối | 0.106 → 0.014 | 0.094 → 0.214 | 0.694 |
+| FedAvg v4b | 96.71% | 37.55% | PV tuyệt đối, PD tuyệt đối | 0.227 → 0.026 | 0.077 → 0.245 | 0.5588 |
+| Local 00 | 51.82% | 21.56% | PV tuyệt đối, PD tuyệt đối | 0.140 → 0.130 | 0.355 → 0.189 | 1.3258 |
+| Local 01 | 48.85% | 17.10% | PV tuyệt đối, PD tuyệt đối | 0.170 → 0.166 | 0.381 → 0.217 | 1.3287 |
+| Local 02 | 29.24% | 29.74% | PV tuyệt đối, PD tuyệt đối | 0.315 → 0.163 | 0.358 → 0.114 | 1.5022 |
+| Local 03 | 53.02% | 27.14% | PV tuyệt đối, PD tuyệt đối | 0.180 → 0.105 | 0.323 → 0.155 | 1.3219 |
+| Local 04 | 55.57% | 7.43% | PV tuyệt đối, PD tuyệt đối | 0.140 → 0.147 | 0.440 → 0.262 | 1.3646 |
 
-- Khớp tuyệt đối 10/14 phép so; Centralized và FedAvg khớp tuyệt đối trên cả hai nguồn. Chênh lệch (nếu có) chỉ ở Local-only và <= 1 ảnh. Mỗi chênh đều có ảnh ứng viên với độ lệch top-1/top-2 rất nhỏ (< 0,01); phù hợp với sai số số học giữa môi trường chạy, CHƯA được chứng minh.
+- Khớp tuyệt đối 21/21 phép so; Centralized và FedAvg khớp tuyệt đối trên cả hai nguồn. Chênh lệch (nếu có) chỉ ở Local-only và <= 1 ảnh. Mỗi chênh đều có ảnh ứng viên với độ lệch top-1/top-2 rất nhỏ (< 0,01); phù hợp với sai số số học giữa môi trường chạy, CHƯA được chứng minh.
 - ECE đo mức lệch giữa độ tin cậy và độ đúng thật (càng thấp càng tốt); TS = temperature scaling với T fit trên tập calibration, KHÔNG fit trên validation. Temperature scaling không đổi nhãn dự đoán, chỉ đổi độ tin cậy hiển thị.
-- 100 ảnh validation FedAvg v7 sai với confidence ≥ 0,9 đã liệt kê từng ảnh trong `artifacts/local_reeval_report.json` (mục `detail.fedavg.high_confidence_wrong`).
-- Leakage (split của release `mixed_pv_pd_v3`): train/val/calibration giao nhau = 0; 46.076 ảnh khớp byte_sha256; 12 partition là tập con của train. Phạm vi: split của release; checkpoint ràng buộc release qua metadata.
+- 1 ảnh validation FedAvg v4b sai với confidence ≥ 0,9 đã liệt kê từng ảnh trong `artifacts/local_reeval_report.json` (mục `detail.fedavg.high_confidence_wrong`).
+- Leakage (split của release `mixed_pv_pd_v4`): train/val/calibration giao nhau = 0; 66.215 ảnh khớp byte_sha256; 2 partition là tập con của train. Phạm vi: split của release; checkpoint ràng buộc release qua metadata.
 
-**Tập test giữ riêng `legacy_diagnostic_test` (11.015 ảnh: PlantVillage 10.843, PlantDoc 172; không dùng để chọn checkpoint; [khoảng tin cậy 95% bootstrap theo cụm]):**
+**Tập test giữ riêng `legacy_diagnostic_test` (13.101 ảnh: PlantVillage 10.843, PlantDoc 172; không dùng để chọn checkpoint; [khoảng tin cậy 95% bootstrap theo cụm]):**
 
 | Model | PlantVillage | PlantDoc |
 |---|---:|---:|
-| Centralized v6 | 99.23% [99.0%; 99.4%] | 63.37% [52.9%; 73.7%] |
-| FedAvg v7 | 93.34% [92.7%; 94.0%] | 50.00% [38.4%; 61.4%] |
-| Local 00 | 45.54% [43.4%; 47.8%] | 25.00% [17.2%; 34.2%] |
-| Local 01 | 52.03% [50.0%; 54.1%] | 24.42% [14.5%; 34.8%] |
-| Local 02 | 55.22% [53.2%; 57.3%] | 26.16% [15.7%; 39.0%] |
-| Local 03 | 55.48% [53.4%; 57.6%] | 24.42% [17.3%; 32.3%] |
-| Local 04 | 55.15% [53.1%; 57.2%] | 25.58% [16.6%; 35.3%] |
-- Hiệu ứng chọn checkpoint: Centralized được chọn ở epoch 22/83 theo macro-F1 PlantDoc trên CHÍNH validation; accuracy PlantDoc ở epoch đó 53.90% là cao nhất (hạng 1/83), epoch cuối 51.67%. Chọn trên val có thể đẩy số val lên; số test giữ riêng ở bảng trên không dùng để chọn nên không chịu thiên lệch này (PlantDoc test chỉ 172 ảnh — khoảng tin cậy rộng).
-- Độ nhạy 'cùng lá' (test, PlantVillage): 2.633 ảnh không được gom nhóm lá, 2.015 có ảnh train mang số liền kề (ước lượng chụp lại). Bỏ các ảnh đó: Centralized 99.23% → 99.32%, FedAvg 93.34% → 93.94% — không thấy dấu hiệu bị thổi phồng.
+| Centralized v4b | 99.32% [99.1%; 99.5%] | 59.88% [51.1%; 68.7%] |
+| FedAvg v4b | 96.84% [96.3%; 97.3%] | 40.12% [30.1%; 49.7%] |
+| Local 00 | 52.68% [50.6%; 54.9%] | 11.05% [5.9%; 17.6%] |
+| Local 01 | 49.19% [47.1%; 51.4%] | 23.84% [14.9%; 33.5%] |
+| Local 02 | 29.09% [26.8%; 31.3%] | 32.56% [19.6%; 46.3%] |
+| Local 03 | 53.51% [51.3%; 55.6%] | 34.30% [23.3%; 46.0%] |
+| Local 04 | 55.11% [52.9%; 57.2%] | 17.44% [10.3%; 25.8%] |
+- Hiệu ứng chọn checkpoint: Centralized được chọn ở epoch 33/40 theo mean macro-F1 over val sources with >= 30 images trên CHÍNH validation; macro-F1 PlantDoc ở epoch đó 59.03% (hạng 6/40), epoch cuối 59.07%. Chọn trên val có thể đẩy số val lên; số test giữ riêng ở bảng trên không dùng để chọn nên không chịu thiên lệch này (PlantDoc test chỉ 172 ảnh — khoảng tin cậy rộng).
+- Độ nhạy 'cùng lá' (test, PlantVillage): 2.633 ảnh không được gom nhóm lá, 2.015 có ảnh train mang số liền kề (ước lượng chụp lại). Bỏ các ảnh đó: Centralized 99.32% → 99.29%, FedAvg 96.84% → 97.02% — không thấy dấu hiệu bị thổi phồng.
 
-**Theo lớp trên PlantDoc (FedAvg v7, số công bố; sắp theo recall tăng dần):**
+**Theo lớp trên PlantDoc (FedAvg v4b, số ghi trong gói; sắp theo recall tăng dần):**
 
-- PlantDoc chỉ phủ **13/38** lớp của taxonomy; 6 lớp có recall < 50% chiếm 136/269 ảnh.
-- Phân rã 269 ảnh: đúng 127 · sai loại cây 66 · đúng cây nhưng sai bệnh 76; sai với confidence > 0.9: 41 ảnh (29% số lỗi).
+- PlantDoc chỉ phủ **13/38** lớp của taxonomy; 8 lớp có recall < 50% chiếm 204/269 ảnh.
+- Phân rã 269 ảnh: đúng 101 · sai loại cây 87 · đúng cây nhưng sai bệnh 81; sai với confidence > 0.9: 0 ảnh (0% số lỗi).
 
 | Lớp | Ảnh PlantDoc | FedAvg PlantDoc | Centralized PlantDoc | FedAvg PlantVillage | Chênh (điểm) |
 |---|---:|---:|---:|---:|---:|
-| Tomato___Tomato_mosaic_virus | 29 | 0% | 66% | 83% | 83.33 |
-| Tomato___Early_blight | 5 | 0% | 20% | 52% | 52.5 |
-| Tomato___Bacterial_spot | 16 | 6% | 0% | 81% | 75.15 |
-| Apple___Apple_scab | 25 | 44% | 32% | 85% | 41.42 |
-| Potato___Late_blight | 22 | 45% | 45% | 95% | 49.55 |
-| Tomato___Septoria_leaf_spot | 39 | 49% | 64% | 89% | 40.64 |
-| Tomato___Leaf_Mold | 32 | 50% | 44% | 93% | 43.42 |
-| Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot | 6 | 50% | 67% | 54% | 3.66 |
-| Potato___Early_blight | 36 | 56% | 44% | 100% | 44.44 |
-| Tomato___Late_blight | 20 | 60% | 60% | 96% | 36.05 |
-| Grape___Black_rot | 6 | 67% | 67% | 38% | -29.17 |
-| Corn_(maize)___Common_rust_ | 9 | 89% | 89% | 98% | 9.01 |
-| Squash___Powdery_mildew | 24 | 96% | 100% | 100% | 4.17 |
+| Tomato___Tomato_mosaic_virus | 29 | 0% | 34% | 100% | 100.0 |
+| Tomato___Early_blight | 5 | 0% | 20% | 74% | 73.75 |
+| Tomato___Bacterial_spot | 16 | 6% | 0% | 96% | 89.68 |
+| Potato___Early_blight | 36 | 28% | 42% | 99% | 70.97 |
+| Apple___Apple_scab | 25 | 28% | 56% | 94% | 65.75 |
+| Tomato___Leaf_Mold | 32 | 34% | 62% | 93% | 59.05 |
+| Tomato___Septoria_leaf_spot | 39 | 36% | 67% | 79% | 42.83 |
+| Potato___Late_blight | 22 | 41% | 45% | 91% | 50.34 |
+| Tomato___Late_blight | 20 | 50% | 85% | 90% | 40.13 |
+| Grape___Black_rot | 6 | 67% | 67% | 100% | 33.33 |
+| Squash___Powdery_mildew | 24 | 88% | 96% | 100% | 12.5 |
+| Corn_(maize)___Common_rust_ | 9 | 89% | 89% | 100% | 11.11 |
+| Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot | 6 | 100% | 67% | 93% | -7.32 |
 
 - Không có trong số công bố (cần ảnh validation): confusion matrix đầy đủ trên ảnh PlantDoc; danh sách từng ảnh sai với confidence cao; calibration (ECE / temperature scaling) trên tập validation độc lập; tỷ lệ PlantDoc trong dữ liệu huấn luyện (bundle chỉ công bố validation_manifest, không kèm manifest train).
 

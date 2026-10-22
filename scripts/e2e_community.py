@@ -459,7 +459,7 @@ def main() -> int:
             request.add_header("Content-Type", f"multipart/form-data; boundary={boundary}")
             with urllib.request.urlopen(request, timeout=90) as response:
                 prediction = json.loads(response.read())
-            check("dự đoán bằng mô hình cộng đồng (phiên bản 1) có so sánh FedAvg v7",
+            check("dự đoán bằng mô hình cộng đồng (phiên bản 1) có so sánh với FedAvg của gói web",
                   prediction["ready"] and prediction["version"] == 1 and "baseline" in prediction, prediction["predicted_class"])
 
             admin_ui_checks(browser, base, ADMIN)

@@ -1,5 +1,5 @@
 // Chương 4 · Kết quả: tổng hợp 7 mô hình, tập giữ riêng và thống kê, phân tích lỗi, độ tin cậy của xác suất.
-import { centralizedNoteHtml, holdoutPlantdocHtml, modelTraining, overallHtml, telemetryHtml, trainingHistoryHtml } from "../core/report-training.js";
+import { centralizedNoteHtml, holdoutPlantdocHtml, modelTraining, overallHtml, seedsHtml, telemetryHtml, trainingHistoryHtml } from "../core/report-training.js";
 import { getDetails, getEvidence, getSummary, modelsById } from "../core/store.js";
 import { attachCrosshair } from "../core/crosshair.js";
 import { barRise, lineDraw, makeChartWhenVisible, pillarColors } from "../core/charts.js";
@@ -83,11 +83,12 @@ function buildSummary() {
       <p class="field-hint mt-3"><b>Cách đọc:</b> “đúng” là tỉ lệ ảnh mà mô hình đoán đúng bệnh (Top-1). Macro-F1 là điểm trung bình công bằng giữa các nhóm (không bị nhóm nhiều ảnh lấn át), tính trên các nhóm có ảnh kiểm tra${covered ? `; PlantDoc chỉ phủ ${esc(covered)} nhóm` : ""}. Cách chia tập và các thuật ngữ nằm ở <a href="#du-lieu">chương 2</a> và <a href="#phuong-phap">chương 3</a>.</p>
     </section>
     ${overallHtml(summary?.training)}
+    ${seedsHtml(summary?.seeds)}
 
     <details class="overview-detail mt-4">
       <summary><span><strong>Lịch sử huấn luyện Centralized</strong><small>Đường độ chính xác và sai số theo epoch</small></span></summary>
       <div class="overview-detail-body">
-      <h4 class="panel-title">Quá trình huấn luyện Centralized v6</h4>
+      <h4 class="panel-title">Quá trình huấn luyện ${MODEL_LABELS.centralized}</h4>
       ${centralizedNoteHtml(summary?.training, byModel.centralized.metrics.plantdoc.top1_accuracy)}
       <div class="chart-container mt-4"><canvas id="chart-central-history" aria-label="Độ chính xác và sai số trên tập kiểm tra của Centralized qua các epoch"></canvas></div>
       <p class="field-hint mt-2">Lịch sử FedAvg có trong mục riêng bên dưới, trích từ checkpoint của vòng được chọn.</p>
@@ -127,7 +128,7 @@ function buildSummary() {
       ] }, options: { animation: lineDraw(), interaction: { mode: "index", intersect: false }, scales: { x: { title: { display: true, text: "Epoch" } }, y: { min: 0, max: 100, ticks: { callback: v => `${v}%` } } } } };
     });
   }
-  if (summary?.training?.available && fedTraining?.history?.length) {
+  if (summary?.training?.available && summary.training.delta_l2_recorded !== false && fedTraining?.history?.length) {
     makeChartWhenVisible(byId("chart-fedavg-drift"), () => {
       const colors = pillarColors();
       const palette = [colors.centralized, colors.fedavg, colors.local, colors.violet, colors.danger];
@@ -214,13 +215,17 @@ function buildSummary() {
   const history = evidence.centralized_history || [];
   makeChartWhenVisible(byId("chart-central-history"), () => {
     const colors = pillarColors();
+    // gói train_v4 không đo sai số (loss) trên tập kiểm tra mỗi epoch: vẽ sai số huấn luyện thay vì bỏ trống hoặc vẽ số không có
+    const hasValLoss = history.every(h => Number.isFinite(h.val_loss));
+    const lossKey = hasValLoss ? "val_loss" : "train_loss";
+    const lossLabel = hasValLoss ? "Sai số (loss) trên tập kiểm tra" : "Sai số (loss) trên tập huấn luyện";
     return {
     type: "line",
     data: {
       labels: history.map(h => h.epoch),
       datasets: [
         { label: "Độ chính xác trên tập kiểm tra (%)", data: history.map(h => +(h.val_accuracy * 100).toFixed(2)), borderColor: colors.centralized, backgroundColor: withAlpha(colors.centralized, 0.12), fill: true, tension: 0.25, pointRadius: 0, yAxisID: "y" },
-        { label: "Sai số (loss) trên tập kiểm tra", data: history.map(h => +h.val_loss.toFixed(4)), borderColor: colors.danger, tension: 0.25, pointRadius: 0, yAxisID: "y1" },
+        { label: lossLabel, data: history.map(h => +h[lossKey].toFixed(4)), borderColor: colors.danger, tension: 0.25, pointRadius: 0, yAxisID: "y1" },
       ],
     },
     options: {
@@ -282,14 +287,14 @@ function buildPlantdoc() {
       <article class="stat-tile"><b>${esc(pd.classes_covered)}</b><span>nhóm có ảnh PlantDoc trong tập kiểm tra</span></article>
       <article class="stat-tile warn"><b>${fmtInt(pd.weak_images)}</b><span>ảnh thuộc ${pd.weak_classes.length} nhóm mà FedAvg nhận đúng dưới ${fmtNum((pd.weak_threshold || 0.5) * 100, 0)}%</span></article>
       <article class="stat-tile"><b>${pd.fedavg_worse_in}/${pd.classes_compared}</b><span>nhóm FedAvg kém Centralized (tốt hơn ở ${pd.fedavg_better_in} nhóm)</span></article>
-      ${gap ? `<article class="stat-tile"><b>${fmtNum(gap["FedAvg v7"].gap_pp, 1)} điểm</b><span>FedAvg giảm từ PlantVillage xuống PlantDoc (Centralized: ${fmtNum(gap["Centralized v6"].gap_pp, 1)})</span></article>` : ""}
+      ${gap ? `<article class="stat-tile"><b>${fmtNum(gap[MODEL_LABELS.fedavg].gap_pp, 1)} điểm</b><span>FedAvg giảm từ PlantVillage xuống PlantDoc (Centralized: ${fmtNum(gap[MODEL_LABELS.centralized].gap_pp, 1)})</span></article>` : ""}
     </section>
 
     <section class="panel mt-4">
       <h5 class="panel-title">Phân loại lỗi: sai loại cây hoặc sai bệnh</h5>
-      <p class="panel-desc">Chia ${fmtInt(pd.models["FedAvg v7"].count)} ảnh PlantDoc theo kết quả dự đoán.</p>
+      <p class="panel-desc">Chia ${fmtInt(pd.models[MODEL_LABELS.fedavg].count)} ảnh PlantDoc theo kết quả dự đoán.</p>
       <div class="legend-row mt-3"><span><i class="swatch seg-ok"></i>Đúng</span><span><i class="swatch seg-mid"></i>Đúng loại cây, sai bệnh</span><span><i class="swatch seg-bad"></i>Sai cả loại cây</span></div>
-      <div class="mt-3">${breakdownBar("FedAvg v7", "fedavg", pd.models["FedAvg v7"])}${breakdownBar("Centralized v6", "centralized", pd.models["Centralized v6"])}</div>
+      <div class="mt-3">${breakdownBar(MODEL_LABELS.fedavg, "fedavg", pd.models[MODEL_LABELS.fedavg])}${breakdownBar(MODEL_LABELS.centralized, "centralized", pd.models[MODEL_LABELS.centralized])}</div>
     </section>
 
     <section class="panel mt-4">
@@ -385,8 +390,8 @@ function buildCalibration() {
       data: {
         datasets: [
           { label: "Hiệu chuẩn hoàn hảo", data: [{ x: 0, y: 0 }, { x: 100, y: 100 }], showLine: true, borderDash: [6, 6], borderColor: colors.neutral, pointRadius: 0, borderWidth: 1.5 },
-          { label: "FedAvg v7", data: points("fedavg"), showLine: true, borderColor: colors.fedavg, backgroundColor: colors.fedavg, tension: 0.2 },
-          { label: "Centralized v6", data: points("centralized"), showLine: true, borderColor: colors.centralized, backgroundColor: colors.centralized, tension: 0.2 },
+          { label: MODEL_LABELS.fedavg, data: points("fedavg"), showLine: true, borderColor: colors.fedavg, backgroundColor: colors.fedavg, tension: 0.2 },
+          { label: MODEL_LABELS.centralized, data: points("centralized"), showLine: true, borderColor: colors.centralized, backgroundColor: colors.centralized, tension: 0.2 },
         ],
       },
       options: {
@@ -528,8 +533,8 @@ function buildHoldout() {
     <section class="callout callout-warn">
       <b>Vì sao cần tập giữ riêng:</b>
       <ul>
-        <li>Phiên bản mô hình được chọn theo điểm Macro-F1 PlantDoc ngay trên <b>chính tập kiểm tra dùng để báo cáo</b>, nên con số ở đó có thể hơi đẹp hơn thực tế (số liệu về epoch được chọn ở <a href="#ket-luan">chương 5</a>).</li>
-        <li>Vì vậy đồ án chấm lại thêm trên ${fmtInt(ho?.count)} ảnh <b>giữ riêng</b>, không dùng để chọn mô hình nên không bị thiên lệch này. ${valVsTest} Với FedAvg: web có lịch sử 27 vòng đến vòng được chọn nhưng không có vòng 28–32 nên chưa đo được hiệu ứng chọn mô hình.</li>
+        <li>Phiên bản mô hình được chọn ${sel.value_kind === "macro_f1" ? "theo trung bình Macro-F1 của các nguồn ảnh" : "theo điểm Macro-F1 PlantDoc"} ngay trên <b>chính tập kiểm tra dùng để báo cáo</b>, nên con số ở đó có thể hơi đẹp hơn thực tế (số liệu về epoch được chọn ở <a href="#ket-luan">chương 5</a>).</li>
+        <li>Vì vậy đồ án chấm lại thêm trên ${fmtInt(ho?.count)} ảnh <b>giữ riêng</b>, không dùng để chọn mô hình nên không bị thiên lệch này. ${valVsTest} ${sel.fedavg?.available ? `FedAvg được chọn ở vòng ${fmtInt(sel.fedavg.chosen_epoch)}/${fmtInt(sel.fedavg.epochs)} theo cùng cách, nên số của nó ở tập kiểm tra cũng có thể hơi đẹp hơn.` : "Hiệu ứng chọn mô hình của FedAvg chưa được đo riêng."}</li>
         <li><b>Lưu ý:</b> tập giữ riêng chưa nằm trong phép kiểm tra trùng ảnh; một phần ảnh PlantVillage trong tập này có thể là ảnh chụp lại cùng lá với ảnh học (xem mục “Độ nhạy” bên dưới).</li>
       </ul>
     </section>` : ""}
@@ -802,10 +807,10 @@ function pvSection(pv) {
       <table class="data-table wrap-head"><thead><tr><th scope="col">Tập</th><th scope="col">Số ảnh</th><th scope="col">Top-1 (khoảng tin cậy 95%)</th><th scope="col">Macro-F1</th><th scope="col">Đúng loại cây</th></tr></thead>
       <tbody>${pvSplitRow("PlantDoc, test giữ riêng", h.plantdoc)}${pvSplitRow("PlantVillage, test giữ riêng", h.plantvillage)}${pvSplitRow("PlantDoc, validation", v.plantdoc)}${pvSplitRow("PlantVillage, validation", v.plantvillage)}</tbody></table></div>
     <div class="callout callout-warn mt-3" role="note"><b>Con số PlantVillage không dùng để so sánh.</b> ${esc(pv.leakage?.note || "")}
-      Ở PlantDoc, nơi so sánh được, mô hình này kém xa FedAvg v7.</div>
-    <h5 class="subhead mt-4">So với FedAvg v7 trên cùng ảnh test giữ riêng (kiểm định McNemar chính xác)</h5>
+      Ở PlantDoc, nơi so sánh được, mô hình này kém xa ${MODEL_LABELS.fedavg}.</div>
+    <h5 class="subhead mt-4">So với ${MODEL_LABELS.fedavg} trên cùng ảnh test giữ riêng (kiểm định McNemar chính xác)</h5>
     <div tabindex="0" role="group" aria-label="Bảng so sánh với FedAvg" class="table-responsive mt-2">
-      <table class="data-table wrap-head"><thead><tr><th scope="col">Nguồn ảnh</th><th scope="col">Số ảnh</th><th scope="col">PlantVillage</th><th scope="col">FedAvg v7</th><th scope="col">Chỉ PV đúng / chỉ FedAvg đúng</th><th scope="col">p</th></tr></thead>
+      <table class="data-table wrap-head"><thead><tr><th scope="col">Nguồn ảnh</th><th scope="col">Số ảnh</th><th scope="col">PlantVillage</th><th scope="col">${esc(MODEL_LABELS.fedavg)}</th><th scope="col">Chỉ PV đúng / chỉ FedAvg đúng</th><th scope="col">p</th></tr></thead>
       <tbody>${line("plantdoc", "PlantDoc (ảnh ngoài đồng)")}${line("plantvillage", "PlantVillage (ảnh trong phòng)")}</tbody></table></div>
     <p class="field-hint mt-2">Tiền xử lý đúng của tác giả (mean = std = 0,5) cho Top-1 validation ${fmtPct(pre.hf_half_256_224?.val_top1, 1)}; chuẩn hóa ImageNet chỉ ${fmtPct(pre.imagenet_256_224?.val_top1, 1)}, nên web dùng cách của tác giả.
       ECE trên PlantDoc ${fmtNum(pv.holdout.ece?.plantdoc, 3)}: mô hình quá tự tin khi ảnh ngoài đồng. Nhiệt độ T = ${fmtNum(pv.holdout.temperature, 2)} làm ECE chung xấu đi (${fmtNum(pv.holdout.ece?.overall, 3)} khi dùng xác suất thô), nên web hiện xác suất thô.</p>
@@ -840,7 +845,7 @@ function simSection(sim) {
     ${sectionHead("4.5.3", "Cộng đồng: thí nghiệm mô phỏng học phân tán", { id: "three-comm", tag: "h4" })}
     <p class="section-lead">${esc(sim.pool.images.toLocaleString("vi-VN"))} ảnh của kho hiệu chuẩn (không giao train và validation) chia cho K người mô phỏng, mỗi người ${sim.local_config.images_per_user[0]} đến ${sim.local_config.images_per_user[1]} ảnh,
       học lớp cuối ${sim.local_config.epochs} epoch bằng đúng thuật toán của trình duyệt, máy chủ kiểm, cắt chuẩn, gộp FedAvg và qua cổng chất lượng như bản chạy thật. ${sim.rounds} vòng, ${sim.seeds.length} seed.
-      Số đo trên <b>test giữ riêng ${fmtInt(sim.test.images)} ảnh</b>; mô hình gốc FedAvg v7: chính xác ${fmtPct(base.accuracy, 2)}, macro-recall ${fmtPct(base.macro_recall, 2)}, PlantDoc ${fmtPct(base.plantdoc_accuracy, 1)} (${fmtInt(base.plantdoc_count)} ảnh).</p>
+      Số đo trên <b>test giữ riêng ${fmtInt(sim.test.images)} ảnh</b>; mô hình gốc ${MODEL_LABELS.fedavg}: chính xác ${fmtPct(base.accuracy, 2)}, macro-recall ${fmtPct(base.macro_recall, 2)}, PlantDoc ${fmtPct(base.plantdoc_accuracy, 1)} (${fmtInt(base.plantdoc_count)} ảnh).</p>
     ${simTable(sim)}
     <div class="form-group mt-3"><label for="sim-run">Thay đổi theo vòng cho</label><select id="sim-run" class="input-field">${options}</select></div>
     <div id="sim-chart" class="mt-2"></div>

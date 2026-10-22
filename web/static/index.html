@@ -341,13 +341,13 @@
 
             <div class="diag-tabpanel hidden" role="tabpanel" id="dpanel-community" aria-labelledby="dtab-community">
               <div class="panel diag-panel">
-                <p class="panel-desc">Lớp cuối của FedAvg v7 do người tham gia cùng huấn luyện ở trang <a href="#hoc-lien-ket">Học phân tán</a>; luôn dùng phiên bản mới nhất.</p>
+                <p class="panel-desc">Lớp cuối của mô hình FedAvg (của gói mô hình đang dùng) do người tham gia cùng huấn luyện ở trang <a href="#hoc-lien-ket">Học phân tán</a>; luôn dùng phiên bản mới nhất.</p>
                 <div id="comm-view" class="mt-3" role="status" aria-live="polite"><p class="field-hint">Chọn ảnh lá để nhận diện.</p></div>
               </div>
             </div>
           </div>
 
-          <!-- Tổng hợp 7 mô hình (Centralized v6, FedAvg v7, năm Local): mở khi cần đối chiếu, không chiếm chỗ ở ba cách chính -->
+          <!-- Tổng hợp 7 mô hình (Centralized, FedAvg, năm Local): mở khi cần đối chiếu, không chiếm chỗ ở ba cách chính -->
           <dialog class="diag-dialog" id="diag-all-dialog" aria-labelledby="diag-all-title">
             <div class="diag-dialog-head">
               <h3 class="panel-title panel-title-sm" id="diag-all-title">Tổng hợp bảy mô hình của đồ án</h3>
@@ -675,7 +675,7 @@
                   </div>
                   <div class="form-group mt-3">
                     <label for="fl-eval-dataset-root">Thư mục ảnh đánh giá giữ riêng</label>
-                    <input type="text" id="fl-eval-dataset-root" class="input-field" disabled placeholder="Cần bộ ảnh đầy đủ mixed pv_pd_v3">
+                    <input type="text" id="fl-eval-dataset-root" class="input-field" disabled placeholder="Cần bộ ảnh đầy đủ của release (data/dataset_sources)">
                   </div>
                   <div class="form-group mt-3">
                     <label class="check-label"><input type="checkbox" id="fl-require-real-clients" disabled> Bắt buộc client dùng ảnh thật</label>

@@ -1,36 +1,48 @@
 {
-  "source_csv": "artifacts/branch_demo/20261003/fedavg/validation_comparison.csv",
+  "source_csv": "artifacts/model_bundles/v4b_s42/fedavg/validation_comparison.csv",
   "evidence": "published comparison artifact; not a locally repeated validation",
   "models": {
-    "Centralized v6": {
+    "Centralized v4b": {
       "plantdoc": {
         "count": 269,
-        "accuracy_pct": 53.9,
-        "macro_f1_pct": 53.47,
-        "crop_accuracy_pct": 78.81
+        "accuracy_pct": 56.51,
+        "macro_f1_pct": 57.89,
+        "crop_accuracy_pct": 80.3
       },
       "plantvillage": {
         "count": 4344,
-        "accuracy_pct": 99.22,
-        "macro_f1_pct": 98.99,
-        "crop_accuracy_pct": 99.72
+        "accuracy_pct": 99.54,
+        "macro_f1_pct": 99.46,
+        "crop_accuracy_pct": 99.82
       },
-      "plantvillage_minus_plantdoc_accuracy_pp": 45.32
+      "field_other": {
+        "count": 2133,
+        "accuracy_pct": 94.56,
+        "macro_f1_pct": 89.86,
+        "crop_accuracy_pct": 99.06
+      },
+      "plantvillage_minus_plantdoc_accuracy_pp": 43.03
     },
-    "FedAvg v7": {
+    "FedAvg v4b": {
       "plantdoc": {
         "count": 269,
-        "accuracy_pct": 47.21,
-        "macro_f1_pct": 46.87,
-        "crop_accuracy_pct": 75.46
+        "accuracy_pct": 37.55,
+        "macro_f1_pct": 45.41,
+        "crop_accuracy_pct": 67.66
       },
       "plantvillage": {
         "count": 4344,
-        "accuracy_pct": 93.12,
-        "macro_f1_pct": 90.19,
-        "crop_accuracy_pct": 98.69
+        "accuracy_pct": 96.71,
+        "macro_f1_pct": 96.02,
+        "crop_accuracy_pct": 99.31
       },
-      "plantvillage_minus_plantdoc_accuracy_pp": 45.91
+      "field_other": {
+        "count": 2133,
+        "accuracy_pct": 86.73,
+        "macro_f1_pct": 78.33,
+        "crop_accuracy_pct": 98.03
+      },
+      "plantvillage_minus_plantdoc_accuracy_pp": 59.16
     }
   },
   "note": "Crop accuracy is a separately reported metric; do not interpret as full 38-class top-1 accuracy.",

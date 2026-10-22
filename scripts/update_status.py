@@ -30,6 +30,7 @@ from src import registry as reg  # noqa: E402
 
 STATUS_MD = ROOT / "PROJECT_STATUS.md"
 STATUS_JSON = ROOT / reg.STATUS_REPORT_JSON
+CEN, FED = reg.WEB_DISPLAY_NAMES["centralized"], reg.WEB_DISPLAY_NAMES["fedavg"]   # tên mô hình của gói đang dùng (src/bundle.py)
 
 JOURNAL_BEGIN = "<!-- ROADMAP-BEGIN (khối này TỰ TAY SỬA - script bảo toàn nội dung) -->"
 JOURNAL_END = "<!-- ROADMAP-END -->"
@@ -435,7 +436,7 @@ def check_per_class(ctx: Ctx) -> Result:
     return Result(
         DONE,
         f"PlantDoc phủ {s['plantdoc_classes_covered']} lớp; {len(s['weak_classes_fedavg'])} lớp recall<50% "
-        f"({s['weak_images_fedavg']}/{report['models']['FedAvg v7']['plantdoc']['count']} ảnh); FedAvg tệ hơn Centralized ở "
+        f"({s['weak_images_fedavg']}/{report['models'][FED]['plantdoc']['count']} ảnh); FedAvg tệ hơn Centralized ở "
         f"{cmp['fedavg_worse_in']}/{cmp['classes_compared']} lớp (số công bố, đã kiểm nhất quán; xem mục 5)",
     )
 
@@ -461,7 +462,7 @@ def check_reeval(ctx: Ctx) -> Result:
         return Result(TODO, f"không tái lập được số công bố (ngoài ngưỡng ≤1 ảnh hoặc hai model chính không khớp tuyệt đối): {bad} — kiểm lại preprocessing/checkpoint")
     exact, total = report["comparisons_exact"], report["comparisons_total"]
     detail = (
-        f"{vn(report['validation_count'])} ảnh validation tái đo trên CPU: Centralized v6 và FedAvg v7 khớp TUYỆT ĐỐI số công bố "
+        f"{vn(report['validation_count'])} ảnh validation tái đo trên CPU: {CEN} và {FED} khớp TUYỆT ĐỐI số ghi trong gói "
         f"(số ảnh đúng, macro-F1, crop accuracy, recall theo lớp); tổng {exact}/{total} phép so khớp tuyệt đối"
     )
     if exact != total:
@@ -476,7 +477,7 @@ def check_confident_errors(ctx: Ctx) -> Result:
     if report is None:
         return Result(TODO, f"chưa có {reg.PER_CLASS_REPORT_JSON} — chạy scripts/report_per_class.py")
     rows = []
-    for name in ("Centralized v6", "FedAvg v7"):
+    for name in (CEN, FED):
         hc = report["models"][name]["plantdoc"]["high_confidence_wrong"]
         rows.append(f"{name}: {hc['count']}/{report['models'][name]['plantdoc']['count']} ảnh PlantDoc sai với confidence>{hc['threshold']} "
                     f"({hc['share_of_errors']:.0%} số lỗi)")
@@ -497,14 +498,15 @@ def check_calibration(ctx: Ctx) -> Result:
     wrong = len((report.get("detail", {}).get("fedavg", {}) or {}).get("high_confidence_wrong", []))
     return Result(
         DONE,
-        f"FedAvg v7: ECE PlantDoc {pd.get('ece_raw', 0):.3f} → {pd.get('ece_temperature_scaled', 0):.3f} sau temperature scaling "
+        f"{FED}: ECE PlantDoc {pd.get('ece_raw', 0):.3f} → {pd.get('ece_temperature_scaled', 0):.3f} sau temperature scaling "
         f"(T={report['models']['fedavg']['temperature_fitted_on_calibration']}, fit trên {vn(report['calibration_count'])} ảnh calibration tách biệt val); "
         f"{wrong} ảnh validation sai với confidence ≥ 0,9 đã liệt kê từng ảnh. UI hiển thị softmax thô kèm xác suất đã hiệu chuẩn (T)",
     )
 
 
 def _published_hashes(ctx: Ctx) -> dict[str, str]:
-    return {m["model_id"].replace("demo_", "").replace("_v6", "").replace("_v7", ""): m.get("file_sha256")
+    by_registry_id = {registry_id: model_id for model_id, registry_id in reg.WEB_REGISTRY_IDS.items()}
+    return {by_registry_id.get(m["model_id"], m["model_id"]): m.get("file_sha256")
             for m in ctx.registry["models"] if m["family"] == reg.FAMILY_PUBLISHED_DEMO}
 
 
@@ -713,7 +715,7 @@ def _reeval_lines() -> list[str]:
         f"{report['known_discrepancy_note']}",
         "- ECE đo mức lệch giữa độ tin cậy và độ đúng thật (càng thấp càng tốt); TS = temperature scaling với T fit trên tập calibration, "
         "KHÔNG fit trên validation. Temperature scaling không đổi nhãn dự đoán, chỉ đổi độ tin cậy hiển thị.",
-        f"- {len(wrong)} ảnh validation FedAvg v7 sai với confidence ≥ 0,9 đã liệt kê từng ảnh trong `{reg.LOCAL_REEVAL_JSON}` (mục `detail.fedavg.high_confidence_wrong`).",
+        f"- {len(wrong)} ảnh validation {FED} sai với confidence ≥ 0,9 đã liệt kê từng ảnh trong `{reg.LOCAL_REEVAL_JSON}` (mục `detail.fedavg.high_confidence_wrong`).",
     ]
     audit = load_json(reg.abs_path(reg.RELEASE_LEAKAGE_AUDIT_JSON))
     if audit:
@@ -753,11 +755,15 @@ def _holdout_lines() -> list[str]:
         out.append(f"| {model['display_name']} | {cell(model_id, 'plantvillage')} | {cell(model_id, 'plantdoc')} |")
     selection = stats.get("selection_effect") or {}
     if selection.get("available"):
+        # báo cáo của gói cũ ghi accuracy (`*_plantdoc_accuracy`), của gói train_v4 ghi macro-F1 (`*_plantdoc_value`)
+        kind = "macro-F1" if selection.get("value_kind") == "macro_f1" else "accuracy"
+        chosen = selection.get("chosen_plantdoc_value", selection.get("chosen_plantdoc_accuracy"))
+        last = selection.get("last_plantdoc_value", selection.get("last_plantdoc_accuracy"))
         out.append(
-            f"- Hiệu ứng chọn checkpoint: Centralized được chọn ở epoch {selection['chosen_epoch']}/{selection['epochs']} theo macro-F1 "
-            f"PlantDoc trên CHÍNH validation; accuracy PlantDoc ở epoch đó {selection['chosen_plantdoc_accuracy']:.2%} "
+            f"- Hiệu ứng chọn checkpoint: Centralized được chọn ở epoch {selection['chosen_epoch']}/{selection['epochs']} theo "
+            f"{selection.get('selection_metric') or 'macro-F1 PlantDoc'} trên CHÍNH validation; {kind} PlantDoc ở epoch đó {chosen:.2%} "
             + ("là cao nhất " if selection["chosen_rank_among_epochs"] == 1 else "")
-            + f"(hạng {selection['chosen_rank_among_epochs']}/{selection['epochs']}), epoch cuối {selection['last_plantdoc_accuracy']:.2%}. "
+            + f"(hạng {selection['chosen_rank_among_epochs']}/{selection['epochs']}), epoch cuối {last:.2%}. "
             "Chọn trên val có thể đẩy số val lên; số test giữ riêng ở bảng trên không dùng để chọn nên không chịu thiên lệch này "
             "(PlantDoc test chỉ 172 ảnh — khoảng tin cậy rộng)."
         )
@@ -826,7 +832,7 @@ def quality_section(registry: dict[str, Any]) -> list[str]:
     fed = models.get(reg.web_id("fedavg")) or {}
     conf = (((fed.get("metrics") or {}).get("quality") or {}).get("top_confusions")) or []
     if conf:
-        lines.append("- Nhầm lẫn lớn nhất của FedAvg v7 (metrics công bố): " + "; ".join(
+        lines.append(f"- Nhầm lẫn lớn nhất của {FED} (metrics ghi trong gói): " + "; ".join(
             f"{c['target']} → {c['predicted']} ({c['count']} ảnh)" for c in conf[:3]))
     lines.append("- Nhận định: khoảng cách PlantVillage↔PlantDoc ~45 điểm ở cả hai phương pháp ⇒ vấn đề là tổng quát hóa giữa miền "
                  "dữ liệu, không phải riêng frontend. Chưa đủ bằng chứng để kết luận nguyên nhân (thiếu dữ liệu, nhãn, hay chiến lược train).")
@@ -840,11 +846,11 @@ def quality_section(registry: dict[str, Any]) -> list[str]:
 
     report = _per_class_report()
     if report and _per_class_consistent(report):
-        fed_pd = report["models"]["FedAvg v7"]["plantdoc"]
+        fed_pd = report["models"][FED]["plantdoc"]
         eb, hc = fed_pd["error_breakdown"], fed_pd["high_confidence_wrong"]
         lines += [
             "",
-            "**Theo lớp trên PlantDoc (FedAvg v7, số công bố; sắp theo recall tăng dần):**",
+            f"**Theo lớp trên PlantDoc ({FED}, số ghi trong gói; sắp theo recall tăng dần):**",
             "",
             f"- PlantDoc chỉ phủ **{report['summary']['plantdoc_classes_covered']}** lớp của taxonomy; "
             f"{len(report['summary']['weak_classes_fedavg'])} lớp có recall < 50% chiếm {report['summary']['weak_images_fedavg']}/{fed_pd['count']} ảnh.",

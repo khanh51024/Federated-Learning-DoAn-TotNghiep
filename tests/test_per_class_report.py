@@ -6,7 +6,7 @@ import json
 import pytest
 
 from scripts import report_per_class as rpc
-from src import registry as reg
+from src import bundle, registry as reg
 
 
 @pytest.fixture(scope="module")
@@ -29,12 +29,14 @@ def test_error_breakdown_adds_up_to_the_sample_count(report):
 
 def test_matches_numbers_in_the_registry(report):
     registry = {m["model_id"]: m for m in reg.iter_models()}
-    fed = registry["demo_fedavg_v7"]["metrics"]
-    pd = report["models"]["FedAvg v7"]["plantdoc"]
+    fed = registry[reg.web_id("fedavg")]["metrics"]
+    name = reg.WEB_DISPLAY_NAMES["fedavg"]
+    pd = report["models"][name]["plantdoc"]
+    pv = report["models"][name]["plantvillage"]
     assert pd["top1_accuracy"] == fed["plantdoc"]["top1_accuracy"]
-    assert pd["count"] == fed["plantdoc"]["count"] == 269
-    assert pd["high_confidence_wrong"]["count"] == fed["overall"]["high_confidence_wrong_count_0_9"] - \
-        report["models"]["FedAvg v7"]["plantvillage"]["high_confidence_wrong"]["count"]
+    assert pd["count"] == fed["plantdoc"]["count"] == bundle.validation_counts(bundle.load_manifest())["plantdoc"]
+    # tổng toàn tập validation còn gồm nhóm ngoài đồng khác (field_other) nên hai nhóm này không vượt tổng
+    assert pd["high_confidence_wrong"]["count"] + pv["high_confidence_wrong"]["count"] <= fed["overall"]["high_confidence_wrong_count_0_9"]
 
 
 def test_class_table_is_sorted_by_fedavg_plantdoc_recall(report):

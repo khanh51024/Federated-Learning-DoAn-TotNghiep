@@ -64,7 +64,7 @@ const EVENT_LABELS = {
   admin_revoke_code: "Quản trị: thu hồi mã", admin_revoke_participant: "Quản trị: thu hồi người",
   admin_close_round: "Quản trị: gộp vòng ngay", admin_rollback: "Quản trị: khôi phục phiên bản",
 };
-const KIND_LABELS = { base: "Gốc (FedAvg v7)", aggregate: "Gộp từ vòng", rollback: "Khôi phục" };
+const KIND_LABELS = { base: "Gốc (FedAvg)", aggregate: "Gộp từ vòng", rollback: "Khôi phục" };
 
 // ───────── Tiện ích ─────────
 const pct = v => (v === null || v === undefined ? "—" : `${fmtNum(Number(v) * 100, 1)}%`);
@@ -267,8 +267,8 @@ function renderSession() {
   if (latest?.metrics) {
     text("kpi-accuracy", pct(latest.metrics.accuracy));
     text("metric-note", latest.version === 0
-      ? "Chưa có vòng nào được nhận: mô hình hiện hành là FedAvg v7 gốc."
-      : `Mô hình gốc FedAvg v7: ${pct(base?.metrics?.accuracy)}. Tính trên tập validation đã dùng để chọn mô hình gốc nên chỉ để theo dõi từng vòng; số đo mức báo cáo là mô phỏng ở chương 4.`);
+      ? "Chưa có vòng nào được nhận: mô hình hiện hành là FedAvg gốc."
+      : `Mô hình gốc FedAvg: ${pct(base?.metrics?.accuracy)}. Tính trên tập validation đã dùng để chọn mô hình gốc nên chỉ để theo dõi từng vòng; số đo mức báo cáo là mô phỏng ở chương 4.`);
   }
   const select = $("rollback-version");
   const wanted = versions.map(v => String(v.version));

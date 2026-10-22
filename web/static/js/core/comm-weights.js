@@ -3,7 +3,7 @@
 // Mọi số đều đến từ máy chủ: trọng số gộp là min(n, n_cap) / tổng đúng như phép gộp FedAvg; độ trễ do client báo, chỉ để theo dõi.
 import { esc, fmtNum } from "./dom.js";
 
-const KIND_LABELS = { base: "Gốc (FedAvg v7)", aggregate: "Gộp từ vòng", rollback: "Khôi phục" };
+const KIND_LABELS = { base: "Gốc (FedAvg)", aggregate: "Gộp từ vòng", rollback: "Khôi phục" };
 const SERIES = [
   { key: "accuracy", label: "Độ chính xác", cls: "cw-acc" },
   { key: "macro_recall", label: "Macro-recall", cls: "cw-macro" },
@@ -97,7 +97,7 @@ export function versionsHtml(versions) {
   return `<div tabindex="0" role="group" aria-label="Bảng các phiên bản mô hình và tệp trọng số, cuộn được bằng phím mũi tên" class="table-responsive mt-2">
       <table class="data-table wrap-head"><thead><tr><th scope="col">Phiên bản</th><th scope="col">Loại</th><th scope="col">Người</th><th scope="col">Ảnh</th>
         <th scope="col">Chính xác</th><th scope="col">Macro-recall</th><th scope="col">PlantDoc</th><th scope="col">Trọng số</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <p class="field-hint mt-2">Tệp .npz gồm <code>weight</code> (38 × 1024) và <code>bias</code> (38) của lớp cuối <code>classifier.3</code>; ghép với phần đóng băng của FedAvg v7 để chạy lại mô hình. Chỉ giữ 200 phiên bản mới nhất và bản gốc.</p>`;
+    <p class="field-hint mt-2">Tệp .npz gồm <code>weight</code> (38 × 1024) và <code>bias</code> (38) của lớp cuối <code>classifier.3</code>; ghép với phần đóng băng của FedAvg để chạy lại mô hình. Chỉ giữ 200 phiên bản mới nhất và bản gốc.</p>`;
 }
 
 function contributorRows(round) {

@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from src import registry as reg
+from src import bundle, registry as reg
 from web import demo_evidence
 from web.app import app
 from web.routers.inference import _gated_evidence
@@ -111,11 +111,11 @@ def test_details_and_partitions_endpoints(client):
     details = client.get("/api/evidence/details").json()
     assert details["available"] is True and len(details["classes"]) == 38
     matrix = details["confusion"]["val"]["fedavg"]["plantdoc"]
-    assert len(matrix) == 38 and sum(map(sum, matrix)) == 269
+    assert len(matrix) == 38 and sum(map(sum, matrix)) == bundle.validation_counts(bundle.load_manifest())["plantdoc"]
     assert details["errors"]["available"] is True and details["errors"]["count"] > 0
     first = details["errors"]["items"][0]
     assert (reg.abs_path(reg.ERROR_GALLERY_DIR) / first["thumb"]).is_file()
     partitions = client.get("/api/evidence/partitions").json()
     assert partitions["available"] is True and partitions["trained_scheme"] == "label_alpha_0_1"
     assert partitions["schemes"]["label_alpha_0_1"]["has_trained_models"] is True
-    assert {"iid", "mixed_stress"} <= set(partitions["schemes"])
+    assert {"iid", partitions["trained_scheme"]} <= set(partitions["schemes"])

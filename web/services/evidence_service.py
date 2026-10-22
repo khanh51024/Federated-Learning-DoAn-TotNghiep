@@ -680,18 +680,27 @@ def _statistics(evidence: Dict[str, Any]) -> Dict[str, Any]:
         "reshoot_heuristic": str(report.get("reshoot_heuristic") or ""),
         "best_local_chosen_on_val": {k: str(v) for k, v in (report.get("best_local_chosen_on_val") or {}).items()},
         "splits": splits,
-        "selection_effect": {
-            "available": selection.get("available") is True,
-            "chosen_epoch": _int(selection.get("chosen_epoch")),
-            "epochs": _int(selection.get("epochs")),
-            "chosen_plantdoc_accuracy": _round(selection.get("chosen_plantdoc_accuracy")),
-            "last_epoch": _int(selection.get("last_epoch")),
-            "last_plantdoc_accuracy": _round(selection.get("last_plantdoc_accuracy")),
-            "max_plantdoc_accuracy": _round(selection.get("max_plantdoc_accuracy")),
-            "chosen_rank_among_epochs": _int(selection.get("chosen_rank_among_epochs")),
-            "selection_metric": str(selection.get("selection_metric") or ""),
-            "fedavg_note": str(selection.get("fedavg_note") or ""),
-        },
+        "selection_effect": {**_selection_projection(selection), "fedavg": _selection_projection(selection.get("fedavg") or {}),
+                             "fedavg_note": str(selection.get("fedavg_note") or "")},
+    }
+
+
+def _selection_projection(selection: Dict[str, Any]) -> Dict[str, Any]:
+    """Hiệu ứng chọn checkpoint trên chính validation. Báo cáo cũ ghi accuracy PlantDoc (`*_plantdoc_accuracy`), báo cáo của gói train_v4 ghi macro-F1 (`*_plantdoc_value`)."""
+    def pick(name: str):
+        return selection.get(f"{name}_plantdoc_value", selection.get(f"{name}_plantdoc_accuracy"))
+
+    return {
+        "available": selection.get("available") is True,
+        "value_kind": str(selection.get("value_kind") or "accuracy"),
+        "chosen_epoch": _int(selection.get("chosen_epoch")),
+        "epochs": _int(selection.get("epochs")),
+        "chosen_plantdoc_value": _round(pick("chosen")),
+        "last_epoch": _int(selection.get("last_epoch")),
+        "last_plantdoc_value": _round(pick("last")),
+        "max_plantdoc_value": _round(pick("max")),
+        "chosen_rank_among_epochs": _int(selection.get("chosen_rank_among_epochs")),
+        "selection_metric": str(selection.get("selection_metric") or ""),
     }
 
 
@@ -804,6 +813,53 @@ def _partitions(evidence: Dict[str, Any]) -> Dict[str, Any]:
     return {"available": True, "classes": classes, "total_train": total, "trained_scheme": reg.PARTITION_SCHEME, "schemes": schemes}
 
 
+_SEED_METRICS = (
+    ("plantvillage_test", "PlantVillage (tập thử)"), ("field_same_source_test", "Ngoài đồng, cùng nguồn (tập thử)"),
+    ("plantdoc_holdout_v3", "PlantDoc giữ riêng"), ("plantwild_strict", "PlantWild, ảnh bệnh (nguồn lạ)"),
+    ("plantwild_healthy_as_disease", "Lá khỏe PlantWild bị đoán thành bệnh (thấp hơn là tốt hơn)"),
+)
+
+
+def _seed_value(block: Any) -> Optional[float]:
+    if isinstance(block, dict):
+        block = block.get("top1")
+    return float(block) if isinstance(block, (int, float)) else None
+
+
+def _seeds(evidence: Dict[str, Any]) -> Dict[str, Any]:
+    """Kết quả của mọi hạt giống đã chạy (artifacts/train_v4_results.json), chỉ khi các run cùng release với gói đang dùng.
+
+    Web phục vụ mô hình của MỘT hạt giống (evidence.seed); bảng này cho thấy độ dao động giữa các lần chạy để không đọc số của một hạt giống như thể chắc chắn."""
+    report = _load_json(reg.TRAIN_V4_RESULTS_JSON)
+    if report is None:
+        return _withheld("Chưa có artifacts/train_v4_results.json; chạy scripts/eval_trained_v4.py trên các run đã kéo về.")
+    runs = report.get("runs") or {}
+    if not runs or any(r.get("release_manifest_sha256") != evidence["release_manifest_sha256"] for r in runs.values()):
+        return _withheld("Các run đã đo không cùng release với gói mô hình đang dùng.")
+    methods: Dict[str, Dict[str, Any]] = {}
+    seeds = sorted({int(r["seed"]) for r in runs.values()})
+    for method in ("centralized", "fedavg", "local"):
+        per_metric: Dict[str, Any] = {}
+        for key, label in _SEED_METRICS:
+            by_seed: Dict[str, Optional[float]] = {}
+            for seed in seeds:
+                values = [v for r in runs.values() if r["method"] == method and int(r["seed"]) == seed
+                          for v in [_seed_value(r.get(key))] if v is not None]
+                by_seed[str(seed)] = _round(sum(values) / len(values)) if values else None
+            present = [v for v in by_seed.values() if v is not None]
+            if not present:
+                continue
+            mean = sum(present) / len(present)
+            std = (sum((v - mean) ** 2 for v in present) / (len(present) - 1)) ** 0.5 if len(present) > 1 else None
+            per_metric[key] = {"label": label, "mean": _round(mean), "std": _round(std), "by_seed": by_seed}
+        methods[method] = per_metric
+    return {"available": True, "seeds": seeds, "served_seed": evidence.get("seed"), "methods": methods,
+            "metric_order": [k for k, _ in _SEED_METRICS],
+            "note": ("Mỗi số là trung bình của các hạt giống; Local-only là trung bình 5 client rồi trung bình các hạt giống. "
+                     "PlantWild đo trên ảnh bệnh nguồn lạ (không dùng để học); ảnh giữ riêng PlantDoc chỉ 172 ảnh nên khoảng dao động rộng."),
+            "source": reg.TRAIN_V4_RESULTS_JSON}
+
+
 def _checklist(redact: bool = False) -> Dict[str, Any]:
     """Checklist trạng thái dự án. `redact`: chỉ id/tiêu đề/trạng thái (detail chứa số của mô hình)."""
     report = _load_json(reg.STATUS_REPORT_JSON)
@@ -860,7 +916,7 @@ def summary(evidence: Dict[str, Any]) -> Dict[str, Any]:
             "reason": reason,
             "identity": None,
             "checklist": _guard("checklist", lambda: _checklist(redact=True)),
-            **{name: _withheld(reason) for name in ("reeval", "plantdoc", "domain_gap", "leakage", "shards", "holdout", "statistics", "fullframe", "plantvillage_reference", "community_simulation", "training")},
+            **{name: _withheld(reason) for name in ("reeval", "plantdoc", "domain_gap", "leakage", "shards", "holdout", "statistics", "fullframe", "plantvillage_reference", "community_simulation", "training", "seeds")},
         }
     return {
         "available": True,
@@ -876,5 +932,6 @@ def summary(evidence: Dict[str, Any]) -> Dict[str, Any]:
         "fullframe": _guard("ảnh nguyên khung", lambda: _fullframe(evidence)),
         "plantvillage_reference": _guard("PlantVillage tham chiếu", lambda: _plantvillage_reference(evidence)),
         "community_simulation": _guard("mô phỏng cộng đồng", lambda: _community_simulation(evidence)),
+        "seeds": _guard("các hạt giống", lambda: _seeds(evidence)),
         "checklist": _guard("checklist", _checklist),
     }

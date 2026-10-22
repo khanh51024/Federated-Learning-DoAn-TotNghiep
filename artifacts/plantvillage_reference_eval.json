@@ -15,7 +15,7 @@
  "preprocessing_chosen": "hf_half_256_224",
  "preprocessing_comparison_on_val": {
   "imagenet_256_224": {
-   "val_top1": 0.51377,
+   "val_top1": 0.40127,
    "mean": [
     0.485,
     0.456,
@@ -28,7 +28,7 @@
    ]
   },
   "hf_half_256_224": {
-   "val_top1": 0.91589,
+   "val_top1": 0.72161,
    "mean": [
     0.5,
     0.5,
@@ -41,13 +41,13 @@
    ]
   }
  },
- "protocol_id": "mixed_pv_pd_v3_pretrained_seed42_validation",
- "release_manifest_sha256": "6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252",
- "validation_manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
- "holdout_manifest_sha256": "61ee9f178b93aa65dcc6e41c63365c0f6098dc6f79d3dfa7b6e3a8e735f769c2",
- "validation_count": 4613,
- "calibration_count": 4225,
- "holdout_count": 11015,
+ "protocol_id": "mixed_pv_pd_v4_pretrained_seed42_validation",
+ "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+ "validation_manifest_sha256": "f370f9fe873b874b7ec64a247831a951d0f9108bbd67a06f8b97cfa0d3e6f355",
+ "holdout_manifest_sha256": "02741cd8714e3498cb767644a62e46cca8bdbd2d7c5221fdcaa4bb20c7de0bcf",
+ "validation_count": 6746,
+ "calibration_count": 7005,
+ "holdout_count": 13101,
  "classes": [
   "Apple___Apple_scab",
   "Apple___Black_rot",
@@ -94,16 +94,16 @@
   "note": "Tập huấn luyện của tác giả là bản tăng cường của chính PlantVillage nên ảnh PlantVillage trong val/test của đồ án gần như chắc nằm trong dữ liệu mô hình đã học (ảnh đã mã hóa lại, băm byte không phát hiện được). Số PlantVillage chỉ là mức trần; PlantDoc là phép thử công bằng vì mô hình chưa từng thấy bộ này."
  },
  "validation": {
-  "temperature_fitted_on_calibration": 1.2384,
-  "calibration_set_size": 4225,
+  "temperature_fitted_on_calibration": 1.4783,
+  "calibration_set_size": 7005,
   "overall": {
-   "count": 4613,
-   "correct": 4225,
+   "count": 6746,
+   "correct": 4868,
    "supported_classes": 38,
-   "top1_accuracy": 0.9158898764361587,
-   "macro_f1_supported": 0.8915604921021011,
-   "crop_accuracy": 0.9577281595491004,
-   "high_confidence_wrong_count_0_9": 50
+   "top1_accuracy": 0.7216128075896828,
+   "macro_f1_supported": 0.7079367605694203,
+   "crop_accuracy": 0.8664393714793952,
+   "high_confidence_wrong_count_0_9": 256
   },
   "by_source": {
    "plantdoc": {
@@ -347,124 +347,124 @@
   },
   "calibration": {
    "overall": {
-    "n": 4613,
-    "accuracy": 0.9158898764361587,
-    "mean_confidence_raw": 0.9335399374475217,
-    "mean_confidence_temperature_scaled": 0.9092706769408347,
-    "ece_raw": 0.01765,
-    "ece_temperature_scaled": 0.01814,
-    "nll_raw": 0.32119,
-    "nll_temperature_scaled": 0.31191,
+    "n": 6746,
+    "accuracy": 0.7216128075896828,
+    "mean_confidence_raw": 0.839587065270281,
+    "mean_confidence_temperature_scaled": 0.7484078079185313,
+    "ece_raw": 0.11803,
+    "ece_temperature_scaled": 0.03668,
+    "nll_raw": 1.17164,
+    "nll_temperature_scaled": 1.03537,
     "reliability_raw": [
      {
       "lo": 0.0667,
       "hi": 0.1333,
-      "n": 2,
-      "mean_confidence": 0.1243,
-      "accuracy": 0.0
+      "n": 7,
+      "mean_confidence": 0.1169,
+      "accuracy": 0.1429
      },
      {
       "lo": 0.1333,
       "hi": 0.2,
-      "n": 8,
-      "mean_confidence": 0.1746,
-      "accuracy": 0.0
+      "n": 50,
+      "mean_confidence": 0.174,
+      "accuracy": 0.12
      },
      {
       "lo": 0.2,
       "hi": 0.2667,
-      "n": 20,
-      "mean_confidence": 0.2362,
-      "accuracy": 0.0
+      "n": 127,
+      "mean_confidence": 0.2389,
+      "accuracy": 0.1654
      },
      {
       "lo": 0.2667,
       "hi": 0.3333,
-      "n": 28,
-      "mean_confidence": 0.3055,
-      "accuracy": 0.1786
+      "n": 173,
+      "mean_confidence": 0.3012,
+      "accuracy": 0.1503
      },
      {
       "lo": 0.3333,
       "hi": 0.4,
-      "n": 36,
-      "mean_confidence": 0.3707,
-      "accuracy": 0.1667
+      "n": 197,
+      "mean_confidence": 0.3685,
+      "accuracy": 0.1726
      },
      {
       "lo": 0.4,
       "hi": 0.4667,
-      "n": 63,
-      "mean_confidence": 0.4401,
-      "accuracy": 0.3968
+      "n": 232,
+      "mean_confidence": 0.4357,
+      "accuracy": 0.2241
      },
      {
       "lo": 0.4667,
       "hi": 0.5333,
-      "n": 71,
-      "mean_confidence": 0.5081,
-      "accuracy": 0.3803
+      "n": 243,
+      "mean_confidence": 0.5029,
+      "accuracy": 0.251
      },
      {
       "lo": 0.5333,
       "hi": 0.6,
-      "n": 71,
-      "mean_confidence": 0.5657,
-      "accuracy": 0.5493
+      "n": 251,
+      "mean_confidence": 0.5681,
+      "accuracy": 0.3227
      },
      {
       "lo": 0.6,
       "hi": 0.6667,
-      "n": 85,
-      "mean_confidence": 0.6353,
-      "accuracy": 0.5412
+      "n": 253,
+      "mean_confidence": 0.6341,
+      "accuracy": 0.3518
      },
      {
       "lo": 0.6667,
       "hi": 0.7333,
-      "n": 80,
-      "mean_confidence": 0.7038,
-      "accuracy": 0.65
+      "n": 237,
+      "mean_confidence": 0.7024,
+      "accuracy": 0.4008
      },
      {
       "lo": 0.7333,
       "hi": 0.8,
-      "n": 78,
-      "mean_confidence": 0.7679,
-      "accuracy": 0.6026
+      "n": 225,
+      "mean_confidence": 0.7699,
+      "accuracy": 0.4044
      },
      {
       "lo": 0.8,
       "hi": 0.8667,
-      "n": 124,
-      "mean_confidence": 0.8347,
-      "accuracy": 0.7419
+      "n": 276,
+      "mean_confidence": 0.8363,
+      "accuracy": 0.558
      },
      {
       "lo": 0.8667,
       "hi": 0.9333,
-      "n": 215,
-      "mean_confidence": 0.9047,
-      "accuracy": 0.8791
+      "n": 391,
+      "mean_confidence": 0.9031,
+      "accuracy": 0.6522
      },
      {
       "lo": 0.9333,
       "hi": 1.0,
-      "n": 3732,
-      "mean_confidence": 0.993,
-      "accuracy": 0.9906
+      "n": 4084,
+      "mean_confidence": 0.9915,
+      "accuracy": 0.9554
      }
     ]
    },
    "plantdoc": {
     "n": 269,
     "accuracy": 0.2379182156133829,
-    "mean_confidence_raw": 0.5929088523128243,
-    "mean_confidence_temperature_scaled": 0.5106342458907399,
+    "mean_confidence_raw": 0.5929088521986338,
+    "mean_confidence_temperature_scaled": 0.4375600580358271,
     "ece_raw": 0.35499,
-    "ece_temperature_scaled": 0.27272,
+    "ece_temperature_scaled": 0.19964,
     "nll_raw": 3.53584,
-    "nll_temperature_scaled": 3.1551,
+    "nll_temperature_scaled": 2.95293,
     "reliability_raw": [
      {
       "lo": 0.0667,
@@ -569,12 +569,12 @@
    "plantvillage": {
     "n": 4344,
     "accuracy": 0.9578729281767956,
-    "mean_confidence_raw": 0.954633344883349,
-    "mean_confidence_temperature_scaled": 0.9339560360459166,
+    "mean_confidence_raw": 0.9546333453821186,
+    "mean_confidence_temperature_scaled": 0.904704596996897,
     "ece_raw": 0.0073,
-    "ece_temperature_scaled": 0.02437,
+    "ece_temperature_scaled": 0.05322,
     "nll_raw": 0.12212,
-    "nll_temperature_scaled": 0.13584,
+    "nll_temperature_scaled": 0.16506,
     "reliability_raw": [
      {
       "lo": 0.1333,
@@ -672,16 +672,16 @@
   }
  },
  "holdout": {
-  "temperature_fitted_on_calibration": 1.2384,
-  "calibration_set_size": 4225,
+  "temperature_fitted_on_calibration": 1.4783,
+  "calibration_set_size": 7005,
   "overall": {
-   "count": 11015,
-   "correct": 10427,
+   "count": 13101,
+   "correct": 11096,
    "supported_classes": 38,
-   "top1_accuracy": 0.9466182478438493,
-   "macro_f1_supported": 0.9256573816077169,
-   "crop_accuracy": 0.9775760326827054,
-   "high_confidence_wrong_count_0_9": 91
+   "top1_accuracy": 0.8469582474620257,
+   "macro_f1_supported": 0.8174176387484451,
+   "crop_accuracy": 0.9282497519273338,
+   "high_confidence_wrong_count_0_9": 276
   },
   "by_source": {
    "plantdoc": {
@@ -925,117 +925,124 @@
   },
   "calibration": {
    "overall": {
-    "n": 11015,
-    "accuracy": 0.9466182478438493,
-    "mean_confidence_raw": 0.948639393669401,
-    "mean_confidence_temperature_scaled": 0.9264732983527513,
-    "ece_raw": 0.00388,
-    "ece_temperature_scaled": 0.02223,
-    "nll_raw": 0.18112,
-    "nll_temperature_scaled": 0.18829,
+    "n": 13101,
+    "accuracy": 0.8469582474620257,
+    "mean_confidence_raw": 0.8975233882974226,
+    "mean_confidence_temperature_scaled": 0.8263275905330533,
+    "ece_raw": 0.05057,
+    "ece_temperature_scaled": 0.0275,
+    "nll_raw": 0.59908,
+    "nll_temperature_scaled": 0.5685,
     "reliability_raw": [
+     {
+      "lo": 0.0667,
+      "hi": 0.1333,
+      "n": 2,
+      "mean_confidence": 0.1067,
+      "accuracy": 0.0
+     },
      {
       "lo": 0.1333,
       "hi": 0.2,
-      "n": 4,
-      "mean_confidence": 0.1816,
-      "accuracy": 0.0
+      "n": 47,
+      "mean_confidence": 0.1788,
+      "accuracy": 0.1489
      },
      {
       "lo": 0.2,
       "hi": 0.2667,
-      "n": 18,
-      "mean_confidence": 0.2421,
-      "accuracy": 0.1111
+      "n": 112,
+      "mean_confidence": 0.2359,
+      "accuracy": 0.1071
      },
      {
       "lo": 0.2667,
       "hi": 0.3333,
-      "n": 33,
-      "mean_confidence": 0.298,
-      "accuracy": 0.1818
+      "n": 206,
+      "mean_confidence": 0.301,
+      "accuracy": 0.1505
      },
      {
       "lo": 0.3333,
       "hi": 0.4,
-      "n": 47,
-      "mean_confidence": 0.3707,
-      "accuracy": 0.2128
+      "n": 193,
+      "mean_confidence": 0.3693,
+      "accuracy": 0.2228
      },
      {
       "lo": 0.4,
       "hi": 0.4667,
-      "n": 68,
-      "mean_confidence": 0.4364,
-      "accuracy": 0.3824
+      "n": 242,
+      "mean_confidence": 0.435,
+      "accuracy": 0.2273
      },
      {
       "lo": 0.4667,
       "hi": 0.5333,
-      "n": 140,
-      "mean_confidence": 0.5005,
-      "accuracy": 0.5429
+      "n": 323,
+      "mean_confidence": 0.4991,
+      "accuracy": 0.3932
      },
      {
       "lo": 0.5333,
       "hi": 0.6,
-      "n": 159,
-      "mean_confidence": 0.5675,
-      "accuracy": 0.5597
+      "n": 338,
+      "mean_confidence": 0.5666,
+      "accuracy": 0.4112
      },
      {
       "lo": 0.6,
       "hi": 0.6667,
-      "n": 152,
-      "mean_confidence": 0.634,
-      "accuracy": 0.6447
+      "n": 310,
+      "mean_confidence": 0.6338,
+      "accuracy": 0.4677
      },
      {
       "lo": 0.6667,
       "hi": 0.7333,
-      "n": 160,
-      "mean_confidence": 0.6993,
-      "accuracy": 0.6813
+      "n": 296,
+      "mean_confidence": 0.7001,
+      "accuracy": 0.5
      },
      {
       "lo": 0.7333,
       "hi": 0.8,
-      "n": 235,
-      "mean_confidence": 0.7674,
-      "accuracy": 0.7787
+      "n": 385,
+      "mean_confidence": 0.7672,
+      "accuracy": 0.6312
      },
      {
       "lo": 0.8,
       "hi": 0.8667,
-      "n": 312,
-      "mean_confidence": 0.8343,
-      "accuracy": 0.8237
+      "n": 474,
+      "mean_confidence": 0.8337,
+      "accuracy": 0.6709
      },
      {
       "lo": 0.8667,
       "hi": 0.9333,
-      "n": 516,
-      "mean_confidence": 0.9037,
-      "accuracy": 0.8934
+      "n": 699,
+      "mean_confidence": 0.9034,
+      "accuracy": 0.7797
      },
      {
       "lo": 0.9333,
       "hi": 1.0,
-      "n": 9171,
-      "mean_confidence": 0.9935,
-      "accuracy": 0.9933
+      "n": 9474,
+      "mean_confidence": 0.9929,
+      "accuracy": 0.9798
      }
     ]
    },
    "plantdoc": {
     "n": 172,
     "accuracy": 0.25,
-    "mean_confidence_raw": 0.6271093134701129,
-    "mean_confidence_temperature_scaled": 0.5453424659743056,
+    "mean_confidence_raw": 0.627109311967326,
+    "mean_confidence_temperature_scaled": 0.47047880889765215,
     "ece_raw": 0.37711,
-    "ece_temperature_scaled": 0.29534,
+    "ece_temperature_scaled": 0.22048,
     "nll_raw": 3.62043,
-    "nll_temperature_scaled": 3.20146,
+    "nll_temperature_scaled": 2.97309,
     "reliability_raw": [
      {
       "lo": 0.1333,
@@ -1133,12 +1140,12 @@
    "plantvillage": {
     "n": 10843,
     "accuracy": 0.9576685419164438,
-    "mean_confidence_raw": 0.9537397509316232,
-    "mean_confidence_temperature_scaled": 0.9325190885555634,
+    "mean_confidence_raw": 0.9537397509786208,
+    "mean_confidence_temperature_scaled": 0.9028500434353622,
     "ece_raw": 0.00473,
-    "ece_temperature_scaled": 0.02581,
+    "ece_temperature_scaled": 0.05484,
     "nll_raw": 0.12657,
-    "nll_temperature_scaled": 0.14049,
+    "nll_temperature_scaled": 0.17016,
     "reliability_raw": [
      {
       "lo": 0.1333,
@@ -1239,21 +1246,21 @@
   "plantdoc": {
    "count": 172,
    "plantvillage_model_top1": 0.25,
-   "fedavg_top1": 0.5,
+   "fedavg_top1": 0.4011627906976744,
    "mcnemar": {
-    "a_right_b_wrong": 14,
-    "a_wrong_b_right": 57,
-    "p_value": 2.6659171387086086e-07
+    "a_right_b_wrong": 20,
+    "a_wrong_b_right": 46,
+    "p_value": 0.0018582303075658085
    }
   },
   "plantvillage": {
    "count": 10843,
    "plantvillage_model_top1": 0.9576685419164438,
-   "fedavg_top1": 0.9334132620123582,
+   "fedavg_top1": 0.9683666881859264,
    "mcnemar": {
-    "a_right_b_wrong": 589,
-    "a_wrong_b_right": 326,
-    "p_value": 2.74195649671366e-18
+    "a_right_b_wrong": 246,
+    "a_wrong_b_right": 362,
+    "p_value": 2.906688070606735e-06
    }
   }
  },

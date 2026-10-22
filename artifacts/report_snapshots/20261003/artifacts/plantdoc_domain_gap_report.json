@@ -1,0 +1,38 @@
+{
+  "source_csv": "artifacts/branch_demo/20261003/fedavg/validation_comparison.csv",
+  "evidence": "published comparison artifact; not a locally repeated validation",
+  "models": {
+    "Centralized v6": {
+      "plantdoc": {
+        "count": 269,
+        "accuracy_pct": 53.9,
+        "macro_f1_pct": 53.47,
+        "crop_accuracy_pct": 78.81
+      },
+      "plantvillage": {
+        "count": 4344,
+        "accuracy_pct": 99.22,
+        "macro_f1_pct": 98.99,
+        "crop_accuracy_pct": 99.72
+      },
+      "plantvillage_minus_plantdoc_accuracy_pp": 45.32
+    },
+    "FedAvg v7": {
+      "plantdoc": {
+        "count": 269,
+        "accuracy_pct": 47.21,
+        "macro_f1_pct": 46.87,
+        "crop_accuracy_pct": 75.46
+      },
+      "plantvillage": {
+        "count": 4344,
+        "accuracy_pct": 93.12,
+        "macro_f1_pct": 90.19,
+        "crop_accuracy_pct": 98.69
+      },
+      "plantvillage_minus_plantdoc_accuracy_pp": 45.91
+    }
+  },
+  "note": "Crop accuracy is a separately reported metric; do not interpret as full 38-class top-1 accuracy.",
+  "recommendation": "Evaluate and improve real-world/domain robustness before optimizing confidence display."
+}

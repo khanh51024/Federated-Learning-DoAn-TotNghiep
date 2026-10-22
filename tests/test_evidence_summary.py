@@ -6,6 +6,7 @@ import copy
 import pytest
 from fastapi.testclient import TestClient
 
+from src import bundle
 from web.app import app
 from web.routers.inference import _gated_evidence
 from web.services import evidence_service
@@ -39,7 +40,7 @@ def test_summary_builds_every_section_from_real_artifacts(evidence):
 
     shards = result["shards"]
     assert shards["classes_total"] == 38 and len(shards["clients"]) == 5
-    assert sum(c["n_k"] for c in shards["clients"]) == shards["total_train"] == 37238
+    assert sum(c["n_k"] for c in shards["clients"]) == shards["total_train"] == bundle.shard_total(bundle.load_manifest())
     for row in shards["classes"]:
         assert row["total"] == sum(row["per_client"].values())
     assert result["leakage"]["passed"] is True and result["leakage"]["overlap_total"] == 0
@@ -103,7 +104,7 @@ def test_http_route_returns_the_summary(evidence):
     assert body["available"] is True
     assert body["identity"]["protocol_id"] == evidence["protocol_id"]
     assert len(body["identity"]["models"]) == 7
-    assert len(response.content) < 145_000  # payload nhỏ để mở trang nhanh trên server 2 GiB RAM
+    assert len(response.content) < 200_000  # payload nhỏ để mở trang nhanh trên server 2 GiB RAM (lịch sử 40 epoch/vòng của gói v4b lớn hơn gói cũ)
 
 
 def test_checklist_is_redacted_when_the_bundle_is_withheld():

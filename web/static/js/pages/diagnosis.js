@@ -539,7 +539,7 @@ function setStageView(view) {
   if (!stage) return;
   const cam = view === "cam";
   stage.classList.toggle("is-cam", cam);
-  byId("stage-tag").textContent = cam ? "Grad-CAM của FedAvg v7: vùng ảnh ảnh hưởng tới nhóm nó đoán" : "";
+  byId("stage-tag").textContent = cam ? `Grad-CAM của ${MODEL_LABELS.fedavg}: vùng ảnh ảnh hưởng tới nhóm nó đoán` : "";
   $$("[data-stage-view]").forEach(button => {
     const on = button.dataset.stageView === view;
     button.classList.toggle("is-active", on);
@@ -988,9 +988,9 @@ function renderCommunity() {
   const v = verdict(d, trueClass);
   const baseVerdict = verdict({ predicted_class: d.baseline.predicted_class }, trueClass);
   const note = d.version === 0
-    ? "Chưa có vòng cộng đồng nào được nhận nên phiên bản hiện hành trùng FedAvg v7."
+    ? `Chưa có vòng cộng đồng nào được nhận nên phiên bản hiện hành trùng ${MODEL_LABELS.fedavg}.`
     : `Phiên bản ${esc(d.version)} · độ chính xác trên tập giám sát ${fmtPct(d.metrics?.accuracy, 1)} (mô hình gốc ${fmtPct(d.base_metrics?.accuracy, 1)}).`;
-  const compare = `<p class="field-hint mt-2">FedAvg v7 gốc trên cùng ảnh: <b>${esc(formatDiseaseName(d.baseline.predicted_class))}</b> (${fmtNum(d.baseline.confidence_pct, 1)}%) ${baseVerdict ? verdictHtml(baseVerdict) : ""} · ${d.same_as_baseline ? "cùng kết luận" : "khác kết luận"}.</p>`;
+  const compare = `<p class="field-hint mt-2">${MODEL_LABELS.fedavg} gốc trên cùng ảnh: <b>${esc(formatDiseaseName(d.baseline.predicted_class))}</b> (${fmtNum(d.baseline.confidence_pct, 1)}%) ${baseVerdict ? verdictHtml(baseVerdict) : ""} · ${d.same_as_baseline ? "cùng kết luận" : "khác kết luận"}.</p>`;
   box.innerHTML = `${headlineBlock(`Kết quả chính, mô hình cộng đồng · phiên bản ${esc(d.version)}`, d, trueClass, compare)}
     <h4 class="subhead mt-3">Ba nhóm có xác suất cao nhất</h4>${topListHtml(d.top3, "fedavg", null)}
     <p class="field-hint mt-3">${note}</p>

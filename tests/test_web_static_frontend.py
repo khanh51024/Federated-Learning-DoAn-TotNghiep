@@ -439,7 +439,7 @@ def test_fullframe_limitation_numbers_come_from_the_api_not_the_source():
     source = JS_BY_REL["pages/conclusion.js"]
     assert "summary?.fullframe" in source and "ff.splits" in source
     block = source[source.index("const ff = summary?.fullframe"):]
-    block = block[: block.index('out.push(["So sánh Centralized')]
+    block = block[: block.index('out.push(["Công thức huấn luyện được chọn')]
     literal_percent = re.findall(r"(?<![\w$.{])\d{1,3}[,.]\d\s*%", block)
     assert not literal_percent, f"số phần trăm gõ cứng trong giới hạn ảnh nguyên khung: {literal_percent}"
 

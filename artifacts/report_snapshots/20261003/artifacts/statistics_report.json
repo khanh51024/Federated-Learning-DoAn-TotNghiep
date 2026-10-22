@@ -1,0 +1,491 @@
+{
+ "evidence": "thống kê trên logits đã lưu của lần chấm cục bộ (không chạy lại mô hình); bootstrap theo cụm, McNemar chính xác",
+ "protocol_id": "mixed_pv_pd_v3_pretrained_seed42_validation",
+ "release_manifest_sha256": "6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252",
+ "validation_manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
+ "checkpoint_sha256": {
+  "centralized": "7fa1a91f20fac2f37526366d7d11256d409f23e45f0ced5dd89e837ade7bb603",
+  "fedavg": "eb5b4e70c17c5e1be70fc7c493e6e8ddb32149150f81496176332e6fe62d0c5c",
+  "local_00": "55f2b0d476cd18bda957293fd00869a95cb9ab67050d4bab83c5edff54ce86ae",
+  "local_01": "0391db294a87c634a5e6ca9d81a90252f35cc3c17d92c1bae4607d56fc091cd1",
+  "local_02": "ba2d936eb74e3de33500c8106fbb1edfef7a59fdbe2627211c479c01639be7c4",
+  "local_03": "9d94ab2f7452c8940c1b74118a81e934efb96c09920bba5244bb5f91e2764f76",
+  "local_04": "7ff7a833777dd195b9cdf922ccba088aa706edea8dc4e9d56a9a744dea8eccb0"
+ },
+ "bootstrap_resamples": 2000,
+ "bootstrap_seed": 20261011,
+ "cluster_definition": {
+  "plantdoc": "parent_scene_id",
+  "plantvillage": "group_id (nhóm lá của release)"
+ },
+ "reshoot_heuristic": "ảnh PlantVillage thuộc nhóm một-ảnh có ảnh train cùng lớp, cùng tiền tố tên, số thứ tự ±1 — ƯỚC LƯỢNG ảnh chụp lại cùng lá, không phải phát hiện chắc chắn",
+ "splits": {
+  "val": {
+   "available": true,
+   "name": "validation",
+   "manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
+   "count": 4613,
+   "used_for_checkpoint_selection": true,
+   "by_source": {
+    "plantdoc": {
+     "count": 269,
+     "clusters": 115,
+     "models": {
+      "centralized": {
+       "correct": 145,
+       "estimate": 0.5390334572490706,
+       "low": 0.442026950008142,
+       "high": 0.6313563476237952,
+       "clusters": 115
+      },
+      "fedavg": {
+       "correct": 127,
+       "estimate": 0.4721189591078067,
+       "low": 0.3727561468392576,
+       "high": 0.5731340890446714,
+       "clusters": 115
+      },
+      "local_00": {
+       "correct": 69,
+       "estimate": 0.25650557620817843,
+       "low": 0.18208665487970058,
+       "high": 0.3483252289679917,
+       "clusters": 115
+      },
+      "local_01": {
+       "correct": 68,
+       "estimate": 0.2527881040892193,
+       "low": 0.16784287041954327,
+       "high": 0.34547959914101634,
+       "clusters": 115
+      },
+      "local_02": {
+       "correct": 78,
+       "estimate": 0.2899628252788104,
+       "low": 0.19230392156862747,
+       "high": 0.3891254482964734,
+       "clusters": 115
+      },
+      "local_03": {
+       "correct": 72,
+       "estimate": 0.26765799256505574,
+       "low": 0.1953101655876494,
+       "high": 0.3469445514054678,
+       "clusters": 115
+      },
+      "local_04": {
+       "correct": 57,
+       "estimate": 0.21189591078066913,
+       "low": 0.14034405078844972,
+       "high": 0.29337572020752406,
+       "clusters": 115
+      }
+     },
+     "pairs": {
+      "centralized_vs_fedavg": {
+       "a": "centralized",
+       "b": "fedavg",
+       "a_right_b_wrong": 44,
+       "a_wrong_b_right": 26,
+       "p_value": 0.04139142867391546,
+       "difference_ci": {
+        "estimate": 0.06691449814126393,
+        "low": -0.03677919819380034,
+        "high": 0.18001807228915653,
+        "clusters": 115
+       }
+      },
+      "fedavg_vs_best_local": {
+       "a": "fedavg",
+       "b": "local_02",
+       "a_right_b_wrong": 90,
+       "a_wrong_b_right": 41,
+       "p_value": 2.2318496164502152e-05,
+       "difference_ci": {
+        "estimate": 0.1821561338289963,
+        "low": 0.02596570096570097,
+        "high": 0.3370076425631981,
+        "clusters": 115
+       }
+      }
+     }
+    },
+    "plantvillage": {
+     "count": 4344,
+     "clusters": 1660,
+     "models": {
+      "centralized": {
+       "correct": 4310,
+       "estimate": 0.9921731123388582,
+       "low": 0.988699094930437,
+       "high": 0.9953333411105926,
+       "clusters": 1660
+      },
+      "fedavg": {
+       "correct": 4045,
+       "estimate": 0.9311694290976059,
+       "low": 0.9192149157359463,
+       "high": 0.9419751731765774,
+       "clusters": 1660
+      },
+      "local_00": {
+       "correct": 1950,
+       "estimate": 0.4488950276243094,
+       "low": 0.41230173701110645,
+       "high": 0.481945428283153,
+       "clusters": 1660
+      },
+      "local_01": {
+       "correct": 2259,
+       "estimate": 0.5200276243093923,
+       "low": 0.4874229932615603,
+       "high": 0.5516876987728441,
+       "clusters": 1660
+      },
+      "local_02": {
+       "correct": 2404,
+       "estimate": 0.5534069981583793,
+       "low": 0.5208300438596491,
+       "high": 0.5853839186824927,
+       "clusters": 1660
+      },
+      "local_03": {
+       "correct": 2410,
+       "estimate": 0.5547882136279927,
+       "low": 0.5234332855093257,
+       "high": 0.5866015835295308,
+       "clusters": 1660
+      },
+      "local_04": {
+       "correct": 2396,
+       "estimate": 0.5515653775322283,
+       "low": 0.5172803580435557,
+       "high": 0.5823474271919705,
+       "clusters": 1660
+      }
+     },
+     "pairs": {
+      "centralized_vs_fedavg": {
+       "a": "centralized",
+       "b": "fedavg",
+       "a_right_b_wrong": 284,
+       "a_wrong_b_right": 19,
+       "p_value": 8.528132364560656e-62,
+       "difference_ci": {
+        "estimate": 0.0610036832412523,
+        "low": 0.049437543459016346,
+        "high": 0.07219630142625194,
+        "clusters": 1660
+       }
+      },
+      "fedavg_vs_best_local": {
+       "a": "fedavg",
+       "b": "local_03",
+       "a_right_b_wrong": 1683,
+       "a_wrong_b_right": 48,
+       "p_value": 0.0,
+       "difference_ci": {
+        "estimate": 0.3763812154696133,
+        "low": 0.3453917537770759,
+        "high": 0.40759235262262106,
+        "clusters": 1660
+       }
+      }
+     },
+     "same_leaf_sensitivity": {
+      "ungrouped_images": 1053,
+      "ungrouped_with_adjacent_train_number": 808,
+      "models": {
+       "centralized": {
+        "all": 0.9921731123388582,
+        "grouped_only": 0.9936189608021878,
+        "without_suspected_reshoots": 0.9929298642533937,
+        "suspected_reshoots_only": 0.9888613861386139
+       },
+       "fedavg": {
+        "all": 0.9311694290976059,
+        "grouped_only": 0.937708903068976,
+        "without_suspected_reshoots": 0.9383484162895928,
+        "suspected_reshoots_only": 0.8997524752475248
+       },
+       "local_00": {
+        "all": 0.4488950276243094,
+        "grouped_only": 0.4627772713460954,
+        "without_suspected_reshoots": 0.47680995475113125,
+        "suspected_reshoots_only": 0.32673267326732675
+       },
+       "local_01": {
+        "all": 0.5200276243093923,
+        "grouped_only": 0.5326648435126101,
+        "without_suspected_reshoots": 0.5220588235294118,
+        "suspected_reshoots_only": 0.5111386138613861
+       },
+       "local_02": {
+        "all": 0.5534069981583793,
+        "grouped_only": 0.5183834700698876,
+        "without_suspected_reshoots": 0.5175339366515838,
+        "suspected_reshoots_only": 0.7103960396039604
+       },
+       "local_03": {
+        "all": 0.5547882136279927,
+        "grouped_only": 0.5861440291704649,
+        "without_suspected_reshoots": 0.5890837104072398,
+        "suspected_reshoots_only": 0.40470297029702973
+       },
+       "local_04": {
+        "all": 0.5515653775322283,
+        "grouped_only": 0.5979945305378305,
+        "without_suspected_reshoots": 0.5992647058823529,
+        "suspected_reshoots_only": 0.34282178217821785
+       }
+      }
+     }
+    }
+   }
+  },
+  "test": {
+   "available": true,
+   "name": "legacy_diagnostic_test",
+   "manifest_sha256": "61ee9f178b93aa65dcc6e41c63365c0f6098dc6f79d3dfa7b6e3a8e735f769c2",
+   "count": 11015,
+   "used_for_checkpoint_selection": false,
+   "by_source": {
+    "plantdoc": {
+     "count": 172,
+     "clusters": 96,
+     "models": {
+      "centralized": {
+       "correct": 109,
+       "estimate": 0.6337209302325582,
+       "low": 0.5286446176365867,
+       "high": 0.7371991978609626,
+       "clusters": 96
+      },
+      "fedavg": {
+       "correct": 86,
+       "estimate": 0.5,
+       "low": 0.38417086578103526,
+       "high": 0.6142990444908923,
+       "clusters": 96
+      },
+      "local_00": {
+       "correct": 43,
+       "estimate": 0.25,
+       "low": 0.17166768853464132,
+       "high": 0.34228647605038154,
+       "clusters": 96
+      },
+      "local_01": {
+       "correct": 42,
+       "estimate": 0.2441860465116279,
+       "low": 0.14534883720930233,
+       "high": 0.3480725060525172,
+       "clusters": 96
+      },
+      "local_02": {
+       "correct": 45,
+       "estimate": 0.2616279069767442,
+       "low": 0.15662240799934432,
+       "high": 0.38993323061119617,
+       "clusters": 96
+      },
+      "local_03": {
+       "correct": 42,
+       "estimate": 0.2441860465116279,
+       "low": 0.173070987654321,
+       "high": 0.32298136645962733,
+       "clusters": 96
+      },
+      "local_04": {
+       "correct": 44,
+       "estimate": 0.2558139534883721,
+       "low": 0.16589316390805225,
+       "high": 0.3533483146067415,
+       "clusters": 96
+      }
+     },
+     "pairs": {
+      "centralized_vs_fedavg": {
+       "a": "centralized",
+       "b": "fedavg",
+       "a_right_b_wrong": 46,
+       "a_wrong_b_right": 23,
+       "p_value": 0.007620521855025698,
+       "difference_ci": {
+        "estimate": 0.13372093023255813,
+        "low": 0.01645021645021645,
+        "high": 0.2483221476510067,
+        "clusters": 96
+       }
+      },
+      "fedavg_vs_best_local": {
+       "a": "fedavg",
+       "b": "local_02",
+       "a_right_b_wrong": 53,
+       "a_wrong_b_right": 12,
+       "p_value": 2.7862343424643344e-07,
+       "difference_ci": {
+        "estimate": 0.23837209302325582,
+        "low": 0.1407035175879397,
+        "high": 0.34731177888126186,
+        "clusters": 96
+       }
+      }
+     }
+    },
+    "plantvillage": {
+     "count": 10843,
+     "clusters": 4147,
+     "models": {
+      "centralized": {
+       "correct": 10759,
+       "estimate": 0.9922530664945126,
+       "low": 0.990149398039283,
+       "high": 0.9942963922612423,
+       "clusters": 4147
+      },
+      "fedavg": {
+       "correct": 10121,
+       "estimate": 0.9334132620123582,
+       "low": 0.9265655417776775,
+       "high": 0.9402401773966098,
+       "clusters": 4147
+      },
+      "local_00": {
+       "correct": 4938,
+       "estimate": 0.45540901964401,
+       "low": 0.43353290041428494,
+       "high": 0.4778734711694207,
+       "clusters": 4147
+      },
+      "local_01": {
+       "correct": 5642,
+       "estimate": 0.5203357004519045,
+       "low": 0.5002361632988621,
+       "high": 0.5409108069943743,
+       "clusters": 4147
+      },
+      "local_02": {
+       "correct": 5988,
+       "estimate": 0.5522456884626026,
+       "low": 0.5321803540878428,
+       "high": 0.5733181925483863,
+       "clusters": 4147
+      },
+      "local_03": {
+       "correct": 6016,
+       "estimate": 0.5548279996310984,
+       "low": 0.5339535468373482,
+       "high": 0.5759807434268559,
+       "clusters": 4147
+      },
+      "local_04": {
+       "correct": 5980,
+       "estimate": 0.5515078852716038,
+       "low": 0.53127418167235,
+       "high": 0.5724337680031422,
+       "clusters": 4147
+      }
+     },
+     "pairs": {
+      "centralized_vs_fedavg": {
+       "a": "centralized",
+       "b": "fedavg",
+       "a_right_b_wrong": 672,
+       "a_wrong_b_right": 34,
+       "p_value": 6.8365193837760864e-155,
+       "difference_ci": {
+        "estimate": 0.05883980448215439,
+        "low": 0.052096416114442136,
+        "high": 0.0657251695455234,
+        "clusters": 4147
+       }
+      },
+      "fedavg_vs_best_local": {
+       "a": "fedavg",
+       "b": "local_03",
+       "a_right_b_wrong": 4236,
+       "a_wrong_b_right": 131,
+       "p_value": 0.0,
+       "difference_ci": {
+        "estimate": 0.3785852623812598,
+        "low": 0.3581442706298085,
+        "high": 0.3991716380687552,
+        "clusters": 4147
+       }
+      }
+     },
+     "same_leaf_sensitivity": {
+      "ungrouped_images": 2633,
+      "ungrouped_with_adjacent_train_number": 2015,
+      "models": {
+       "centralized": {
+        "all": 0.9922530664945126,
+        "grouped_only": 0.9934226552984166,
+        "without_suspected_reshoots": 0.9932034435885818,
+        "suspected_reshoots_only": 0.9880893300248139
+       },
+       "fedavg": {
+        "all": 0.9334132620123582,
+        "grouped_only": 0.9386114494518879,
+        "without_suspected_reshoots": 0.9393973719981876,
+        "suspected_reshoots_only": 0.9071960297766749
+       },
+       "local_00": {
+        "all": 0.45540901964401,
+        "grouped_only": 0.47088915956151034,
+        "without_suspected_reshoots": 0.48652016311735385,
+        "suspected_reshoots_only": 0.31910669975186107
+       },
+       "local_01": {
+        "all": 0.5203357004519045,
+        "grouped_only": 0.5341047503045067,
+        "without_suspected_reshoots": 0.5207294970548255,
+        "suspected_reshoots_only": 0.5186104218362283
+       },
+       "local_02": {
+        "all": 0.5522456884626026,
+        "grouped_only": 0.520462850182704,
+        "without_suspected_reshoots": 0.520163117353874,
+        "suspected_reshoots_only": 0.6928039702233251
+       },
+       "local_03": {
+        "all": 0.5548279996310984,
+        "grouped_only": 0.5841656516443362,
+        "without_suspected_reshoots": 0.5898278205709108,
+        "suspected_reshoots_only": 0.40148883374689825
+       },
+       "local_04": {
+        "all": 0.5515078852716038,
+        "grouped_only": 0.5993909866017052,
+        "without_suspected_reshoots": 0.5995695514272769,
+        "suspected_reshoots_only": 0.3409429280397022
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "selection_effect": {
+  "available": true,
+  "model": "centralized",
+  "selection_metric": "macro-F1 PlantDoc trên validation (trong các epoch đạt ngưỡng F1 PlantVillage)",
+  "epochs": 83,
+  "chosen_epoch": 22,
+  "chosen_plantdoc_accuracy": 0.5390334572490706,
+  "last_epoch": 83,
+  "last_plantdoc_accuracy": 0.516728624535316,
+  "max_plantdoc_accuracy": 0.5390334572490706,
+  "eligible_range": [
+   0.4795539033457249,
+   0.5390334572490706
+  ],
+  "chosen_rank_among_epochs": 1,
+  "fedavg_note": "Bundle FedAvg v7 không công bố lịch sử từng vòng nên không đo được hiệu ứng chọn của nó."
+ },
+ "best_local_chosen_on_val": {
+  "plantdoc": "local_02",
+  "plantvillage": "local_03"
+ }
+}

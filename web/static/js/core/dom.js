@@ -202,16 +202,23 @@ export function skeleton(lines = 3) {
   return Array.from({ length: lines }, () => '<span class="skeleton skeleton-line"></span>').join("");
 }
 
-/** Nhãn tiếng Việt ngắn của mô hình (tên đã dùng trong tài liệu). */
+/** Nhãn ngắn của mô hình. Giá trị ban đầu chỉ là tên chung (không phiên bản); tên thật của gói đang dùng (ví dụ "Centralized v4b") do
+ *  `setModelLabels` điền từ /api/demo/evidence ngay khi nạp xong (js/core/store.js), nên không có tên mô hình viết cứng trong giao diện. */
 export const MODEL_LABELS = {
-  centralized: "Centralized v6",
-  fedavg: "FedAvg v7",
+  centralized: "Centralized",
+  fedavg: "FedAvg",
   local_00: "Local 00",
   local_01: "Local 01",
   local_02: "Local 02",
   local_03: "Local 03",
   local_04: "Local 04",
 };
+
+export function setModelLabels(models) {
+  for (const m of models || []) {
+    if (m && m.model_id && m.name) MODEL_LABELS[m.model_id] = m.name;
+  }
+}
 
 export const MODEL_ORDER = ["centralized", "fedavg", "local_00", "local_01", "local_02", "local_03", "local_04"];
 

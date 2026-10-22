@@ -27,7 +27,7 @@ def test_models_endpoint_lists_only_gated_models(client):
     payload = client.get("/api/models").json()
     ids = {m["model_id"] for m in payload["models"]}
     assert payload["count"] == len(ids) >= 8
-    assert {"demo_centralized_v6", "demo_fedavg_v7", "plantvillage_traced_reference"} <= ids
+    assert {reg.web_id("centralized"), reg.web_id("fedavg"), "plantvillage_traced_reference"} <= ids
     for entry in payload["models"]:
         assert entry["role"] in (reg.ROLE_CURRENT, reg.ROLE_REFERENCE)
         assert entry["display_label"]
@@ -48,16 +48,16 @@ def test_predict_rejects_unknown_and_gated_models():
 def test_predict_fails_closed_when_registry_missing(monkeypatch):
     monkeypatch.setattr(model_service, "registry_models", lambda: {})
     with pytest.raises(model_service.RegistryUnavailable):
-        model_service.predict("demo_fedavg_v7", Image.new("RGB", (8, 8)))
+        model_service.predict(reg.web_id("fedavg"), Image.new("RGB", (8, 8)))
 
 
 def test_inference_endpoint_labels_results_with_registry_context(client):
     response = client.post("/api/inference?federated_source=fedavg", files={"file": ("leaf.jpg", _jpeg(), "image/jpeg")})
     assert response.status_code == 200
     body = response.json()
-    assert body["federated"]["registry"]["model_id"] == "demo_fedavg_v7"
-    assert body["centralized"]["registry"]["model_id"] == "demo_centralized_v6"
-    assert "Demo" in body["federated"]["registry"]["display_label"]
+    assert body["federated"]["registry"]["model_id"] == reg.web_id("fedavg")
+    assert body["centralized"]["registry"]["model_id"] == reg.web_id("centralized")
+    assert "hash-verified" in body["federated"]["registry"]["display_label"]
     assert len(body["federated"]["top3"]) == 3
     assert body["scientific_status"]["overall_scientific_valid"] is False
 
@@ -75,7 +75,7 @@ def test_unknown_federated_source_is_rejected(client):
 
 def test_gated_model_returns_503_with_reasons(client, monkeypatch):
     models = {m["model_id"]: dict(m) for m in reg.iter_models()}
-    models["demo_fedavg_v7"].update(web_visible=False, web_gate_failures=["1.hash: checkpoint_status=hash_mismatch"])
+    models[reg.web_id("fedavg")].update(web_visible=False, web_gate_failures=["1.hash: checkpoint_status=hash_mismatch"])
     monkeypatch.setattr(model_service, "registry_models", lambda: models)
     response = client.post("/api/inference?federated_source=fedavg", files={"file": ("leaf.jpg", _jpeg(), "image/jpeg")})
     assert response.status_code == 503
@@ -84,7 +84,7 @@ def test_gated_model_returns_503_with_reasons(client, monkeypatch):
 
 
 def test_unknown_internal_model_is_a_server_state_problem_not_a_client_error(client, monkeypatch):
-    models = {k: v for k, v in model_service.registry_models().items() if k != "demo_centralized_v6"}
+    models = {k: v for k, v in model_service.registry_models().items() if k != reg.web_id("centralized")}
     monkeypatch.setattr(model_service, "registry_models", lambda: models)
     response = client.post("/api/inference?federated_source=fedavg", files={"file": ("leaf.jpg", _jpeg(), "image/jpeg")})
     assert response.status_code == 503
@@ -101,14 +101,14 @@ def test_registry_read_errors_do_not_become_500(monkeypatch):
 def test_weights_inspect_obeys_the_same_gate_as_inference(client, monkeypatch):
     models = {m["model_id"]: dict(m) for m in reg.iter_models()}
     assert client.get("/api/weights/inspect").json()["available"] is True
-    models["demo_fedavg_v7"].update(web_visible=False, checkpoint_status="hash_mismatch")
+    models[reg.web_id("fedavg")].update(web_visible=False, checkpoint_status="hash_mismatch")
     monkeypatch.setattr(model_service, "registry_models", lambda: models)
     assert client.get("/api/weights/inspect").json()["available"] is False
 
 
 def test_weights_inspect_rejects_checkpoint_whose_hash_changed(client, monkeypatch):
     models = {m["model_id"]: dict(m) for m in reg.iter_models()}
-    models["demo_fedavg_v7"]["file_sha256"] = "0" * 64
+    models[reg.web_id("fedavg")]["file_sha256"] = "0" * 64
     monkeypatch.setattr(model_service, "registry_models", lambda: models)
     assert client.get("/api/weights/inspect").json()["available"] is False
 
@@ -123,21 +123,21 @@ def test_reference_model_hash_is_rechecked_on_every_use(client, monkeypatch):
 def test_models_endpoint_exposes_the_key_the_ui_posts(client):
     models = client.get("/api/models").json()["models"]
     keys = {m["model_id"]: m["inference_key"] for m in models}
-    assert keys["demo_fedavg_v7"] == "fedavg"
-    assert keys["demo_local_03"] == "local_03"
+    assert keys[reg.web_id("fedavg")] == "fedavg"
+    assert keys[reg.web_id("local_03")] == "local_03"
     assert all(m["display_label"] for m in models)
 
 
 def test_comparison_and_evidence_are_withheld_when_any_bundle_model_is_blocked(client, monkeypatch):
     assert client.get("/api/compare").json()["available"] is True
     models = {m["model_id"]: dict(m) for m in reg.iter_models()}
-    models["demo_local_02"].update(web_visible=False, web_gate_failures=["1.hash: checkpoint_status=hash_mismatch"])
+    models[reg.web_id("local_02")].update(web_visible=False, web_gate_failures=["1.hash: checkpoint_status=hash_mismatch"])
     monkeypatch.setattr(model_service, "registry_models", lambda: models)
     for path in ("/api/compare", "/api/demo/evidence"):
         body = client.get(path).json()
         assert body["available"] is False, path
         assert body["models"] == []
-        assert "demo_local_02" in body["reason"] and "hash_mismatch" in body["reason"]
+        assert reg.web_id("local_02") in body["reason"] and "hash_mismatch" in body["reason"]
     assert client.get("/api/compare").json()["rows"] == []
 
 

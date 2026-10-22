@@ -1,0 +1,163 @@
+{
+ "evidence": "đối chiếu manifest release đã kiểm hash; không phải kiểm tra từng checkpoint được huấn luyện trên split nào",
+ "scope": "split của release. Việc từng checkpoint train trên đúng split này dựa vào release_manifest_sha256 ghi trong metadata checkpoint (web kiểm mỗi lần suy luận) và n_k từng client khớp tóm tắt huấn luyện công bố.",
+ "release_name": "mixed_pv_pd_v3",
+ "release_binding": {
+  "pinned_release_manifest_sha256": "6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252",
+  "sha256_of_stored_file": "1bd5b51c93c317f016535265867436de5f978884428d1595d535326d5b85e29e",
+  "sha256_with_crlf_terminator": "6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252",
+  "matches_pinned": true,
+  "note": "git lưu file với LF; hash khớp khi thêm CRLF cuối file (cách file nằm trên máy nhóm train)"
+ },
+ "validation_manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
+ "manifest_hashes_match_files": {
+  "train": true,
+  "val": true,
+  "calibration": true
+ },
+ "counts": {
+  "train": 37238,
+  "val": 4613,
+  "calibration": 4225
+ },
+ "pairwise_overlaps": {
+  "train__val": {
+   "group_id": 0,
+   "parent_scene_id": 0,
+   "byte_sha256": 0,
+   "sample_id": 0,
+   "image_id": 0
+  },
+  "train__calibration": {
+   "group_id": 0,
+   "parent_scene_id": 0,
+   "byte_sha256": 0,
+   "sample_id": 0,
+   "image_id": 0
+  },
+  "val__calibration": {
+   "group_id": 0,
+   "parent_scene_id": 0,
+   "byte_sha256": 0,
+   "sample_id": 0,
+   "image_id": 0
+  }
+ },
+ "partitions": {
+  "feature_alpha_0_3": {
+   "clients": 5,
+   "samples": 37238,
+   "unique_samples": 37238,
+   "disjoint": true,
+   "subset_of_train": true,
+   "union_equals_train": true,
+   "groups_split_across_clients": 0
+  },
+  "feature_alpha_10_0": {
+   "clients": 5,
+   "samples": 37238,
+   "unique_samples": 37238,
+   "disjoint": true,
+   "subset_of_train": true,
+   "union_equals_train": true,
+   "groups_split_across_clients": 0
+  },
+  "feature_alpha_1_0": {
+   "clients": 5,
+   "samples": 37238,
+   "unique_samples": 37238,
+   "disjoint": true,
+   "subset_of_train": true,
+   "union_equals_train": true,
+   "groups_split_across_clients": 0
+  },
+  "iid": {
+   "clients": 5,
+   "samples": 37238,
+   "unique_samples": 37238,
+   "disjoint": true,
+   "subset_of_train": true,
+   "union_equals_train": true,
+   "groups_split_across_clients": 0
+  },
+  "label_alpha_0_1": {
+   "clients": 5,
+   "samples": 37238,
+   "unique_samples": 37238,
+   "disjoint": true,
+   "subset_of_train": true,
+   "union_equals_train": true,
+   "groups_split_across_clients": 0
+  },
+  "label_alpha_0_5": {
+   "clients": 5,
+   "samples": 37238,
+   "unique_samples": 37238,
+   "disjoint": true,
+   "subset_of_train": true,
+   "union_equals_train": true,
+   "groups_split_across_clients": 0
+  },
+  "label_alpha_10_0": {
+   "clients": 5,
+   "samples": 37238,
+   "unique_samples": 37238,
+   "disjoint": true,
+   "subset_of_train": true,
+   "union_equals_train": true,
+   "groups_split_across_clients": 0
+  },
+  "label_alpha_1_0": {
+   "clients": 5,
+   "samples": 37238,
+   "unique_samples": 37238,
+   "disjoint": true,
+   "subset_of_train": true,
+   "union_equals_train": true,
+   "groups_split_across_clients": 0
+  },
+  "mixed_stress": {
+   "clients": 5,
+   "samples": 37238,
+   "unique_samples": 37238,
+   "disjoint": true,
+   "subset_of_train": true,
+   "union_equals_train": true,
+   "groups_split_across_clients": 0
+  },
+  "quantity_alpha_0_3": {
+   "clients": 5,
+   "samples": 37238,
+   "unique_samples": 37238,
+   "disjoint": true,
+   "subset_of_train": true,
+   "union_equals_train": true,
+   "groups_split_across_clients": 0
+  },
+  "quantity_alpha_10_0": {
+   "clients": 5,
+   "samples": 37238,
+   "unique_samples": 37238,
+   "disjoint": true,
+   "subset_of_train": true,
+   "union_equals_train": true,
+   "groups_split_across_clients": 0
+  },
+  "quantity_alpha_1_0": {
+   "clients": 5,
+   "samples": 37238,
+   "unique_samples": 37238,
+   "disjoint": true,
+   "subset_of_train": true,
+   "union_equals_train": true,
+   "groups_split_across_clients": 0
+  }
+ },
+ "image_bytes": {
+  "verified": true,
+  "checked": 46076,
+  "hash_mismatch": 0,
+  "missing_files": 0
+ },
+ "passed": true
+}

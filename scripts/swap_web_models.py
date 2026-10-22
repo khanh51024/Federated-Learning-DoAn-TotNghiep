@@ -10,7 +10,8 @@ Mọi nhận dạng (release, tập validation, tên mô hình, giao thức trai
   4. sinh lại toàn bộ báo cáo theo đúng thứ tự phụ thuộc, rồi phần học cộng đồng, rồi danh mục mô hình và trạng thái;
   5. một bước lỗi thì tự LÙI (khôi phục con trỏ và báo cáo đã chụp) và thoát mã khác 0.
 
-Gói cũ không bị xóa. `--steps` liệt kê các bước; `--skip-slow` bỏ hai bước chậm (ảnh nguyên khung PlantDoc, bộ ảnh ngoài PlantWild); `--only <tên>` chạy riêng một bước.
+Gói cũ không bị xóa. `--steps` liệt kê các bước; `--skip-slow` bỏ hai bước chậm (ảnh nguyên khung PlantDoc, bộ ảnh ngoài PlantWild); `--only <bước>` chạy riêng một bước, `--from <bước>` chạy tiếp từ một bước (cả hai chỉ cho gói đã được chọn, không đổi con trỏ).
+Lệnh kiểm trước các thư viện cần cho mọi bước (onnx, onnxruntime, scipy, sklearn) để không chạy cả buổi rồi mới lỗi ở bước cuối.
 """
 from __future__ import annotations
 
@@ -45,10 +46,10 @@ COMMUNITY_DIRS = (reg.COMMUNITY_STATE_DIR,)
 PY = [sys.executable, "-X", "utf8"]
 # (tên bước, lệnh, chậm?)
 STEPS: list[tuple[str, list[str], bool]] = [
-    ("registry", PY + ["scripts/update_status.py", "--skip-gates"], False),
+    ("registry", PY + ["scripts/update_status.py"], False),
     ("client_shards", PY + ["scripts/report_client_shards.py"], False),
     ("partition_schemes", PY + ["scripts/report_partition_schemes.py"], False),
-    ("leakage_audit", PY + ["scripts/audit_release_leakage.py", "--skip-bytes"], False),
+    ("leakage_audit", PY + ["scripts/audit_release_leakage.py"], False),
     ("per_class", PY + ["scripts/report_per_class.py"], False),
     ("domain_gap", PY + ["scripts/report_domain_gap.py"], False),
     ("training_protocol", PY + ["scripts/report_training_protocol.py"], False),
@@ -63,7 +64,7 @@ STEPS: list[tuple[str, list[str], bool]] = [
     ("community_simulation", PY + ["scripts/simulate_community.py"], False),
     ("fullframe", PY + ["scripts/eval_fullframe_plantdoc.py"], True),
     ("external_eval", PY + ["scripts/eval_external_set.py", "--reuse"], True),
-    ("status", PY + ["scripts/update_status.py", "--skip-gates"], False),
+    ("status", PY + ["scripts/update_status.py"], False),
 ]
 
 
@@ -146,14 +147,31 @@ def restore(ident: str) -> bool:
     return True
 
 
-def write_pointer(directory: str | None) -> None:
+def read_pointer() -> dict[str, Any]:
+    try:
+        return json.loads((ROOT / bundle.POINTER).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+REQUIRED_MODULES = ("onnx", "onnxruntime", "scipy", "sklearn", "torch", "torchvision", "PIL")
+
+
+def missing_modules() -> list[str]:
+    import importlib.util
+
+    return [m for m in REQUIRED_MODULES if importlib.util.find_spec(m) is None]
+
+
+def write_pointer(directory: str | None, previous: str | None = None) -> None:
+    """`previous`: gói trước đó, để một lần thay bị gián đoạn (chạy tiếp bằng --from) vẫn lùi đúng về gói trước chứ không về chính nó."""
     pointer = ROOT / bundle.POINTER
     if directory is None or directory.rstrip("/") == bundle.LEGACY_DIR:
         if pointer.exists():
             pointer.unlink()         # không có con trỏ = gói cũ (mặc định trong src/bundle.py)
         return
     manifest = ROOT / directory / "import_manifest.json"
-    pointer.write_text(json.dumps({"bundle_dir": directory, "manifest_sha256": sha256_file(manifest),
+    pointer.write_text(json.dumps({"bundle_dir": directory, "manifest_sha256": sha256_file(manifest), "previous_bundle_dir": previous,
                                    "updated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}, indent=1) + "\n", encoding="utf-8")
 
 
@@ -170,19 +188,30 @@ def run_step(name: str, command: list[str], log: Path) -> bool:
     return process.returncode == 0
 
 
-def select_steps(skip_slow: bool, only: str | None) -> list[tuple[str, list[str], bool]]:
+def select_steps(skip_slow: bool, only: str | None, start: str | None = None) -> list[tuple[str, list[str], bool]]:
+    names = [step[0] for step in STEPS]
+    for label, value in (("--only", only), ("--from", start)):
+        if value and value not in names:
+            raise SystemExit(f"{label}: không có bước '{value}'; các bước: {names}")
     if only:
-        chosen = [s for s in STEPS if s[0] == only]
-        if not chosen:
-            raise SystemExit(f"không có bước '{only}'; các bước: {[s[0] for s in STEPS]}")
-        return chosen
-    return [s for s in STEPS if not (skip_slow and s[2])]
+        return [step for step in STEPS if step[0] == only]
+    chosen = STEPS[names.index(start):] if start else STEPS
+    return [step for step in chosen if not (skip_slow and step[2])]
 
 
 def swap(args: argparse.Namespace) -> int:
     current = bundle.active_bundle_dir()
     target_dir = f"{bundle.BUNDLES_DIR}/{args.name}"
     target = ROOT / target_dir
+    absent = missing_modules()
+    if absent:
+        print(f"[swap] thiếu thư viện: {absent}. Cài: pip install -r requirements.txt (chưa đổi gì)", file=sys.stderr)
+        return 1
+    if (args.only or args.start) and current != target_dir:
+        print(f"[swap] --only/--from chỉ chạy khi gói {target_dir} đã được chọn (hiện là {current}); chạy lại không kèm hai tùy chọn đó", file=sys.stderr)
+        return 1
+    # gói sẽ lùi về khi lỗi: gói đang dùng; nếu đang tiếp tục một lần thay dở thì là gói trước đó ghi trong con trỏ
+    previous = (read_pointer().get("previous_bundle_dir") or bundle.LEGACY_DIR) if current == target_dir else current
     log = ROOT / "tmp" / f"swap_{args.name}.log"
     log.parent.mkdir(exist_ok=True)
     log.write_text("", encoding="utf-8")
@@ -193,7 +222,7 @@ def swap(args: argparse.Namespace) -> int:
             return 1
     if current != target_dir:
         snapshot(current)
-    write_pointer(target_dir)
+    write_pointer(target_dir, previous)
     if current != target_dir:
         # tệp cộng đồng của gói cũ không dùng được với gói mới (dấu vân tay tài sản): xóa để bước xuất tạo lại; trạng thái cũ đã nằm trong bản chụp
         for relative in (*COMMUNITY_FILES, *COMMUNITY_DIRS):
@@ -202,15 +231,15 @@ def swap(args: argparse.Namespace) -> int:
                 path.unlink()
             elif path.is_dir():
                 shutil.rmtree(path)
-    for name, command, _slow in select_steps(args.skip_slow, args.only):
+    for name, command, _slow in select_steps(args.skip_slow, args.only, args.start):
         if not run_step(name, command, log):
-            print(f"[swap] bước {name} lỗi: lùi về {current}. Chi tiết: {log}", file=sys.stderr)
-            write_pointer(current)
-            restored = restore(bundle_id(current))
-            run_step("registry_after_rollback", PY + ["scripts/update_status.py", "--skip-gates"], log)
+            print(f"[swap] bước {name} lỗi: lùi về {previous}. Chi tiết: {log}", file=sys.stderr)
+            write_pointer(previous)
+            restored = restore(bundle_id(previous))
+            run_step("registry_after_rollback", PY + ["scripts/update_status.py"], log)
             print(f"[swap] đã lùi (khôi phục bản chụp: {restored})", file=sys.stderr)
             return 2
-    print(f"[swap] XONG: web dùng gói {target_dir}. Lùi: python scripts/swap_web_models.py --rollback {current}")
+    print(f"[swap] XONG: web dùng gói {target_dir}. Lùi: python scripts/swap_web_models.py --rollback {previous}")
     return 0
 
 
@@ -230,7 +259,7 @@ def rollback(args: argparse.Namespace) -> int:
     print(f"[swap] khôi phục bản chụp báo cáo của {bundle_id(directory)}: {restored}", flush=True)
     if not restored:
         print("[swap] CHƯA có bản chụp của gói này: báo cáo hiện tại là của gói khác; chạy lại các bước báo cáo cho gói này", file=sys.stderr)
-    ok = run_step("registry", PY + ["scripts/update_status.py", "--skip-gates"], log)
+    ok = run_step("registry", PY + ["scripts/update_status.py"], log)
     return 0 if ok and restored else 3
 
 
@@ -242,7 +271,8 @@ def main() -> int:
     parser.add_argument("--label", help="nhãn hiển thị cạnh tên mô hình (ví dụ v4b)")
     parser.add_argument("--rollback", metavar="THƯ_MỤC_GÓI", help="lùi về gói đã có, ví dụ artifacts/branch_demo/20261003")
     parser.add_argument("--skip-slow", action="store_true")
-    parser.add_argument("--only", help="chỉ chạy một bước (xem --steps)")
+    parser.add_argument("--only", help="chỉ chạy một bước của gói đã chọn (xem --steps)")
+    parser.add_argument("--from", dest="start", metavar="BƯỚC", help="chạy tiếp từ một bước của gói đã chọn (sau khi sửa nguyên nhân lỗi)")
     parser.add_argument("--steps", action="store_true", help="liệt kê các bước rồi thoát")
     args = parser.parse_args()
     if args.steps:
