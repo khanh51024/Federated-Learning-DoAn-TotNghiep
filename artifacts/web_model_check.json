@@ -1,0 +1,109 @@
+{
+ "base_url": "https://datn.tranngochung.id.vn",
+ "protocol_id": "mixed_pv_pd_v4_pretrained_seed42_validation",
+ "images": 369,
+ "generated_utc": "2026-10-22T07:19:31Z",
+ "request_failures": [],
+ "agreement": {
+  "compared": 2583,
+  "mismatches": 0,
+  "rate": 0.0,
+  "near_ties_margin_lt_0_01": 0,
+  "examples": []
+ },
+ "accuracy_via_web": {
+  "plantvillage": {
+   "images": 100,
+   "centralized": 1.0,
+   "fedavg": 0.95,
+   "local_00": 0.57,
+   "local_01": 0.45,
+   "local_02": 0.28,
+   "local_03": 0.52,
+   "local_04": 0.65
+  },
+  "plantdoc": {
+   "images": 100,
+   "centralized": 0.55,
+   "fedavg": 0.35,
+   "local_00": 0.23,
+   "local_01": 0.16,
+   "local_02": 0.34,
+   "local_03": 0.22,
+   "local_04": 0.04
+  },
+  "field_other": {
+   "images": 100,
+   "centralized": 0.95,
+   "fedavg": 0.85,
+   "local_00": 0.54,
+   "local_01": 0.51,
+   "local_02": 0.33,
+   "local_03": 0.37,
+   "local_04": 0.35
+  },
+  "plantwild": {
+   "images": 50,
+   "centralized": 0.4,
+   "fedavg": 0.3,
+   "local_00": 0.14,
+   "local_01": 0.14,
+   "local_02": 0.16,
+   "local_03": 0.22,
+   "local_04": 0.26
+  }
+ },
+ "crop_filter": {
+  "images": 30,
+  "violations": 0,
+  "accuracy_without": {
+   "centralized": 0.9333,
+   "fedavg": 0.7667,
+   "local_00": 0.7,
+   "local_01": 0.2333,
+   "local_02": 0.2333,
+   "local_03": 0.4,
+   "local_04": 0.2333
+  },
+  "accuracy_with": {
+   "centralized": 0.9667,
+   "fedavg": 0.8,
+   "local_00": 0.7,
+   "local_01": 0.4,
+   "local_02": 0.4333,
+   "local_03": 0.5,
+   "local_04": 0.2667
+  }
+ },
+ "gradcam": {
+  "images": 5,
+  "problems": []
+ },
+ "edge_cases": {
+  "large_24mp_jpeg": {
+   "bytes": 1358749,
+   "status": 200,
+   "ms": 1081
+  },
+  "over_pixel_limit_48mp": {
+   "bytes": 151184,
+   "status": 413,
+   "detail": "Ảnh có 48 triệu điểm ảnh, vượt giới hạn 40 triệu. Hãy thu nhỏ ảnh trước khi tải lên."
+  },
+  "over_10mb": {
+   "status": 413,
+   "detail": "Ảnh vượt giới hạn 10 MB. Hãy chọn ảnh nhỏ hơn."
+  },
+  "not_an_image": {
+   "status": 400,
+   "detail": "File tải lên không phải là ảnh hợp lệ"
+  }
+ },
+ "timing_ms": {
+  "predict_median": 72.7,
+  "predict_p95": 91.7,
+  "round_trip_median": 334,
+  "round_trip_p95": 492
+ },
+ "problems": []
+}

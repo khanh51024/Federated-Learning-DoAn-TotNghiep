@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-22T13:33:09",
+      "generated_at": "2026-10-22T14:27:18",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,7 +145,7 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-22T13:33:10",
+      "generated_at": "2026-10-22T14:27:20",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
@@ -180,7 +180,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-22T13:33:13",
+      "generated_at": "2026-10-22T14:27:23",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
@@ -227,7 +227,7 @@
       "id": "no_hardcode",
       "title": "Không hardcode đường dẫn artifact",
       "status": "CHƯA",
-      "detail": "8 chỗ hardcode đường dẫn artifacts/ (quét AST): ['src/bundle.py:19', 'src/bundle.py:20', 'src/bundle.py:21', 'scripts/build_community_sim_features.py:88', 'scripts/eval_trained_v4.py:31']",
+      "detail": "9 chỗ hardcode đường dẫn artifacts/ (quét AST): ['src/bundle.py:19', 'src/bundle.py:20', 'src/bundle.py:21', 'scripts/build_community_sim_features.py:88', 'scripts/eval_trained_v4.py:31']",
       "unlock": []
     },
     {

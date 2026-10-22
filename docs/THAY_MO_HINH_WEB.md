@@ -39,6 +39,8 @@ Lệnh làm theo thứ tự và dừng ở bước lỗi:
 
 Sau khi thay, chạy `pytest` và `python scripts/update_status.py --full-gates`, rồi kiểm web ở máy này (`uvicorn web.app:app --port 8088`) trước khi triển khai lên VM.
 
+Sau khi triển khai, kiểm mô hình ngay trên web bằng `python scripts/web_model_check.py` (mặc định gọi production; `--base-url http://127.0.0.1:8088` cho máy chủ cục bộ). Script gửi ảnh val, PlantWild và ảnh mẫu qua `/api/inference/all`, đối chiếu dự đoán với tính toán offline cùng đường tiền xử lý (phải trùng ~100%), đo độ chính xác theo nhóm nguồn, lọc loại cây, Grad-CAM, ảnh lớn và ảnh xấu, thời gian; kết quả ở `artifacts/web_model_check.json`.
+
 ## 3. Lùi về gói trước
 
 ```

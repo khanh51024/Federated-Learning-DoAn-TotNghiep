@@ -1,6 +1,6 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-22 13:33 · sinh tự bởi `scripts/update_status.py`
+> **Cập nhật lúc:** 2026-10-22 14:27 · sinh tự bởi `scripts/update_status.py`
 > **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 5 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
@@ -28,7 +28,7 @@
 | 2 | Smoke cách ly khỏi slot canonical | ✅ XONG | slot canonical không chứa smoke; 3 checkpoint smoke nằm ở artifacts/checkpoints/smoke/ |
 | 3 | Một engine train (pipeline cũ gom vào legacy/) | ✅ XONG | engine duy nhất là src/; pipeline Kaggle/stage* nằm trong legacy/ (chạy riêng: pytest legacy/tests) |
 | 4 | Web tách router/service, inference đi một cửa | ✅ XONG | app.py chỉ mount router; inference chỉ đi qua web/services/model_service.py (cổng web_visible) |
-| 5 | Không hardcode đường dẫn artifact | ⬜ CHƯA | 8 chỗ hardcode đường dẫn artifacts/ (quét AST): ['src/bundle.py:19', 'src/bundle.py:20', 'src/bundle.py:21', 'scripts/build_community_sim_features.py:88', 'scripts/eval_trained_v4.py:31'] |
+| 5 | Không hardcode đường dẫn artifact | ⬜ CHƯA | 9 chỗ hardcode đường dẫn artifacts/ (quét AST): ['src/bundle.py:19', 'src/bundle.py:20', 'src/bundle.py:21', 'scripts/build_community_sim_features.py:88', 'scripts/eval_trained_v4.py:31'] |
 | 6 | Dọn tài liệu mâu thuẫn | ⬜ CHƯA | tài liệu ngoài danh mục: gốc=[] docs=['REPORT_WORD_WEB_2026-10-20.md', 'THAY_MO_HINH_WEB.md'] |
 | 7 | Số liệu trong docs không mâu thuẫn artifact | ✅ XONG | không còn số liệu mâu thuẫn đã biết (97,12, 97.12...) và không ghi tĩnh kết quả test trong README/docs |
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ⬜ CHƯA | docs/EXPERIMENT_PROTOCOL.md chưa nêu protocol: ['mixed_pv_pd_v4_pretrained_seed42_validation'] |
@@ -81,7 +81,7 @@ Copy-Item <centralized_best.pt tải về> artifacts/checkpoints/centralized_bes
 
 ### Việc làm được ngay (chưa BLOCKED)
 
-1. Không hardcode đường dẫn artifact — 8 chỗ hardcode đường dẫn artifacts/ (quét AST): ['src/bundle.py:19', 'src/bundle.py:20', 'src/bundle.py:21', 'scripts/build_community_sim_features.py:88', 'scripts/eval_trained_v4.py:31']
+1. Không hardcode đường dẫn artifact — 9 chỗ hardcode đường dẫn artifacts/ (quét AST): ['src/bundle.py:19', 'src/bundle.py:20', 'src/bundle.py:21', 'scripts/build_community_sim_features.py:88', 'scripts/eval_trained_v4.py:31']
 2. Dọn tài liệu mâu thuẫn — tài liệu ngoài danh mục: gốc=[] docs=['REPORT_WORD_WEB_2026-10-20.md', 'THAY_MO_HINH_WEB.md']
 3. Chốt một protocol khoa học cho mỗi thí nghiệm — docs/EXPERIMENT_PROTOCOL.md chưa nêu protocol: ['mixed_pv_pd_v4_pretrained_seed42_validation']
 4. Full tests pass trên mã nguồn hiện tại — kết quả cũ (2026-10-21T21:54:16) không còn khớp mã nguồn hiện tại — chạy lại --full-gates
