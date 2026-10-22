@@ -85,7 +85,7 @@ def main() -> int:
 
     # đối chiếu với đặc trưng ONNX của trình duyệt (cùng ảnh validation, cùng thứ tự manifest)
     print(f"[sim-features] đối chiếu PyTorch ↔ ONNX trên {PARITY_IMAGES} ảnh validation")
-    eval_path = reg.abs_path("artifacts/community_fl/eval_features.npz")
+    eval_path = reg.abs_path(reg.COMMUNITY_EVAL_FEATURES_NPZ)
     with np.load(eval_path, allow_pickle=False) as data:
         onnx_features = data["features"][:PARITY_IMAGES].astype(np.float32)
     torch_features = extract(val_rows[:PARITY_IMAGES], dataset_root, transform, frozen, args.batch_size, args.workers)

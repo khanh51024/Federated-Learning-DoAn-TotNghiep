@@ -32,8 +32,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src import registry as reg  # noqa: E402
+from scripts.evaluate_published_models import source_group  # noqa: E402
 
-SOURCES = ("plantdoc", "plantvillage")
+SOURCES = ("plantdoc", "plantvillage", "field_other")   # nhóm nguồn khi đo (scripts/evaluate_published_models.source_group); nhóm không có ảnh trong tập thì bỏ qua
 MODELS = ("centralized", "fedavg", "local_00", "local_01", "local_02", "local_03", "local_04")
 LOCALS = MODELS[2:]
 NPZ_DIR = "data/reeval"
@@ -160,11 +161,13 @@ def _cluster_of(row: dict[str, Any]) -> str:
 def analyze_split(rows: list[dict[str, Any]], logits: dict[str, np.ndarray], best_local: dict[str, str],
                   rng: np.random.Generator, reshoot: np.ndarray, singleton_groups: set[str]) -> dict[str, Any]:
     targets = np.array([r["class_id"] for r in rows], dtype=np.int64)
-    sources = np.array([r["source_dataset"].lower() for r in rows])
+    sources = np.array([source_group(r["source_dataset"]) for r in rows])
     correct = {m: _softmax_argmax(logits[m]) == targets for m in MODELS}
     out: dict[str, Any] = {}
     for source in SOURCES:
         mask = sources == source
+        if not mask.any():
+            continue
         sub_rows = [r for r, keep in zip(rows, mask) if keep]
         clusters = [_cluster_of(r) for r in sub_rows]
         block: dict[str, Any] = {"count": int(mask.sum()), "clusters": len(set(clusters)), "models": {}, "pairs": {}}
@@ -294,7 +297,8 @@ def build_report(rng_seed: int = SEED) -> dict[str, Any]:
         "checkpoint_sha256": {m["model_id"]: m["checkpoint_sha256"] for m in evidence["models"]},
         "bootstrap_resamples": BOOTSTRAP,
         "bootstrap_seed": rng_seed,
-        "cluster_definition": {"plantdoc": "parent_scene_id", "plantvillage": "group_id (nhóm lá của release)"},
+        "cluster_definition": {"plantdoc": "parent_scene_id", "plantvillage": "group_id (nhóm lá của release)",
+                               "field_other": "group_id (nhóm ảnh cùng nguồn của release)"},
         "reshoot_heuristic": ("ảnh PlantVillage thuộc nhóm một-ảnh có ảnh train cùng lớp, cùng tiền tố tên, số thứ tự ±1 — "
                               "ƯỚC LƯỢNG ảnh chụp lại cùng lá, không phải phát hiện chắc chắn"),
         "splits": {},
@@ -304,9 +308,11 @@ def build_report(rng_seed: int = SEED) -> dict[str, Any]:
     best_local: dict[str, str] = {}
     if val_logits is not None:
         val_targets = np.array([r["class_id"] for r in val_rows])
-        val_sources = np.array([r["source_dataset"].lower() for r in val_rows])
+        val_sources = np.array([source_group(r["source_dataset"]) for r in val_rows])
         for source in SOURCES:
             mask = val_sources == source
+            if not mask.any():
+                continue
             best_local[source] = max(LOCALS, key=lambda m: float((_softmax_argmax(val_logits[m][mask]) == val_targets[mask]).mean()))
         report["best_local_chosen_on_val"] = best_local
     for split, rows in (("val", val_rows), ("test", test_rows)):

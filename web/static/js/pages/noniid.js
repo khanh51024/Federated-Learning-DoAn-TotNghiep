@@ -3,8 +3,9 @@ import { releaseHtml } from "../core/report-training.js";
 import { getEvidence, getPartitions, getSummary, modelsById } from "../core/store.js";
 import { attachCrosshair } from "../core/crosshair.js";
 import {
-  byId, cropOf, diseaseOf, esc, fmtInt, fmtNum, fmtPct, formatDiseaseName, revealItems, sectionHead,
+  SOURCE_GROUPS, byId, cropOf, diseaseOf, esc, fmtInt, fmtNum, fmtPct, formatDiseaseName, revealItems, sectionHead,
 } from "../core/dom.js";
+import { alphaText, factsOf } from "../core/facts-text.js";
 
 const LOCALS = ["local_00", "local_01", "local_02", "local_03", "local_04"];
 
@@ -35,8 +36,33 @@ function pickExample(shards) {
   return preferred || concentrated.reduce((a, b) => (b.total > a.total ? b : a));
 }
 
-function clientCards(evidence, shards, byModel) {
+/** Tập đánh giá cho phần công bằng: ưu tiên tập giữ riêng (không dùng chọn mô hình), không có thì tập kiểm tra. */
+function fairnessSplit(fairness) {
+  if (!fairness?.available) return null;
+  for (const name of ["test", "val"]) {
+    if (fairness.splits?.[name]?.available) return { name, label: name === "test" ? "tập giữ riêng" : "tập kiểm tra", block: fairness.splits[name] };
+  }
+  return null;
+}
+
+/** Nhận xét tổng hợp từ số đo (khoảng min–max giữa các client), không viết sẵn con số. */
+function fairnessText(split) {
+  const rows = Object.values(split.block.by_client);
+  const range = pick => {
+    const values = rows.map(pick).filter(v => v !== null && v !== undefined);
+    return values.length ? `${fmtPct(Math.min(...values), 1)}–${fmtPct(Math.max(...values), 1)}` : "—";
+  };
+  const fedAll = rows.flatMap(r => [r.classes_with_images.fedavg, r.classes_without_images.fedavg]).filter(v => v !== null && v !== undefined);
+  const gap = fedAll.length ? (Math.max(...fedAll) - Math.min(...fedAll)) * 100 : null;
+  return `Trên ${split.label}, ở các nhóm mà client <b>không có ảnh học</b>, mô hình Local-only của client đó đúng ${range(r => r.classes_without_images.local)}`
+    + ` còn FedAvg đúng ${range(r => r.classes_without_images.fedavg)}; ở các nhóm client <b>có ảnh</b>, Local-only đúng ${range(r => r.classes_with_images.local)}`
+    + ` và FedAvg ${range(r => r.classes_with_images.fedavg)}.${gap !== null ? ` Giữa các client, độ chính xác của FedAvg chênh nhau tối đa ${fmtNum(gap, 1)} điểm phần trăm.` : ""}`
+    + " Đây là số đo theo việc client có ảnh của nhóm hay không, chưa phải kiểm chứng nguyên nhân.";
+}
+
+function clientCards(evidence, shards, byModel, fairness) {
   const counts = evidence.shard_counts || {};
+  const split = fairnessSplit(fairness);
   const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1;
   return Object.keys(counts).sort().map((client, i) => {
     const model = byModel[LOCALS[i]];
@@ -49,6 +75,8 @@ function clientCards(evidence, shards, byModel) {
         <dl class="client-tile-metrics">
           <div><dt>Học riêng · ảnh trong phòng</dt><dd class="mono">${fmtPct(model.metrics.plantvillage.top1_accuracy, 1)}</dd></div>
           <div><dt>Học riêng · ngoài đồng</dt><dd class="mono">${fmtPct(model.metrics.plantdoc.top1_accuracy, 1)}</dd></div>
+          ${split ? `<div><dt>Nhóm client có ảnh · Local / FedAvg</dt><dd class="mono">${fmtPct(split.block.by_client[client]?.classes_with_images.local, 1)} / ${fmtPct(split.block.by_client[client]?.classes_with_images.fedavg, 1)}</dd></div>
+          <div><dt>Nhóm client thiếu ảnh · Local / FedAvg</dt><dd class="mono">${fmtPct(split.block.by_client[client]?.classes_without_images.local, 1)} / ${fmtPct(split.block.by_client[client]?.classes_without_images.fedavg, 1)}</dd></div>` : ""}
         </dl>
       </article>`;
   }).join("");
@@ -191,14 +219,24 @@ async function mountExplorer() {
 
 /** Bộ dữ liệu và ba tập ảnh: nơi DUY NHẤT trên web định nghĩa tập kiểm tra và tập giữ riêng (các trang khác chỉ nhắc tên). */
 function datasetHtml(evidence, summary) {
+  const facts = factsOf(summary);
   const counts = evidence.shard_counts || {};
   const trainTotal = Object.values(counts).reduce((a, b) => a + b, 0);
   const val = evidence.validation_counts || {};
   const classCount = evidence.classes?.length || summary?.shards?.classes_total;
   const ho = summary?.holdout?.available ? summary.holdout : null;
+  const groups = SOURCE_GROUPS.filter(g => g.id in val);
+  const trainSplit = (summary?.training?.release?.splits || []).find(s => s.name === "train");
+  const trainNames = groups.filter(g => !trainSplit?.by_source || g.id in trainSplit.by_source).map(g => g.label).join(" + ");
+  const numberWord = ["", "Một", "Hai", "Ba", "Bốn"][groups.length] || String(groups.length);
+  const otherCard = groups.some(g => g.id === "field_other") ? `
+        <article class="source-card">
+          <h4>Ngoài đồng, bộ khác</h4>
+          <p>Ảnh lá ngoài đồng từ các bộ dữ liệu công khai khác PlantDoc (nguồn và giấy phép ghi trong manifest của release). Nhãn do tác giả bộ dữ liệu gán hoặc được sàng lọc bằng mắt, không phải chuyên gia. Ảnh được chia theo nhóm ảnh nên một nhóm không nằm ở cả tập học và tập kiểm tra.</p>
+        </article>` : "";
   return `
     <section class="panel report-section" aria-labelledby="dataset-title">
-      ${sectionHead("2.1", "Bộ dữ liệu", { id: "dataset-title", lead: `Hai nguồn ảnh, ${classCount ? `${fmtInt(classCount)} nhóm lá khỏe/bệnh` : "nhiều nhóm lá khỏe/bệnh"}` })}
+      ${sectionHead("2.1", "Bộ dữ liệu", { id: "dataset-title", lead: `${numberWord} nguồn ảnh, ${classCount ? `${fmtInt(classCount)} nhóm lá khỏe/bệnh` : "nhiều nhóm lá khỏe/bệnh"}` })}
       <div class="source-grid mt-3">
         <article class="source-card">
           <h4>PlantVillage</h4>
@@ -207,13 +245,13 @@ function datasetHtml(evidence, summary) {
         <article class="source-card">
           <h4>PlantDoc</h4>
           <p>Ảnh lá ngoài đồng, nền phức tạp, ít ảnh hơn và chỉ phủ một phần các nhóm. Bản phát hiện đối tượng có hộp bao lá; mỗi hộp được cắt thành một ảnh lá (nới 8% mỗi phía), nên một ảnh gốc có thể cho nhiều ảnh. Dùng để xem mô hình có giữ được độ chính xác khi ảnh khác kiểu.</p>
-        </article>
+        </article>${otherCard}
       </div>
       <h4 class="subhead mt-4">Ba tập ảnh và mục đích của từng tập</h4>
       <dl class="term-list mt-3">
-        <div><dt>Tập học</dt><dd><b>${fmtInt(trainTotal)} ảnh</b> (PlantVillage + PlantDoc), chia cho ${Object.keys(counts).length} client. Mô hình chỉ cập nhật trọng số trên tập này.</dd></div>
-        <div><dt>Tập kiểm tra</dt><dd><b>${fmtInt(val.plantvillage)}</b> ảnh PlantVillage + <b>${fmtInt(val.plantdoc)}</b> ảnh PlantDoc. Dùng trong lúc huấn luyện để chọn phiên bản mô hình tốt nhất, nên số đo trên tập này có thể hơi đẹp hơn thực tế.</dd></div>
-        <div><dt>Tập giữ riêng</dt><dd>${ho ? `<b>${fmtInt(ho.count)} ảnh</b> (${fmtInt(ho.counts_by_source?.plantvillage)} PlantVillage, ${fmtInt(ho.counts_by_source?.plantdoc)} PlantDoc). ` : ""}Là bộ chẩn đoán có sẵn của bộ dữ liệu (legacy), không dùng để chọn mô hình, nhưng chưa nằm trong kiểm tra trùng ảnh. Dùng làm phép kiểm tra bổ sung ở chương 4.</dd></div>
+        <div><dt>Tập học</dt><dd><b>${fmtInt(trainTotal)} ảnh</b> (${esc(trainNames)}), chia cho ${Object.keys(counts).length} client. Mô hình chỉ cập nhật trọng số trên tập này.</dd></div>
+        <div><dt>Tập kiểm tra</dt><dd>${groups.map(g => `<b>${fmtInt(val[g.id])}</b> ảnh ${esc(g.label)}`).join(" + ")}. Dùng trong lúc huấn luyện để chọn phiên bản mô hình tốt nhất, nên số đo trên tập này có thể hơi đẹp hơn thực tế.</dd></div>
+        <div><dt>Tập giữ riêng</dt><dd>${ho ? `<b>${fmtInt(ho.count)} ảnh</b> (${groups.map(g => `${fmtInt(ho.counts_by_source?.[g.id])} ${esc(g.label)}`).join("; ")}). ` : ""}Là bộ chẩn đoán có sẵn của bộ dữ liệu (legacy), không dùng để chọn mô hình${facts?.holdout_audited === false ? ", nhưng chưa nằm trong kiểm tra trùng ảnh" : ""}. Dùng làm phép kiểm tra bổ sung ở chương 4.</dd></div>
       </dl>
       ${releaseHtml(summary?.training)}
     </section>`;
@@ -286,7 +324,8 @@ export async function mount() {
     <section class="mt-5" aria-labelledby="clients-title">
       ${sectionHead("2.3", "Dữ liệu của từng client", { id: "clients-title" })}
       <p class="panel-desc">${Object.keys(evidence.shard_counts || {}).length} phân vùng giả lập từ cùng một bộ ảnh, kèm kết quả của mô hình học riêng trên phân vùng đó.</p>
-      <div class="client-grid mt-3" aria-label="Các client">${clientCards(evidence, shards, byModel)}</div>
+      <div class="client-grid mt-3" aria-label="Các client">${clientCards(evidence, shards, byModel, summary?.fairness)}</div>
+      ${fairnessSplit(summary?.fairness) ? `<p class="field-hint mt-3">${fairnessText(fairnessSplit(summary.fairness))}</p>` : ""}
     </section>
 
     ${shards ? `
@@ -320,7 +359,7 @@ export async function mount() {
     <details class="panel panel-fold mt-4" id="scheme-explorer">
       <summary>Xem các cách chia dữ liệu có sẵn</summary>
       <p class="panel-desc mt-2">Release dựng sẵn các cách chia cho 5 client (số lượng và loại — IID, lệch nhãn... — tùy release).
-        Đây <b>chỉ là dữ liệu</b> — mọi kết quả trên web là của cách chia lệch nhãn α = 0,1; các cách chia khác chưa được huấn luyện.</p>
+        Đây <b>chỉ là dữ liệu</b> — mọi kết quả trên web là của cách chia lệch nhãn${alphaText(factsOf(summary)) ? ` ${alphaText(factsOf(summary))}` : ""}; các cách chia khác chưa được huấn luyện.</p>
       <div class="mt-3" id="scheme-explorer-body"><div class="skeleton skeleton-block"></div></div>
     </details>
 

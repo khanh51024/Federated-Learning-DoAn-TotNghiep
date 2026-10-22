@@ -1,5 +1,6 @@
 // Chương 1 · Giới thiệu: bài toán, câu hỏi nghiên cứu, kết quả chính và mục lục báo cáo.
-import { getEvidence, getGallery, modelsById } from "../core/store.js";
+import { getEvidence, getGallery, getSummary, modelsById } from "../core/store.js";
+import { factsOf, scopeText } from "../core/facts-text.js";
 import { beat, diagramHtml, pulse } from "../core/flnet.js";
 import { cancelWithin, followPointer, onMotionPrefChange, play } from "../core/motion.js";
 import { onRouteChange } from "../core/router.js";
@@ -122,7 +123,7 @@ export async function mount() {
   playHero();
   heroFresh = true;
   const body = byId("overview-body");
-  const [evidence, gallery] = await Promise.all([getEvidence(), getGallery()]);
+  const [evidence, gallery, summary] = await Promise.all([getEvidence(), getGallery(), getSummary().catch(() => null)]);
   if (!evidence.available) {
     body.innerHTML = unavailable(evidence.reason);
     return;
@@ -158,7 +159,7 @@ export async function mount() {
       <ol class="question-list mt-3">
         <li><b>So với gom ảnh.</b> Khi ảnh chia lệch cho ${fmtInt(clientCount)} client, FedAvg đạt gần mô hình Centralized (gom ảnh một nơi) đến đâu?</li>
         <li><b>So với học riêng.</b> Học chung có hơn việc mỗi client tự học riêng (Local-only) không?</li>
-        <li><b>Ảnh khác kiểu.</b> Mô hình học chủ yếu từ ảnh chụp trong phòng (PlantVillage) có giữ được độ chính xác trên ảnh ngoài đồng (PlantDoc) không?</li>
+        <li><b>Ảnh khác kiểu.</b> Mô hình học chủ yếu từ ảnh chụp trong phòng (PlantVillage) có giữ được độ chính xác trên ảnh ngoài đồng không? Ảnh ngoài đồng gồm PlantDoc${(evidence.validation_counts || {}).field_other ? " và các bộ công khai khác" : ""}.</li>
       </ol>
       <p class="field-hint mt-3">Câu trả lời nằm ở <a href="#ket-luan">chương 5 · Kết luận</a>; số liệu đầy đủ ở <a href="#ket-qua">chương 4 · Kết quả</a>.</p>
     </section>
@@ -171,7 +172,7 @@ export async function mount() {
       <div class="overview-headline-compare"><span>Local-only</span><strong>${range(pvLocals)}</strong><small>Mỗi client học riêng</small></div>
     </section>
 
-    <p class="viewer-scope mt-3"><b class="scope-tag">Phạm vi</b> Kết quả từ một lần chạy; tập kiểm tra đã tham gia quá trình chọn mô hình và các cách học chưa huấn luyện cùng điều kiện, nên chưa phải độ chính xác ngoài thực địa. Xem hạn chế ở <a href="#ket-luan">chương 5</a>.</p>
+    <p class="viewer-scope mt-3"><b class="scope-tag">Phạm vi</b> ${esc(scopeText(factsOf(summary)))} Xem hạn chế ở <a href="#ket-luan">chương 5</a>.</p>
 
     <section class="mt-5" aria-labelledby="toc-title">
       ${sectionHead("1.4", "Cấu trúc báo cáo", { id: "toc-title", lead: "Đọc theo thứ tự hoặc nhảy tới phần cần xem" })}

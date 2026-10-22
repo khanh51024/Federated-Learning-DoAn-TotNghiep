@@ -2,7 +2,8 @@
 // Chỉ dùng số có trong /api/demo/evidence; siêu tham số không có trong bộ số liệu đã công bố thì không ghi.
 import { configsHtml, glossaryHtml } from "../core/report-training.js";
 import { getEvidence, getSummary } from "../core/store.js";
-import { byId, esc, fmtInt, revealItems, sectionHead } from "../core/dom.js";
+import { byId, esc, fmtInt, revealItems, sectionHead, SOURCE_GROUPS } from "../core/dom.js";
+import { alphaText, factsOf, recipeNote, runsText } from "../core/facts-text.js";
 
 function pillarsHtml() {
   return `
@@ -47,25 +48,29 @@ function alphaOf(evidence) {
   return match ? `${match[1]},${match[2]}` : null;
 }
 
-function setupHtml(evidence) {
+function setupHtml(evidence, summary) {
   const alpha = alphaOf(evidence);
+  const facts = factsOf(summary);
   const counts = evidence.shard_counts || {};
   const trainTotal = Object.values(counts).reduce((a, b) => a + b, 0);
   const val = evidence.validation_counts || {};
+  const groups = SOURCE_GROUPS.filter(g => g.id in val);
+  const trainSplit = (summary?.training?.release?.splits || []).find(s => s.name === "train");
+  const trainNames = groups.filter(g => !trainSplit?.by_source || g.id in trainSplit.by_source).map(g => g.label).join(" + ");
   const classCount = evidence.classes?.length;
   return `
     <dl class="fact-grid mt-3">
       <div><dt>Mô hình</dt><dd>MobileNetV3-Small${classCount ? `, ${fmtInt(classCount)} nhóm` : ""}${/pretrained/.test(String(evidence.protocol_id)) ? "; theo mã giao thức, khởi tạo từ trọng số ImageNet (pretrained)" : ""}</dd></div>
       <div><dt>Số client</dt><dd>${fmtInt(Object.keys(counts).length)} client giả lập (năm phần của cùng một bộ ảnh)</dd></div>
       <div><dt>Cách chia ảnh</dt><dd>Lệch nặng: số ảnh mỗi nhóm chênh rất lớn giữa các client${alpha ? ` (Dirichlet α = ${alpha})` : ""}</dd></div>
-      <div><dt>Ảnh để học</dt><dd>${fmtInt(trainTotal)} ảnh (PlantVillage + PlantDoc)</dd></div>
-      <div><dt>Ảnh để kiểm tra</dt><dd>${fmtInt(val.plantvillage)} + ${fmtInt(val.plantdoc)} ảnh</dd></div>
-      <div><dt>Số lần chạy</dt><dd>1 lần (seed ${esc(evidence.seed)})</dd></div>
+      <div><dt>Ảnh để học</dt><dd>${fmtInt(trainTotal)} ảnh (${esc(trainNames)})</dd></div>
+      <div><dt>Ảnh để kiểm tra</dt><dd>${groups.map(g => fmtInt(val[g.id])).join(" + ")} ảnh (${esc(groups.map(g => g.label).join(" + "))})</dd></div>
+      <div><dt>Số lần chạy</dt><dd>${esc(runsText(facts))}${facts?.seeds_run?.length ? ` (${esc(facts.seeds_run.join(", "))}); web phục vụ hạt giống ${esc(evidence.seed)}` : ` (seed ${esc(evidence.seed)})`}${alphaText(facts) && !alpha ? `; ${esc(alphaText(facts))}` : ""}</dd></div>
     </dl>
-    <p class="field-hint mt-2">Ba cách huấn luyện dùng cùng một bộ ảnh và cùng kiến trúc mạng; các thiết lập huấn luyện khác (bộ tối ưu, số bước) khác nhau như bảng dưới, nên so sánh Centralized với FedAvg chỉ mang tính tham khảo (xem hạn chế ở <a href="#ket-luan">chương 5</a>).</p>`;
+    <p class="field-hint mt-2">${esc(recipeNote(facts))} Xem thêm hạn chế ở <a href="#ket-luan">chương 5</a>.</p>`;
 }
 
-function metricsHtml() {
+function metricsHtml(summary) {
   return `
     <dl class="term-list mt-3">
       <div><dt>Top-1</dt><dd>Tỉ lệ ảnh mà lựa chọn đầu tiên của mô hình đúng nhóm bệnh. Là số chính ở chương 4.</dd></div>
@@ -76,7 +81,7 @@ function metricsHtml() {
       <div><dt>Độ tin cậy của xác suất (ECE)</dt><dd>Mô hình báo chắc 90% thì có đúng khoảng 90% số lần không. ECE càng thấp càng tốt; temperature scaling chỉnh xác suất mà không đổi dự đoán.</dd></div>
     </dl>
     <p class="field-hint mt-2">Tập học, tập kiểm tra và tập giữ riêng được định nghĩa ở <a href="#du-lieu">chương 2</a>. Kết quả theo từng chỉ số ở <a href="#ket-qua">chương 4</a>.</p>
-    ${glossaryHtml()}`;
+    ${glossaryHtml(alphaText(factsOf(summary)))}`;
 }
 
 function systemHtml() {
@@ -102,8 +107,8 @@ export async function mount() {
     ${section(2, "Thuật toán FedAvg", fedavgHtml(evidence.shard_counts))}
     ${unavailable
       ? `<div class="callout callout-warn mt-4" role="note"><b>Chưa có số liệu thiết lập thí nghiệm.</b> ${esc(evidence.reason || "")}</div>`
-      : section(3, "Mô hình và thiết lập thí nghiệm", setupHtml(evidence) + configsHtml(summary?.training))}
-    ${section(4, "Cách đánh giá", metricsHtml())}
+      : section(3, "Mô hình và thiết lập thí nghiệm", setupHtml(evidence, summary) + configsHtml(summary?.training))}
+    ${section(4, "Cách đánh giá", metricsHtml(summary))}
     ${section(5, "Hệ thống demo", systemHtml())}`;
   revealItems(root.querySelectorAll(".pillar"), { stagger: 60 });
 }

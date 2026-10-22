@@ -220,6 +220,20 @@ export function setModelLabels(models) {
   }
 }
 
+/** Nhóm nguồn khi đo của gói đang dùng, theo thứ tự trình bày: [{ id, label, short, kind: "lab" | "field", val_count, holdout_count }].
+ *  `setSourceGroups` điền từ /api/demo/evidence (js/core/store.js); gói cũ chỉ có hai nhóm. Trước khi nạp xong dùng hai nhóm mặc định. */
+export const SOURCE_GROUPS = [
+  { id: "plantvillage", label: "PlantVillage", inline: "trong phòng", short: "ảnh trong phòng", kind: "lab", val_count: 0, holdout_count: 0 },
+  { id: "plantdoc", label: "PlantDoc", inline: "PlantDoc", short: "ảnh ngoài đồng", kind: "field", val_count: 0, holdout_count: 0 },
+];
+
+export function setSourceGroups(groups) {
+  if (Array.isArray(groups) && groups.length) SOURCE_GROUPS.splice(0, SOURCE_GROUPS.length, ...groups);
+}
+
+export const sourceGroup = id => SOURCE_GROUPS.find(g => g.id === id) || { id, label: id, inline: id, short: id, kind: "field", val_count: 0, holdout_count: 0 };
+export const sourceLabel = id => sourceGroup(id).label;
+
 export const MODEL_ORDER = ["centralized", "fedavg", "local_00", "local_01", "local_02", "local_03", "local_04"];
 
 export function pillarOf(modelId) {

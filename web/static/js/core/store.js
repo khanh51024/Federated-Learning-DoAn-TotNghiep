@@ -1,6 +1,6 @@
 // Dữ liệu dùng chung giữa các bước: nạp một lần, mọi trang đọc cùng một bản (số liệu không bao giờ lệch nhau).
 import { getJson } from "./api.js";
-import { setModelLabels } from "./dom.js";
+import { setModelLabels, setSourceGroups } from "./dom.js";
 
 const memo = new Map();
 
@@ -19,6 +19,7 @@ function once(key, loader, force = false) {
 export const getEvidence = (force = false) => once("evidence", async () => {
   const evidence = await getJson("/api/demo/evidence", { cache: "no-store" });
   setModelLabels(evidence?.models); // tên mô hình của gói đang dùng, dùng cho mọi trang
+  setSourceGroups(evidence?.source_groups); // các nhóm nguồn ảnh của gói đang dùng (gói v4 có thêm "ngoài đồng, bộ khác")
   return evidence;
 }, force);
 

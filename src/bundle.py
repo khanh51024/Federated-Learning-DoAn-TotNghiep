@@ -72,6 +72,25 @@ def validation_counts(manifest: dict[str, Any]) -> dict[str, int]:
     return {str(k): int(v) for k, v in (manifest.get("validation_counts") or LEGACY_VALIDATION_COUNTS).items()}
 
 
+# Nhóm nguồn khi đo (khóa của validation_counts/holdout.counts): thứ tự trình bày, nhãn và loại ảnh. Nhóm lạ (gói sau này) lấy nhãn = tên nhóm.
+SOURCE_PRESENTATION: dict[str, dict[str, str]] = {
+    "plantvillage": {"label": "PlantVillage", "inline": "trong phòng", "short": "ảnh trong phòng", "kind": "lab"},
+    "field_other": {"label": "Ngoài đồng, bộ khác", "inline": "ngoài đồng, bộ khác", "short": "ảnh ngoài đồng từ các bộ công khai khác", "kind": "field"},
+    "plantdoc": {"label": "PlantDoc", "inline": "PlantDoc", "short": "ảnh ngoài đồng, nền phức tạp", "kind": "field"},
+}
+
+
+def source_groups(validation: dict[str, int], holdout_counts: dict[str, int] | None = None) -> list[dict[str, Any]]:
+    """Các nhóm nguồn của gói theo thứ tự trình bày: id, nhãn, loại (lab/field), số ảnh val và số ảnh giữ riêng. Gói cũ chỉ có hai nhóm."""
+    holdout_counts = holdout_counts or {}
+    ordered = [s for s in SOURCE_PRESENTATION if s in validation] + [s for s in validation if s not in SOURCE_PRESENTATION]
+    out = []
+    for source in ordered:
+        info = SOURCE_PRESENTATION.get(source, {"label": source, "inline": source, "short": source, "kind": "field"})
+        out.append({"id": source, **info, "val_count": int(validation[source]), "holdout_count": int(holdout_counts.get(source, 0))})
+    return out
+
+
 def shard_total(manifest: dict[str, Any]) -> int:
     return int(manifest.get("shard_total") or LEGACY_SHARD_TOTAL)
 

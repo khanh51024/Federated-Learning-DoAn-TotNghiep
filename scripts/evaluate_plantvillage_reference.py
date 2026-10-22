@@ -32,7 +32,7 @@ from scripts import evaluate_published_models as ev  # noqa: E402
 from scripts.report_statistics import cluster_bootstrap_ci, mcnemar_exact  # noqa: E402
 from src import registry as reg  # noqa: E402
 
-REPORT_JSON = "artifacts/plantvillage_reference_eval.json"
+REPORT_JSON = reg.PLANTVILLAGE_EVAL_JSON
 LOGITS_NPZ = "data/reeval/plantvillage_logits.npz"
 SOURCES = ev.SOURCES
 HF_ID = "linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification"

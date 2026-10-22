@@ -1,7 +1,7 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-22 14:27 · sinh tự bởi `scripts/update_status.py`
-> **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 5 mục kỹ thuật chưa XONG)
+> **Cập nhật lúc:** 2026-10-22 15:11 · sinh tự bởi `scripts/update_status.py`
+> **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (0 mục BLOCKED cần dữ liệu/máy train, 2 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
 > con số nào trong repo phải truy được về `artifacts/registry.json`. Không sửa tay — chỉ khối Nhật ký cuối file.
@@ -20,7 +20,7 @@
 - Dataset cục bộ để tái lập: `data/partitions_stage2_scratch_v3` — split **38984/4400/10921** (5 clients, seed 42, protocol `stage2_scratch_clean_v3`)
 - Run Kaggle lịch sử: `20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62` — metrics CÓ, **checkpoint KHÔNG còn trên máy**
 
-## 3. Checklist nghiệm thu — XONG 14/22 · CHƯA 5 · BLOCKED 3
+## 3. Checklist nghiệm thu — XONG 20/22 · CHƯA 2 · BLOCKED 0
 
 | # | Hạng mục | Trạng thái | Bằng chứng (máy kiểm) |
 |---|---|---|---|
@@ -28,64 +28,29 @@
 | 2 | Smoke cách ly khỏi slot canonical | ✅ XONG | slot canonical không chứa smoke; 3 checkpoint smoke nằm ở artifacts/checkpoints/smoke/ |
 | 3 | Một engine train (pipeline cũ gom vào legacy/) | ✅ XONG | engine duy nhất là src/; pipeline Kaggle/stage* nằm trong legacy/ (chạy riêng: pytest legacy/tests) |
 | 4 | Web tách router/service, inference đi một cửa | ✅ XONG | app.py chỉ mount router; inference chỉ đi qua web/services/model_service.py (cổng web_visible) |
-| 5 | Không hardcode đường dẫn artifact | ⬜ CHƯA | 9 chỗ hardcode đường dẫn artifacts/ (quét AST): ['src/bundle.py:19', 'src/bundle.py:20', 'src/bundle.py:21', 'scripts/build_community_sim_features.py:88', 'scripts/eval_trained_v4.py:31'] |
-| 6 | Dọn tài liệu mâu thuẫn | ⬜ CHƯA | tài liệu ngoài danh mục: gốc=[] docs=['REPORT_WORD_WEB_2026-10-20.md', 'THAY_MO_HINH_WEB.md'] |
+| 5 | Không hardcode đường dẫn artifact | ✅ XONG | mọi đường dẫn artifacts/ trong src/web/scripts lấy từ src/registry.py (quét AST) |
+| 6 | Dọn tài liệu mâu thuẫn | ✅ XONG | gốc repo chỉ còn README.md + PROJECT_STATUS.md; docs/ chỉ gồm tài liệu hiện hành |
 | 7 | Số liệu trong docs không mâu thuẫn artifact | ✅ XONG | không còn số liệu mâu thuẫn đã biết (97,12, 97.12...) và không ghi tĩnh kết quả test trong README/docs |
-| 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ⬜ CHƯA | docs/EXPERIMENT_PROTOCOL.md chưa nêu protocol: ['mixed_pv_pd_v4_pretrained_seed42_validation'] |
+| 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
 | 9 | Test không ghi đè artifact đang track | ✅ XONG | test không tham chiếu artifacts/checkpoints/metrics (dùng tmp_path) |
 | 10 | Dependency khai báo một nơi (pyproject = requirements) | ✅ XONG | 17 dependency trùng giữa pyproject.toml và requirements.txt; ghim cũ nằm ở legacy/pyproject.toml |
 | 11 | Full tests pass trên mã nguồn hiện tại | ⬜ CHƯA | kết quả cũ (2026-10-21T21:54:16) không còn khớp mã nguồn hiện tại — chạy lại --full-gates |
-| 12 | Kiểm chứng provenance & checkpoint canonical | ⛔ BLOCKED | provenance=unverified; lỗi: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing'] |
+| 12 | Kiểm chứng provenance & checkpoint canonical | ✅ XONG | gói v4b_s42: con trỏ ghim mã băm manifest; 7 checkpoint khớp artifact_manifest; release 68e574519a1a… và validation khớp; mã huấn luyện 9dcbcbf6684d… (commit 93c5f80fd); W0 tính lại từ hạt giống 42. Slot canonical của pipeline Kaggle cũ không còn checkpoint nhưng không phục vụ web. |
 | 13 | Audit leakage theo từng run | ✅ XONG | release mixed_pv_pd_v4: train 52.464 / val 6.746 / calibration 7.005 rời nhau trên 5 khóa (giao nhau tổng = 0); 2 partition đều là tập con train; 66.215 ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train) |
 | 14 | Đánh giá PlantDoc theo từng lớp (từ số công bố) | ✅ XONG | PlantDoc phủ 13/38 lớp; 8 lớp recall<50% (204/269 ảnh); FedAvg tệ hơn Centralized ở 9/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5) |
 | 15 | Tái đánh giá cục bộ trên ảnh validation (xác nhận số công bố) | ✅ XONG | 6.746 ảnh validation tái đo trên CPU: Centralized v4b và FedAvg v4b khớp TUYỆT ĐỐI số ghi trong gói (số ảnh đúng, macro-F1, crop accuracy, recall theo lớp); tổng 21/21 phép so khớp tuyệt đối |
 | 16 | Phân tích lỗi confidence cao (mức tổng hợp, từ số công bố) | ✅ XONG | mức tổng hợp từ metrics công bố — Centralized v4b: 8/269 ảnh PlantDoc sai với confidence>0.9 (7% số lỗi); FedAvg v4b: 0/269 ảnh PlantDoc sai với confidence>0.9 (0% số lỗi) (xem mục 5) |
 | 17 | Phân tích từng ảnh sai tự tin + đo calibration (ECE) | ✅ XONG | FedAvg v4b: ECE PlantDoc 0.077 → 0.245 sau temperature scaling (T=0.5588, fit trên 7.005 ảnh calibration tách biệt val); 1 ảnh validation sai với confidence ≥ 0,9 đã liệt kê từng ảnh. UI hiển thị softmax thô kèm xác suất đã hiệu chuẩn (T) |
 | 18 | Đánh giá trên tập test giữ riêng (không dùng để chọn checkpoint) | ✅ XONG | 13.101 ảnh legacy_diagnostic_test (không dùng để chọn checkpoint): Centralized v4b PV 99.32% / PD 59.88%; FedAvg v4b PV 96.84% / PD 40.12%; Centralized so với số tự ghi trong summary.json: plantdoc +2 ảnh, plantvillage +13 ảnh, field_other không suy ra được số ảnh đúng |
-| 19 | Khoảng tin cậy theo cụm + McNemar + độ nhạy 'cùng lá' | ✅ XONG | khoảng tin cậy 95% bootstrap theo cụm (cảnh/nhóm lá) — val: PlantDoc Centralized 56.5% [47.4%; 66.0%], Centralized−FedAvg +19.0% [+11.2%; +26.9%], McNemar p=5.19e-09 / test: PlantDoc Centralized 59.9% [51.1%; 68.7%], Centralized−FedAvg +19.8% [+10.9%; +29.8%], McNemar p=1.21e-05 |
-| 20 | Chạy multi-seed non-IID (seed 42/123/2026) | ⛔ BLOCKED | chưa có multi-seed THẬT cho protocol đang công bố (mixed PV+PlantDoc, pretrained); chỉ có bản smoke trên ảnh nhiễu ngẫu nhiên |
-| 21 | Đồng bộ báo cáo & artifacts sau khi có run mới | ⛔ BLOCKED | phụ thuộc multi-seed thật |
-| 22 | Release sạch (mọi gate kỹ thuật XONG) | ⬜ CHƯA | còn mục kỹ thuật chưa XONG: ['no_hardcode', 'docs_clean', 'protocol', 'full_tests'] |
-
-### Việc đang BLOCKED — cần gì và mở khóa bằng lệnh nào
-
-**Kiểm chứng provenance & checkpoint canonical**
-- Cần: HAI file checkpoint thật: FedAvg best.pt của run canonical (oid sha256:bdfe01879aef693d…) và Centralized best — best.pt trên máy này chỉ là con trỏ Git-LFS (object chưa tải về, không có trong .git/lfs/objects); thử `git lfs pull` trước, remote không còn giữ object thì phải tải lại từ Kaggle
-- Mở khóa:
-
-```powershell
-# 0) thử kéo object LFS về (chỉ được nếu remote còn giữ):
-git lfs pull
-# 1) nếu vẫn thiếu: tải hai file từ Kaggle, 2) đặt đúng vào slot canonical (đường mà provenance validator và registry đọc):
-Copy-Item <fedavg_best.pt tải về> artifacts/checkpoints/fedavg_best.pt
-Copy-Item <centralized_best.pt tải về> artifacts/checkpoints/centralized_best.pt
-.\.venv\Scripts\python.exe scripts\update_status.py   # so state-hash với canonical_manifest
-```
-
-**Chạy multi-seed non-IID (seed 42/123/2026)**
-- Cần: GPU (Kaggle/Colab): train lại 7 mô hình × 3 seed với CÙNG optimizer và ngân sách (~10 GPU-giờ mỗi seed); máy này CPU, không train. Xem docs/EXPERIMENT_PROTOCOL.md mục 'Khi nào cần train lại'
-- Mở khóa:
-
-```powershell
-# train ngoài theo protocol mixed_pv_pd_v3 rồi nhập bundle: python scripts/import_branch_demo.py (docs/MODEL_REGISTRY.md)
-# LƯU Ý: scripts/run_real_multiseed_report.ps1 chạy protocol scratch PlantVillage CŨ, không thay được mục này
-```
-
-**Đồng bộ báo cáo & artifacts sau khi có run mới**
-- Cần: chạy xong mục multi-seed rồi đồng bộ báo cáo
-- Mở khóa:
-
-```powershell
-.\.venv\Scripts\python.exe scripts\update_status.py
-```
+| 19 | Khoảng tin cậy theo cụm + McNemar + độ nhạy 'cùng lá' | ✅ XONG | khoảng tin cậy 95% bootstrap theo cụm (cảnh/nhóm lá) — val: PlantDoc Centralized 56.5% [47.4%; 66.0%], Centralized−FedAvg +19.0% [+11.2%; +26.9%], McNemar p=5.19e-09 / test: PlantDoc Centralized 59.9% [51.2%; 68.8%], Centralized−FedAvg +19.8% [+10.4%; +30.0%], McNemar p=1.21e-05 |
+| 20 | Chạy multi-seed non-IID (seed 42/123/2026) | ✅ XONG | 3 hạt giống [42, 123, 2026] × 7 mô hình (Centralized, FedAvg, 5 Local-only) cùng release 68e574519a1a…, cùng thiết lập huấn luyện; mean ± độ lệch chuẩn ở trang Kết quả (artifacts/train_v4_results.json). 7/14 ngưỡng đặt trước đạt; chưa đạt: B_centralized_plantwild_65, web1_centralized_plantwild_plus10, web2_centralized_plantdoc_holdout, A_fedavg_field_same_source, B_fedavg_plantwild_65, web1_fedavg_plantwild_plus10, web2_fedavg_plantdoc_holdout. |
+| 21 | Đồng bộ báo cáo & artifacts sau khi có run mới | ✅ XONG | 5 báo cáo (tái đánh giá, test giữ riêng, thống kê, cấu hình huấn luyện, shard) khớp protocol và release của gói v4b_s42 |
+| 22 | Release sạch (mọi gate kỹ thuật XONG) | ⬜ CHƯA | còn mục kỹ thuật chưa XONG: ['full_tests'] |
 
 ### Việc làm được ngay (chưa BLOCKED)
 
-1. Không hardcode đường dẫn artifact — 9 chỗ hardcode đường dẫn artifacts/ (quét AST): ['src/bundle.py:19', 'src/bundle.py:20', 'src/bundle.py:21', 'scripts/build_community_sim_features.py:88', 'scripts/eval_trained_v4.py:31']
-2. Dọn tài liệu mâu thuẫn — tài liệu ngoài danh mục: gốc=[] docs=['REPORT_WORD_WEB_2026-10-20.md', 'THAY_MO_HINH_WEB.md']
-3. Chốt một protocol khoa học cho mỗi thí nghiệm — docs/EXPERIMENT_PROTOCOL.md chưa nêu protocol: ['mixed_pv_pd_v4_pretrained_seed42_validation']
-4. Full tests pass trên mã nguồn hiện tại — kết quả cũ (2026-10-21T21:54:16) không còn khớp mã nguồn hiện tại — chạy lại --full-gates
-5. Release sạch (mọi gate kỹ thuật XONG) — còn mục kỹ thuật chưa XONG: ['no_hardcode', 'docs_clean', 'protocol', 'full_tests']
+1. Full tests pass trên mã nguồn hiện tại — kết quả cũ (2026-10-21T21:54:16) không còn khớp mã nguồn hiện tại — chạy lại --full-gates
+2. Release sạch (mọi gate kỹ thuật XONG) — còn mục kỹ thuật chưa XONG: ['full_tests']
 
 ## 4. Kết quả chuẩn theo họ (không trộn lẫn)
 
@@ -202,13 +167,13 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
 
 | Model | PlantVillage | PlantDoc |
 |---|---:|---:|
-| Centralized v4b | 99.32% [99.1%; 99.5%] | 59.88% [51.1%; 68.7%] |
-| FedAvg v4b | 96.84% [96.3%; 97.3%] | 40.12% [30.1%; 49.7%] |
-| Local 00 | 52.68% [50.6%; 54.9%] | 11.05% [5.9%; 17.6%] |
-| Local 01 | 49.19% [47.1%; 51.4%] | 23.84% [14.9%; 33.5%] |
-| Local 02 | 29.09% [26.8%; 31.3%] | 32.56% [19.6%; 46.3%] |
-| Local 03 | 53.51% [51.3%; 55.6%] | 34.30% [23.3%; 46.0%] |
-| Local 04 | 55.11% [52.9%; 57.2%] | 17.44% [10.3%; 25.8%] |
+| Centralized v4b | 99.32% [99.1%; 99.5%] | 59.88% [51.2%; 68.8%] |
+| FedAvg v4b | 96.84% [96.3%; 97.3%] | 40.12% [30.4%; 50.6%] |
+| Local 00 | 52.68% [50.4%; 54.9%] | 11.05% [5.6%; 17.7%] |
+| Local 01 | 49.19% [47.1%; 51.4%] | 23.84% [14.9%; 33.3%] |
+| Local 02 | 29.09% [26.9%; 31.3%] | 32.56% [19.3%; 46.2%] |
+| Local 03 | 53.51% [51.4%; 55.6%] | 34.30% [23.9%; 46.2%] |
+| Local 04 | 55.11% [52.9%; 57.3%] | 17.44% [10.4%; 26.3%] |
 - Hiệu ứng chọn checkpoint: Centralized được chọn ở epoch 33/40 theo mean macro-F1 over val sources with >= 30 images trên CHÍNH validation; macro-F1 PlantDoc ở epoch đó 59.03% (hạng 6/40), epoch cuối 59.07%. Chọn trên val có thể đẩy số val lên; số test giữ riêng ở bảng trên không dùng để chọn nên không chịu thiên lệch này (PlantDoc test chỉ 172 ảnh — khoảng tin cậy rộng).
 - Độ nhạy 'cùng lá' (test, PlantVillage): 2.633 ảnh không được gom nhóm lá, 2.015 có ảnh train mang số liền kề (ước lượng chụp lại). Bỏ các ảnh đó: Centralized 99.32% → 99.29%, FedAvg 96.84% → 97.02% — không thấy dấu hiệu bị thổi phồng.
 

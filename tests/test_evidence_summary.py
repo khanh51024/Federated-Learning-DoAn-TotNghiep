@@ -30,7 +30,9 @@ def test_summary_builds_every_section_from_real_artifacts(evidence):
 
     reeval = result["reeval"]
     assert [m["model_id"] for m in reeval["models"]] == list(evidence_service.MODEL_ORDER)
-    assert reeval["comparisons_total"] == 14 and reeval["main_models_exact"] is True
+    # mỗi mô hình so với số công bố ở từng nhóm nguồn của gói (gói v4: PlantVillage, PlantDoc, ngoài đồng bộ khác)
+    expected_comparisons = len(evidence_service.MODEL_ORDER) * len(evidence_service.all_sources(evidence))
+    assert reeval["comparisons_total"] == expected_comparisons and reeval["main_models_exact"] is True
     # số tái đánh giá khớp số đã kiểm hash trong dung sai của chính báo cáo (Local-only có thể lệch <= 1 ảnh)
     published = {m["model_id"]: m["metrics"] for m in evidence["models"]}
     for model in reeval["models"]:
@@ -135,15 +137,16 @@ def test_leakage_pass_flag_is_not_trusted_without_matching_numbers(evidence, mon
 def test_reeval_recomputes_totals_instead_of_trusting_the_report(evidence, monkeypatch):
     original = evidence_service._load_json(evidence_service.reg.LOCAL_REEVAL_JSON)
     forged = copy.deepcopy(original)
-    forged["comparisons_exact"] = 14
+    total = len(evidence_service.MODEL_ORDER) * len(evidence_service.all_sources(evidence))
+    forged["comparisons_exact"] = total
     forged["main_models_exact"] = True
     forged["models"]["local_01"]["vs_published"]["plantvillage"]["reproduced"] = False
     forged["models"]["local_01"]["vs_published"]["plantvillage"]["correct_diff_images"] = 1
     monkeypatch.setattr(evidence_service, "_load_json", lambda relative: forged if relative.endswith("local_reeval_report.json") else evidence_service._JSON_CACHE.get(relative, (None, None))[1])
     result = evidence_service.summary(evidence)["reeval"]
     assert result["available"] is True
-    assert result["comparisons_exact"] < 14, "tổng phải tính lại từ từng phép so sánh"
-    assert result["comparisons_total"] == 14
+    assert result["comparisons_exact"] < total, "tổng phải tính lại từ từng phép so sánh"
+    assert result["comparisons_total"] == total
 
 
 def test_non_finite_numbers_become_null_not_a_500(evidence, monkeypatch):

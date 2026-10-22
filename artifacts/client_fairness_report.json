@@ -1,0 +1,197 @@
+{
+ "evidence": "tính trên logits đã lưu của lần chấm cục bộ; không chạy lại mô hình",
+ "protocol_id": "mixed_pv_pd_v4_pretrained_seed42_validation",
+ "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+ "validation_manifest_sha256": "f370f9fe873b874b7ec64a247831a951d0f9108bbd67a06f8b97cfa0d3e6f355",
+ "checkpoint_sha256": {
+  "centralized": "a4ea0dcc8ef34eec529207ad1c015001f5554119e2a9eaa1f4760f200885dcbb",
+  "fedavg": "cd1c8f603bd9cd1bb485346454e83d18658a2ac08d51f35c7e29a255335fbb45",
+  "local_00": "3e6cc0019d2906004f028e844bc06144098b21e78aa772557be2ce4413a4d2c9",
+  "local_01": "cf46acf7fd19bdbcec9e988e3276e42c7487b58ba8e7ae3cfd47fae6dfbecbf7",
+  "local_02": "a7a2561ed95f997d8006b64ac54ced996ee948843a85350746a429c09aef6914",
+  "local_03": "4547b8c57bd486b8b78025658a3450e9ddb1d5a8106e46f60cd78bed2ae7d8b6",
+  "local_04": "d13b72fdb7b2d370b9de922ed06d8e8079ce6cd8201debf866c4a3cfaf3dbe3b"
+ },
+ "definition": "lớp client CÓ ảnh học = số ảnh của lớp đó trong shard của client lớn hơn 0 (báo cáo shard của gói)",
+ "clients": {
+  "client_00": {
+   "n_k": 13107,
+   "classes_with_images": 22,
+   "classes_total": 38
+  },
+  "client_01": {
+   "n_k": 11691,
+   "classes_with_images": 22,
+   "classes_total": 38
+  },
+  "client_02": {
+   "n_k": 6647,
+   "classes_with_images": 22,
+   "classes_total": 38
+  },
+  "client_03": {
+   "n_k": 8863,
+   "classes_with_images": 24,
+   "classes_total": 38
+  },
+  "client_04": {
+   "n_k": 12156,
+   "classes_with_images": 26,
+   "classes_total": 38
+  }
+ },
+ "splits": {
+  "val": {
+   "available": true,
+   "count": 6746,
+   "by_client": {
+    "client_00": {
+     "classes_with_images": {
+      "n": 4101,
+      "centralized": 3981,
+      "fedavg": 3856,
+      "local": 3190
+     },
+     "classes_without_images": {
+      "n": 2645,
+      "centralized": 2512,
+      "fedavg": 2296,
+      "local": 0
+     }
+    },
+    "client_01": {
+     "classes_with_images": {
+      "n": 4036,
+      "centralized": 3907,
+      "fedavg": 3730,
+      "local": 3296
+     },
+     "classes_without_images": {
+      "n": 2710,
+      "centralized": 2586,
+      "fedavg": 2422,
+      "local": 0
+     }
+    },
+    "client_02": {
+     "classes_with_images": {
+      "n": 4033,
+      "centralized": 3852,
+      "fedavg": 3657,
+      "local": 2073
+     },
+     "classes_without_images": {
+      "n": 2713,
+      "centralized": 2641,
+      "fedavg": 2495,
+      "local": 0
+     }
+    },
+    "client_03": {
+     "classes_with_images": {
+      "n": 4562,
+      "centralized": 4372,
+      "fedavg": 4154,
+      "local": 3217
+     },
+     "classes_without_images": {
+      "n": 2184,
+      "centralized": 2121,
+      "fedavg": 1998,
+      "local": 0
+     }
+    },
+    "client_04": {
+     "classes_with_images": {
+      "n": 4897,
+      "centralized": 4714,
+      "fedavg": 4473,
+      "local": 3217
+     },
+     "classes_without_images": {
+      "n": 1849,
+      "centralized": 1779,
+      "fedavg": 1679,
+      "local": 0
+     }
+    }
+   }
+  },
+  "test": {
+   "available": true,
+   "count": 13101,
+   "by_client": {
+    "client_00": {
+     "classes_with_images": {
+      "n": 8252,
+      "centralized": 8115,
+      "fedavg": 7917,
+      "local": 6670
+     },
+     "classes_without_images": {
+      "n": 4849,
+      "centralized": 4684,
+      "fedavg": 4382,
+      "local": 0
+     }
+    },
+    "client_01": {
+     "classes_with_images": {
+      "n": 7635,
+      "centralized": 7477,
+      "fedavg": 7288,
+      "local": 6338
+     },
+     "classes_without_images": {
+      "n": 5466,
+      "centralized": 5322,
+      "fedavg": 5011,
+      "local": 0
+     }
+    },
+    "client_02": {
+     "classes_with_images": {
+      "n": 7682,
+      "centralized": 7448,
+      "fedavg": 7117,
+      "local": 3914
+     },
+     "classes_without_images": {
+      "n": 5419,
+      "centralized": 5351,
+      "fedavg": 5182,
+      "local": 0
+     }
+    },
+    "client_03": {
+     "classes_with_images": {
+      "n": 9164,
+      "centralized": 8926,
+      "fedavg": 8583,
+      "local": 6726
+     },
+     "classes_without_images": {
+      "n": 3937,
+      "centralized": 3873,
+      "fedavg": 3716,
+      "local": 0
+     }
+    },
+    "client_04": {
+     "classes_with_images": {
+      "n": 9579,
+      "centralized": 9358,
+      "fedavg": 8970,
+      "local": 6681
+     },
+     "classes_without_images": {
+      "n": 3522,
+      "centralized": 3441,
+      "fedavg": 3329,
+      "local": 0
+     }
+    }
+   }
+  }
+ }
+}

@@ -15,11 +15,11 @@ export function releaseHtml(training) {
   };
   const hasOther = training.release.splits.some(s => s.by_source.field_other);
   const rows = training.release.splits.map(s => `<tr><th scope="row">${roles[s.name][0]}</th><td>${fmtInt(s.by_source.plantdoc)}</td><td>${fmtInt(s.by_source.plantvillage)}</td>${hasOther ? `<td>${fmtInt(s.by_source.field_other || 0)}</td>` : ""}<td><b>${fmtInt(s.count)}</b></td><td>${roles[s.name][1]}</td></tr>`).join("");
-  const head = ["Phần dữ liệu", "PlantDoc", "PlantVillage", ...(hasOther ? ["Ngoài đồng, nguồn khác"] : []), "Tổng ảnh", "Vai trò"];
+  const head = ["Phần dữ liệu", "PlantDoc", "PlantVillage", ...(hasOther ? ["Ngoài đồng, bộ khác"] : []), "Tổng ảnh", "Vai trò"];
   const trainCfg = modelTraining(training, "centralized")?.config || {};
   return `<h4 class="subhead mt-4">Đủ năm phần của release ${esc(training.release.name)}</h4>
     ${table(head, rows, "Số ảnh của năm phần release")}
-    <p class="field-hint mt-2">Trên web, “tập kiểm tra” là validation (dùng chọn mô hình); “tập giữ riêng” là legacy diagnostic test. Tập giữ riêng chưa phải test thực địa mới được niêm phong. Audit hiện có chỉ bao phủ train, validation và calibration.${hasOther ? " Cột “Ngoài đồng, nguồn khác” gồm ảnh ngoài đồng từ các bộ công khai ngoài PlantDoc; nhãn của chúng được sàng lọc bằng mắt (không phải chuyên gia) hoặc do tác giả bộ dữ liệu gán." : ""}</p>
+    <p class="field-hint mt-2">Trên web, “tập kiểm tra” là validation (dùng chọn mô hình); “tập giữ riêng” là legacy diagnostic test. Tập giữ riêng chưa phải test thực địa mới được niêm phong. Audit hiện có chỉ bao phủ train, validation và calibration.${hasOther ? " Cột “Ngoài đồng, bộ khác” gồm ảnh ngoài đồng từ các bộ công khai ngoài PlantDoc; nhãn của chúng được sàng lọc bằng mắt (không phải chuyên gia) hoặc do tác giả bộ dữ liệu gán." : ""}</p>
     <h4 class="subhead mt-4">Tiền xử lý và cách học của các checkpoint trên web</h4>
     <ol class="method-steps mt-3"><li><b>Xây release.</b> Ảnh được chia theo nhóm (cùng một lá, cùng một phiên chụp) để một lá không nằm ở cả huấn luyện lẫn kiểm tra; ảnh gần trùng với các tập đã khóa bị loại; PlantVillage giữ đủ, ảnh ngoài đồng được bổ sung từ các bộ công khai có ghi giấy phép.</li>
     <li><b>Nạp ảnh.</b> canonical_v1: RGB → resize trực tiếp 224 × 224 (bilinear, antialias) → tensor [0, 1] → chuẩn hóa ImageNet, mean (0,485; 0,456; 0,406), std (0,229; 0,224; 0,225). Validation và suy luận không tăng cường ngẫu nhiên.</li>
@@ -176,11 +176,11 @@ export function holdoutPlantdocHtml(holdout) {
 }
 
 /** Thuật ngữ dùng xuyên suốt báo cáo; định nghĩa tập kiểm tra/giữ riêng chỉ nằm ở chương 2. */
-export function glossaryHtml() {
+export function glossaryHtml(alpha = null) {
   const terms = [
     ["FL (Federated Learning)", "Học liên kết: nhiều client cùng huấn luyện, chỉ trao đổi trọng số, không chia sẻ ảnh gốc."],
     ["FedAvg", "Thuật toán gộp bằng trung bình có trọng số (theo số ảnh) các mô hình client."],
-    ["non-IID", "Dữ liệu giữa các client không đồng nhất (ở đây: lệch nhóm bệnh, α = 0,1)."],
+    ["non-IID", `Dữ liệu giữa các client không đồng nhất (ở đây: lệch nhóm bệnh${alpha ? `, ${alpha}` : ""}).`],
     ["Client / server", "Máy khách giữ dữ liệu / máy chủ gộp mô hình."],
     ["Shard", "Phần dữ liệu huấn luyện của một client."],
     ["Checkpoint", "Điểm lưu mô hình: bộ trọng số tại một epoch hoặc một vòng."],

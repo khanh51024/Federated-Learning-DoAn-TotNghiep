@@ -5,9 +5,10 @@ import { attachCrosshair } from "../core/crosshair.js";
 import { barRise, lineDraw, makeChartWhenVisible, pillarColors } from "../core/charts.js";
 import { play } from "../core/motion.js";
 import { chartHtml } from "../core/comm-weights.js";
+import { factsOf, scopeText } from "../core/facts-text.js";
 import {
-  applyStyleData, $$, MODEL_LABELS, MODEL_ORDER, byId, diseaseOf, cropOf, esc, fmtInt, fmtNum, fmtPct,
-  formatDiseaseName, modelPill, notify, pillarOf, sectionHead, withAlpha,
+  applyStyleData, $$, MODEL_LABELS, MODEL_ORDER, SOURCE_GROUPS, byId, diseaseOf, cropOf, esc, fmtInt, fmtNum, fmtPct,
+  formatDiseaseName, modelPill, notify, pillarOf, sectionHead, sourceLabel, withAlpha,
 } from "../core/dom.js";
 
 const built = new Set();
@@ -22,59 +23,55 @@ function buildSummary() {
   const { evidence, summary } = ctx;
   const root = byId("result-summary");
   const byModel = modelsById(evidence);
-  const best = { pvTop1: 0, pdTop1: 0 };
-  for (const id of MODEL_ORDER) {
-    best.pvTop1 = Math.max(best.pvTop1, byModel[id].metrics.plantvillage.top1_accuracy);
-    best.pdTop1 = Math.max(best.pdTop1, byModel[id].metrics.plantdoc.top1_accuracy);
-  }
+  const groups = SOURCE_GROUPS.filter(g => byModel.centralized.metrics[g.id]);   // nhóm nguồn mà gói có số đo (gói v4: ba nhóm, gói cũ: hai)
+  const best = Object.fromEntries(groups.map(g => [g.id, Math.max(...MODEL_ORDER.map(id => byModel[id].metrics[g.id].top1_accuracy))]));
   const rows = MODEL_ORDER.map(id => {
     const mm = byModel[id].metrics;
     const bold = (value, top) => (value === top ? ' class="is-best"' : "");
+    const cells = groups.map(g => `<td${bold(mm[g.id].top1_accuracy, best[g.id])}>${fmtPct(mm[g.id].top1_accuracy)}</td><td>${fmtNum(mm[g.id].macro_f1_supported, 4)}</td>`).join("");
     return `<tr class="row-${pillarOf(id)}">
       <th scope="row">${modelPill(id)}</th>
-      <td${bold(mm.plantvillage.top1_accuracy, best.pvTop1)}>${fmtPct(mm.plantvillage.top1_accuracy)}</td>
-      <td>${fmtNum(mm.plantvillage.macro_f1_supported, 4)}</td>
-      <td${bold(mm.plantdoc.top1_accuracy, best.pdTop1)}>${fmtPct(mm.plantdoc.top1_accuracy)}</td>
-      <td>${fmtNum(mm.plantdoc.macro_f1_supported, 4)}</td>
+      ${cells}
       <td>${fmtPct(mm.plantdoc.crop_accuracy, 1)}</td>
     </tr>`;
   }).join("");
+  const groupHeads = groups.map(g => `<th scope="col">${esc(g.label)}: đúng</th><th scope="col">Macro-F1</th>`).join("");
+  const groupCounts = groups.map(g => `${esc(g.label)} ${fmtInt(evidence.validation_counts[g.id])} ảnh (${esc(g.short)})`).join("; ");
+  const groupNames = ["", "một", "hai", "ba", "bốn"][groups.length] || String(groups.length);
 
   const covered = summary?.plantdoc?.available ? summary.plantdoc.classes_covered : null;
   root.innerHTML = `
     <section class="panel">
       <div class="panel-header-flex"><div>${sectionHead("4.1", "Tổng hợp: so sánh ba phương pháp huấn luyện")}<p class="panel-desc">1 mô hình gom ảnh · 1 mô hình học phân tán · 5 mô hình học riêng</p></div>
         <div class="segmented" role="radiogroup" aria-label="Nguồn ảnh so sánh">
-          <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-result-source="plantvillage">PlantVillage</button>
-          <button type="button" class="segmented-option" role="radio" aria-checked="false" data-result-source="plantdoc">PlantDoc · ngoài đồng</button>
+          ${groups.map((g, i) => `<button type="button" class="segmented-option${i === 0 ? " is-active" : ""}" role="radio" aria-checked="${i === 0}" data-result-source="${esc(g.id)}">${esc(g.label)}${g.kind === "field" && !/ngoài đồng/i.test(g.label) ? " · ngoài đồng" : ""}</button>`).join("")}
         </div>
       </div>
       <p class="field-hint mt-2" id="result-comparison-source"></p>
       <div class="viewer-comparison mt-3" id="result-key-comparison"></div>
       <p class="viewer-takeaway mt-3" id="result-takeaway" aria-live="polite"></p>
-      <p class="viewer-scope mt-2"><b class="scope-tag">Phạm vi</b> Một kịch bản, một lần chạy; tập này cũng dùng để chọn mô hình, nên chưa phải độ chính xác ngoài thực địa. <a href="#ket-luan">Xem hạn chế ở chương 5</a></p>
+      <p class="viewer-scope mt-2"><b class="scope-tag">Phạm vi</b> ${esc(scopeText(factsOf(summary)))} <a href="#ket-luan">Xem hạn chế ở chương 5</a></p>
     </section>
 
     <section class="panel mt-4" aria-labelledby="result-chart-title">
       <div class="overview-section-heading">
-        <div><h4 class="panel-title" id="result-chart-title">Bảy mô hình trên hai nguồn ảnh</h4></div>
+        <div><h4 class="panel-title" id="result-chart-title">Bảy mô hình trên ${groupNames} nguồn ảnh</h4></div>
         <span class="overview-chart-unit">Tỉ lệ đoán đúng · %</span>
       </div>
       <div class="chart-container chart-tall mt-3"><canvas id="chart-overview" aria-label="So sánh tỉ lệ đoán đúng của bảy mô hình"></canvas></div>
-      <p class="field-hint mt-2">Cột đậm: PlantVillage (${fmtInt(evidence.validation_counts.plantvillage)} ảnh). Cột nhạt: PlantDoc (${fmtInt(evidence.validation_counts.plantdoc)} ảnh ngoài đồng).</p>
+      <p class="field-hint mt-2">Trong mỗi mô hình, các cột theo thứ tự: ${groups.map((g, i) => `${i === 0 ? "đậm nhất" : i === groups.length - 1 ? "nhạt nhất" : "nhạt vừa"}: ${esc(g.label)} (${fmtInt(evidence.validation_counts[g.id])} ảnh)`).join(" · ")}.</p>
     </section>
 
     <section class="panel mt-4" id="result-full-table" aria-labelledby="result-table-title">
       <h4 class="panel-title" id="result-table-title">Bảng đầy đủ của 7 mô hình</h4>
-      <p class="panel-desc">PlantVillage ${fmtInt(evidence.validation_counts.plantvillage)} ảnh (cùng kiểu với ảnh học) và PlantDoc ${fmtInt(evidence.validation_counts.plantdoc)} ảnh (ảnh ngoài đồng). Số đậm là cao nhất mỗi cột.</p>
+      <p class="panel-desc">${groupCounts}. Số đậm là cao nhất mỗi cột.</p>
       <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
         <table class="data-table result-table">
           <thead>
             <tr>
               <th scope="col">Mô hình</th>
-              <th scope="col">Ảnh phòng (PlantVillage): đúng</th><th scope="col">Macro-F1</th>
-              <th scope="col">Ảnh ngoài đồng (PlantDoc): đúng</th><th scope="col">Macro-F1</th>
-              <th scope="col">Đúng loại cây (ngoài đồng)</th>
+              ${groupHeads}
+              <th scope="col">Đúng loại cây (PlantDoc)</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -145,14 +142,14 @@ function buildSummary() {
     const fed = byModel.fedavg.metrics[source].top1_accuracy;
     const central = byModel.centralized.metrics[source].top1_accuracy;
     const gain = (fed - Math.max(...values)) * 100;
-    const name = source === "plantvillage" ? "PlantVillage" : "PlantDoc";
+    const name = sourceLabel(source);
     byId("result-comparison-source").textContent = `${fmtInt(evidence.validation_counts[source])} ảnh ${name} trong tập kiểm tra · tỉ lệ dự đoán đúng (Top-1) · seed ${evidence.seed}`;
     byId("result-key-comparison").innerHTML = [
       ["local", "Local-only", `${fmtPct(Math.min(...values), 1)}–${fmtPct(Math.max(...values), 1)}`, "Mỗi client học riêng"],
       ["fedavg", "FedAvg", fmtPct(fed), "Học chung, giữ ảnh tại client"],
       ["centralized", "Centralized", fmtPct(central), "Gom ảnh về máy chủ"],
     ].map(([kind, label, value, desc]) => `<article class="viewer-model ${kind}"><span>${label}</span><b>${value}</b><small>${desc}</small></article>`).join("");
-    byId("result-takeaway").textContent = `Trong lần chạy này, FedAvg ${gain >= 0 ? "cao hơn" : "thấp hơn"} mô hình học riêng tốt nhất ${fmtNum(Math.abs(gain), 1)} điểm phần trăm trên ${name}.`;
+    byId("result-takeaway").textContent = `Ở hạt giống ${evidence.seed}, FedAvg ${gain >= 0 ? "cao hơn" : "thấp hơn"} mô hình học riêng tốt nhất ${fmtNum(Math.abs(gain), 1)} điểm phần trăm trên ${name}.`;
     $$("[data-result-source]", root).forEach(button => {
       const on = button.dataset.resultSource === source;
       button.classList.toggle("is-active", on);
@@ -161,7 +158,7 @@ function buildSummary() {
     });
   };
   $$("[data-result-source]", root).forEach(button => button.addEventListener("click", () => showSource(button.dataset.resultSource)));
-  showSource("plantvillage");
+  showSource(groups[0].id);
 
   const val = evidence.validation_counts || {};
   makeChartWhenVisible(byId("chart-overview"), () => {
@@ -171,22 +168,14 @@ function buildSummary() {
       type: "bar",
       data: {
         labels: MODEL_ORDER.map(id => MODEL_LABELS[id]),
-        datasets: [
-          {
-            label: "PlantVillage",
-            data: MODEL_ORDER.map(id => +(byModel[id].metrics.plantvillage.top1_accuracy * 100).toFixed(2)),
-            backgroundColor: MODEL_ORDER.map(colorOf),
-            borderRadius: 6,
-          },
-          {
-            label: "PlantDoc",
-            data: MODEL_ORDER.map(id => +(byModel[id].metrics.plantdoc.top1_accuracy * 100).toFixed(2)),
-            backgroundColor: MODEL_ORDER.map(id => withAlpha(colorOf(id), 0.45)),
-            borderColor: MODEL_ORDER.map(colorOf),
-            borderWidth: 1.5,
-            borderRadius: 6,
-          },
-        ],
+        datasets: groups.map((g, i) => ({
+          label: g.label,
+          data: MODEL_ORDER.map(id => +(byModel[id].metrics[g.id].top1_accuracy * 100).toFixed(2)),
+          // nhóm đầu đặc, các nhóm sau nhạt dần và có viền để vẫn đọc được màu của mô hình
+          backgroundColor: MODEL_ORDER.map(id => (i === 0 ? colorOf(id) : withAlpha(colorOf(id), i === 1 && groups.length > 2 ? 0.7 : 0.45))),
+          ...(i === 0 ? {} : { borderColor: MODEL_ORDER.map(colorOf), borderWidth: 1.5 }),
+          borderRadius: 6,
+        })),
       },
       options: {
         animation: barRise(),
@@ -204,7 +193,7 @@ function buildSummary() {
                 return `${MODEL_LABELS[id]} · ${role}`;
               },
               label: ctx => `${ctx.dataset.label}: ${fmtNum(ctx.parsed.y, 2)}%`,
-              footer: () => `Tập kiểm tra: ${fmtInt(val.plantvillage)} ảnh PlantVillage · ${fmtInt(val.plantdoc)} ảnh PlantDoc`,
+              footer: () => `Tập kiểm tra: ${groups.map(g => `${fmtInt(val[g.id])} ảnh ${g.label}`).join(" · ")}`,
             },
           },
         },
@@ -331,27 +320,40 @@ function buildCalibration() {
     root.innerHTML = notReady();
     return;
   }
+  const groups = SOURCE_GROUPS.filter(g => re.models[0].calibration[g.id]);
+  const fieldGroups = groups.filter(g => g.kind === "field");
   const rows = re.models.map(m => {
-    const pv = m.calibration.plantvillage;
-    const pd = m.calibration.plantdoc;
+    const eceCells = groups.map(g => {
+      const c = m.calibration[g.id];
+      return `<td class="mono ${c.ece_temperature_scaled >= 0.2 ? "text-rose" : ""}">${fmtNum(c.ece_raw, 3)} → ${fmtNum(c.ece_temperature_scaled, 3)}</td>`;
+    }).join("");
+    const rawCells = fieldGroups.map(g => `<td class="mono">${fmtPct(m.calibration[g.id].mean_confidence, 0)} / ${fmtPct(m.calibration[g.id].accuracy, 0)}</td>`).join("");
+    const confident = fieldGroups.reduce((n, g) => n + (m[g.id]?.high_confidence_wrong || 0), 0);
     return `<tr>
       <th scope="row">${modelPill(m.model_id)}</th>
       <td class="mono">${fmtNum(m.temperature, 2)}</td>
-      <td class="mono">${fmtNum(pv.ece_raw, 3)} → ${fmtNum(pv.ece_temperature_scaled, 3)}</td>
-      <td class="mono ${pd.ece_raw >= 0.25 ? "text-rose" : ""}">${fmtNum(pd.ece_raw, 3)} → ${fmtNum(pd.ece_temperature_scaled, 3)}</td>
-      <td class="mono">${fmtPct(pd.mean_confidence, 0)} / ${fmtPct(pd.accuracy, 0)}</td>
-      <td class="mono">${fmtInt(m.plantdoc.high_confidence_wrong)}</td>
+      ${eceCells}${rawCells}
+      <td class="mono">${fmtInt(confident)}</td>
     </tr>`;
   }).join("");
+  const headCells = groups.map(g => `<th scope="col">ECE ${esc(g.label)}</th>`).join("")
+    + fieldGroups.map(g => `<th scope="col">${esc(g.label)}: xác suất TB / tỉ lệ đúng thực</th>`).join("");
+
+  // Nhận xét suy ra từ số đo: nhóm nào ECE giảm, nhóm nào tăng sau hiệu chuẩn (không viết sẵn nhóm nào xấu)
+  const fed = re.models.find(m => m.model_id === "fedavg");
+  const sameWay = (pred) => groups.filter(g => pred(fed.calibration[g.id]));
+  const eceText = list => list.map(g => `${esc(g.label)} (${fmtNum(fed.calibration[g.id].ece_raw, 3)} → ${fmtNum(fed.calibration[g.id].ece_temperature_scaled, 3)})`).join(", ");
+  const improved = sameWay(c => c.ece_temperature_scaled < c.ece_raw);
+  const worsened = sameWay(c => c.ece_temperature_scaled > c.ece_raw);
+  const calibrationNote = `${improved.length ? `Hiệu chuẩn làm ECE của ${esc(MODEL_LABELS.fedavg)} giảm ở ${eceText(improved)}. ` : ""}`
+    + `${worsened.length ? `Ở ${eceText(worsened)} ECE lại tăng${fed.temperature < 1 ? "; T < 1 làm xác suất nhọn hơn, nên với nhóm này xác suất sau hiệu chuẩn lệch xa thực tế hơn xác suất thô" : ""}. ` : ""}`;
 
   root.innerHTML = `
     ${sectionHead("4.4", "Độ tin cậy của xác suất")}
     <section class="callout callout-warn mt-3">
       <b>Xác suất softmax thô của các mô hình chưa được hiệu chuẩn.</b> Trang Chẩn đoán ảnh hiện cả số thô lẫn số đã hiệu chuẩn bằng temperature scaling (T ở bảng dưới).
-      Trên PlantVillage độ tin cậy khá sát độ chính xác thực, nhưng trên PlantDoc các mô hình <b>gán xác suất cao hơn nhiều so với tỉ lệ đúng thực tế</b>:
-      FedAvg báo trung bình ${fmtPct(re.models.find(m => m.model_id === "fedavg").calibration.plantdoc.mean_confidence, 0)} nhưng chỉ đúng
-      ${fmtPct(re.models.find(m => m.model_id === "fedavg").calibration.plantdoc.accuracy, 0)}.
-      Việc hiệu chuẩn (temperature scaling) học trên tập ảnh chủ yếu là PlantVillage nên chỉ sửa được một phần sai lệch trên PlantDoc (ECE vẫn cao).
+      ${calibrationNote}
+      Nhiệt độ T học trên tập hiệu chuẩn riêng, chủ yếu gồm ảnh cùng nguồn với ảnh đã học; ảnh chụp ở điều kiện khác thì độ tin cậy hiển thị không đáng tin bằng.
       Vì vậy một ảnh có độ tin cậy cao không có nghĩa là chắc đúng.
     </section>
 
@@ -360,7 +362,7 @@ function buildCalibration() {
       <p class="panel-desc">ECE (Expected Calibration Error, ${re.bins} khoảng) càng thấp càng tốt. "Thô → chỉnh T" là trước và sau khi chia logit cho nhiệt độ T học trên tập hiệu chuẩn riêng ${fmtInt(re.calibration_count)} ảnh; temperature scaling không đổi dự đoán, chỉ đổi xác suất.</p>
       <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
         <table class="data-table">
-          <thead><tr><th scope="col">Mô hình</th><th scope="col">T</th><th scope="col">ECE PlantVillage</th><th scope="col">ECE PlantDoc</th><th scope="col">Ngoài đồng: xác suất TB / tỉ lệ đúng thực</th><th scope="col">Sai dù tự tin ≥ ${fmtNum(re.high_confidence_threshold * 100, 0)}% (ngoài đồng)</th></tr></thead>
+          <thead><tr><th scope="col">Mô hình</th><th scope="col">T</th>${headCells}<th scope="col">Sai dù tự tin ≥ ${fmtNum(re.high_confidence_threshold * 100, 0)}% (ngoài đồng)</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
@@ -373,8 +375,7 @@ function buildCalibration() {
           <p class="panel-desc">Mỗi điểm là một khoảng độ tin cậy: trục ngang là độ tin cậy trung bình, trục dọc là tỉ lệ đúng thực tế. Đường nét đứt là hiệu chuẩn hoàn hảo; điểm dưới đường là tự tin quá mức.</p>
         </div>
         <div class="segmented" role="radiogroup" aria-label="Nguồn ảnh kiểm tra">
-          <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-cal="plantdoc">PlantDoc</button>
-          <button type="button" class="segmented-option" role="radio" aria-checked="false" data-cal="plantvillage">PlantVillage</button>
+          ${[...groups].reverse().map((g, i) => `<button type="button" class="segmented-option${i === 0 ? " is-active" : ""}" role="radio" aria-checked="${i === 0}" data-cal="${esc(g.id)}">${esc(g.label)}</button>`).join("")}
         </div>
       </div>
       <div class="chart-container chart-tall mt-4"><canvas id="chart-reliability" aria-label="Biểu đồ độ tin cậy của FedAvg và Centralized"></canvas></div>
@@ -407,7 +408,7 @@ function buildCalibration() {
       };
     });
   };
-  draw("plantdoc");
+  draw(groups[groups.length - 1].id);
   root.querySelectorAll("[data-cal]").forEach(button => {
     button.addEventListener("click", () => {
       root.querySelectorAll("[data-cal]").forEach(b => {
@@ -458,19 +459,20 @@ function buildHoldout() {
   const val = split("val");
   const test = split("test");
   const sel = st?.selection_effect;
+  const groups = SOURCE_GROUPS.filter(g => byModel.centralized.metrics[g.id]);
 
   const renderRows = ids => ids.map(id => {
     const pub = byModel[id].metrics;
     const h = holdoutById[id];
     const cell = (source, block, value) => withCi(value, block?.[source]?.models?.[id]);
+    const cells = groups.map(g => `<td>${cell(g.id, val, pub[g.id].top1_accuracy)}</td><td>${h?.[g.id] ? cell(g.id, test, h[g.id].top1) : "—"}</td>`).join("");
     return `<tr class="row-${pillarOf(id)}">
       <th scope="row">${modelPill(id)}</th>
-      <td>${cell("plantvillage", val, pub.plantvillage.top1_accuracy)}</td>
-      <td>${h ? cell("plantvillage", test, h.plantvillage.top1) : "—"}</td>
-      <td>${cell("plantdoc", val, pub.plantdoc.top1_accuracy)}</td>
-      <td>${h ? cell("plantdoc", test, h.plantdoc.top1) : "—"}</td>
+      ${cells}
     </tr>`;
   }).join("");
+  const tableHead = `<tr><th scope="col">Mô hình</th>${groups.map(g => `<th scope="col">${esc(g.label)} · tập kiểm tra</th><th scope="col">${esc(g.label)} · tập giữ riêng</th>`).join("")}</tr>`;
+  const nComparisons = groups.length * 2 * ((val ? 1 : 0) + (test ? 1 : 0));
   const rows = renderRows(["centralized", "fedavg"]);
   const localRows = renderRows(MODEL_ORDER.filter(id => id.startsWith("local_")));
 
@@ -487,10 +489,8 @@ function buildHoldout() {
       <div class="pair-block">
         <h5 class="subhead">${title}</h5>
         <ul class="pair-list">
-          ${pairLine("PlantDoc · Centralized − FedAvg", pairs(block, "plantdoc").centralized_vs_fedavg)}
-          ${pairLine(`PlantDoc · FedAvg − ${esc(MODEL_LABELS[bestLocal.plantdoc] || "Local tốt nhất")}`, pairs(block, "plantdoc").fedavg_vs_best_local)}
-          ${pairLine("PlantVillage · Centralized − FedAvg", pairs(block, "plantvillage").centralized_vs_fedavg)}
-          ${pairLine(`PlantVillage · FedAvg − ${esc(MODEL_LABELS[bestLocal.plantvillage] || "Local tốt nhất")}`, pairs(block, "plantvillage").fedavg_vs_best_local)}
+          ${groups.map(g => `${pairLine(`${esc(g.label)} · Centralized − FedAvg`, pairs(block, g.id).centralized_vs_fedavg)}
+          ${pairLine(`${esc(g.label)} · FedAvg − ${esc(MODEL_LABELS[bestLocal[g.id]] || "Local tốt nhất")}`, pairs(block, g.id).fedavg_vs_best_local)}`).join("")}
         </ul>
       </div>` : "");
 
@@ -502,24 +502,24 @@ function buildHoldout() {
 
   const recorded = holdoutById.centralized?.vs_recorded || {};
   const recordedText = Object.entries(recorded).filter(([, v]) => v.available)
-    .map(([src, v]) => `${src === "plantdoc" ? "PlantDoc" : "PlantVillage"} ${v.reproduced ? "khớp" : `lệch ${fmtInt(v.correct_diff_images)} ảnh`}`).join(", ");
+    .map(([src, v]) => `${sourceLabel(src)} ${v.reproduced ? "khớp" : `lệch ${fmtInt(v.correct_diff_images)} ảnh`}`).join(", ");
 
   root.innerHTML = `
     ${sectionHead("4.2", "Tập giữ riêng và thống kê")}
-    <p class="viewer-scope mt-2">Tập giữ riêng không dùng để chọn mô hình, nhưng chưa phải kiểm thử cuối được khóa trước và chưa nằm trong kiểm tra trùng ảnh (định nghĩa ở <a href="#du-lieu">chương 2</a>).</p>
+    <p class="viewer-scope mt-2">Tập giữ riêng không dùng để chọn mô hình, nhưng chưa phải kiểm thử cuối được khóa trước${factsOf(summary)?.holdout_audited === false ? " và chưa nằm trong kiểm tra trùng ảnh" : ""} (định nghĩa ở <a href="#du-lieu">chương 2</a>).</p>
 
     <section class="panel mt-3">
       <h4 class="panel-title">Tập kiểm tra và tập giữ riêng, kèm khoảng tin cậy 95%</h4>
-      <p class="panel-desc">Tỉ lệ dự đoán đúng, kèm khoảng tin cậy 95%. Khoảng càng rộng, kết quả càng dao động. Tập giữ riêng: PlantVillage ${fmtInt(ho?.counts_by_source?.plantvillage)} ảnh, PlantDoc ${fmtInt(ho?.counts_by_source?.plantdoc)} ảnh.</p>
+      <p class="panel-desc">Tỉ lệ dự đoán đúng, kèm khoảng tin cậy 95%. Khoảng càng rộng, kết quả càng dao động. Tập giữ riêng: ${groups.map(g => `${esc(g.label)} ${fmtInt(ho?.counts_by_source?.[g.id])} ảnh`).join(", ")}.</p>
       <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
         <table class="data-table result-table">
-          <thead><tr><th scope="col">Mô hình</th><th scope="col">PlantVillage · tập kiểm tra</th><th scope="col">PlantVillage · tập giữ riêng</th><th scope="col">PlantDoc · tập kiểm tra</th><th scope="col">PlantDoc · tập giữ riêng</th></tr></thead>
+          <thead>${tableHead}</thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
       <details class="fold mt-3"><summary>Xem thêm 5 mô hình học riêng</summary>
         <div class="table-responsive mt-3" tabindex="0" role="group" aria-label="Kết quả các mô hình học riêng">
-          <table class="data-table result-table"><thead><tr><th scope="col">Mô hình</th><th scope="col">PlantVillage · tập kiểm tra</th><th scope="col">PlantVillage · tập giữ riêng</th><th scope="col">PlantDoc · tập kiểm tra</th><th scope="col">PlantDoc · tập giữ riêng</th></tr></thead><tbody>${localRows}</tbody></table>
+          <table class="data-table result-table"><thead>${tableHead}</thead><tbody>${localRows}</tbody></table>
         </div>
       </details>
       ${recordedText ? `<p class="field-hint mt-2">Đối chiếu: số Centralized trên tập giữ riêng do nhóm huấn luyện tự ghi — ${recordedText} (số gốc làm tròn 4 chữ số).</p>` : ""}
@@ -535,10 +535,10 @@ function buildHoldout() {
       <ul>
         <li>Phiên bản mô hình được chọn ${sel.value_kind === "macro_f1" ? "theo trung bình Macro-F1 của các nguồn ảnh" : "theo điểm Macro-F1 PlantDoc"} ngay trên <b>chính tập kiểm tra dùng để báo cáo</b>, nên con số ở đó có thể hơi đẹp hơn thực tế (số liệu về epoch được chọn ở <a href="#ket-luan">chương 5</a>).</li>
         <li>Vì vậy đồ án chấm lại thêm trên ${fmtInt(ho?.count)} ảnh <b>giữ riêng</b>, không dùng để chọn mô hình nên không bị thiên lệch này. ${valVsTest} ${sel.fedavg?.available ? `FedAvg được chọn ở vòng ${fmtInt(sel.fedavg.chosen_epoch)}/${fmtInt(sel.fedavg.epochs)} theo cùng cách, nên số của nó ở tập kiểm tra cũng có thể hơi đẹp hơn.` : "Hiệu ứng chọn mô hình của FedAvg chưa được đo riêng."}</li>
-        <li><b>Lưu ý:</b> tập giữ riêng chưa nằm trong phép kiểm tra trùng ảnh; một phần ảnh PlantVillage trong tập này có thể là ảnh chụp lại cùng lá với ảnh học (xem mục “Độ nhạy” bên dưới).</li>
+        <li><b>Lưu ý:</b> ${factsOf(summary)?.holdout_audited === false ? "tập giữ riêng chưa nằm trong phép kiểm tra trùng ảnh; " : ""}một phần ảnh PlantVillage trong tập này có thể là ảnh chụp lại cùng lá với ảnh học (xem mục “Độ nhạy” bên dưới).</li>
       </ul>
     </section>` : ""}
-      <p class="field-hint mt-3">Khoảng tin cậy tính bằng bootstrap theo cụm: PlantDoc theo cảnh chụp, PlantVillage theo nhóm lá; nhiều ảnh cùng cảnh/lá không độc lập nhau.</p>
+      <p class="field-hint mt-3">Khoảng tin cậy tính bằng bootstrap theo cụm: PlantDoc theo cảnh chụp, PlantVillage theo nhóm lá${groups.some(g => g.id === "field_other") ? ", ngoài đồng bộ khác theo nhóm ảnh của release" : ""}; nhiều ảnh cùng cảnh/lá không độc lập nhau.</p>
       </div>
     </details>
 
@@ -547,7 +547,7 @@ function buildHoldout() {
       <p class="panel-desc">Mỗi dòng là hiệu số độ chính xác (điểm phần trăm) giữa hai mô hình trên đúng cùng tập ảnh.</p>
       <ul class="mt-2">
         <li>“Khác biệt rõ” nghĩa là khoảng tin cậy không chứa 0; ưu tiên đọc khoảng tin cậy hơn giá trị p.</li>
-        <li>Chưa hiệu chỉnh cho 8 phép so sánh; theo Bonferroni, ngưỡng p là 0,05/8 ≈ 0,006.</li>
+        <li>Chưa hiệu chỉnh cho ${nComparisons} phép so sánh; theo Bonferroni, ngưỡng p là 0,05/${nComparisons} ≈ ${fmtNum(0.05 / nComparisons, 4)}.</li>
         <li>“Local tốt nhất” được chọn theo tập kiểm tra, không theo tập giữ riêng.</li>
       </ul>
       <p class="field-hint mt-2"><b>McNemar:</b> kiểm định hai mô hình trên cùng ảnh (giả định ảnh độc lập). <b>Bootstrap theo cụm:</b> ước lượng khoảng dao động khi nhiều ảnh cùng cảnh hoặc cùng lá.</p>
@@ -607,6 +607,10 @@ async function buildConfusion() {
   }
   const state = { model: "fedavg", source: "plantdoc", split: "val" };
   const splits = Object.keys(details.confusion);
+  // nguồn có ma trận trong gói đang dùng; PlantDoc (nguồn khó nhất) đứng đầu như trước
+  const firstSplit = details.confusion[splits[0]]?.fedavg || {};
+  const cmGroups = [...SOURCE_GROUPS].reverse().filter(g => firstSplit[g.id]);
+  if (cmGroups.length && !firstSplit[state.source]) state.source = cmGroups[0].id;
   root.innerHTML = `
     <section class="panel">
       <div class="panel-header-flex">
@@ -620,8 +624,7 @@ async function buildConfusion() {
           <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-cm-model="fedavg">FedAvg</button>
         </div>
         <div class="segmented" role="radiogroup" aria-label="Nguồn">
-          <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-cm-source="plantdoc">PlantDoc</button>
-          <button type="button" class="segmented-option" role="radio" aria-checked="false" data-cm-source="plantvillage">PlantVillage</button>
+          ${cmGroups.map((g, i) => `<button type="button" class="segmented-option${i === 0 ? " is-active" : ""}" role="radio" aria-checked="${i === 0}" data-cm-source="${esc(g.id)}">${esc(g.label)}</button>`).join("")}
         </div>
         ${splits.length > 1 ? `<div class="segmented" role="radiogroup" aria-label="Tập đánh giá">
           <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-cm-split="val">Tập kiểm tra</button>
@@ -645,7 +648,7 @@ async function buildConfusion() {
     }
     const total = matrix.reduce((a, row) => a + row.reduce((x, y) => x + y, 0), 0);
     const correct = matrix.reduce((a, row, i) => a + row[i], 0);
-    byId("cm-summary").textContent = `${MODEL_LABELS[state.model]} · ${state.source === "plantdoc" ? "PlantDoc" : "PlantVillage"} · ${state.split === "val" ? "tập kiểm tra" : "tập giữ riêng"}: ${fmtInt(correct)}/${fmtInt(total)} ảnh đúng (${fmtPct(total ? correct / total : 0)}).`;
+    byId("cm-summary").textContent = `${MODEL_LABELS[state.model]} · ${sourceLabel(state.source)} · ${state.split === "val" ? "tập kiểm tra" : "tập giữ riêng"}: ${fmtInt(correct)}/${fmtInt(total)} ảnh đúng (${fmtPct(total ? correct / total : 0)}).`;
     byId("cm-wrap").innerHTML = confusionHtml(matrix, details.classes);
     attachCrosshair(byId("cm-wrap"));
     byId("cm-top").innerHTML = topConfusions(matrix, details.classes) || "<li>Không có nhầm lẫn.</li>";
@@ -682,6 +685,7 @@ async function buildErrors() {
 
   // Tóm tắt trên TOÀN BỘ thư viện (không đổi theo bộ lọc): giúp thấy ngay lỗi nào đáng chú ý trước khi cuộn qua từng ảnh.
   const fieldCount = items.filter(item => item.source === "plantdoc").length;
+  const errGroups = [...SOURCE_GROUPS].reverse().filter(g => items.some(item => item.source === g.id));
   const fedavgWrong = items.filter(item => item.wrong_by.fedavg).length;
 
   root.innerHTML = `
@@ -700,8 +704,7 @@ async function buildErrors() {
         </div>
         <div class="segmented" role="radiogroup" aria-label="Nguồn">
           <button type="button" class="segmented-option is-active" role="radio" aria-checked="true" data-err-source="all">Mọi nguồn</button>
-          <button type="button" class="segmented-option" role="radio" aria-checked="false" data-err-source="plantdoc">PlantDoc</button>
-          <button type="button" class="segmented-option" role="radio" aria-checked="false" data-err-source="plantvillage">PlantVillage</button>
+          ${errGroups.map(g => `<button type="button" class="segmented-option" role="radio" aria-checked="false" data-err-source="${esc(g.id)}">${esc(g.label)}</button>`).join("")}
         </div>
         <div class="segmented" role="radiogroup" aria-label="Xác suất dự đoán tối thiểu">
           ${levels.map((level, index) => `<button type="button" class="segmented-option${index === 0 ? " is-active" : ""}" role="radio" aria-checked="${index === 0}" data-err-min="${level}">Xác suất ≥ ${level}%</button>`).join("")}
@@ -724,7 +727,7 @@ async function buildErrors() {
       <figure class="error-card">
         <img src="/static/samples/errors/${encodeURIComponent(item.thumb)}" alt="" loading="lazy" width="160" height="160">
         <figcaption>
-          <span class="error-src">${item.source === "plantdoc" ? "PlantDoc" : "PlantVillage"}</span>
+          <span class="error-src">${esc(sourceLabel(item.source))}</span>
           <b>${esc(formatDiseaseName(item.target))}</b>
           ${Object.entries(item.wrong_by).map(([model, v]) => `<span class="error-pred">${modelPill(model)} đoán <b>${esc(formatDiseaseName(v.predicted))}</b> · ${fmtPct(v.confidence, 0)}</span>`).join("")}
         </figcaption>

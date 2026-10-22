@@ -176,6 +176,7 @@ def load_evidence(root: Path = STORE) -> dict[str, Any]:
             "transform": "canonical_v1",
             "classes": classes,
             "validation_counts": counts,
+            "source_groups": bundle.source_groups(counts, reg.HOLDOUT_COUNTS),
             "shard_counts": shard_counts,
             "centralized_history": central_history,
             "non_iid_scenarios": [partition],

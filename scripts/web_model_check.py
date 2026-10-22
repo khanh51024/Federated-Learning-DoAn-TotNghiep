@@ -37,7 +37,6 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 PRODUCTION = "https://datn.tranngochung.id.vn"
-OUT_JSON = "artifacts/web_model_check.json"
 MODEL_KEYS = ("centralized", "fedavg", "local_00", "local_01", "local_02", "local_03", "local_04")
 MISMATCH_LIMIT = 0.005          # tối đa 0,5% ảnh x mô hình lệch dự đoán so với offline
 SAMPLES_DIR = "web/static/samples/demo"
@@ -161,7 +160,7 @@ def main() -> int:
     parser.add_argument("--crop-check", type=int, default=30)
     parser.add_argument("--explain-check", type=int, default=5)
     parser.add_argument("--seed", type=int, default=20261022)
-    parser.add_argument("--out", default=OUT_JSON)
+    parser.add_argument("--out", default=None, help="mặc định: artifacts/web_model_check.json (reg.WEB_MODEL_CHECK_JSON)")
     args = parser.parse_args()
     base = args.base_url.rstrip("/")
 
@@ -298,7 +297,7 @@ def main() -> int:
         if not 400 <= edge[name]["status"] < 500:
             problems.append(f"{name}: mong đợi 4xx, nhận {edge[name]['status']}")
     results["problems"] = problems
-    out = reg.abs_path(args.out)
+    out = reg.abs_path(args.out or reg.WEB_MODEL_CHECK_JSON)
     out.write_text(json.dumps(results, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
     agree = results["agreement"]

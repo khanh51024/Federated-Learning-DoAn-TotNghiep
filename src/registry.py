@@ -197,6 +197,9 @@ BACKEND_TORCHSCRIPT_REFERENCE = "torchscript_reference"  # web/plantvillage_refe
 
 KNOWN_PREPROCESSING = frozenset({"imagenet_eval_v1", "canonical_v1", "get_default_transform(eval)", "hf_half_256_224"})
 COMMUNITY_SIMULATION_JSON = f"{COMMUNITY_FL_DIR}/simulation_report.json"  # thí nghiệm mô phỏng học phân tán cộng đồng
+REPORT_SNAPSHOTS_DIR = "artifacts/report_snapshots"  # scripts/swap_web_models.py: bản chụp báo cáo của gói đang dùng, để lùi gói
+CLIENT_FAIRNESS_JSON = "artifacts/client_fairness_report.json"  # scripts/report_client_fairness.py: độ chính xác trên lớp client có / không có ảnh học
+WEB_MODEL_CHECK_JSON = "artifacts/web_model_check.json"  # scripts/web_model_check.py: dự đoán trên web so với tính toán offline
 PLANTVILLAGE_EVAL_JSON = "artifacts/plantvillage_reference_eval.json"  # đánh giá lại mô hình PlantVillage (không huấn luyện lại)
 
 # ---------------------------------------------------------------------------

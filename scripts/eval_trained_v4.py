@@ -28,7 +28,7 @@ sys.path.insert(0, str(ROOT))
 
 from src import registry as reg  # noqa: E402
 
-RESULTS_JSON = "artifacts/train_v4_results.json"
+RESULTS_JSON = reg.TRAIN_V4_RESULTS_JSON
 V3_DIR = "data/dataset_sources/mixed/pv_pd_v3"
 V4_DIR = "data/dataset_sources/mixed/pv_pd_v4"
 BOOTSTRAP = 2000

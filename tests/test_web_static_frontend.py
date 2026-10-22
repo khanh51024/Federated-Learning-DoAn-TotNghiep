@@ -402,10 +402,12 @@ def test_honest_caveats_are_visible_outside_collapsed_sections():
     overview = _outside_details(JS_BY_REL["pages/overview.js"])
     results = _outside_details(JS_BY_REL["pages/results.js"])
     conclusion = _outside_details(JS_BY_REL["pages/conclusion.js"])
+    # Câu phạm vi nằm ở core/facts-text.js (dựng từ summary.facts); mỗi chương phải gọi nó NGOÀI phần gập
+    facts_text = " ".join(JS_BY_REL["core/facts-text.js"].split())
+    for phrase in ("chọn mô hình", "một lần chạy", "chưa phải độ chính xác ngoài thực địa"):
+        assert phrase in facts_text, f"facts-text.js: thiếu lời cảnh báo: “{phrase}”"
     for label, text in (("chương 1", overview), ("chương 4", results), ("chương 5", conclusion)):
-        flat = " ".join(text.split())
-        for phrase in ("chọn mô hình", "một lần chạy", "chưa phải độ chính xác ngoài thực địa"):
-            assert phrase in flat, f"{label}: thiếu lời cảnh báo hiển thị ngoài phần gập: “{phrase}”"
+        assert "scopeText(" in text, f"{label}: thiếu câu phạm vi hiển thị ngoài phần gập (scopeText)"
     data = " ".join(JS_BY_REL["pages/noniid.js"].split())
     assert "bộ chẩn đoán có sẵn của bộ dữ liệu (legacy)" in data and "chưa nằm trong kiểm tra trùng ảnh" in data, "chương Dữ liệu là nơi định nghĩa tập giữ riêng: phải gọi đúng là bộ chẩn đoán legacy"
     appendix = " ".join(JS_BY_REL["pages/appendix.js"].split())

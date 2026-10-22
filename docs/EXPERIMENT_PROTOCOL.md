@@ -9,7 +9,8 @@ Tài liệu này đóng băng toàn bộ thông số kỹ thuật, cấu hình m
 
 | Protocol ID | Vai trò | Dữ liệu | Nơi train | Trạng thái |
 |---|---|---|---|---|
-| `mixed_pv_pd_v3_pretrained_seed42_validation` | **Kết quả hiện hành** (Centralized v6, FedAvg v7, 5 Local-only v7) | Mixed PlantVillage + PlantDoc; validation 4.344 PV + 269 PlantDoc; seed 42; pretrained; non-IID label alpha=0.1 | Ngoài repo (branch `train-*`), import bundle bằng `scripts/import_branch_demo.py` | Đã kiểm hash; **đã tái đánh giá cục bộ** (10/14 phép so khớp tuyệt đối, hai mô hình chính khớp hết); **có kết quả trên test giữ riêng** `legacy_diagnostic_test` (11.015 ảnh); chưa multi-seed |
+| `mixed_pv_pd_v4_pretrained_seed42_validation` | **Kết quả hiện hành** (Centralized v4b, FedAvg v4b, 5 Local-only v4b; web phục vụ hạt giống 42, 3 hạt giống 42/123/2026 đã chạy) | Release `mixed_pv_pd_v4` (SHA `68e57451…`): train 52.464, validation 6.746 (4.344 PlantVillage + 269 PlantDoc + 2.133 ngoài đồng bộ khác), calibration 7.005, test giữ riêng `legacy_diagnostic_test` 13.101; pretrained; non-IID label alpha=0.1 | Máy GPU thuê (`scripts/train_v4.py`), nhập gói bằng `scripts/import_run_bundle.py`, đổi gói bằng `scripts/swap_web_models.py` | Đã kiểm hash; **đã tái đánh giá cục bộ** (21/21 phép so khớp tuyệt đối); có kết quả trên test giữ riêng và 3 hạt giống (`artifacts/train_v4_results.json`) |
+| `mixed_pv_pd_v3_pretrained_seed42_validation` | Lịch sử (gói trước, giữ để lùi: Centralized v6, FedAvg v7, 5 Local-only v7) | Mixed PlantVillage + PlantDoc; validation 4.344 PV + 269 PlantDoc; seed 42; pretrained; non-IID label alpha=0.1 | Ngoài repo (branch `train-*`), import bundle bằng `scripts/import_branch_demo.py` | Đã kiểm hash; **đã tái đánh giá cục bộ** (10/14 phép so khớp tuyệt đối, hai mô hình chính khớp hết); **có kết quả trên test giữ riêng** `legacy_diagnostic_test` (11.015 ảnh); chưa multi-seed |
 | `stage2_scratch_clean_v3` | Tái lập khoa học cục bộ GĐ2 (scratch, 5 client) | PlantVillage 54.305 ảnh, split 38.984/4.400/10.921 (`data/partitions_stage2_scratch_v3/`) | Cần dataset gốc + máy train | **BLOCKED**: chưa có run cục bộ |
 | `kaggle_pv_v1_label_skew_a0.1` | Lịch sử (run Kaggle 99,09% / 98,25% / 81,40%) | PlantVillage, partition v1, 10 client, test 10.917 ảnh | Kaggle (pipeline cũ ở `legacy/`) | Chỉ còn metrics; checkpoint mất; chỉ trích dẫn kèm nhãn "historical" |
 
@@ -144,3 +145,30 @@ về `artifacts/holdout_eval_report.json` và `artifacts/statistics_report.json`
 - **Sạch nhất**: gom lại nhóm lá cho ảnh PlantVillage một-ảnh (theo tên/số thứ tự), dựng release mới, chia lại split rồi train lại
   — mọi số liệu sẽ đổi. Kết quả nhập lại qua `scripts/import_branch_demo.py` (bundle có kiểm hash).
 - `scripts/run_real_multiseed_report.ps1` thuộc protocol scratch PlantVillage cũ (`stage2_scratch_clean_v3`), không thay được việc trên.
+
+---
+
+## 8. Protocol hiện hành `mixed_pv_pd_v4_pretrained_seed42_validation`
+
+Mục này mô tả protocol của gói mô hình web đang dùng (`artifacts/active_bundle.json` → `artifacts/model_bundles/v4b_s42`). Cách thay gói: `docs/THAY_MO_HINH_WEB.md`.
+
+**Dữ liệu.** Release `mixed_pv_pd_v4` (`data/dataset_sources/mixed/pv_pd_v4`, mô tả ở `docs/DATASET_V4.md`). Ảnh được chia theo nhóm (cùng lá, cùng cảnh, cùng phiên chụp) rồi
+kiểm trùng bằng băm byte và dHash; mã băm manifest của release và của từng tập được ghim trong `import_manifest.json` của gói và kiểm lại ở mỗi lần suy luận. Báo cáo chia ảnh theo
+`source_dataset` thành ba nhóm: `plantvillage` (ảnh trong phòng), `plantdoc` (ngoài đồng, nền phức tạp) và `field_other` (ảnh ngoài đồng từ các bộ công khai khác, nhãn do tác giả bộ
+dữ liệu gán hoặc sàng lọc bằng mắt). Release v4 gán `source_domain = "plantdoc"` cho mọi ảnh ngoài đồng nên không dùng `source_domain` để chia nhóm.
+
+**Tập đánh giá.** `val` (chọn checkpoint, báo cáo kèm cảnh báo là đã tham gia chọn), `calibration` (chỉ để fit nhiệt độ T), `legacy_diagnostic_test` (không dùng để chọn;
+chưa nằm trong kiểm tra trùng ảnh của `audit_release_leakage.py`), PlantWild (ảnh bệnh nguồn lạ, đo một lần sau khi train, không dùng để chọn). Chọn checkpoint theo trung bình
+macro-F1 trên các nhóm nguồn của `val` có từ 30 ảnh trở lên.
+
+**Cách học.** MobileNetV3-Small, khởi tạo ImageNet-1K + đầu 38 lớp theo hạt giống (W0 tính lại từ hạt giống, ghi trong manifest). Cả ba cách (Centralized, FedAvg, Local-only) dùng cùng
+công thức: SGD động lượng 0,9, weight decay 1e-4, lr 0,02 cosine có khởi động 1 epoch hoặc vòng, batch 128, label smoothing 0,1, bf16, tăng cường ảnh `gpu_v2`, trọng số mất mát cân bằng
+hai miền và 40 epoch hoặc vòng. FedAvg mô phỏng 5 client trong một tiến trình (1 epoch cục bộ mỗi vòng, bộ tối ưu của client làm mới mỗi vòng, gộp theo n_k); Local-only là phần bước
+của một client. Phân vùng non-IID: `label_alpha_0_1` (Dirichlet α = 0,1, n_k = 13.107 / 11.691 / 6.647 / 8.863 / 12.156). Hạt giống 42, 123, 2026.
+
+**Điều chưa ghi lại được.** Độ lệch cập nhật ‖w_k − w‖₂ của từng client và lưu lượng mạng đo thật (web ghi `delta_l2_recorded: false`); FedAvg chưa chạy qua Flower.
+
+**Kiểm tra trên web.** `scripts/web_model_check.py` gửi ảnh qua `/api/inference/all` và đối chiếu từng dự đoán với tính toán offline cùng đường tiền xử lý; kết quả ở `artifacts/web_model_check.json`.
+
+**Hạn chế.** Kết quả trên PlantDoc và PlantWild thấp hơn nhiều so với ảnh cùng nguồn (PlantWild: Centralized 36,9%, FedAvg 29,8% trung bình 3 hạt giống); FedAvg chưa dò riêng tốc độ học trên dữ liệu lệch;
+chưa thử FedProx, SCAFFOLD, FedBN; năm client là phân vùng giả lập.

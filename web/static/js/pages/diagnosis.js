@@ -2,7 +2,7 @@
 import { getEvidence, getGallery, getModels, getSummary } from "../core/store.js";
 import { ApiError, isAbort, postForm } from "../core/api.js";
 import {
-  $$, MODEL_LABELS, MODEL_ORDER, NARROW_QUERY, byId, cropOf, diseaseOf, esc, fmtInt, fmtNum, fmtPct, fmtPctValue, formatApiError,
+  $$, MODEL_LABELS, MODEL_ORDER, NARROW_QUERY, SOURCE_GROUPS, byId, cropOf, diseaseOf, esc, fmtInt, fmtNum, fmtPct, fmtPctValue, formatApiError,
   formatDiseaseName, modelPill, notify, pillarOf, prefersReducedMotion, revealItems, setBar, setDisabled, setHtml,
   openOnWide, setText, toggleHidden,
 } from "../core/dom.js";
@@ -306,7 +306,7 @@ function detailHtml(modelId) {
         const cal = result.calibrated?.top3?.[i];
         return `<li><span>${esc(formatDiseaseName(t.class))}</span><b class="mono">${fmtNum(t.confidence, 2)}%</b>${cal ? `<span class="mono text-muted">hiệu chuẩn ${fmtNum(cal.confidence, 1)}%</span>` : ""}</li>`;
       }).join("")}</ol>
-      <p class="field-hint">Độ chính xác công bố của mô hình này trên tập kiểm tra: PlantVillage ${fmtPct(val?.plantvillage?.top1_accuracy)} · PlantDoc ${fmtPct(val?.plantdoc?.top1_accuracy)}.
+      <p class="field-hint">Độ chính xác công bố của mô hình này trên tập kiểm tra: ${SOURCE_GROUPS.filter(g => val?.[g.id]).map(g => `${esc(g.label)} ${fmtPct(val[g.id].top1_accuracy)}`).join(" · ")}.
         ${result.calibrated ? `Số hiệu chuẩn chia logit cho T = ${fmtNum(result.calibrated.temperature, 2)}; thứ tự các nhóm không đổi.` : result.crop_restricted ? cropRestrictedHint(result.crop_restricted) : "Xác suất softmax chưa hiệu chuẩn."}</p>
     </div></td>`;
 }
@@ -1108,8 +1108,9 @@ function renderBrief(evidence, summary) {
   }
   const fed = evidence?.available ? (evidence.models || []).find(m => m.model_id === "fedavg")?.metrics : null;
   if (fed) {
-    setText(byId("brief-crop-title"), `Nhận đúng cây: ${fmtPct(fed.plantvillage.crop_accuracy, 1)} (trong phòng), ${fmtPct(fed.plantdoc.crop_accuracy, 1)} (ngoài đồng)`);
-    setText(byId("brief-crop-text"), `Đúng nhóm bệnh: ${fmtPct(fed.plantvillage.top1_accuracy, 1)} (trong phòng), ${fmtPct(fed.plantdoc.top1_accuracy, 1)} (ngoài đồng).`);
+    const present = SOURCE_GROUPS.filter(g => fed[g.id]);
+    setText(byId("brief-crop-title"), `Nhận đúng cây: ${present.map(g => `${fmtPct(fed[g.id].crop_accuracy, 1)} (${g.inline})`).join(", ")}`);
+    setText(byId("brief-crop-text"), `Đúng nhóm bệnh: ${present.map(g => `${fmtPct(fed[g.id].top1_accuracy, 1)} (${g.inline})`).join(", ")}.`);
     const fullFrame = summary?.fullframe?.available ? summary.fullframe.splits?.val?.full_frame?.fedavg : null;
     setText(byId("brief-own-title"), "Ảnh ngoài bộ dữ liệu");
     setText(byId("brief-own-text"), `Nên dùng ảnh một lá chụp rõ${fullFrame !== null && fullFrame !== undefined ? ` (ảnh nhiều lá giảm còn khoảng ${fmtPct(fullFrame, 1)})` : ""}. Kết quả mang tính tham khảo.`);

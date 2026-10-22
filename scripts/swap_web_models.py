@@ -31,13 +31,13 @@ sys.path.insert(0, str(ROOT))
 
 from src import bundle, registry as reg  # noqa: E402
 
-SNAPSHOTS = "artifacts/report_snapshots"
+SNAPSHOTS = reg.REPORT_SNAPSHOTS_DIR
 COMMUNITY_SNAPSHOTS = "data/report_snapshots"          # tệp cộng đồng nằm ngoài git (.gitignore), nên chụp ngoài git
 # Báo cáo (tracked) mà web đọc theo gói; thư viện ảnh sai đi kèm catalog của nó
 REPORTS = (
     reg.LOCAL_REEVAL_JSON, reg.HOLDOUT_EVAL_JSON, reg.STATISTICS_JSON, reg.TRAINING_PROTOCOL_REPORT_JSON, reg.PARTITION_SCHEMES_JSON,
     reg.RELEASE_LEAKAGE_AUDIT_JSON, reg.CLIENT_SHARD_COUNTS_JSON, reg.PER_CLASS_REPORT_JSON, reg.DOMAIN_GAP_REPORT_JSON, reg.FULLFRAME_EVAL_JSON,
-    reg.EXTERNAL_EVAL_RESULTS_JSON, reg.PLANTVILLAGE_EVAL_JSON, reg.COMMUNITY_SIMULATION_JSON,
+    reg.EXTERNAL_EVAL_RESULTS_JSON, reg.PLANTVILLAGE_EVAL_JSON, reg.COMMUNITY_SIMULATION_JSON, reg.CLIENT_FAIRNESS_JSON,
 )
 REPORT_DIRS = (reg.ERROR_GALLERY_DIR,)
 COMMUNITY_FILES = (reg.COMMUNITY_FEATURE_MODEL_ONNX, reg.COMMUNITY_BASE_HEAD_NPZ, reg.COMMUNITY_EVAL_FEATURES_NPZ, reg.COMMUNITY_MANIFEST_JSON)
@@ -56,6 +56,7 @@ STEPS: list[tuple[str, list[str], bool]] = [
     ("reeval_val", PY + ["scripts/evaluate_published_models.py", "--reuse"], False),
     ("reeval_holdout", PY + ["scripts/evaluate_published_models.py", "--holdout", "--reuse"], False),
     ("statistics", PY + ["scripts/report_statistics.py"], False),
+    ("client_fairness", PY + ["scripts/report_client_fairness.py"], False),
     ("plantvillage_reference", PY + ["scripts/evaluate_plantvillage_reference.py"], False),
     ("error_gallery", PY + ["scripts/build_error_gallery.py"], False),
     ("community_export", PY + ["scripts/export_community_feature_model.py"], False),

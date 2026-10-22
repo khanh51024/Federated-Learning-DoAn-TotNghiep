@@ -1,20 +1,31 @@
 // Chương 5 · Kết luận: trả lời câu hỏi nghiên cứu, hạn chế (nói thẳng, hiện sẵn), hướng phát triển.
 import { getEvidence, getSummary, modelsById } from "../core/store.js";
-import { byId, esc, fmtInt, fmtNum, fmtPct, revealItems, sectionHead } from "../core/dom.js";
+import { SOURCE_GROUPS, byId, esc, fmtInt, fmtNum, fmtPct, revealItems, sectionHead } from "../core/dom.js";
+import { alphaText, calibrationShift, factsOf, runsText, scopeText } from "../core/facts-text.js";
 
 const LOCALS = ["local_00", "local_01", "local_02", "local_03", "local_04"];
 
-function baseLimits(seed) {
+function baseLimits(seed, facts, summary) {
+  const alpha = alphaText(facts) || "một mức lệch";
+  const runs = facts?.seeds_run?.length || 0;
+  const shift = calibrationShift(summary?.reeval, SOURCE_GROUPS);
+  const names = list => list.map(r => r.group.label).join(", ");
+  const fairnessLimit = summary?.fairness?.available
+    ? ["Nhãn PlantDoc chưa được chuyên gia rà soát; độ công bằng giữa client chỉ đo theo phân bố nhóm", "Nhãn PlantDoc được ánh xạ về 38 nhóm của PlantVillage mà chưa có chuyên gia rà lại. Độ chính xác của FedAvg và Local-only đã được đo theo việc client có hay không có ảnh của từng nhóm (chương 2, mục 2.3), nhưng năm client là phân vùng giả lập nên chưa phản ánh sự khác biệt giữa các nông hộ thật (thiết bị, ánh sáng, cách chụp)."]
+    : ["Nhãn PlantDoc chưa được chuyên gia rà soát, chưa đo độ công bằng giữa client", "Nhãn PlantDoc được ánh xạ về 38 nhóm của PlantVillage mà chưa có chuyên gia rà lại. Chưa có số liệu độ chính xác của FedAvg trên dữ liệu từng client, nên chưa đánh giá được tính công bằng giữa các client."];
+  const calibrationText = shift?.worsened?.length
+    ? `Hiệu chuẩn làm ECE của FedAvg giảm ở ${shift.improved.length ? names(shift.improved) : "không nhóm nào"} nhưng tăng ở ${names(shift.worsened)} (xem chương 4, mục 4.4), nên với ảnh khác nguồn ảnh đã học xác suất hiển thị vẫn không đáng tin.`
+    : "Với ảnh khác nguồn ảnh đã học, xác suất hiển thị vẫn có thể cao hơn độ chính xác thực (xem chương 4, mục 4.4).";
   return [
-    ["Mới có một kịch bản", `Mới thử mức lệch dữ liệu α = 0,1; các trang chi tiết hiển thị hạt giống ${seed ?? "—"} (bảng ba hạt giống ở trang Kết quả cho thấy độ dao động giữa các lần chạy), chưa đủ để nói kết quả ổn định khi mức lệch thay đổi (chương 2 liệt kê các cách chia của release, nhưng chỉ α = 0,1 có mô hình).`],
+    ["Mới có một kịch bản", `Mới thử ${alpha}; ${runs > 1 ? `đã chạy ${fmtInt(runs)} hạt giống, các trang chi tiết hiển thị hạt giống ${seed ?? "—"} (bảng các hạt giống ở trang Kết quả cho thấy độ dao động giữa các lần chạy)` : `các trang chi tiết hiển thị hạt giống ${seed ?? "—"}`}, chưa đủ để nói kết quả ổn định khi mức lệch thay đổi (chương 2 liệt kê các cách chia của release, nhưng chỉ ${alpha} có mô hình).`],
     ["Chưa có kiểm thử thực địa độc lập", "PlantVillage là ảnh chụp trong phòng; PlantDoc là ảnh ngoài đồng nhưng chỉ phủ một phần các nhóm và không có lá khỏe. Cả tập kiểm tra lẫn tập giữ riêng đều lấy từ cùng bộ dữ liệu."],
     ["Chỉ nhận ảnh một chiếc lá đã cắt", "Mô hình không tự tìm lá trong ảnh toàn cây; ảnh khác kiểu sẽ cho kết quả kém dù xác suất dự đoán hiển thị vẫn cao."],
-    ["Xác suất dự đoán chỉ được hiệu chuẩn một phần", "Web hiện cả xác suất gốc và xác suất đã hiệu chuẩn. Việc hiệu chuẩn học trên ảnh chủ yếu là PlantVillage nên với ảnh ngoài đồng mô hình vẫn gán xác suất cao hơn độ chính xác thực (xem chương 4, mục 4.4)."],
+    ["Xác suất dự đoán chỉ được hiệu chuẩn một phần", `Web hiện cả xác suất gốc và xác suất đã hiệu chuẩn. ${calibrationText}`],
     ["Chưa thử nghiệm client lỗi hay bị tấn công", "Máy chủ có cơ chế kiểm tra bản cập nhật (chạy thử ở Phụ lục kỹ thuật), nhưng chưa có thí nghiệm đo độ chính xác nên chưa kết luận được."],
-    ["FedAvg chưa chạy lại qua Flower", "Kết quả FedAvg dùng runner in_process_simulation (5 client mô phỏng trong một tiến trình). Lịch sử từng vòng được ghi đủ, nhưng độ lệch ‖Δ‖₂ của từng client chưa được ghi và số byte là kích thước mô hình, không phải lưu lượng đo trên mạng. Phiên Flower trên web dùng ảnh nhiễu, chỉ kiểm tra hệ thống; Local-only chưa có lịch sử từng vòng trong báo cáo."],
+    ["FedAvg chưa chạy lại qua Flower", `Kết quả FedAvg dùng runner in_process_simulation (5 client mô phỏng trong một tiến trình). Lịch sử từng vòng được ghi đủ${facts?.delta_l2_recorded === false ? ", nhưng độ lệch ‖Δ‖₂ của từng client chưa được ghi" : ""}${facts?.delta_l2_recorded === false ? " và " : ", nhưng "}số byte là kích thước mô hình, không phải lưu lượng đo trên mạng. Phiên Flower trên web dùng ảnh nhiễu, chỉ kiểm tra hệ thống; Local-only chưa có lịch sử từng vòng trong báo cáo.`],
     ["Chênh lệch miền dữ liệu là vấn đề của dữ liệu", "Mô hình Centralized đạt rất cao trên PlantVillage nhưng thấp hơn nhiều trên PlantDoc, nên khoảng cách này không riêng của học liên kết. Mohanty và cộng sự (2016) cũng ghi nhận độ chính xác giảm mạnh khi ảnh được chụp trong điều kiện khác; Noyan (2022) chỉ ra PlantVillage có thiên lệch khi chụp."],
     ["BatchNorm trong học liên kết", "MobileNetV3 có lớp BatchNorm; khi đặc trưng giữa các client khác nhau, việc lấy trung bình cả thống kê BatchNorm có thể gây hại (FedBN, Li và cộng sự 2021). Đồ án chưa thử nghiệm FedBN nên đây là giả thuyết cần kiểm chứng."],
-    ["Nhãn PlantDoc chưa được chuyên gia rà soát, chưa đo độ công bằng giữa client", "Nhãn PlantDoc được ánh xạ về 38 nhóm của PlantVillage mà chưa có chuyên gia rà lại. Chưa có số liệu độ chính xác của FedAvg trên dữ liệu từng client, nên chưa đánh giá được tính công bằng giữa các client."],
+    fairnessLimit,
     ["Năm client là giả lập", "Năm client là năm phần của cùng một bộ dữ liệu, không phải năm nông hộ thật; không có độ trễ mạng hay thiết bị khác nhau."],
     ["Học phân tán cộng đồng có giới hạn đã đo", "Người tham gia chỉ học lớp cuối trên đặc trưng của backbone đóng băng, với ảnh và nhãn tự gán (chưa có chuyên gia kiểm). Thí nghiệm mô phỏng ở mục 4.5 cho thấy mức tăng khiêm tốn (khoảng 1 đến 2 điểm phần trăm khi dữ liệu người tham gia đủ đa dạng), gần như không tăng với ảnh ngoài đồng, và vòng có ít người mà mỗi người chỉ có một nhóm bệnh thì dễ bị cổng chất lượng từ chối. Người thật chưa được thử ở quy mô lớn."],
     ["Riêng tư chưa tuyệt đối", "Học phân tán chỉ giữ ảnh gốc không rời client; trọng số vẫn có thể làm lộ thông tin. Muốn bảo đảm mạnh hơn cần thêm kỹ thuật như differential privacy hoặc secure aggregation."],
@@ -83,7 +94,7 @@ function evaluationLimits(summary) {
 
 
 /** Ba câu trả lời cho ba câu hỏi ở chương 1; mọi số tính từ cùng bộ số liệu của chương 4. */
-function answersHtml(evidence) {
+function answersHtml(evidence, facts) {
   const m = modelsById(evidence);
   const central = m.centralized.metrics;
   const fed = m.fedavg.metrics;
@@ -92,6 +103,7 @@ function answersHtml(evidence) {
   const vsCentral = (fed.plantvillage.top1_accuracy - central.plantvillage.top1_accuracy) * 100;
   const vsLocal = (fed.plantvillage.top1_accuracy - bestLocalPv) * 100;
   const vsDomain = (fed.plantdoc.top1_accuracy - fed.plantvillage.top1_accuracy) * 100;
+  const fieldOther = fed.field_other?.top1_accuracy;
   const signed = value => `${value >= 0 ? "+" : "−"}${fmtNum(Math.abs(value), 1)} điểm`;
   return `
     <div class="conclusion-grid mt-3">
@@ -99,7 +111,7 @@ function answersHtml(evidence) {
         <span class="conclusion-label">So với gom ảnh (Centralized)</span>
         <b>${signed(vsCentral)}</b>
         <span class="conclusion-sub">FedAvg so với Centralized · điểm phần trăm · PlantVillage${Math.abs(vsCentral) <= 0.5 ? " · gần ngang nhau" : ""}</span>
-        <p>Trên PlantVillage: FedAvg ${fmtPct(fed.plantvillage.top1_accuracy)}, Centralized ${fmtPct(central.plantvillage.top1_accuracy)}. Chênh lệch chỉ mang tính tham khảo vì điều kiện huấn luyện hai bên khác nhau.</p>
+        <p>Trên PlantVillage: FedAvg ${fmtPct(fed.plantvillage.top1_accuracy)}, Centralized ${fmtPct(central.plantvillage.top1_accuracy)}. ${facts?.same_recipe === false ? "Chênh lệch chỉ mang tính tham khảo vì điều kiện huấn luyện hai bên khác nhau." : facts?.same_recipe === true ? `Hai bên dùng cùng thiết lập huấn luyện và cùng số bước; số liệu là của hạt giống ${esc(evidence.seed)}.` : ""}</p>
       </article>
       <article class="conclusion local">
         <span class="conclusion-label">So với học riêng (Local-only)</span>
@@ -111,13 +123,21 @@ function answersHtml(evidence) {
         <span class="conclusion-label">Từ ảnh trong phòng sang ngoài đồng</span>
         <b>${signed(vsDomain)}</b>
         <span class="conclusion-sub">FedAvg trên PlantDoc so với PlantVillage · điểm phần trăm</span>
-        <p>Từ PlantVillage (${fmtPct(fed.plantvillage.top1_accuracy)}) sang PlantDoc (${fmtPct(fed.plantdoc.top1_accuracy)}). Nguyên nhân chưa được kiểm chứng: có thể do ảnh khác kiểu, PlantDoc ít ảnh và chỉ phủ một phần nhóm, hoặc nhãn (<a href="#ket-qua">chương 4</a>).</p>
+        <p>Từ PlantVillage (${fmtPct(fed.plantvillage.top1_accuracy)}) ${fieldOther !== undefined ? `sang ảnh ngoài đồng của các bộ khác (${fmtPct(fieldOther)}) và PlantDoc` : "sang PlantDoc"} (${fmtPct(fed.plantdoc.top1_accuracy)}). Nguyên nhân chưa được kiểm chứng: có thể do ảnh khác kiểu, PlantDoc ít ảnh và chỉ phủ một phần nhóm, hoặc nhãn (<a href="#ket-qua">chương 4</a>).</p>
       </article>
     </div>`;
 }
 
+/** Hướng phát triển: bỏ mục đã làm xong (ví dụ "cùng điều kiện" khi các cách học đã cùng thiết lập). */
+function futureList(facts) {
+  return FUTURE.filter(([title]) => !(title === "Huấn luyện cùng điều kiện" && facts?.same_recipe === true))
+    .map(([title, text]) => (title === "Chạy lặp lại nhiều lần"
+      ? [title, `Chạy nhiều mức lệch dữ liệu (không chỉ ${alphaText(facts) || "một mức"}) để biết kết quả có ổn định khi điều kiện thay đổi không, và dò riêng tốc độ học cho FedAvg trên dữ liệu lệch. Cần GPU.`]
+      : [title, text]));
+}
+
 const FUTURE = [
-  ["Chạy lặp lại nhiều lần", "Chạy nhiều mức lệch dữ liệu (không chỉ α = 0,1) để biết kết quả có ổn định khi điều kiện thay đổi không, và dò riêng tốc độ học cho FedAvg. Cần GPU."],
+  ["Chạy lặp lại nhiều lần", ""],
   ["Đối chiếu FedAvg trên Flower", "Dùng cùng release, W0, phân hoạch và cấu hình; lưu đủ log, đối chiếu checkpoint với runner hiện tại, rồi đo mạng thật riêng."],
   ["Thuật toán chịu non-IID", "Thử FedProx, SCAFFOLD và FedBN trên cùng phân hoạch; đây là kế hoạch, chưa có kết quả để khẳng định cải thiện."],
   ["Huấn luyện cùng điều kiện", "Cho Centralized, FedAvg và Local-only cùng bộ tối ưu và số bước, rồi so sánh lại."],
@@ -131,38 +151,40 @@ export async function mount() {
   const root = byId("conclusion-root");
   const [evidence, summary] = await Promise.all([getEvidence().catch(() => null), getSummary().catch(() => null)]);
   const seed = evidence?.seed ?? summary?.identity?.seed;
-  const base = baseLimits(seed);
+  const facts = factsOf(summary);
+  const base = baseLimits(seed, facts, summary);
+  const future = futureList(facts);
   // thứ tự: phạm vi của kết quả (2 mục đầu) -> các hạn chế của phép đánh giá (theo số liệu) -> còn lại
   const limits = [...base.slice(0, 2), ...(summary?.available ? evaluationLimits(summary) : []), ...base.slice(2)];
   root.innerHTML = `
     <section class="panel report-section" aria-labelledby="c-answers">
       ${sectionHead("5.1", "Kết luận", { id: "c-answers", lead: "Câu trả lời cho ba câu hỏi nghiên cứu" })}
-      ${evidence?.available ? answersHtml(evidence) : `<div class="callout callout-warn mt-3" role="note"><b>Chưa có số liệu để kết luận.</b> ${esc(evidence?.reason || "")}</div>`}
-      <p class="viewer-scope mt-3"><b class="scope-tag">Phạm vi</b> Kết quả từ một lần chạy với một cách chia lệch dữ liệu; tập kiểm tra cũng dùng để chọn mô hình, nên chưa phải độ chính xác ngoài thực địa.</p>
+      ${evidence?.available ? answersHtml(evidence, facts) : `<div class="callout callout-warn mt-3" role="note"><b>Chưa có số liệu để kết luận.</b> ${esc(evidence?.reason || "")}</div>`}
+      <p class="viewer-scope mt-3"><b class="scope-tag">Phạm vi</b> ${esc(scopeText(facts))}</p>
     </section>
 
     <section class="panel report-section mt-4" aria-labelledby="c-limits">
       ${sectionHead("5.2", "Hạn chế", { id: "c-limits", lead: "Những gì nghiên cứu chưa làm được" })}
       <div class="viewer-limits mt-3">
-        <article><h4>Chưa đánh giá qua nhiều kịch bản</h4><p>Một mức lệch dữ liệu (α = 0,1), ba hạt giống; các client là phân vùng giả lập.</p></article>
+        <article><h4>Chưa đánh giá qua nhiều kịch bản</h4><p>Một mức lệch dữ liệu${facts?.alpha != null ? ` (${esc(alphaText(facts))})` : ""}, ${esc(runsText(facts))}; các client là phân vùng giả lập.</p></article>
         <article><h4>Chưa có kiểm thử độc lập trong điều kiện thực tế</h4><p>Ảnh ngoài đồng hiện có chỉ phủ một phần nhóm lá; kết quả chưa đại diện cho triển khai thực tế.</p></article>
         <article><h4>Cần ảnh một lá đã cắt</h4><p>Web chưa tự tìm lá trên ảnh toàn cây. Xác suất dự đoán cao vẫn có thể sai.</p></article>
       </div>
-      <p class="viewer-scope mt-3">Tập kiểm tra cũng dùng để chọn mô hình; tập giữ riêng chưa được đối soát trùng ảnh. Điều kiện huấn luyện giữa các cách học còn khác nhau.</p>
+      <p class="viewer-scope mt-3">Tập kiểm tra cũng dùng để chọn mô hình${facts?.holdout_audited === false ? "; tập giữ riêng chưa được đối soát trùng ảnh" : ""}.${facts?.same_recipe === false ? " Điều kiện huấn luyện giữa các cách học còn khác nhau." : ""}</p>
       <h4 class="subhead mt-4">Danh sách đầy đủ (${limits.length} mục)</h4>
       <ol class="limit-list mt-3">${limits.map(([title, text]) => `<li><b>${esc(title)}.</b> ${esc(text)}</li>`).join("")}</ol>
     </section>
 
     <section class="panel report-section mt-4" aria-labelledby="c-future">
       ${sectionHead("5.3", "Hướng phát triển", { id: "c-future", lead: "Việc nên làm tiếp" })}
-      <ul class="future-list mt-3">${FUTURE.map(([title, text]) => `<li><b>${esc(title)}.</b> ${esc(text)}</li>`).join("")}</ul>
+      <ul class="future-list mt-3">${future.map(([title, text]) => `<li><b>${esc(title)}.</b> ${esc(text)}</li>`).join("")}</ul>
       <p class="field-hint mt-3">Tình trạng các hạng mục kiểm thử và việc còn dở của dự án nằm ở <a href="#phu-luc">Phụ lục kỹ thuật</a>.</p>
     </section>
     <section class="panel report-section mt-4" aria-labelledby="c-progress">
       ${sectionHead("5.4", "Tiến độ và nguồn tham khảo", { id: "c-progress" })}
       <div tabindex="0" role="region" aria-label="Tiến độ theo giai đoạn" class="table-responsive mt-3"><table class="data-table wrap-head"><thead><tr><th scope="col">Giai đoạn</th><th scope="col">Đã có</th><th scope="col">Còn thiếu</th></tr></thead><tbody>
-        <tr><th scope="row">Mốc so sánh</th><td>Centralized, FedAvg và 5 Local-only; cùng công thức, cùng số bước gradient, cùng validation; đánh giá bổ sung trên tập test giữ riêng</td><td>Đối chứng cùng bộ tối ưu và ngân sách</td></tr>
-        <tr><th scope="row">Non-IID</th><td>Các phân hoạch của release; kết quả huấn luyện α = 0,1, hạt giống ${seed ?? "—"} hiển thị (3 hạt giống đã chạy)</td><td>Huấn luyện nhiều α</td></tr>
+        <tr><th scope="row">Mốc so sánh</th><td>Centralized, FedAvg và 5 Local-only; ${facts?.same_recipe === true ? "cùng công thức, cùng số bước, " : ""}cùng validation; đánh giá bổ sung trên tập test giữ riêng</td><td>${facts?.same_recipe === true ? "Dò riêng tốc độ học cho FedAvg trên dữ liệu lệch" : "Đối chứng cùng bộ tối ưu và ngân sách"}</td></tr>
+        <tr><th scope="row">Non-IID</th><td>Các phân hoạch của release; kết quả huấn luyện ${esc(alphaText(facts) || "một mức lệch")}, hạt giống ${seed ?? "—"} hiển thị${facts?.seeds_run?.length ? ` (${fmtInt(facts.seeds_run.length)} hạt giống đã chạy)` : ""}</td><td>Huấn luyện nhiều mức lệch</td></tr>
         <tr><th scope="row">Flower</th><td>Mã legacy và phiên localhost dùng ảnh nhiễu trên web</td><td>Chạy lại FedAvg trên Flower và đối chiếu runner</td></tr>
         <tr><th scope="row">Thuật toán và client</th><td>MobileNetV3-Small; học lớp cuối trong demo cộng đồng</td><td>FedProx / SCAFFOLD / FedBN, lượng tử hóa, thử nhiều máy và client thật</td></tr>
         <tr><th scope="row">Đánh giá triển khai</th><td>Phân tích lỗi, hiệu chuẩn, phép đo ảnh toàn cảnh trên dữ liệu hiện có</td><td>Tập thực địa mới, nhãn được chuyên gia duyệt, test cuối cùng được niêm phong</td></tr>

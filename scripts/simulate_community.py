@@ -29,7 +29,7 @@ from src.federated import community as core  # noqa: E402
 from src.federated import community_sim as sim  # noqa: E402
 
 FEATURES = "data/community_sim/features.npz"
-REPORT = "artifacts/community_fl/simulation_report.json"
+REPORT = reg.COMMUNITY_SIMULATION_JSON
 KS = (3, 10, 25)
 SEEDS = (11, 12, 13, 14, 15)
 ROUNDS = 20

@@ -1601,7 +1601,7 @@ details > summary { min-height: 24px; }
   .toc-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
 }
 
-.source-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.source-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: var(--space-3); }
 .source-card { padding: var(--space-4); border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-sunken); }
 .source-card h4 { font-size: var(--fs-md); margin-bottom: var(--space-1); }
 .source-card p { color: var(--text-secondary); font-size: var(--fs-sm); line-height: 1.6; }

@@ -13,14 +13,15 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from typing import Any, Callable, Dict, List, Optional
 
-from src import registry as reg
+from src import bundle, registry as reg
 from web.services import model_service
 from web.services.training_evidence import training_report
 
 MODEL_ORDER = ("centralized", "fedavg", "local_00", "local_01", "local_02", "local_03", "local_04")
-SOURCES = ("plantdoc", "plantvillage")
+SOURCES = ("plantdoc", "plantvillage")   # hai nguồn có báo cáo riêng (theo lớp, khoảng cách miền); gói có thể còn nhóm khác: all_sources()
 MAIN_MODELS = ("centralized", "fedavg")
 # Mô hình trong per-class report/domain-gap report được đặt tên hiển thị thay vì model_id
 _DISPLAY = {k: v for k, v in reg.WEB_DISPLAY_NAMES.items() if k in ("centralized", "fedavg")}
@@ -45,6 +46,11 @@ def _load_json(relative: str) -> Optional[Dict[str, Any]]:
         cached = (key, data if isinstance(data, dict) else None)
         _JSON_CACHE[relative] = cached
     return cached[1]
+
+
+def all_sources(evidence: Dict[str, Any]) -> tuple:
+    """Hai nguồn chính cộng các nhóm khác mà gói đo (ví dụ field_other ở gói v4), theo thứ tự khai trong manifest của gói."""
+    return SOURCES + tuple(s for s in (evidence.get("validation_counts") or {}) if s not in SOURCES)
 
 
 def _withheld(reason: str) -> Dict[str, Any]:
@@ -195,6 +201,7 @@ def _reeval(evidence: Dict[str, Any]) -> Dict[str, Any]:
     if report is None:
         return _withheld(f"chưa có {reg.LOCAL_REEVAL_JSON} — chạy scripts/evaluate_published_models.py (cần dataset)")
     published = _published_by_id(evidence)
+    sources = all_sources(evidence)
     problems = _identity_problems(report, evidence)
     expected = {mid: m["checkpoint_sha256"] for mid, m in published.items()}
     if (report.get("checkpoint_sha256") or {}) != expected:
@@ -215,7 +222,7 @@ def _reeval(evidence: Dict[str, Any]) -> Dict[str, Any]:
         by_source = rep.get("by_source") or {}
         calibration = rep.get("calibration") or {}
         vs_published = rep.get("vs_published") or {}
-        for source in SOURCES:
+        for source in sources:
             pub = info["metrics"][source]
             own = by_source.get(source) or {}
             if _int(own.get("count")) != _int(pub.get("count")):
@@ -225,7 +232,7 @@ def _reeval(evidence: Dict[str, Any]) -> Dict[str, Any]:
                 expected_correct = round(float(pub["top1_accuracy"]) * int(pub["count"]))
                 if _int(vp.get("correct_published")) != expected_correct:
                     return _withheld(f"{mid}/{source}: số ảnh đúng 'đã công bố' trong báo cáo khác bundle")
-        statuses[mid] = {s: _reproduction_status(vs_published.get(s))["status"] for s in SOURCES}
+        statuses[mid] = {s: _reproduction_status(vs_published.get(s))["status"] for s in sources}
         models.append({
             "model_id": mid,
             "name": str(info["name"]),
@@ -233,20 +240,20 @@ def _reeval(evidence: Dict[str, Any]) -> Dict[str, Any]:
             "overall": _metrics(rep.get("overall") or {}),
             "plantdoc": _metrics(by_source.get("plantdoc") or {}),
             "plantvillage": _metrics(by_source.get("plantvillage") or {}),
+            **{s: _metrics(by_source.get(s) or {}) for s in sources if s not in SOURCES},
             "temperature": _round(rep.get("temperature_fitted_on_calibration")),
             "calibration": {
                 "overall": _calibration_row(calibration.get("overall") or {}),
-                "plantdoc": _calibration_row(calibration.get("plantdoc") or {}),
-                "plantvillage": _calibration_row(calibration.get("plantvillage") or {}),
+                **{s: _calibration_row(calibration.get(s) or {}) for s in sources},
             },
-            "vs_published": {s: _reproduction_status(vs_published.get(s)) for s in SOURCES},
+            "vs_published": {s: _reproduction_status(vs_published.get(s)) for s in sources},
         })
         recall = ((by_source.get("plantvillage") or {}).get("per_class_recall")) or {}
         pv_recall[mid] = {str(name): _round(v.get("recall")) for name, v in recall.items()}
         for name, v in recall.items():
             pv_support.setdefault(str(name), _int(v.get("support")) or 0)
         if mid in MAIN_MODELS:
-            reliability[mid] = {s: _bins(calibration.get(s) or {}) for s in SOURCES}
+            reliability[mid] = {s: _bins(calibration.get(s) or {}) for s in sources}
 
     # Tính lại từ trạng thái từng phép so sánh thay vì tin các tổng trong báo cáo
     flat = [status for per_source in statuses.values() for status in per_source.values()]
@@ -257,7 +264,7 @@ def _reeval(evidence: Dict[str, Any]) -> Dict[str, Any]:
                 {"target": str(c.get("target")), "predicted": str(c.get("predicted")), "count": _int(c.get("count"))}
                 for c in (((detail.get(mid) or {}).get("top_confusions") or {}).get(s) or [])[:6]
             ]
-            for s in SOURCES
+            for s in sources
         }
         for mid in MAIN_MODELS
     }
@@ -269,7 +276,7 @@ def _reeval(evidence: Dict[str, Any]) -> Dict[str, Any]:
         "comparisons_total": len(flat),
         "comparisons_exact": sum(1 for s in flat if s == "exact"),
         "all_within_tolerance": all(s in ("exact", "within_tolerance") for s in flat),
-        "main_models_exact": all(statuses[m][s] == "exact" for m in MAIN_MODELS for s in SOURCES),
+        "main_models_exact": all(statuses[m][s] == "exact" for m in MAIN_MODELS for s in sources),
         "tolerance_rule": {
             "correct_images": _int(tolerance.get("correct_images")),
             "high_confidence_wrong_images": _int(tolerance.get("high_confidence_wrong_images")),
@@ -526,6 +533,7 @@ def _holdout(evidence: Dict[str, Any]) -> Dict[str, Any]:
     if report is None:
         return _withheld(reason)
     published = _published_by_id(evidence)
+    sources = all_sources(evidence)
     models = []
     for mid in MODEL_ORDER:
         rep = report["models"][mid]
@@ -536,7 +544,8 @@ def _holdout(evidence: Dict[str, Any]) -> Dict[str, Any]:
             "phase": str(published[mid]["phase"]),
             "plantdoc": _metrics(rep["by_source"]["plantdoc"]),
             "plantvillage": _metrics(rep["by_source"]["plantvillage"]),
-            "ece": {s: _calibration_row(calibration.get(s) or {}) for s in SOURCES},
+            **{s: _metrics(rep["by_source"][s]) for s in sources if s not in SOURCES},
+            "ece": {s: _calibration_row(calibration.get(s) or {}) for s in sources},
             "plantdoc_per_class": _holdout_per_class(rep["by_source"]["plantdoc"]),
         }
         if "vs_recorded" in rep:
@@ -631,8 +640,10 @@ def _statistics(evidence: Dict[str, Any]) -> Dict[str, Any]:
             continue
         out_sources: Dict[str, Any] = {}
         bad = None
-        for source in SOURCES:
+        for source in all_sources(evidence):
             data = (block.get("by_source") or {}).get(source) or {}
+            if not data and source not in SOURCES:
+                continue    # báo cáo thống kê chưa có nhóm phụ này (gói cũ hoặc chưa sinh lại): bỏ riêng nhóm đó, không giữ cả phần
             models = {}
             for mid in MODEL_ORDER:
                 m = (data.get("models") or {}).get(mid) or {}
@@ -749,14 +760,14 @@ def _details(evidence: Dict[str, Any]) -> Dict[str, Any]:
     if reeval is not None and not (_identity_problems(reeval, evidence) + _checkpoint_problems(reeval, evidence)):
         confusion["val"] = {
             mid: {s: _matrix((((reeval.get("detail") or {}).get(mid) or {}).get("confusion_matrix") or {}).get(s), len(classes),
-                             int(published[mid]["metrics"][s]["count"])) for s in SOURCES}
+                             int(published[mid]["metrics"][s]["count"])) for s in all_sources(evidence)}
             for mid in MAIN_MODELS
         }
     holdout, _ = _holdout_report(evidence)
     if holdout is not None:
         confusion["test"] = {
             mid: {s: _matrix((((holdout.get("detail") or {}).get(mid) or {}).get("confusion_matrix") or {}).get(s), len(classes),
-                             reg.HOLDOUT_COUNTS[s]) for s in SOURCES}
+                             reg.HOLDOUT_COUNTS[s]) for s in all_sources(evidence)}
             for mid in MAIN_MODELS
         }
     errors = _withheld(f"chưa có {reg.ERROR_GALLERY_CATALOG_JSON} — chạy scripts/build_error_gallery.py (cần dataset)")
@@ -772,7 +783,7 @@ def _details(evidence: Dict[str, Any]) -> Dict[str, Any]:
                             for m, v in (item.get("wrong_by") or {}).items() if m in MAIN_MODELS}
                 thumb = str(item.get("thumb") or "")
                 if (not wrong_by or not thumb or "/" in thumb or "\\" in thumb or ".." in thumb
-                        or item.get("source") not in SOURCES):
+                        or item.get("source") not in all_sources(evidence)):
                     continue
                 items.append({"sample_id": str(item.get("sample_id")), "thumb": thumb, "source": str(item.get("source")),
                               "target": str(item.get("target")), "wrong_by": wrong_by})
@@ -814,7 +825,7 @@ def _partitions(evidence: Dict[str, Any]) -> Dict[str, Any]:
 
 
 _SEED_METRICS = (
-    ("plantvillage_test", "PlantVillage (tập thử)"), ("field_same_source_test", "Ngoài đồng, cùng nguồn (tập thử)"),
+    ("plantvillage_test", "PlantVillage (tập thử)"), ("field_same_source_test", "Ngoài đồng, bộ khác (tập thử)"),
     ("plantdoc_holdout_v3", "PlantDoc giữ riêng"), ("plantwild_strict", "PlantWild, ảnh bệnh (nguồn lạ)"),
     ("plantwild_healthy_as_disease", "Lá khỏe PlantWild bị đoán thành bệnh (thấp hơn là tốt hơn)"),
 )
@@ -884,6 +895,93 @@ def _checklist(redact: bool = False) -> Dict[str, Any]:
     }
 
 
+def _fairness(evidence: Dict[str, Any]) -> Dict[str, Any]:
+    """Độ chính xác của Centralized, FedAvg và Local-only trên các lớp mà từng client CÓ / KHÔNG CÓ ảnh học (scripts/report_client_fairness.py)."""
+    report = _load_json(reg.CLIENT_FAIRNESS_JSON)
+    if report is None:
+        return _withheld(f"chưa có {reg.CLIENT_FAIRNESS_JSON} — chạy scripts/report_client_fairness.py")
+    problems = _identity_problems(report, evidence) + _checkpoint_problems(report, evidence)
+    shard_counts = evidence.get("shard_counts") or {}
+    for client, n_k in shard_counts.items():
+        if _int(((report.get("clients") or {}).get(client) or {}).get("n_k")) != _int(n_k):
+            problems.append(f"n_k của {client} khác số trong bundle")
+    if problems:
+        return _withheld("báo cáo công bằng giữa client không khớp bundle: " + "; ".join(problems))
+    expected = {"val": sum(int(v) for v in (evidence.get("validation_counts") or {}).values()),
+                "test": sum(int(v) for v in reg.HOLDOUT_COUNTS.values())}
+    splits: Dict[str, Any] = {}
+    for name, total in expected.items():
+        block = (report.get("splits") or {}).get(name) or {}
+        if not block.get("available"):
+            splits[name] = _withheld(str(block.get("reason") or "chưa có"))
+            continue
+        if _int(block.get("count")) != total:
+            splits[name] = _withheld("số ảnh của phần công bằng khác số trong bundle")
+            continue
+        by_client: Dict[str, Any] = {}
+        bad = None
+        for client in sorted(shard_counts):
+            data = (block.get("by_client") or {}).get(client) or {}
+            row: Dict[str, Any] = {}
+            n_sum = 0
+            for group in ("classes_with_images", "classes_without_images"):
+                part = data.get(group) or {}
+                n = _int(part.get("n"))
+                if n is None or n < 0:
+                    bad = f"{client}/{group}: thiếu số ảnh"
+                    break
+                n_sum += n
+                entry: Dict[str, Any] = {"n": n}
+                for model in ("centralized", "fedavg", "local"):
+                    ratio = _ratio(part.get(model), n) if n else None
+                    if n and ratio is None:
+                        bad = f"{client}/{group}/{model}: số ảnh đúng không hợp lệ"
+                    entry[model] = _round(ratio)
+                row[group] = entry
+            if bad:
+                break
+            if n_sum != total:
+                bad = f"{client}: tổng số ảnh khác tập đánh giá"
+                break
+            by_client[client] = {**row, "n_classes_with_images": _int(((report.get("clients") or {}).get(client) or {}).get("classes_with_images"))}
+        splits[name] = _withheld(bad) if bad else {"available": True, "count": total, "by_client": by_client}
+    return {"available": True, "definition": str(report.get("definition") or ""), "classes_total": len(evidence.get("classes") or []), "splits": splits}
+
+
+# Thiết lập huấn luyện phải trùng giữa các mô hình thì mới được nói "cùng điều kiện" (đơn vị epoch/vòng và cách khởi động lr khác nhau theo cách học nên không so)
+_RECIPE_KEYS = ("optimizer", "lr", "batch_size", "label_smoothing", "precision", "train_transform", "loss_weighting", "selection", "steps_total", "local_epochs")
+
+
+def _facts(evidence: Dict[str, Any], seeds: Dict[str, Any], training: Dict[str, Any], leakage: Dict[str, Any]) -> Dict[str, Any]:
+    """Dữ kiện mà giao diện dùng để VIẾT các câu phạm vi / hạn chế (cùng điều kiện huấn luyện chưa? mấy hạt giống? độ trôi client đã ghi chưa?).
+
+    Mọi câu khẳng định trong giao diện về cách huấn luyện đọc từ đây, nên đổi gói mô hình thì câu chữ tự đổi theo (không viết sẵn trong JS)."""
+    trainings = evidence.get("training") or {}
+    same: Optional[bool] = None
+    differences: List[str] = []
+    if trainings.get("centralized") and trainings.get("fedavg"):
+        for key in _RECIPE_KEYS:
+            if len({json.dumps(t.get(key), sort_keys=True, ensure_ascii=False) for t in trainings.values()}) > 1:
+                differences.append(key)
+        same = not differences
+    fed = trainings.get("fedavg") or {}
+    match = re.search(r"alpha_(\d+)_(\d+)", str(reg.PARTITION_SCHEME))
+    leak_counts = (_load_json(reg.RELEASE_LEAKAGE_AUDIT_JSON) or {}).get("counts") or {}
+    return {
+        "available": True,
+        "seeds_run": list(seeds.get("seeds") or []) if seeds.get("available") else [],
+        "seed_served": _int(evidence.get("seed")),
+        "same_recipe": same,
+        "recipe_differences": differences,
+        "recipe": {k: fed.get(k) for k in ("optimizer", "lr", "batch_size", "label_smoothing", "steps_total", "local_epochs", "train_transform", "loss_weighting", "selection")} if fed else None,
+        "holdout_audited": any(k in leak_counts for k in ("test", "legacy_diagnostic_test")) if leakage.get("available") else None,
+        "delta_l2_recorded": training.get("delta_l2_recorded") if training.get("available") else None,
+        "transport_mode": training.get("transport_mode") if training.get("available") else None,
+        "partition_scheme": str(reg.PARTITION_SCHEME),
+        "alpha": float(f"{match.group(1)}.{match.group(2)}") if match else None,
+    }
+
+
 def _identity(evidence: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "protocol_id": str(evidence.get("protocol_id")),
@@ -893,6 +991,8 @@ def _identity(evidence: Dict[str, Any]) -> Dict[str, Any]:
         "seed": _int(evidence.get("seed")),
         "transform": str(evidence.get("transform")),
         "validation_counts": {k: _int(v) for k, v in (evidence.get("validation_counts") or {}).items()},
+        "source_groups": bundle.source_groups({k: _int(v) or 0 for k, v in (evidence.get("validation_counts") or {}).items()},
+                                              {k: _int(v) or 0 for k, v in reg.HOLDOUT_COUNTS.items()}),
         "models": [
             {k: str(m.get(k)) for k in ("model_id", "name", "phase", "method", "branch", "commit", "checkpoint_sha256")}
             for m in evidence.get("models", [])
@@ -916,22 +1016,27 @@ def summary(evidence: Dict[str, Any]) -> Dict[str, Any]:
             "reason": reason,
             "identity": None,
             "checklist": _guard("checklist", lambda: _checklist(redact=True)),
-            **{name: _withheld(reason) for name in ("reeval", "plantdoc", "domain_gap", "leakage", "shards", "holdout", "statistics", "fullframe", "plantvillage_reference", "community_simulation", "training", "seeds")},
+            **{name: _withheld(reason) for name in ("reeval", "plantdoc", "domain_gap", "leakage", "shards", "holdout", "statistics", "fullframe", "plantvillage_reference", "community_simulation", "training", "seeds", "facts", "fairness")},
         }
+    training = _guard("cấu hình huấn luyện", lambda: training_report(evidence, _load_json))
+    seeds = _guard("các hạt giống", lambda: _seeds(evidence))
+    leakage = _guard("audit rò rỉ", lambda: _leakage(evidence))
     return {
         "available": True,
         "identity": _identity(evidence),
-        "training": _guard("cấu hình huấn luyện", lambda: training_report(evidence, _load_json)),
+        "facts": _guard("dữ kiện", lambda: _facts(evidence, seeds, training, leakage)),
+        "training": training,
         "reeval": _guard("tái đánh giá", lambda: _reeval(evidence)),
         "plantdoc": _guard("PlantDoc theo lớp", lambda: _plantdoc(evidence)),
         "domain_gap": _guard("khoảng cách miền", lambda: _domain_gap(evidence)),
-        "leakage": _guard("audit rò rỉ", lambda: _leakage(evidence)),
+        "leakage": leakage,
         "shards": _guard("shard", lambda: _shards(evidence)),
         "holdout": _guard("test giữ riêng", lambda: _holdout(evidence)),
         "statistics": _guard("thống kê", lambda: _statistics(evidence)),
         "fullframe": _guard("ảnh nguyên khung", lambda: _fullframe(evidence)),
         "plantvillage_reference": _guard("PlantVillage tham chiếu", lambda: _plantvillage_reference(evidence)),
         "community_simulation": _guard("mô phỏng cộng đồng", lambda: _community_simulation(evidence)),
-        "seeds": _guard("các hạt giống", lambda: _seeds(evidence)),
+        "seeds": seeds,
+        "fairness": _guard("công bằng giữa client", lambda: _fairness(evidence)),
         "checklist": _guard("checklist", _checklist),
     }

@@ -33,7 +33,8 @@ def test_every_item_has_a_machine_verdict(evaluated):
 def test_blocked_items_say_what_is_needed_and_how_to_unlock(evaluated):
     _registry, _ctx, results = evaluated
     blocked = [(i, r) for i, r in results if r.status == us.BLOCKED]
-    assert blocked, "máy này không có dataset nên phải còn mục BLOCKED trung thực"
+    if not us._run_bundle_manifest():   # gói cũ nhập từ nhánh train: provenance/multiseed chưa kiểm chứng được nên phải còn mục BLOCKED trung thực
+        assert blocked, "gói cũ không có multi-seed và provenance nên phải còn mục BLOCKED trung thực"
     for item, result in blocked:
         assert result.needs, item.key
         assert result.unlock, item.key
@@ -163,3 +164,34 @@ def test_vietnamese_number_formatting_touches_only_numbers():
     # câu có dấu phẩy phải giữ nguyên dấu phẩy (lỗi cũ: .replace(",", ".") áp lên cả câu)
     sentence = f"T=1.15, fit trên {us.vn(4225)} ảnh"
     assert sentence == "T=1.15, fit trên 4.225 ảnh"
+
+
+def test_gates_of_a_bundle_built_from_runs_are_verified_from_the_bundle_itself(evaluated, monkeypatch):
+    """Gói dựng từ run train_v4: provenance kiểm từ chính gói, multi-seed từ train_v4_results.json; gói cũ giữ cách kiểm cũ."""
+    _registry, _ctx, results = evaluated
+    by_key = {item.key: result for item, result in results}
+    manifest = us._run_bundle_manifest()
+    if not manifest:
+        pytest.skip("gói đang dùng là gói cũ")
+    assert by_key["provenance"].status == us.DONE and manifest["bundle_id"] in by_key["provenance"].detail
+    assert by_key["multiseed"].status == us.DONE and "hạt giống" in by_key["multiseed"].detail
+    assert by_key["reports_synced"].status == us.DONE
+
+    # run của release khác (hoặc thiếu hạt giống) thì KHÔNG được tính là multi-seed của gói này
+    real = us.load_json(reg.abs_path(reg.TRAIN_V4_RESULTS_JSON))
+    other_release = {**real, "runs": {k: {**v, "release_manifest_sha256": "0" * 64} for k, v in real["runs"].items()}}
+    original = us.load_json
+    monkeypatch.setattr(us, "load_json", lambda path: other_release if path.name == "train_v4_results.json" else original(path))
+    assert us._v4_multiseed(manifest) is None
+
+
+def test_multiseed_needs_every_method_for_every_seed(monkeypatch):
+    manifest = us._run_bundle_manifest()
+    if not manifest:
+        pytest.skip("gói đang dùng là gói cũ")
+    real = us.load_json(reg.abs_path(reg.TRAIN_V4_RESULTS_JSON))
+    release = manifest["release_manifest_sha256"]
+    runs = {k: v for k, v in real["runs"].items() if not (v["seed"] == 2026 and v["method"] == "local" and v["client"] == 4)}
+    monkeypatch.setattr(us, "load_json", lambda path: {**real, "runs": runs})
+    assert all(r["release_manifest_sha256"] == release for r in runs.values())
+    assert us._v4_multiseed(manifest) is None, "thiếu một client Local-only của một hạt giống thì chưa đủ 3 hạt giống × 7 mô hình"

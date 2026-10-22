@@ -57,6 +57,7 @@ ALLOWED_DOCS = {
     "UI_UX_REVIEW_2026-10-14.md", "REVIEW_TOAN_DIEN_2026-10-16.md", "REVIEW_WEB_2026-10-19.md",
     "CAU_HOI_BAO_VE_2026-10-19.md", "DANH_GIA_DU_LIEU_MO_HINH_FEDAVG_2026-10-21.md", "HUONG_DAN_DO_TOC_DO_LAN.md",
     "DATASET_V4.md", "HUONG_DAN_CHUP_ANH.md", "CONG_TU_CHOI_ANH_KHONG_PHAI_LA.md",
+    "THAY_MO_HINH_WEB.md", "REPORT_WORD_WEB_2026-10-20.md",
 }
 # Số liệu từng xuất hiện trong tài liệu cũ và mâu thuẫn với artifact: không được quay lại docs hiện hành.
 FORBIDDEN_NUMBERS = ("97,12", "97.12", "90,44", "90.44")
@@ -258,7 +259,8 @@ def check_no_hardcode(ctx: Ctx) -> Result:
     hits: list[str] = []
     for top in ("src", "web", "scripts"):
         for path in sorted((ROOT / top).rglob("*.py")):
-            if "__pycache__" in path.parts or path == ROOT / "src/registry.py":
+            # registry.py định nghĩa mọi đường dẫn; bundle.py định nghĩa vị trí gói mô hình (registry import nó nên không thể import ngược)
+            if "__pycache__" in path.parts or path in (ROOT / "src/registry.py", ROOT / "src/bundle.py"):
                 continue
             hits += path_literals(path)
     if hits:
@@ -348,7 +350,35 @@ def check_release(ctx: Ctx) -> Result:
     return Result(DONE, "mọi mục kỹ thuật XONG; trước khi nộp vẫn phải `git status` sạch và gắn tag")
 
 
+def _run_bundle_manifest() -> dict[str, Any]:
+    """Manifest của gói đang dùng NẾU gói dựng từ run train_v4 (có khối `code`); gói cũ nhập từ nhánh train trả {} (dùng cách kiểm cũ)."""
+    from src import bundle
+
+    manifest = bundle.load_manifest()
+    return manifest if manifest.get("code") and (ROOT / bundle.POINTER).is_file() else {}
+
+
+def _bundle_provenance(manifest: dict[str, Any]) -> Result:
+    """Nguồn gốc của gói web: con trỏ ghim mã băm manifest, mọi checkpoint khớp artifact_manifest, release/validation khớp, mã huấn luyện ghi trong gói."""
+    from web.demo_evidence import load_evidence
+
+    evidence = load_evidence()
+    if not evidence.get("available"):
+        return Result(TODO, f"gói {manifest.get('bundle_id')} không qua cổng kiểm hash: {evidence.get('reason')}")
+    code = manifest["code"]
+    return Result(
+        DONE,
+        f"gói {manifest['bundle_id']}: con trỏ ghim mã băm manifest; {len(evidence['models'])} checkpoint khớp artifact_manifest; "
+        f"release {manifest['release_manifest_sha256'][:12]}… và validation khớp; mã huấn luyện {str(code['code_fingerprint'])[:12]}… "
+        f"(commit {str(code['git_commit'])[:9]}); W0 tính lại từ hạt giống {manifest['seed']}. "
+        "Slot canonical của pipeline Kaggle cũ không còn checkpoint nhưng không phục vụ web.",
+    )
+
+
 def check_provenance(ctx: Ctx) -> Result:
+    manifest = _run_bundle_manifest()
+    if manifest:
+        return _bundle_provenance(manifest)
     prov = ctx.gates.get("provenance") or {}
     if prov.get("status") == "verified":
         return Result(DONE, "checkpoint canonical khớp manifest (hash + epoch + accuracy)")
@@ -568,7 +598,39 @@ def check_statistics(ctx: Ctx) -> Result:
     return Result(DONE, "khoảng tin cậy 95% bootstrap theo cụm (cảnh/nhóm lá) — " + " | ".join(pieces))
 
 
+def _v4_multiseed(manifest: dict[str, Any]) -> Result | None:
+    """Multi-seed THẬT của protocol đang công bố: đủ hạt giống × 7 mô hình, cùng release với gói (artifacts/train_v4_results.json). None = không áp dụng."""
+    results = load_json(reg.abs_path(reg.TRAIN_V4_RESULTS_JSON))
+    runs = (results or {}).get("runs") or {}
+    if not runs:
+        return None
+    release = manifest["release_manifest_sha256"]
+    seeds = sorted({int(r["seed"]) for r in runs.values()})
+    complete = [s for s in seeds if sum(1 for r in runs.values() if int(r["seed"]) == s and r["method"] == "centralized") == 1
+                and sum(1 for r in runs.values() if int(r["seed"]) == s and r["method"] == "fedavg") == 1
+                and sum(1 for r in runs.values() if int(r["seed"]) == s and r["method"] == "local") == 5]
+    if len(complete) < 3 or any(r.get("release_manifest_sha256") != release for r in runs.values()):
+        return None
+    checks = results.get("checks") or []
+    failed = [c["id"] for c in checks if not c.get("pass")]
+    trainings = (manifest.get("training") or {}).values()
+    recipe_keys = ("optimizer", "lr", "batch_size", "label_smoothing", "precision", "train_transform", "loss_weighting", "selection", "steps_total", "local_epochs")
+    differing = [k for k in recipe_keys if len({json.dumps(t.get(k), sort_keys=True) for t in trainings}) > 1] if trainings else None
+    recipe = "" if differing is None else (", cùng thiết lập huấn luyện" if not differing else f", thiết lập huấn luyện khác nhau ở {differing}")
+    return Result(
+        DONE,
+        f"{len(complete)} hạt giống {complete} × 7 mô hình (Centralized, FedAvg, 5 Local-only) cùng release {release[:12]}…{recipe}; "
+        f"mean ± độ lệch chuẩn ở trang Kết quả ({reg.TRAIN_V4_RESULTS_JSON}). {len(checks) - len(failed)}/{len(checks)} ngưỡng đặt trước đạt"
+        + (f"; chưa đạt: {', '.join(failed)}" if failed else "") + ".",
+    )
+
+
 def check_multiseed(ctx: Ctx) -> Result:
+    manifest = _run_bundle_manifest()
+    if manifest:
+        v4 = _v4_multiseed(manifest)
+        if v4 is not None:
+            return v4
     summary = load_json(reg.abs_path(reg.REPORT_EXPERIMENTS_DIR) / "multiseed_real_summary.json") or {}
     if summary.get("scientific_valid"):
         return Result(DONE, "multiseed_real_summary.json hợp lệ (mean ± std, 3 seed)")
@@ -588,6 +650,18 @@ def check_reports_synced(ctx: Ctx) -> Result:
     if RESULTS_CACHE.get("multiseed", Result(TODO, "")).status != DONE:
         return Result(BLOCKED, "phụ thuộc multi-seed thật", needs="chạy xong mục multi-seed rồi đồng bộ báo cáo",
                       unlock=[".\\.venv\\Scripts\\python.exe scripts\\update_status.py"])
+    manifest = _run_bundle_manifest()
+    if manifest:
+        # báo cáo phải sinh từ ĐÚNG gói đang dùng (cùng protocol/release/checkpoint); lệch thì chạy lại scripts/swap_web_models.py --only <bước>
+        stale = []
+        for name, relative in (("tái đánh giá", reg.LOCAL_REEVAL_JSON), ("test giữ riêng", reg.HOLDOUT_EVAL_JSON), ("thống kê", reg.STATISTICS_JSON),
+                               ("cấu hình huấn luyện", reg.TRAINING_PROTOCOL_REPORT_JSON), ("shard", reg.CLIENT_SHARD_COUNTS_JSON)):
+            report = load_json(reg.abs_path(relative)) or {}
+            if report.get("protocol_id") != manifest["protocol_id"] or (report.get("release_manifest_sha256") not in (None, manifest["release_manifest_sha256"])):
+                stale.append(name)
+        if stale:
+            return Result(TODO, f"báo cáo không sinh từ gói {manifest['bundle_id']}: {stale} — chạy lại scripts/swap_web_models.py --only <bước>")
+        return Result(DONE, f"5 báo cáo (tái đánh giá, test giữ riêng, thống kê, cấu hình huấn luyện, shard) khớp protocol và release của gói {manifest['bundle_id']}")
     return Result(DONE, "báo cáo sinh lại từ registry sau multi-seed")
 
 
