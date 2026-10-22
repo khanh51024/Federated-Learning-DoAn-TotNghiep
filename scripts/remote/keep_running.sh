@@ -11,7 +11,8 @@ SEEDS="${SEEDS:-42 123 2026}"
 INTERVAL="${INTERVAL:-120}"
 WORK="${WORK:-/root/cropfed}"
 read -r -a seed_list <<< "$SEEDS"
-SSH=(ssh -i "$SSH_KEY" -p "$SSH_PORT" -o IdentitiesOnly=yes -o PasswordAuthentication=no -o ConnectTimeout=20 -o ServerAliveInterval=30 "$SSH_TARGET")
+# SSH_HOSTKEY_ALIAS: khi gọi máy bằng IP (tên miền của nơi thuê có lúc không phân giải được) vẫn kiểm khóa máy chủ theo mục đã lưu, ví dụ "[n2.ckey.vn]:1766"
+SSH=(ssh -i "$SSH_KEY" -p "$SSH_PORT" -o IdentitiesOnly=yes -o PasswordAuthentication=no -o ConnectTimeout=20 -o ServerAliveInterval=30 ${SSH_HOSTKEY_ALIAS:+-o "HostKeyAlias=$SSH_HOSTKEY_ALIAS"} "$SSH_TARGET")
 while true; do
   missing=""
   if ! state=$("${SSH[@]}" "for s in $SEEDS; do if [ -f '$REMOTE_OUT'/FINISHED_seeds_\$s ]; then echo \"\$s xong\"; elif tmux has-session -t train_s\$s 2>/dev/null; then echo \"\$s chạy\"; else echo \"\$s mất\"; fi; done; cut -d' ' -f1 /proc/uptime"); then

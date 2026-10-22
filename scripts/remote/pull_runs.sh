@@ -8,7 +8,8 @@ set -uo pipefail
 : "${SSH_TARGET:?}" "${SSH_PORT:?}" "${SSH_KEY:?}" "${REMOTE_OUT:?}" "${LOCAL_OUT:?}"
 INTERVAL="${INTERVAL:-600}"
 EXPECTED="${EXPECTED:-21}"
-SSH=(ssh -i "$SSH_KEY" -p "$SSH_PORT" -o IdentitiesOnly=yes -o PasswordAuthentication=no -o ConnectTimeout=20 -o ServerAliveInterval=30 "$SSH_TARGET")
+# SSH_HOSTKEY_ALIAS: khi gọi máy bằng IP (tên miền của nơi thuê có lúc không phân giải được) vẫn kiểm khóa máy chủ theo mục đã lưu, ví dụ "[n2.ckey.vn]:1766"
+SSH=(ssh -i "$SSH_KEY" -p "$SSH_PORT" -o IdentitiesOnly=yes -o PasswordAuthentication=no -o ConnectTimeout=20 -o ServerAliveInterval=30 ${SSH_HOSTKEY_ALIAS:+-o "HostKeyAlias=$SSH_HOSTKEY_ALIAS"} "$SSH_TARGET")
 mkdir -p "$LOCAL_OUT"
 while true; do
   # `exit 0` ở cuối: chưa có run nào xong thì vòng lặp trả mã 1, không được nhầm thành mất kết nối (ssh lỗi trả 255)

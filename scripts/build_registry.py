@@ -849,6 +849,9 @@ def build_artifact_catalog(models: list[dict[str, Any]]) -> tuple[list[dict[str,
         elif rel.startswith(reg.WEB_RUNS_GLOB + "/"):
             add("web_runs", reg.ROLE_TECHNICAL_DEMO,
                 "Checkpoint từ run do web khởi động (smoke Flower hoặc demo huấn luyện); chưa có bằng chứng khoa học", rel)
+        elif rel.startswith(reg.TRAIN_V4_RUNS_PREFIX):
+            add("train_v4_runs", reg.ROLE_TECHNICAL_DEMO,
+                "Checkpoint đợt train v4 (scripts/train_v4.py, máy GPU thuê) chưa đánh giá/promote — số liệu chỉ dùng sau scripts/eval_trained_v4.py", rel)
         elif rel.startswith(reg.KAGGLE_RESULTS_DIR + "/"):
             oid = _lfs_pointer_oid(path)
             if oid:

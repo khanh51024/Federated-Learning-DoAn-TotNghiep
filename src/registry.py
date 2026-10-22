@@ -157,6 +157,7 @@ CHECKPOINT_SCAN_EXCLUDE_ROOT = (".venv", ".git", ".tmp-agent", ".zcode", "tmp")
 CHECKPOINT_SCAN_EXCLUDE_ANY = ("__pycache__", "pytest-of-", "torchinductor_")
 REPORT_EXPERIMENTS_GLOB = "artifacts/report_experiments"
 WEB_RUNS_GLOB = "artifacts/web_runs"
+TRAIN_V4_RUNS_PREFIX = "runs/v4"           # đầu ra scripts/train_v4.py (runs/v4, runs/v4b...) kéo về từ máy GPU thuê, ngoài git
 KAGGLE_RESULTS_DIR = "results/fedavg"
 
 # ---------------------------------------------------------------------------
