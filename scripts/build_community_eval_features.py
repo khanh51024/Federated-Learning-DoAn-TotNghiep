@@ -61,11 +61,13 @@ def main() -> int:
         print(f"[community] bundle không hợp lệ: {evidence.get('reason')}", file=sys.stderr)
         return 1
     dataset_root = reg.abs_path(reg.DATASET_SOURCES_DIR)
-    release = reg.abs_path(reg.RELEASE_V3_DIR)
+    release = reg.abs_path(reg.RELEASE_DIR)
     if not (release / "manifests" / "val.jsonl").is_file():
         print(f"[community] thiếu dataset ở {reg.DATASET_SOURCES_DIR}", file=sys.stderr)
         return 1
     val_rows, _calibration = _verify_inputs(evidence, release, dataset_root)
+    # Bộ đánh giá cộng đồng chỉ có hai nguồn (mã nguồn 0/1: PlantVillage, PlantDoc): bỏ ảnh ngoài đồng từ nguồn khác của release v4
+    val_rows = [r for r in val_rows if str(r["source_dataset"]).lower() in ("plantdoc", "plantvillage")]
     if args.limit:
         val_rows = val_rows[: args.limit]
 

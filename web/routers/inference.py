@@ -10,6 +10,7 @@ from fastapi.routing import APIRouter
 from PIL import Image
 from starlette.concurrency import run_in_threadpool
 
+from src import registry as reg
 from src.common.image_io import to_rgb
 from web.demo_evidence import PROTOCOL_ID, load_evidence
 from web.services import evidence_service, model_service
@@ -17,12 +18,8 @@ from web.services import evidence_service, model_service
 router = APIRouter()
 
 
-# Bảy mô hình của bundle đối chứng: (khóa hiển thị, model_id trong registry)
-ALL_MODELS = (
-    ("centralized", "demo_centralized_v6"),
-    ("fedavg", "demo_fedavg_v7"),
-    *((f"local_{i:02d}", f"demo_local_{i:02d}") for i in range(5)),
-)
+# Bảy mô hình của gói đang dùng: (khóa hiển thị, model_id trong registry); tên và id lấy từ import_manifest.json của gói
+ALL_MODELS = tuple(reg.WEB_REGISTRY_IDS.items())
 # Giới hạn ảnh tải lên. MAX_UPLOAD_BYTES phải khớp MAX_UPLOAD_BYTES trong web/static/js/pages/diagnosis.js
 # (tests/test_web_static_frontend.py kiểm hai số này bằng nhau). Mô hình chỉ cần 224 px nên 40 triệu điểm ảnh là dư.
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
@@ -277,16 +274,16 @@ def run_dual_inference(
     """
     image = _read_image(file)
     if federated_source not in {"fedavg", *(f"local_{i:02d}" for i in range(5))}:
-        raise HTTPException(status_code=400, detail="Chỉ chọn FedAvg v7 hoặc một trong năm Local-only v7 cùng protocol.")
+        raise HTTPException(status_code=400, detail=f"Chỉ chọn {reg.WEB_DISPLAY_NAMES['fedavg']} hoặc một trong năm Local-only cùng protocol.")
     _check_true_class(true_class)
-    selected_id = "demo_fedavg_v7" if federated_source == "fedavg" else f"demo_{federated_source}"
+    selected_id = reg.web_id(federated_source)
     temperatures = _temperatures()
     try:
-        central = _predict("demo_centralized_v6", image, temperatures.get("centralized"))
+        central = _predict(reg.web_id("centralized"), image, temperatures.get("centralized"))
         selected = _predict(selected_id, image, temperatures.get(federated_source))
     except ValueError as exc:
         raise HTTPException(status_code=503, detail=f"Artifact suy luận chưa sẵn sàng: {exc}") from exc
-    selected_name = "FedAvg v7" if federated_source == "fedavg" else f"Local {federated_source[-2:]}"
+    selected_name = reg.WEB_DISPLAY_NAMES[federated_source]
     return {
         "filename": file.filename,
         "federated_source": federated_source,

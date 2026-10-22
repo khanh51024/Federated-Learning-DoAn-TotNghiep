@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-22T10:50:15",
+      "generated_at": "2026-10-22T12:05:52",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,7 +145,7 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-22T10:50:17",
+      "generated_at": "2026-10-22T12:05:53",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
@@ -180,16 +180,16 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-22T10:50:20",
+      "generated_at": "2026-10-22T12:05:56",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
     },
     "checkpoint_catalog": {
       "status": "complete",
-      "total_pt_files": 93,
+      "total_pt_files": 100,
       "in_models": 15,
-      "in_groups": 78,
+      "in_groups": 85,
       "unclassified": [],
       "source": "quét đĩa (scripts/build_registry.py)"
     }
@@ -199,7 +199,7 @@
       "id": "registry",
       "title": "Registry v2 + danh mục mọi checkpoint trên đĩa",
       "status": "XONG",
-      "detail": "schema v2; 18 model; 93 file .pt đều có tên (15 trong model, 78 trong nhóm)",
+      "detail": "schema v2; 18 model; 100 file .pt đều có tên (15 trong model, 85 trong nhóm)",
       "unlock": []
     },
     {
@@ -227,7 +227,7 @@
       "id": "no_hardcode",
       "title": "Không hardcode đường dẫn artifact",
       "status": "CHƯA",
-      "detail": "4 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/build_community_sim_features.py:85', 'scripts/eval_trained_v4.py:31', 'scripts/evaluate_plantvillage_reference.py:35', 'scripts/simulate_community.py:32']",
+      "detail": "8 chỗ hardcode đường dẫn artifacts/ (quét AST): ['src/bundle.py:19', 'src/bundle.py:20', 'src/bundle.py:21', 'scripts/build_community_sim_features.py:88', 'scripts/eval_trained_v4.py:31']",
       "unlock": []
     },
     {

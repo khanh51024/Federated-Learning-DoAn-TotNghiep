@@ -1,7 +1,7 @@
-"""Phân bố lớp trong shard huấn luyện của từng client (partition label_alpha_0_1 của release mixed_pv_pd_v3).
+"""Phân bố lớp trong shard huấn luyện của từng client (partition label_alpha_0_1 của release mà gói mô hình đang dùng khai báo).
 
 Dùng để GIẢI THÍCH kết quả Local-only trên web: một Local-only không nhận ra được bệnh mà shard của nó
-không có ảnh. Nguồn: manifest release đã kiểm hash (data/dataset_sources/mixed/pv_pd_v3), đối chiếu với
+không có ảnh. Nguồn: manifest release đã kiểm hash (reg.RELEASE_DIR), đối chiếu với
 `local/combined_summary.json` của bundle (n_k từng client) và với train.jsonl (hợp các shard = train).
 
 Chạy: python scripts/report_client_shards.py   ->  artifacts/client_shard_class_counts.json
@@ -38,7 +38,7 @@ def _jsonl(path: Path) -> list[dict[str, Any]]:
 
 
 def build_report() -> dict[str, Any]:
-    release = reg.abs_path(reg.RELEASE_V3_DIR)
+    release = reg.abs_path(reg.RELEASE_DIR)
     shard_dir = release / "partitions" / reg.PARTITION_SCHEME
     needed = [shard_dir / f"client_{i:02d}.jsonl" for i in range(NUM_CLIENTS)] + [
         release / "manifests" / "train.jsonl",

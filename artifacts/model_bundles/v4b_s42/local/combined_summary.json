@@ -1,0 +1,169 @@
+{
+ "backend": "local_only",
+ "partition_scheme": "label_alpha_0_1",
+ "rounds_per_client": 40,
+ "seed": 42,
+ "w0_fingerprint": "a3937527052a339e840b2f092abd30460ecda00b13e5a163c6a822528a612bb6",
+ "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+ "clients": {
+  "client_00": {
+   "n_k": 13107,
+   "class_coverage": {
+    "train_label_count": 22,
+    "missing_class_ids": [
+     0,
+     5,
+     11,
+     12,
+     14,
+     16,
+     18,
+     19,
+     25,
+     26,
+     29,
+     31,
+     32,
+     33,
+     36,
+     37
+    ],
+    "validation_seen_label_fraction": 0.6079158019567151,
+    "plantdoc_validation_seen_label_fraction": 0.4052044609665427,
+    "plantvillage_validation_seen_label_fraction": 0.6372007366482505
+   },
+   "best_validation": {
+    "round": 22,
+    "accuracy": 0.4739,
+    "plantdoc_macro_f1_supported": 0.13211684350241082,
+    "plantvillage_macro_f1_supported": 0.3292496939038302
+   }
+  },
+  "client_01": {
+   "n_k": 11691,
+   "class_coverage": {
+    "train_label_count": 22,
+    "missing_class_ids": [
+     5,
+     6,
+     7,
+     10,
+     12,
+     13,
+     14,
+     18,
+     19,
+     20,
+     21,
+     25,
+     29,
+     30,
+     32,
+     35
+    ],
+    "validation_seen_label_fraction": 0.5982804624962941,
+    "plantdoc_validation_seen_label_fraction": 0.4349442379182156,
+    "plantvillage_validation_seen_label_fraction": 0.5791896869244936
+   },
+   "best_validation": {
+    "round": 30,
+    "accuracy": 0.4895,
+    "plantdoc_macro_f1_supported": 0.1269641120988051,
+    "plantvillage_macro_f1_supported": 0.308696464631259
+   }
+  },
+  "client_02": {
+   "n_k": 6647,
+   "class_coverage": {
+    "train_label_count": 22,
+    "missing_class_ids": [
+     1,
+     2,
+     6,
+     9,
+     10,
+     11,
+     12,
+     15,
+     16,
+     19,
+     21,
+     23,
+     25,
+     26,
+     30,
+     31
+    ],
+    "validation_seen_label_fraction": 0.5978357545211977,
+    "plantdoc_validation_seen_label_fraction": 0.6133828996282528,
+    "plantvillage_validation_seen_label_fraction": 0.5778084714548803
+   },
+   "best_validation": {
+    "round": 33,
+    "accuracy": 0.3119,
+    "plantdoc_macro_f1_supported": 0.18358378253316782,
+    "plantvillage_macro_f1_supported": 0.19587153065112395
+   }
+  },
+  "client_03": {
+   "n_k": 8863,
+   "class_coverage": {
+    "train_label_count": 24,
+    "missing_class_ids": [
+     2,
+     3,
+     6,
+     9,
+     10,
+     13,
+     19,
+     26,
+     27,
+     30,
+     33,
+     34,
+     36,
+     37
+    ],
+    "validation_seen_label_fraction": 0.6762525941298547,
+    "plantdoc_validation_seen_label_fraction": 0.8178438661710037,
+    "plantvillage_validation_seen_label_fraction": 0.7060313075506446
+   },
+   "best_validation": {
+    "round": 38,
+    "accuracy": 0.4798,
+    "plantdoc_macro_f1_supported": 0.2858641405832608,
+    "plantvillage_macro_f1_supported": 0.3392312157125898
+   }
+  },
+  "client_04": {
+   "n_k": 12156,
+   "class_coverage": {
+    "train_label_count": 26,
+    "missing_class_ids": [
+     3,
+     4,
+     5,
+     8,
+     12,
+     14,
+     16,
+     17,
+     18,
+     20,
+     21,
+     31
+    ],
+    "validation_seen_label_fraction": 0.7259116513489475,
+    "plantdoc_validation_seen_label_fraction": 0.6319702602230484,
+    "plantvillage_validation_seen_label_fraction": 0.7458563535911602
+   },
+   "best_validation": {
+    "round": 37,
+    "accuracy": 0.4778,
+    "plantdoc_macro_f1_supported": 0.10058262025907896,
+    "plantvillage_macro_f1_supported": 0.4136250351756252
+   }
+  }
+ }
+}

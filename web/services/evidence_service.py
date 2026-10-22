@@ -23,7 +23,7 @@ MODEL_ORDER = ("centralized", "fedavg", "local_00", "local_01", "local_02", "loc
 SOURCES = ("plantdoc", "plantvillage")
 MAIN_MODELS = ("centralized", "fedavg")
 # Mô hình trong per-class report/domain-gap report được đặt tên hiển thị thay vì model_id
-_DISPLAY = {"centralized": "Centralized v6", "fedavg": "FedAvg v7"}
+_DISPLAY = {k: v for k, v in reg.WEB_DISPLAY_NAMES.items() if k in ("centralized", "fedavg")}
 
 _JSON_CACHE: Dict[str, Any] = {}
 

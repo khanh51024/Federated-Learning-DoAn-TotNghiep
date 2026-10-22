@@ -137,7 +137,7 @@ def main() -> int:
         print(f"[pv-eval] bundle không hợp lệ: {evidence.get('reason')}", file=sys.stderr)
         return 1
     dataset_root = reg.abs_path(reg.DATASET_SOURCES_DIR)
-    release = reg.abs_path(reg.RELEASE_V3_DIR)
+    release = reg.abs_path(reg.RELEASE_DIR)
     classes = evidence["classes"]
     val_rows, cal_rows = ev._verify_inputs(evidence, release, dataset_root)
     test_rows = ev._verify_holdout(evidence, release)

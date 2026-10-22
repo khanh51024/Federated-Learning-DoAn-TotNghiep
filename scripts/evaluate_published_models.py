@@ -1,4 +1,4 @@
-"""Tái đánh giá CỤC BỘ 7 checkpoint của bundle published trên ảnh validation của release mixed_pv_pd_v3.
+"""Tái đánh giá CỤC BỘ 7 checkpoint của gói mô hình đang dùng (artifacts/active_bundle.json) trên ảnh validation của release mà gói khai báo.
 
 Mục đích: xác nhận (hoặc bác bỏ) số liệu mà nhóm train công bố, và đo thứ chưa có trong bundle:
 confusion matrix đầy đủ, ảnh sai với confidence cao, calibration (ECE) trước/sau temperature scaling.
@@ -35,7 +35,21 @@ from src import registry as reg  # noqa: E402
 
 BINS = 15
 HIGH_CONFIDENCE = 0.9
-SOURCES = ("plantdoc", "plantvillage")
+SOURCES = ("plantdoc", "plantvillage", "field_other")
+PRIMARY_SOURCES = ("plantdoc", "plantvillage")
+
+
+def source_group(source_dataset: str) -> str:
+    """Nhóm nguồn khi báo cáo: PlantDoc, PlantVillage, hoặc "field_other" (mọi nguồn ngoài đồng khác của release v4; release v3 không có nhóm này).
+
+    Release v4 gán `source_domain="plantdoc"` cho MỌI ảnh ngoài đồng, nên không dùng source_domain: nhóm theo `source_dataset` để giữ số PlantDoc
+    so sánh được với bản cũ và vẫn thấy phần ngoài đồng cùng nguồn."""
+    name = str(source_dataset).lower()
+    return name if name in PRIMARY_SOURCES else "field_other"
+
+
+def present_sources(sources: np.ndarray) -> list[str]:
+    return [s for s in SOURCES if (sources == s).any()]
 NPZ_DIR = "data/reeval"  # gitignored (data/*)
 # `reproduced` = khớp TUYỆT ĐỐI số ảnh đúng và metric (sai số float <= 5e-4).
 # `within_tolerance` = chấp nhận tối đa MỘT ảnh đổi nhãn so với số công bố (ví dụ ảnh sát ngưỡng quyết định khi khác phần cứng/
@@ -294,15 +308,16 @@ def build_report(
     classes = evidence["classes"]
     val_targets = np.array([r["class_id"] for r in val_rows], dtype=np.int64)
     cal_targets = np.array([r["class_id"] for r in cal_rows], dtype=np.int64)
-    sources = np.array([r["source_dataset"].lower() for r in val_rows])
+    sources = np.array([source_group(r["source_dataset"]) for r in val_rows])
     names = {m["model_id"]: m["name"] for m in evidence["models"]}
+    present = present_sources(sources)
 
     models: dict[str, Any] = {}
     for key in val_logits:
         result = analyze_model(val_logits[key], val_targets, sources, cal_logits[key], cal_targets, classes)
         result["display_name"] = names[key]
         result["vs_published"] = {}
-        for source in SOURCES:
+        for source in present:
             if source not in result["by_source"]:  # --limit có thể làm một nguồn không còn ảnh
                 continue
             published = _published_for(key, source)
@@ -341,13 +356,13 @@ def build_report(
             if preds[i] != val_targets[i] and conf[i] >= HIGH_CONFIDENCE
         ]
         detail[key] = {
-            "confusion_matrix": {s: confusion(val_targets[sources == s], preds[sources == s], len(classes)).tolist() for s in SOURCES},
+            "confusion_matrix": {s: confusion(val_targets[sources == s], preds[sources == s], len(classes)).tolist() for s in present},
             "top_confusions": {
                 s: [{"target": classes[t], "predicted": classes[p], "count": int(c)}
                     for (t, p), c in Counter(
                         (int(t), int(p)) for t, p in zip(val_targets[sources == s], preds[sources == s]) if t != p
                     ).most_common(10)]
-                for s in SOURCES
+                for s in present
             },
             "high_confidence_wrong": wrong_confident,
         }
@@ -355,7 +370,7 @@ def build_report(
     comparisons = [c for m in models.values() for c in m["vs_published"].values()]
     all_reproduced = all(c.get("reproduced") for c in comparisons)
     main_exact = all(models[k]["vs_published"][s].get("reproduced") for k in ("centralized", "fedavg")
-                     for s in SOURCES if s in models[k]["vs_published"])
+                     for s in present if s in models[k]["vs_published"])
     return {
         "evidence": "tái đánh giá cục bộ trên CPU từ checkpoint đã kiểm hash + ảnh validation đã kiểm byte_sha256",
         "protocol_id": evidence["protocol_id"],
@@ -467,27 +482,28 @@ def build_holdout_report(
     classes = evidence["classes"]
     targets = np.array([r["class_id"] for r in rows], dtype=np.int64)
     cal_targets = np.array([r["class_id"] for r in cal_rows], dtype=np.int64)
-    sources = np.array([r["source_dataset"].lower() for r in rows])
+    sources = np.array([source_group(r["source_dataset"]) for r in rows])
     names = {m["model_id"]: m["name"] for m in evidence["models"]}
+    present = present_sources(sources)
     models: dict[str, Any] = {}
     for key in logits:
         result = analyze_model(logits[key], targets, sources, cal_logits[key], cal_targets, classes)
         result["display_name"] = names[key]
         if key == "centralized":
             result["vs_recorded"] = {s: compare_with_recorded(result["by_source"][s], _recorded_holdout(s))
-                                     for s in SOURCES if s in result["by_source"]}
+                                     for s in present if s in result["by_source"]}
         models[key] = result
     detail: dict[str, Any] = {}
     for key in ("fedavg", "centralized"):
         preds = softmax(logits[key]).argmax(axis=1)
         detail[key] = {
-            "confusion_matrix": {s: confusion(targets[sources == s], preds[sources == s], len(classes)).tolist() for s in SOURCES},
+            "confusion_matrix": {s: confusion(targets[sources == s], preds[sources == s], len(classes)).tolist() for s in present},
             "top_confusions": {
                 s: [{"target": classes[t], "predicted": classes[p], "count": int(c)}
                     for (t, p), c in Counter(
                         (int(t), int(p)) for t, p in zip(targets[sources == s], preds[sources == s]) if t != p
                     ).most_common(10)]
-                for s in SOURCES
+                for s in present
             },
         }
     counts = Counter(sources.tolist())
@@ -500,7 +516,7 @@ def build_holdout_report(
         "split": reg.HOLDOUT_SPLIT,
         "holdout_manifest_sha256": manifest_sha256,
         "holdout_count": len(rows),
-        "holdout_counts_by_source": {s: int(counts.get(s, 0)) for s in SOURCES},
+        "holdout_counts_by_source": {s: int(counts.get(s, 0)) for s in present},
         "checkpoint_sha256": {m["model_id"]: m["checkpoint_sha256"] for m in evidence["models"]},
         "classes": classes,
         "bins": BINS,
@@ -599,7 +615,7 @@ def main() -> int:
         print(f"[reeval] bundle không hợp lệ: {evidence.get('reason')}", file=sys.stderr)
         return 1
     dataset_root = reg.abs_path(reg.DATASET_SOURCES_DIR)
-    release = reg.abs_path(reg.RELEASE_V3_DIR)
+    release = reg.abs_path(reg.RELEASE_DIR)
     if not (release / "manifests" / "val.jsonl").is_file():
         print(f"[reeval] thiếu dataset ở {reg.DATASET_SOURCES_DIR} (nhánh dataset-sources của GitHub)", file=sys.stderr)
         return 1

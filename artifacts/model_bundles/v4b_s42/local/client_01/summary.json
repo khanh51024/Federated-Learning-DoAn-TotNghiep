@@ -1,0 +1,490 @@
+{
+ "seed": 42,
+ "w0_fingerprint": "a3937527052a339e840b2f092abd30460ecda00b13e5a163c6a822528a612bb6",
+ "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+ "client": 1,
+ "n_k": 11691,
+ "history": [
+  {
+   "epoch": 1,
+   "lr": 0.02,
+   "val_accuracy": 0.3067,
+   "val_loss": null,
+   "selection_score": 0.1283,
+   "seconds": 52.9,
+   "plantdoc_macro_f1_supported": 0.0562,
+   "plantvillage_macro_f1_supported": 0.1497,
+   "train_loss": 1.3028823086401933
+  },
+  {
+   "epoch": 2,
+   "lr": 0.02,
+   "val_accuracy": 0.381,
+   "val_loss": null,
+   "selection_score": 0.1349,
+   "seconds": 12.2,
+   "plantdoc_macro_f1_supported": 0.0459,
+   "plantvillage_macro_f1_supported": 0.2327,
+   "train_loss": 0.8782156981064494
+  },
+  {
+   "epoch": 3,
+   "lr": 0.019967573081342102,
+   "val_accuracy": 0.4545,
+   "val_loss": null,
+   "selection_score": 0.183,
+   "seconds": 11.1,
+   "plantdoc_macro_f1_supported": 0.0719,
+   "plantvillage_macro_f1_supported": 0.2669,
+   "train_loss": 0.8298186772945001
+  },
+  {
+   "epoch": 4,
+   "lr": 0.019870502626379127,
+   "val_accuracy": 0.4503,
+   "val_loss": null,
+   "selection_score": 0.1802,
+   "seconds": 10.7,
+   "plantdoc_macro_f1_supported": 0.0481,
+   "plantvillage_macro_f1_supported": 0.2806,
+   "train_loss": 0.8022980083504405
+  },
+  {
+   "epoch": 5,
+   "lr": 0.019709418174260522,
+   "val_accuracy": 0.4735,
+   "val_loss": null,
+   "selection_score": 0.2063,
+   "seconds": 8.9,
+   "plantdoc_macro_f1_supported": 0.0748,
+   "plantvillage_macro_f1_supported": 0.2907,
+   "train_loss": 0.7851625983662647
+  },
+  {
+   "epoch": 6,
+   "lr": 0.019485364419471456,
+   "val_accuracy": 0.4457,
+   "val_loss": null,
+   "selection_score": 0.2078,
+   "seconds": 6.6,
+   "plantdoc_macro_f1_supported": 0.0768,
+   "plantvillage_macro_f1_supported": 0.2855,
+   "train_loss": 0.7700960875352836
+  },
+  {
+   "epoch": 7,
+   "lr": 0.019199794436588244,
+   "val_accuracy": 0.488,
+   "val_loss": null,
+   "selection_score": 0.2483,
+   "seconds": 6.5,
+   "plantdoc_macro_f1_supported": 0.128,
+   "plantvillage_macro_f1_supported": 0.2912,
+   "train_loss": 0.7622389819091608
+  },
+  {
+   "epoch": 8,
+   "lr": 0.018854560256532097,
+   "val_accuracy": 0.4782,
+   "val_loss": null,
+   "selection_score": 0.2248,
+   "seconds": 6.5,
+   "plantdoc_macro_f1_supported": 0.1146,
+   "plantvillage_macro_f1_supported": 0.2845,
+   "train_loss": 0.749937184586434
+  },
+  {
+   "epoch": 9,
+   "lr": 0.01845190085543795,
+   "val_accuracy": 0.4886,
+   "val_loss": null,
+   "selection_score": 0.2553,
+   "seconds": 7.5,
+   "plantdoc_macro_f1_supported": 0.1679,
+   "plantvillage_macro_f1_supported": 0.2935,
+   "train_loss": 0.7482675642588316
+  },
+  {
+   "epoch": 10,
+   "lr": 0.017994427634035012,
+   "val_accuracy": 0.4825,
+   "val_loss": null,
+   "selection_score": 0.2402,
+   "seconds": 7.1,
+   "plantdoc_macro_f1_supported": 0.1105,
+   "plantvillage_macro_f1_supported": 0.2929,
+   "train_loss": 0.7435961690616714
+  },
+  {
+   "epoch": 11,
+   "lr": 0.01748510748171101,
+   "val_accuracy": 0.4864,
+   "val_loss": null,
+   "selection_score": 0.2475,
+   "seconds": 7.2,
+   "plantdoc_macro_f1_supported": 0.1101,
+   "plantvillage_macro_f1_supported": 0.3152,
+   "train_loss": 0.7354577305726627
+  },
+  {
+   "epoch": 12,
+   "lr": 0.016927243535095997,
+   "val_accuracy": 0.481,
+   "val_loss": null,
+   "selection_score": 0.2519,
+   "seconds": 7.7,
+   "plantdoc_macro_f1_supported": 0.1162,
+   "plantvillage_macro_f1_supported": 0.294,
+   "train_loss": 0.7352242610501668
+  },
+  {
+   "epoch": 13,
+   "lr": 0.01632445375595377,
+   "val_accuracy": 0.4893,
+   "val_loss": null,
+   "selection_score": 0.258,
+   "seconds": 8.1,
+   "plantdoc_macro_f1_supported": 0.1138,
+   "plantvillage_macro_f1_supported": 0.3172,
+   "train_loss": 0.7305757533840134
+  },
+  {
+   "epoch": 14,
+   "lr": 0.015680647467311556,
+   "val_accuracy": 0.4927,
+   "val_loss": null,
+   "selection_score": 0.2656,
+   "seconds": 12.1,
+   "plantdoc_macro_f1_supported": 0.1283,
+   "plantvillage_macro_f1_supported": 0.314,
+   "train_loss": 0.7270696175209563
+  },
+  {
+   "epoch": 15,
+   "lr": 0.015,
+   "val_accuracy": 0.4831,
+   "val_loss": null,
+   "selection_score": 0.2647,
+   "seconds": 11.5,
+   "plantdoc_macro_f1_supported": 0.1139,
+   "plantvillage_macro_f1_supported": 0.3033,
+   "train_loss": 0.7255362364746386
+  },
+  {
+   "epoch": 16,
+   "lr": 0.01428692561403054,
+   "val_accuracy": 0.4895,
+   "val_loss": null,
+   "selection_score": 0.2554,
+   "seconds": 12.6,
+   "plantdoc_macro_f1_supported": 0.1191,
+   "plantvillage_macro_f1_supported": 0.3156,
+   "train_loss": 0.7213356227546831
+  },
+  {
+   "epoch": 17,
+   "lr": 0.013546048870425357,
+   "val_accuracy": 0.4864,
+   "val_loss": null,
+   "selection_score": 0.2524,
+   "seconds": 13.3,
+   "plantdoc_macro_f1_supported": 0.1196,
+   "plantvillage_macro_f1_supported": 0.3078,
+   "train_loss": 0.719486159893294
+  },
+  {
+   "epoch": 18,
+   "lr": 0.012782174639164527,
+   "val_accuracy": 0.4868,
+   "val_loss": null,
+   "selection_score": 0.2732,
+   "seconds": 12.9,
+   "plantdoc_macro_f1_supported": 0.1196,
+   "plantvillage_macro_f1_supported": 0.3031,
+   "train_loss": 0.7183531435773244
+  },
+  {
+   "epoch": 19,
+   "lr": 0.012000256937760445,
+   "val_accuracy": 0.4907,
+   "val_loss": null,
+   "selection_score": 0.2709,
+   "seconds": 12.5,
+   "plantdoc_macro_f1_supported": 0.1303,
+   "plantvillage_macro_f1_supported": 0.3131,
+   "train_loss": 0.7204289758147293
+  },
+  {
+   "epoch": 20,
+   "lr": 0.01120536680255323,
+   "val_accuracy": 0.4828,
+   "val_loss": null,
+   "selection_score": 0.269,
+   "seconds": 13.7,
+   "plantdoc_macro_f1_supported": 0.1365,
+   "plantvillage_macro_f1_supported": 0.309,
+   "train_loss": 0.716075834242152
+  },
+  {
+   "epoch": 21,
+   "lr": 0.010402659401094153,
+   "val_accuracy": 0.4767,
+   "val_loss": null,
+   "selection_score": 0.2577,
+   "seconds": 13.9,
+   "plantdoc_macro_f1_supported": 0.1158,
+   "plantvillage_macro_f1_supported": 0.3075,
+   "train_loss": 0.7151239134269951
+  },
+  {
+   "epoch": 22,
+   "lr": 0.009597340598905851,
+   "val_accuracy": 0.4859,
+   "val_loss": null,
+   "selection_score": 0.2697,
+   "seconds": 15.8,
+   "plantdoc_macro_f1_supported": 0.1348,
+   "plantvillage_macro_f1_supported": 0.3121,
+   "train_loss": 0.7137492415372937
+  },
+  {
+   "epoch": 23,
+   "lr": 0.00879463319744677,
+   "val_accuracy": 0.4861,
+   "val_loss": null,
+   "selection_score": 0.2771,
+   "seconds": 15.2,
+   "plantdoc_macro_f1_supported": 0.1145,
+   "plantvillage_macro_f1_supported": 0.3023,
+   "train_loss": 0.7137598499914464
+  },
+  {
+   "epoch": 24,
+   "lr": 0.007999743062239557,
+   "val_accuracy": 0.4852,
+   "val_loss": null,
+   "selection_score": 0.2675,
+   "seconds": 13.9,
+   "plantdoc_macro_f1_supported": 0.116,
+   "plantvillage_macro_f1_supported": 0.3104,
+   "train_loss": 0.7116632185014113
+  },
+  {
+   "epoch": 25,
+   "lr": 0.007217825360835474,
+   "val_accuracy": 0.4841,
+   "val_loss": null,
+   "selection_score": 0.27,
+   "seconds": 14.4,
+   "plantdoc_macro_f1_supported": 0.1305,
+   "plantvillage_macro_f1_supported": 0.3088,
+   "train_loss": 0.7107774543452228
+  },
+  {
+   "epoch": 26,
+   "lr": 0.006453951129574643,
+   "val_accuracy": 0.4862,
+   "val_loss": null,
+   "selection_score": 0.2749,
+   "seconds": 14.1,
+   "plantdoc_macro_f1_supported": 0.126,
+   "plantvillage_macro_f1_supported": 0.3009,
+   "train_loss": 0.7103992253656659
+  },
+  {
+   "epoch": 27,
+   "lr": 0.005713074385969456,
+   "val_accuracy": 0.4832,
+   "val_loss": null,
+   "selection_score": 0.2664,
+   "seconds": 13.6,
+   "plantdoc_macro_f1_supported": 0.1185,
+   "plantvillage_macro_f1_supported": 0.304,
+   "train_loss": 0.7098010589074929
+  },
+  {
+   "epoch": 28,
+   "lr": 0.005000000000000003,
+   "val_accuracy": 0.4875,
+   "val_loss": null,
+   "selection_score": 0.2734,
+   "seconds": 14.2,
+   "plantdoc_macro_f1_supported": 0.1214,
+   "plantvillage_macro_f1_supported": 0.3076,
+   "train_loss": 0.7090039212856043
+  },
+  {
+   "epoch": 29,
+   "lr": 0.004319352532688443,
+   "val_accuracy": 0.4855,
+   "val_loss": null,
+   "selection_score": 0.2705,
+   "seconds": 15.2,
+   "plantdoc_macro_f1_supported": 0.1179,
+   "plantvillage_macro_f1_supported": 0.3044,
+   "train_loss": 0.7085422447021212
+  },
+  {
+   "epoch": 30,
+   "lr": 0.0036755462440462286,
+   "val_accuracy": 0.4895,
+   "val_loss": null,
+   "selection_score": 0.2777,
+   "seconds": 15.9,
+   "plantdoc_macro_f1_supported": 0.1262,
+   "plantvillage_macro_f1_supported": 0.3089,
+   "train_loss": 0.7072821775297237
+  },
+  {
+   "epoch": 31,
+   "lr": 0.003072756464904006,
+   "val_accuracy": 0.4865,
+   "val_loss": null,
+   "selection_score": 0.2746,
+   "seconds": 15.8,
+   "plantdoc_macro_f1_supported": 0.1332,
+   "plantvillage_macro_f1_supported": 0.3111,
+   "train_loss": 0.7061251042468566
+  },
+  {
+   "epoch": 32,
+   "lr": 0.002514892518288988,
+   "val_accuracy": 0.4886,
+   "val_loss": null,
+   "selection_score": 0.2756,
+   "seconds": 16.4,
+   "plantdoc_macro_f1_supported": 0.1237,
+   "plantvillage_macro_f1_supported": 0.3118,
+   "train_loss": 0.7074474021148747
+  },
+  {
+   "epoch": 33,
+   "lr": 0.0020055723659649907,
+   "val_accuracy": 0.4871,
+   "val_loss": null,
+   "selection_score": 0.276,
+   "seconds": 16.0,
+   "plantdoc_macro_f1_supported": 0.1201,
+   "plantvillage_macro_f1_supported": 0.3076,
+   "train_loss": 0.7070309994065949
+  },
+  {
+   "epoch": 34,
+   "lr": 0.001548099144562054,
+   "val_accuracy": 0.487,
+   "val_loss": null,
+   "selection_score": 0.2775,
+   "seconds": 16.9,
+   "plantdoc_macro_f1_supported": 0.1223,
+   "plantvillage_macro_f1_supported": 0.3103,
+   "train_loss": 0.7049255136162432
+  },
+  {
+   "epoch": 35,
+   "lr": 0.001145439743467902,
+   "val_accuracy": 0.4864,
+   "val_loss": null,
+   "selection_score": 0.2732,
+   "seconds": 16.0,
+   "plantdoc_macro_f1_supported": 0.1233,
+   "plantvillage_macro_f1_supported": 0.3099,
+   "train_loss": 0.7065403375192456
+  },
+  {
+   "epoch": 36,
+   "lr": 0.0008002055634117578,
+   "val_accuracy": 0.4861,
+   "val_loss": null,
+   "selection_score": 0.2754,
+   "seconds": 16.6,
+   "plantdoc_macro_f1_supported": 0.1216,
+   "plantvillage_macro_f1_supported": 0.3069,
+   "train_loss": 0.7055590972756821
+  },
+  {
+   "epoch": 37,
+   "lr": 0.0005146355805285452,
+   "val_accuracy": 0.4865,
+   "val_loss": null,
+   "selection_score": 0.2765,
+   "seconds": 16.5,
+   "plantdoc_macro_f1_supported": 0.122,
+   "plantvillage_macro_f1_supported": 0.307,
+   "train_loss": 0.7042991136344197
+  },
+  {
+   "epoch": 38,
+   "lr": 0.0002905818257394799,
+   "val_accuracy": 0.4856,
+   "val_loss": null,
+   "selection_score": 0.2749,
+   "seconds": 16.7,
+   "plantdoc_macro_f1_supported": 0.1214,
+   "plantvillage_macro_f1_supported": 0.3089,
+   "train_loss": 0.7045875466437859
+  },
+  {
+   "epoch": 39,
+   "lr": 0.00012949737362087156,
+   "val_accuracy": 0.4865,
+   "val_loss": null,
+   "selection_score": 0.276,
+   "seconds": 16.3,
+   "plantdoc_macro_f1_supported": 0.1245,
+   "plantvillage_macro_f1_supported": 0.3085,
+   "train_loss": 0.7059122669147208
+  },
+  {
+   "epoch": 40,
+   "lr": 3.2426918657900704e-05,
+   "val_accuracy": 0.4867,
+   "val_loss": null,
+   "selection_score": 0.2763,
+   "seconds": 16.9,
+   "plantdoc_macro_f1_supported": 0.1239,
+   "plantvillage_macro_f1_supported": 0.3102,
+   "train_loss": 0.7043172398907279
+  }
+ ],
+ "legacy_diagnostic_test": {
+  "per_source": {
+   "plantdoc": {
+    "count": 172,
+    "accuracy": 0.2209
+   },
+   "plantvillage": {
+    "count": 10843,
+    "accuracy": 0.4907
+   }
+  }
+ },
+ "training": {
+  "method": "local",
+  "client": 1,
+  "seed": 42,
+  "optimizer": "SGD động lượng 0.9, weight decay 0.0001",
+  "optimizer_state": "giữ xuyên suốt",
+  "lr": 0.02,
+  "lr_schedule": "khởi động 1 epoch, sau đó cosine về 0",
+  "batch_size": 128,
+  "label_smoothing": 0.1,
+  "units": "epoch",
+  "budget": 40,
+  "local_epochs": 1,
+  "steps_total": 40,
+  "best_step": 30,
+  "selection": "mean macro-F1 over val sources with >= 30 images",
+  "precision": "bf16",
+  "train_transform": "gpu_v2 (get_cpu_train_transform + src/training/gpu_augment.py)",
+  "loss_weighting": "domain_balanced",
+  "train_sizes": [
+   11691
+  ],
+  "scheme": "label_alpha_0_1",
+  "release_name": "mixed_pv_pd_v4",
+  "code_fingerprint": "9dcbcbf6684dcabc4b49127443dfb38dd5b2206d6cc7612fa57c238ecc496c40",
+  "git_commit": "93c5f80fdb824d44460bf4538d6c063bce4517b1",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "torch": "2.11.0+cu128"
+ }
+}

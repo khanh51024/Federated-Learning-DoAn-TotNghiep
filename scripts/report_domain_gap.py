@@ -22,7 +22,7 @@ def build_report(path: Path) -> dict:
         rows = list(csv.DictReader(handle))
     by_model = {}
     for row in rows:
-        if row["model"] not in {"Centralized v6", "FedAvg v7"}:
+        if row["model"] not in {reg.WEB_DISPLAY_NAMES["centralized"], reg.WEB_DISPLAY_NAMES["fedavg"]}:
             continue
         by_model.setdefault(row["model"], {})[row["source"]] = {
             "count": int(row["count"]),
@@ -31,7 +31,7 @@ def build_report(path: Path) -> dict:
             "crop_accuracy_pct": round(float(row["crop_accuracy"]) * 100, 2),
         }
     for model, sources in by_model.items():
-        if set(sources) != {"plantdoc", "plantvillage"}:
+        if not {"plantdoc", "plantvillage"} <= set(sources):
             raise ValueError(f"Missing dataset metric for {model}")
         sources["plantvillage_minus_plantdoc_accuracy_pp"] = round(
             sources["plantvillage"]["accuracy_pct"] - sources["plantdoc"]["accuracy_pct"], 2)

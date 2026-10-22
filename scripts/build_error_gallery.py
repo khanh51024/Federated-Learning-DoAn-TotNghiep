@@ -27,7 +27,8 @@ from src import registry as reg  # noqa: E402
 
 THUMB = 160
 MODELS = ("fedavg", "centralized")
-ATTRIBUTION = ("Ảnh thuộc tập validation của release mixed_pv_pd_v3, lấy từ PlantVillage (Hughes & Salathé, 2015) và "
+GALLERY_SOURCES = ("plantdoc", "plantvillage")   # chỉ ảnh có nguồn và giấy phép ghi rõ ở dòng ghi công; ảnh ngoài đồng từ nguồn khác (field_other) không đưa lên thư viện
+ATTRIBUTION = ("Ảnh thuộc tập validation của release {release}, lấy từ PlantVillage (Hughes & Salathé, 2015) và "
                "PlantDoc (Singh và cộng sự, 2020); chỉ dùng minh họa lỗi của mô hình trong đồ án.")
 
 
@@ -49,6 +50,8 @@ def merge_wrong(detail: dict[str, Any]) -> dict[str, dict[str, Any]]:
     items: dict[str, dict[str, Any]] = {}
     for model in MODELS:
         for row in (detail.get(model) or {}).get("high_confidence_wrong") or []:
+            if row["source"] not in GALLERY_SOURCES:
+                continue
             item = items.setdefault(row["sample_id"], {
                 "sample_id": row["sample_id"],
                 "relative_path": row["relative_path"],
@@ -74,7 +77,7 @@ def build(out_dir: Path) -> dict[str, Any]:
             or report.get("checkpoint_sha256") != checkpoints):
         raise ValueError("báo cáo tái đánh giá không khớp bundle đã kiểm hash")
 
-    release = reg.abs_path(reg.RELEASE_V3_DIR)
+    release = reg.abs_path(reg.RELEASE_DIR)
     val_rows = {}
     with (release / "manifests" / "val.jsonl").open(encoding="utf-8") as stream:
         for line in stream:
@@ -111,8 +114,9 @@ def build(out_dir: Path) -> dict[str, Any]:
         if stale.name not in keep:
             stale.unlink()
     return {
-        "evidence": "ảnh validation mà FedAvg v7 hoặc Centralized v6 đoán SAI với xác suất >= 0,9 (từ báo cáo tái đánh giá cục bộ)",
-        "attribution": ATTRIBUTION,
+        "evidence": (f"ảnh validation (PlantVillage, PlantDoc) mà {reg.WEB_DISPLAY_NAMES['fedavg']} hoặc {reg.WEB_DISPLAY_NAMES['centralized']} "
+                     "đoán SAI với xác suất >= 0,9 (từ báo cáo tái đánh giá cục bộ)"),
+        "attribution": ATTRIBUTION.format(release=reg.abs_path(reg.RELEASE_DIR).name),
         "threshold": report.get("high_confidence_threshold"),
         "protocol_id": evidence["protocol_id"],
         "validation_manifest_sha256": evidence["validation_manifest_sha256"],
@@ -127,7 +131,7 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     out_dir = reg.abs_path(reg.ERROR_GALLERY_DIR)
     catalog = reg.abs_path(reg.ERROR_GALLERY_CATALOG_JSON)
-    if not (reg.abs_path(reg.RELEASE_V3_DIR) / "manifests" / "val.jsonl").is_file():
+    if not (reg.abs_path(reg.RELEASE_DIR) / "manifests" / "val.jsonl").is_file():
         if catalog.is_file():
             print(f"[error_gallery] thiếu dataset — giữ nguyên {reg.ERROR_GALLERY_CATALOG_JSON}")
             return 0

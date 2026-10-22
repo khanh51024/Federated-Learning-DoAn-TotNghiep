@@ -105,7 +105,7 @@ def load_inputs(release: Path) -> tuple[dict[str, dict[str, Any]], dict[str, dic
     annotations = {a["annotation_id"]: a for a in detection["annotations"]}
     images = {i["image_id"]: i for i in detection["images"]}
     rows = {
-        split: [r for r in _jsonl(release / "manifests" / name) if r["source_domain"] == "plantdoc"]
+        split: [r for r in _jsonl(release / "manifests" / name) if r["source_dataset"] == "PlantDoc" and r.get("annotation_id")]
         for split, name in SPLITS.items()
     }
     return annotations, images, rows
@@ -181,11 +181,11 @@ def evaluate(args: argparse.Namespace) -> int:
         print(f"[fullframe] bundle chưa qua cổng kiểm hash: {evidence.get('reason')}", file=sys.stderr)
         return 1
     bundle = reg.abs_path(reg.DEMO_BUNDLE_DIR)
-    release = reg.abs_path(reg.DATASET_SOURCES_DIR) / "mixed" / "pv_pd_v3"
+    release = reg.abs_path(reg.RELEASE_DIR)
     dataset_root = reg.abs_path(reg.DATASET_SOURCES_DIR)
     cache = reg.abs_path(CACHE_DIR)
     if not (release / "annotations" / "detection.json").is_file():
-        print("[fullframe] thiếu data/dataset_sources/mixed/pv_pd_v3 (nhánh dataset-sources)", file=sys.stderr)
+        print(f"[fullframe] thiếu {reg.RELEASE_DIR}/annotations/detection.json (nhánh dataset-sources)", file=sys.stderr)
         return 1
 
     annotations, images, rows_by_split = load_inputs(release)
@@ -225,11 +225,7 @@ def evaluate(args: argparse.Namespace) -> int:
                          "train_images": payload.get("train_images"), "epochs": payload.get("epochs"),
                          "pretrained_backbone": payload.get("pretrained_backbone")}
         detector_fallbacks = 0
-    files = {
-        "centralized": bundle / "centralized" / "checkpoint_best.pt",
-        "fedavg": bundle / "fedavg" / "checkpoint_best.pt",
-        **{f"local_{i:02d}": bundle / "local" / f"client_{i:02d}" / "checkpoint_best.pt" for i in range(5)},
-    }
+    files = {m["model_id"]: bundle / m["checkpoint_relative_path"] for m in evidence["models"]}
     models = {name: _load_model(path) for name, path in files.items()}
     expected_sha = {m["model_id"]: m.get("checkpoint_sha256") for m in evidence["models"]}
     for name, path in files.items():

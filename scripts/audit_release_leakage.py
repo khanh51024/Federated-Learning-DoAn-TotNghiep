@@ -1,4 +1,4 @@
-"""Audit leakage trên release mixed_pv_pd_v3 mà các checkpoint published ràng buộc.
+"""Audit leakage trên release mà gói mô hình đang dùng ràng buộc (artifacts/active_bundle.json -> import_manifest.json).
 
 Chuỗi bằng chứng (mỗi mắt xích được kiểm, không suy diễn):
   checkpoint.release_manifest_sha256  ==  sha256(release_manifest.json)        (web/demo_evidence kiểm lúc suy luận)
@@ -25,8 +25,11 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from scripts.import_branch_demo import RELEASE_SHA, VALIDATION_SHA  # noqa: E402
-from src import registry as reg  # noqa: E402
+from src import bundle, registry as reg  # noqa: E402
+
+_IDENTITY = bundle.load_manifest()
+RELEASE_SHA = _IDENTITY.get("release_manifest_sha256")        # nhận dạng lấy từ gói, không viết cứng
+VALIDATION_SHA = _IDENTITY.get("validation_manifest_sha256")
 
 KEYS = ("group_id", "parent_scene_id", "byte_sha256", "sample_id", "image_id")
 SPLITS = ("train", "val", "calibration")
@@ -85,7 +88,7 @@ def audit_partition(shards: dict[str, list[dict[str, Any]]], train_ids: set[str]
 
 
 def build_report(verify_bytes: bool) -> dict[str, Any]:
-    release = reg.abs_path(reg.RELEASE_V3_DIR)
+    release = reg.abs_path(reg.RELEASE_DIR)
     image_root = reg.abs_path(reg.DATASET_SOURCES_DIR)
     manifest_path = release / "release_manifest.json"
     needed = [manifest_path] + [release / "manifests" / f"{n}.jsonl" for n in ("train", "val", "calibration")]

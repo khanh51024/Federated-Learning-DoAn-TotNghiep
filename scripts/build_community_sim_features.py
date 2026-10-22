@@ -68,10 +68,13 @@ def main() -> int:
         print(f"[sim-features] bundle không hợp lệ: {evidence.get('reason')}", file=sys.stderr)
         return 1
     dataset_root = reg.abs_path(reg.DATASET_SOURCES_DIR)
-    release = reg.abs_path(reg.RELEASE_V3_DIR)
+    release = reg.abs_path(reg.RELEASE_DIR)
     val_rows, cal_rows = ev._verify_inputs(evidence, release, dataset_root)
     test_rows = ev._verify_holdout(evidence, release)
     test_sha = ev._sha256(release / "manifests" / f"{reg.HOLDOUT_SPLIT}.jsonl")
+    # mô phỏng cộng đồng chỉ có hai nguồn (mã 0/1): bỏ ảnh ngoài đồng từ nguồn khác của release v4 (cùng cách lọc với bộ đặc trưng đánh giá)
+    keep = lambda rows: [r for r in rows if str(r["source_dataset"]).lower() in SOURCE_CODE]  # noqa: E731
+    val_rows, cal_rows, test_rows = keep(val_rows), keep(cal_rows), keep(test_rows)
     if args.limit:
         cal_rows, test_rows = cal_rows[: args.limit], test_rows[: args.limit]
 

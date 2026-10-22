@@ -1,0 +1,23 @@
+{
+ "branch": "runs/v4b/centralized_s42",
+ "validation_manifest_sha256": "f370f9fe873b874b7ec64a247831a951d0f9108bbd67a06f8b97cfa0d3e6f355",
+ "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+ "files": {
+  "checkpoint_best.pt": {
+   "bytes": 6364181,
+   "sha256": "a4ea0dcc8ef34eec529207ad1c015001f5554119e2a9eaa1f4760f200885dcbb"
+  },
+  "summary.json": {
+   "bytes": 12429,
+   "sha256": "27c0e823ac2a2d745b92e5019ba31e579c496124ceaae6f561ff35c70ca1c569"
+  },
+  "validation_comparison.csv": {
+   "bytes": 5986,
+   "sha256": "fd24cc7044ff78a5017fa6095ae42456db3195bbbaf5a78ed781d039fcd8180d"
+  },
+  "validation_metrics.json": {
+   "bytes": 12456,
+   "sha256": "5fd4d139ebd6868d6ca2166495da469cba33429e0fbd7531fa3fd2e85a533815"
+  }
+ }
+}

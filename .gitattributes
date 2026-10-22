@@ -4,3 +4,6 @@ scripts/hooks/* text eol=lf
 artifacts/branch_demo/**/contract/*.py -text
 # Script chạy trên máy GPU Linux: luôn LF (git archive áp dụng core.autocrlf khi xuất)
 scripts/remote/*.sh text eol=lf
+
+# Gói mô hình dựng từ run (scripts/import_run_bundle.py): mọi tệp được ghim SHA-256 theo byte, Git không được đổi LF/CRLF
+artifacts/model_bundles/** -text

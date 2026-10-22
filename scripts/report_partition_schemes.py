@@ -1,10 +1,10 @@
-"""Phân bố lớp theo client cho MỌI cách chia dữ liệu của release mixed_pv_pd_v3 (chỉ dữ liệu, không có số của mô hình).
+"""Phân bố lớp theo client cho MỌI cách chia dữ liệu của release mà gói mô hình đang dùng khai báo (chỉ dữ liệu, không có số của mô hình).
 
 Dùng cho trình xem non-IID ở bước 2 của web: so sánh IID, lệch nhãn (Dirichlet α), lệch số lượng, lệch đặc trưng và
 "mixed_stress". Chỉ α=0,1 (label_alpha_0_1) có mô hình đã huấn luyện; các cách chia khác chỉ để minh họa dữ liệu.
 
 Kiểm tra trước khi ghi (không đạt thì dừng):
-  - hash từng file shard khớp partition_spec_v4.json (11 kịch bản) hoặc release_manifest.json (iid)
+  - hash từng file shard khớp partition_spec_v4.json (các kịch bản của release; v4 có 2: label_alpha_0_1 và iid) hoặc release_manifest.json (iid)
   - mỗi cách chia: các shard rời nhau, hợp lại đúng bằng train.jsonl
   - label_alpha_0_1 khớp n_k của bundle đã kiểm hash (local/combined_summary.json)
 
@@ -72,7 +72,7 @@ def scheme_counts(shards: dict[str, list[dict[str, Any]]], classes: list[str]) -
 
 
 def build() -> dict[str, Any]:
-    release = reg.abs_path(reg.RELEASE_V3_DIR)
+    release = reg.abs_path(reg.RELEASE_DIR)
     spec = json.loads((release / "partition_spec_v4.json").read_text(encoding="utf-8"))
     manifest = json.loads((release / "release_manifest.json").read_text(encoding="utf-8"))
     shard_report = json.loads(reg.abs_path(reg.CLIENT_SHARD_COUNTS_JSON).read_text(encoding="utf-8"))
@@ -126,11 +126,11 @@ def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     out = reg.abs_path(reg.PARTITION_SCHEMES_JSON)
-    if not (reg.abs_path(reg.RELEASE_V3_DIR) / "partition_spec_v4.json").is_file():
+    if not (reg.abs_path(reg.RELEASE_DIR) / "partition_spec_v4.json").is_file():
         if out.is_file():
             print(f"[partition_schemes] thiếu dataset — giữ nguyên {reg.PARTITION_SCHEMES_JSON}")
             return 0
-        print(f"[partition_schemes] thiếu dataset ở {reg.RELEASE_V3_DIR}", file=sys.stderr)
+        print(f"[partition_schemes] thiếu dataset ở {reg.RELEASE_DIR}", file=sys.stderr)
         return 1
     report = build()
     out.write_text(json.dumps(report, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")

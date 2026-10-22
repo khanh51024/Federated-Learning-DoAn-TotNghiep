@@ -59,7 +59,7 @@ def predict(image: Any, version: int, head: core.Head, head_sha: str, base_head:
         "confidence_pct": community[0]["confidence"],
         "top3": community,
         "baseline": {
-            "model": "FedAvg v7", "checkpoint_sha256": info["checkpoint_sha256"],
+            "model": reg.WEB_DISPLAY_NAMES["fedavg"], "checkpoint_sha256": info["checkpoint_sha256"],
             "predicted_class": baseline[0]["class"], "confidence_pct": baseline[0]["confidence"], "top3": baseline,
         },
         "same_as_baseline": community[0]["class"] == baseline[0]["class"],

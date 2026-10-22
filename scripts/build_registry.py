@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT))
 
 from src import registry as reg  # noqa: E402
 from scripts.import_branch_demo import classes_from_taxonomy  # noqa: E402
+from src import bundle  # noqa: E402
 from src.common.checkpoint_io import load_checkpoint  # noqa: E402
 
 import torch  # noqa: E402
@@ -363,13 +364,15 @@ def build_published_demo() -> list[dict[str, Any]]:
     bundle_taxonomy = classes_sha256(import_manifest.get("classes") or [])
     validation_manifest = import_manifest.get("validation_manifest_sha256")
 
-    specs = [
-        ("demo_centralized_v6", "Centralized v6 (published demo)", "centralized", "centralized"),
-        ("demo_fedavg_v7", "FedAvg v7 (published demo)", "fedavg", "fedavg"),
-    ] + [
-        (f"demo_local_{i:02d}", f"Local-only client {i:02d} (published demo)", f"local/client_{i:02d}", "local")
-        for i in range(5)
-    ]
+    # Danh sách mô hình, tên và id lấy từ import_manifest.json của gói đang dùng (src/bundle.py), không viết cứng ở đây.
+    trained_here = import_manifest.get("evidence_level") == "locally_trained_and_reevaluated"
+    suffix = "(mô hình web, đã đánh giá lại cục bộ)" if trained_here else "(published demo)"
+    specs = []
+    for item in bundle.model_specs(import_manifest):
+        local = item["model_id"].startswith("local_")
+        name = f"Local-only client {item['model_id'][-2:]}" if local else item["display_name"]
+        rel = f"local/client_{item['model_id'][-2:]}" if local else item["dir"]
+        specs.append((item["registry_id"], f"{name} {suffix}", rel, item["dir"]))
 
     models: list[dict[str, Any]] = []
     for model_id, display_name, rel_dir, branch_dir in specs:
@@ -406,11 +409,13 @@ def build_published_demo() -> list[dict[str, Any]]:
             metrics_source=f"{reg.DEMO_BUNDLE_DIR}/{rel_dir}/validation_metrics.json",
             status="verified_published_artifact",
             web_visible=insp["checkpoint_exists"],
-            display_label="Demo (hash-verified, pretrained mixed PV+PlantDoc)",
+            display_label=("Mô hình web (hash-verified, đánh giá lại cục bộ)" if trained_here
+                           else "Demo (hash-verified, pretrained mixed PV+PlantDoc)"),
             notes=(
-                "Artifact publish từ branch train, hash khớp artifact_manifest khi import. "
-                "Chưa đánh giá lại cục bộ (evidence_level="
-                f"{import_manifest.get('evidence_level')})."
+                ("Checkpoint do đồ án train (scripts/train_v4.py) và đánh giá lại trên CPU khi nhập gói (scripts/import_run_bundle.py); "
+                 "hash khớp artifact_manifest." if trained_here else
+                 "Artifact publish từ branch train, hash khớp artifact_manifest khi import. "
+                 "Chưa đánh giá lại cục bộ (evidence_level=" f"{import_manifest.get('evidence_level')}).")
             ),
         )
         models.append(m)
@@ -849,6 +854,9 @@ def build_artifact_catalog(models: list[dict[str, Any]]) -> tuple[list[dict[str,
         elif rel.startswith(reg.WEB_RUNS_GLOB + "/"):
             add("web_runs", reg.ROLE_TECHNICAL_DEMO,
                 "Checkpoint từ run do web khởi động (smoke Flower hoặc demo huấn luyện); chưa có bằng chứng khoa học", rel)
+        elif rel.startswith(reg.MODEL_BUNDLES_PREFIX + "/"):
+            add("model_bundles_inactive", reg.ROLE_HISTORICAL,
+                "Gói mô hình dựng từ run train_v4 nhưng không phải gói web đang dùng (artifacts/active_bundle.json); giữ để lùi hoặc thay lại", rel)
         elif rel.startswith(reg.TRAIN_V4_RUNS_PREFIX):
             add("train_v4_runs", reg.ROLE_TECHNICAL_DEMO,
                 "Checkpoint đợt train v4 (scripts/train_v4.py, máy GPU thuê) chưa đánh giá/promote — số liệu chỉ dùng sau scripts/eval_trained_v4.py", rel)

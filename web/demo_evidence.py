@@ -1,7 +1,8 @@
-"""Validated October 2026 mixed PlantVillage/PlantDoc demo evidence.
+"""Evidence for the model bundle the web serves (artifacts/active_bundle.json -> <bundle>/import_manifest.json).
 
-The checks establish byte provenance for published artifacts. Without the image
-release they cannot establish that validation was independently reproduced.
+The checks establish byte provenance of the bundle files and consistency of the identity written in its manifest (release, validation set,
+seed, model list). Identity is NOT pinned here as constants: it comes from the bundle manifest (src/bundle.py), so swapping the bundle does not
+edit this file. Without the image release they cannot establish that validation was independently reproduced.
 """
 
 from __future__ import annotations
@@ -14,28 +15,18 @@ import threading
 from pathlib import Path
 from typing import Any
 
-from src import registry as reg
-from scripts.import_branch_demo import (
-    CONTRACT_FILES,
-    RELEASE_SHA,
-    SOURCES,
-    VALIDATION_SHA,
-    W0,
-    classes_from_taxonomy,
-    sha256,
-    verify_comparison,
-)
+from src import bundle, registry as reg
+from scripts.import_branch_demo import CONTRACT_FILES, classes_from_taxonomy, sha256
 
 
 ROOT = Path(__file__).resolve().parents[1]
 STORE = reg.abs_path(reg.DEMO_BUNDLE_DIR)
 PROTOCOL_ID = reg.DEMO_PROTOCOL_ID
-MODEL_FILES = {
-    "centralized": ("centralized", "checkpoint_best.pt", "Centralized v6", "GĐ1"),
-    "fedavg": ("fedavg", "checkpoint_best.pt", "FedAvg v7", "GĐ2"),
-    **{f"local_{i:02d}": ("local", f"client_{i:02d}/checkpoint_best.pt", f"Local {i:02d}", "GĐ1")
-       for i in range(5)},
-}
+_HEX64 = frozenset("0123456789abcdef")
+
+
+def _is_sha256(value: Any) -> bool:
+    return isinstance(value, str) and len(value) == 64 and set(value) <= _HEX64
 
 
 # Băm lại ~60 MB mỗi lần suy luận là phần tốn nhất của một request. File lớn (checkpoint) được nhớ hash theo
@@ -60,12 +51,11 @@ def _sha256_cached(path: Path) -> str:
     return value
 
 
-def _verified_manifest(root: Path, name: str) -> dict[str, Any]:
-    branch = SOURCES[name][0]
+def _verified_manifest(root: Path, name: str, branch: str, release: str, validation: str) -> dict[str, Any]:
     result_dir = root / name
     manifest = json.loads((result_dir / "artifact_manifest.json").read_text(encoding="utf-8"))
-    if (manifest.get("branch") != branch or manifest.get("release_manifest_sha256") != RELEASE_SHA
-            or manifest.get("validation_manifest_sha256") != VALIDATION_SHA):
+    if (manifest.get("branch") != branch or manifest.get("release_manifest_sha256") != release
+            or manifest.get("validation_manifest_sha256") != validation):
         raise ValueError(f"{branch}: mismatched artifact manifest")
     for relative, expected in manifest["files"].items():
         candidate = (result_dir / relative).resolve()
@@ -80,55 +70,71 @@ def _verified_manifest(root: Path, name: str) -> dict[str, Any]:
 def load_evidence(root: Path = STORE) -> dict[str, Any]:
     """Fail closed: return no metrics or selectable models on any mismatch."""
     try:
-        metadata = json.loads((root / "import_manifest.json").read_text(encoding="utf-8"))
-        if (metadata.get("protocol_id") != PROTOCOL_ID
-                or metadata.get("release_manifest_sha256") != RELEASE_SHA
-                or metadata.get("validation_manifest_sha256") != VALIDATION_SHA
-                or metadata.get("w0_fingerprint") != W0
-                or metadata.get("seed") != 42
+        manifest_bytes = (root / "import_manifest.json").read_bytes()
+        pinned = bundle.pinned_manifest_sha256(root)
+        if pinned and hashlib.sha256(manifest_bytes).hexdigest() != pinned:
+            raise ValueError("import manifest differs from the hash pinned by artifacts/active_bundle.json")
+        metadata = json.loads(manifest_bytes.decode("utf-8"))
+        protocol_id = bundle.protocol_id(metadata)
+        release, validation = metadata.get("release_manifest_sha256"), metadata.get("validation_manifest_sha256")
+        w0, seed = metadata.get("w0_fingerprint"), metadata.get("seed")
+        counts = bundle.validation_counts(metadata)
+        if (not _is_sha256(release) or not _is_sha256(validation) or not isinstance(seed, int)
+                or (w0 is not None and not _is_sha256(w0))
                 or metadata.get("transform") != "canonical_v1"
                 or metadata.get("num_classes") != 38
-                or metadata.get("validation_counts") != {"plantdoc": 269, "plantvillage": 4344}):
+                or not counts or any(n <= 0 for n in counts.values())):
             raise ValueError("import manifest protocol identity mismatch")
-        for name, (branch, commit) in SOURCES.items():
-            if metadata.get("sources", {}).get(name) != {"branch": branch, "commit": commit}:
-                raise ValueError(f"{name}: source ref mismatch")
+        specs = bundle.model_specs(metadata)
+        if len({s["model_id"] for s in specs}) != len(specs) or len({s["display_name"] for s in specs}) != len(specs):
+            raise ValueError("duplicate model ids or display names in bundle manifest")
+        sources = metadata.get("sources") or {}
+        for name in {s["dir"] for s in specs}:
+            ref = sources.get(name) or {}
+            if not ref.get("branch") or not ref.get("commit"):
+                raise ValueError(f"{name}: source ref missing")
+        contract_hashes = metadata.get("contract_hashes") or {}
+        if set(contract_hashes) != set(CONTRACT_FILES):
+            raise ValueError("contract hashes missing from bundle manifest")
         for relative in CONTRACT_FILES:
             name = Path(relative).name
-            if _sha256_cached(root / "contract" / name) != metadata["contract_hashes"].get(relative):
+            if _sha256_cached(root / "contract" / name) != contract_hashes.get(relative):
                 raise ValueError(f"contract hash mismatch: {name}")
         classes = classes_from_taxonomy(root / "contract/taxonomy.py")
         if metadata.get("classes") != classes:
             raise ValueError("class order differs from pinned taxonomy")
 
-        manifests = {name: _verified_manifest(root, name) for name in SOURCES}
+        dirs = list(dict.fromkeys(s["dir"] for s in specs))
+        manifests = {name: _verified_manifest(root, name, sources[name]["branch"], release, validation) for name in dirs}
         comparison_hashes = {
             item["files"]["validation_comparison.csv"]["sha256"] for item in manifests.values()
         }
         if len(comparison_hashes) != 1:
             raise ValueError("comparison bytes differ across branches")
-        comparison = root / "fedavg/validation_comparison.csv"
-        verify_comparison(comparison, manifests)
+        comparison = root / ("fedavg" if "fedavg" in dirs else dirs[0]) / "validation_comparison.csv"
+        bundle.verify_comparison(comparison, manifests, metadata)
+        partition = metadata.get("partition_scheme", "label_alpha_0_1")
         local_summary = json.loads((root / "local/combined_summary.json").read_text(encoding="utf-8"))
-        if (local_summary.get("seed") != 42
-                or local_summary.get("w0_fingerprint") != W0
-                or local_summary.get("release_manifest_sha256") != RELEASE_SHA
-                or local_summary.get("partition_scheme") != "label_alpha_0_1"):
+        if (local_summary.get("seed") != seed
+                or (w0 is not None and local_summary.get("w0_fingerprint") != w0)
+                or local_summary.get("release_manifest_sha256") != release
+                or local_summary.get("partition_scheme") != partition):
             raise ValueError("Local-only summary protocol mismatch")
         shard_counts = {
             name: int(local_summary["clients"][name]["n_k"])
             for name in (f"client_{i:02d}" for i in range(5))
         }
-        if sum(shard_counts.values()) != 37238:
+        if sum(shard_counts.values()) != bundle.shard_total(metadata):
             raise ValueError("Client shard counts do not cover the published train split")
         central_summary = json.loads((root / "centralized/summary.json").read_text(encoding="utf-8"))
-        if (central_summary.get("seed") != 42
-                or central_summary.get("w0_fingerprint") != W0
-                or central_summary.get("release_manifest_sha256") != RELEASE_SHA):
+        if (central_summary.get("seed") != seed
+                or (w0 is not None and central_summary.get("w0_fingerprint") != w0)
+                or central_summary.get("release_manifest_sha256") != release):
             raise ValueError("Centralized summary protocol mismatch")
         central_history = [
             {"epoch": int(item["epoch"]), "val_accuracy": float(item["val_accuracy"]),
-             "train_loss": float(item["train_loss"]), "val_loss": float(item["val_loss"])}
+             "train_loss": float(item["train_loss"]),
+             "val_loss": float(item["val_loss"]) if item.get("val_loss") is not None else None}
             for item in central_summary.get("history", [])
         ]
         with comparison.open(encoding="utf-8", newline="") as stream:
@@ -142,36 +148,39 @@ def load_evidence(root: Path = STORE) -> dict[str, Any]:
                 "crop_accuracy": float(row["crop_accuracy"]),
             }
         models = []
-        for model_id, (source_name, relative, display, phase) in MODEL_FILES.items():
-            source = metadata["sources"][source_name]
-            checkpoint_sha = manifests[source_name]["files"][relative]["sha256"]
+        for spec in specs:
+            source = sources[spec["dir"]]
+            checkpoint_sha = manifests[spec["dir"]]["files"][spec["file"]]["sha256"]
             models.append({
-                "model_id": model_id,
-                "name": display,
-                "phase": phase,
-                "method": "Local-only" if source_name == "local" else display,
+                "model_id": spec["model_id"],
+                "name": spec["display_name"],
+                "phase": spec["phase"],
+                "method": spec["method"],
                 "branch": source["branch"],
                 "commit": source["commit"],
                 "checkpoint_sha256": checkpoint_sha,
-                "checkpoint_relative_path": f"{source_name}/{relative}",
-                "metrics": by_name[display],
+                "checkpoint_relative_path": f"{spec['dir']}/{spec['file']}",
+                "metrics": by_name[spec["display_name"]],
             })
         return {
             "available": True,
-            "protocol_id": PROTOCOL_ID,
-            "evidence_level": "published_artifact_hash_verified_not_locally_reevaluated",
-            "metrics_source": "published validation_comparison.csv; no local image release",
-            "release_manifest_sha256": RELEASE_SHA,
-            "validation_manifest_sha256": VALIDATION_SHA,
-            "w0_fingerprint": W0,
-            "seed": 42,
+            "bundle_id": metadata.get("bundle_id"),
+            "protocol_id": protocol_id,
+            "evidence_level": metadata.get("evidence_level") or "published_artifact_hash_verified_not_locally_reevaluated",
+            "metrics_source": metadata.get("metrics_source") or "published validation_comparison.csv; no local image release",
+            "release_manifest_sha256": release,
+            "validation_manifest_sha256": validation,
+            "w0_fingerprint": w0,
+            "w0_in_checkpoints": bool(metadata.get("w0_in_checkpoints", True)),
+            "seed": seed,
             "transform": "canonical_v1",
             "classes": classes,
-            "validation_counts": {"plantdoc": 269, "plantvillage": 4344},
+            "validation_counts": counts,
             "shard_counts": shard_counts,
             "centralized_history": central_history,
-            "non_iid_scenarios": ["label_alpha_0_1"],
+            "non_iid_scenarios": [partition],
             "scientific_stage2_complete": False,
+            "training": metadata.get("training"),
             "models": models,
         }
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
@@ -191,8 +200,8 @@ _MODEL_LOCK = threading.Lock()
 _TRANSFORM: Any = None
 
 
-def _build_model(source: Any, model_id: str) -> Any:
-    """`source`: đường dẫn hoặc file-like chứa ĐÚNG các byte đã băm (xem `_published_model`)."""
+def _build_model(source: Any, model_id: str, evidence: dict[str, Any]) -> Any:
+    """`source`: đường dẫn hoặc file-like chứa ĐÚNG các byte đã băm (xem `_published_model`). Nhận dạng cần khớp lấy từ `evidence` (manifest của gói)."""
     from torch import nn
     from torchvision.models import mobilenet_v3_small
 
@@ -201,10 +210,11 @@ def _build_model(source: Any, model_id: str) -> Any:
     # Checkpoint đã được băm trước khi giải nén (xem `_published_model`); `load_checkpoint` giữ
     # allowlist numpy ở mức tối thiểu và nạp `weights_only=True` thay vì mở pickle tùy ý.
     checkpoint = load_checkpoint(source)
-    if (checkpoint.get("release_manifest_sha256") != RELEASE_SHA
-            or checkpoint.get("w0_fingerprint") != W0):
+    # Checkpoint của bộ train v4 không ghi `w0_fingerprint` (chỉ release, seed, code_fingerprint): gói đó khai `w0_in_checkpoints: false` trong manifest.
+    if (checkpoint.get("release_manifest_sha256") != evidence["release_manifest_sha256"]
+            or (evidence["w0_in_checkpoints"] and checkpoint.get("w0_fingerprint") != evidence["w0_fingerprint"])):
         raise ValueError("Checkpoint protocol metadata mismatch")
-    if model_id in {"centralized", "fedavg"} and checkpoint.get("seed") != 42:
+    if model_id in {"centralized", "fedavg"} and checkpoint.get("seed") != evidence["seed"]:
         raise ValueError("Checkpoint seed mismatch")
     state = checkpoint.get("model_state", checkpoint.get("model_state_dict"))
     if not isinstance(state, dict) or len(state) != 244:
@@ -232,7 +242,7 @@ def _published_model(evidence: dict[str, Any], model_id: str, root: Path) -> tup
             data = path.read_bytes()
             if hashlib.sha256(data).hexdigest() != model_info["checkpoint_sha256"]:
                 raise ValueError("Checkpoint changed after hash verification")
-            model = _build_model(io.BytesIO(data), model_id)
+            model = _build_model(io.BytesIO(data), model_id, evidence)
             for stale in [k for k in _MODEL_CACHE if k[0] == key[0]]:
                 del _MODEL_CACHE[stale]
             _MODEL_CACHE[key] = model

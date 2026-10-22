@@ -35,8 +35,8 @@ def status_checkpoints_info() -> Dict[str, bool]:
     return {
         "centralized_canonical": model_exists("centralized_canonical"),
         "fedavg_canonical": model_exists("fedavg_canonical"),
-        "centralized_demo": model_exists("demo_centralized_v6"),
-        "fedavg_demo": model_exists("demo_fedavg_v7"),
+        "centralized_demo": model_exists(reg.web_id("centralized")),
+        "fedavg_demo": model_exists(reg.web_id("fedavg")),
     }
 
 
@@ -65,8 +65,8 @@ def is_web_visible(model_id: str) -> bool:
 def status_models_available() -> Dict[str, bool]:
     """Model inference có thực sự dùng được: đã qua đủ 5 điều kiện của cổng registry (web_visible)."""
     return {
-        "centralized": is_web_visible("demo_centralized_v6"),
-        "fedavg": is_web_visible("demo_fedavg_v7"),
+        "centralized": is_web_visible(reg.web_id("centralized")),
+        "fedavg": is_web_visible(reg.web_id("fedavg")),
         "traced_reference": is_web_visible("plantvillage_traced_reference"),
     }
 
@@ -281,8 +281,8 @@ def inspect_weights(layer: Optional[str] = None) -> Dict[str, Any]:
     chỉ khi model đó `web_visible` và hash trên đĩa khớp registry. Không fallback âm thầm.
     """
     fedavg_ckpt = _trusted_checkpoint("fedavg_canonical", "matches_manifest")
-    if fedavg_ckpt is None and is_web_visible("demo_fedavg_v7"):
-        fedavg_ckpt = _trusted_checkpoint("demo_fedavg_v7", "hash_verified")
+    if fedavg_ckpt is None and is_web_visible(reg.web_id("fedavg")):
+        fedavg_ckpt = _trusted_checkpoint(reg.web_id("fedavg"), "hash_verified")
 
     if fedavg_ckpt is None:
         return {

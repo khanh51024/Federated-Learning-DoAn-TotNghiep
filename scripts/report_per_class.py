@@ -1,4 +1,4 @@
-"""Phân tích theo từng lớp trên số liệu validation ĐÃ CÔNG BỐ trong bundle (không cần ảnh).
+"""Phân tích theo từng lớp trên số liệu validation ghi trong gói mô hình đang dùng (không cần ảnh).
 
 Nguồn: `<bundle>/<model>/validation_metrics.json` (quality.by_source.<nguồn>.per_class_recall, đã kiểm hash bởi
 scripts/import_branch_demo.py). Đây là phân tích trên số công bố, KHÔNG phải tái đánh giá cục bộ:
@@ -18,7 +18,9 @@ sys.path.insert(0, str(ROOT))
 
 from src import registry as reg  # noqa: E402
 
-MODELS = {"Centralized v6": "centralized", "FedAvg v7": "fedavg"}
+# tên hiển thị -> thư mục con của gói; tên lấy từ import_manifest.json của gói (src/bundle.py), không viết cứng
+CENTRAL_NAME, FEDAVG_NAME = reg.WEB_DISPLAY_NAMES["centralized"], reg.WEB_DISPLAY_NAMES["fedavg"]
+MODELS = {CENTRAL_NAME: "centralized", FEDAVG_NAME: "fedavg"}
 WEAK_RECALL = 0.5
 MIN_SUPPORT = 5  # lớp support nhỏ hơn dễ nhiễu, vẫn liệt kê nhưng đánh dấu
 
@@ -69,7 +71,7 @@ def build_report() -> dict[str, Any]:
         validation = _load(model_dir)
         models[name] = {src: _source(validation, src) for src in ("plantdoc", "plantvillage")}
 
-    fed, cen = models["FedAvg v7"], models["Centralized v6"]
+    fed, cen = models[FEDAVG_NAME], models[CENTRAL_NAME]
     pd_fed = fed["plantdoc"]["per_class_recall"]
     pd_cen = cen["plantdoc"]["per_class_recall"]
     pv_fed = fed["plantvillage"]["per_class_recall"]

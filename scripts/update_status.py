@@ -807,7 +807,7 @@ def quality_section(registry: dict[str, Any]) -> list[str]:
     models = {m["model_id"]: m for m in registry["models"]}
     lines = ["| Model | PlantVillage | PlantDoc | Chênh | Đúng cây (PlantDoc) | Sai mà confidence > 0.9 |", "|---|---|---|---|---|---|"]
     gap = (registry.get("evidence_reports") or {}).get("domain_gap") or {}
-    for name, mid in (("Centralized v6", "demo_centralized_v6"), ("FedAvg v7", "demo_fedavg_v7")):
+    for name, mid in ((reg.WEB_DISPLAY_NAMES["centralized"], reg.web_id("centralized")), (reg.WEB_DISPLAY_NAMES["fedavg"], reg.web_id("fedavg"))):
         info = (gap.get("models") or {}).get(name) or {}
         pv, pd = info.get("plantvillage") or {}, info.get("plantdoc") or {}
         high = (((models.get(mid) or {}).get("metrics") or {}).get("overall") or {}).get("high_confidence_wrong_count_0_9")
@@ -823,7 +823,7 @@ def quality_section(registry: dict[str, Any]) -> list[str]:
             f"- Audit ảnh ngoài (không có nhãn, chỉ dự đoán): {audit['image_count']} ảnh; Centralized và FedAvg "
             f"**bất đồng trên {audit['models_disagree_count']}/{audit['image_count']}** ảnh. Đây không phải accuracy."
         )
-    fed = models.get("demo_fedavg_v7") or {}
+    fed = models.get(reg.web_id("fedavg")) or {}
     conf = (((fed.get("metrics") or {}).get("quality") or {}).get("top_confusions")) or []
     if conf:
         lines.append("- Nhầm lẫn lớn nhất của FedAvg v7 (metrics công bố): " + "; ".join(

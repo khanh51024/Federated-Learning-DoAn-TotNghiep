@@ -14,6 +14,21 @@ import json
 from pathlib import Path
 from typing import Any
 
+from src import bundle as _bundle
+
+# Nhận dạng gói mô hình đang phục vụ web: đọc từ artifacts/active_bundle.json + import_manifest.json của gói (xem src/bundle.py).
+# Thay mô hình = nhập gói mới rồi đổi con trỏ (scripts/swap_web_models.py), không sửa hằng số.
+_BUNDLE_MANIFEST = _bundle.load_manifest()
+WEB_REGISTRY_IDS = _bundle.registry_ids(_BUNDLE_MANIFEST)      # model_id (centralized, fedavg, local_00...) -> id trong registry.json
+WEB_DISPLAY_NAMES = _bundle.display_names(_BUNDLE_MANIFEST)    # model_id -> "Centralized v4b"...
+
+
+def web_id(model_id: str) -> str:
+    """Id registry của mô hình web `model_id` của gói đang dùng."""
+    return WEB_REGISTRY_IDS[model_id]
+
+
+
 ROOT = Path(__file__).resolve().parents[1]
 
 # schema_version của artifacts/registry.json (v2: pipeline/role/dataset/taxonomy + cổng web + danh mục .pt)
@@ -26,7 +41,7 @@ ARTIFACTS_DIR = "artifacts"
 CHECKPOINTS_DIR = "artifacts/checkpoints"
 SMOKE_CHECKPOINTS_DIR = "artifacts/checkpoints/smoke"
 METRICS_DIR = "artifacts/metrics"
-DEMO_BUNDLE_DIR = "artifacts/branch_demo/20261003"
+DEMO_BUNDLE_DIR = _bundle.active_bundle_dir()   # artifacts/active_bundle.json; không có thì gói cũ artifacts/branch_demo/20261003
 WEB_RUNS_DIR = "artifacts/web_runs"
 TRAINING_AUDIT_JSONL = f"{WEB_RUNS_DIR}/training_audit.jsonl"  # web/services/training_guard.py: ai bắt đầu/dừng huấn luyện
 VERIFIED_DIR = "artifacts/verified"
@@ -60,8 +75,8 @@ LOCAL_REEVAL_JSON = "artifacts/local_reeval_report.json"  # scripts/evaluate_pub
 HOLDOUT_SPLIT = "legacy_diagnostic_test"
 # Ghim theo release_manifest.json (manifest_hashes.legacy_diagnostic_test) của release đã ghim RELEASE_SHA: máy chủ không có
 # dataset vẫn kiểm được báo cáo test giữ riêng nói về đúng tập ảnh nào.
-HOLDOUT_MANIFEST_SHA256 = "61ee9f178b93aa65dcc6e41c63365c0f6098dc6f79d3dfa7b6e3a8e735f769c2"
-HOLDOUT_COUNTS = {"plantdoc": 172, "plantvillage": 10843}
+HOLDOUT_MANIFEST_SHA256 = _bundle.holdout(_BUNDLE_MANIFEST)["manifest_sha256"]
+HOLDOUT_COUNTS = dict(_bundle.holdout(_BUNDLE_MANIFEST)["counts"])
 HOLDOUT_EVAL_JSON = "artifacts/holdout_eval_report.json"
 FULLFRAME_EVAL_JSON = "artifacts/fullframe_eval.json"  # scripts/eval_fullframe_plantdoc.py (ảnh nguyên khung vs ảnh cắt lá)
 FULLFRAME_CROP_POLICY = "bbox_margin_8pct_v1"
@@ -91,6 +106,7 @@ RELEASE_LEAKAGE_AUDIT_JSON = "artifacts/release_leakage_audit.json"  # scripts/a
 # Dataset đã tải từ nhánh dataset-sources của GitHub (gitignored); chỉ máy có dataset mới sinh lại được báo cáo shard
 DATASET_SOURCES_DIR = "data/dataset_sources"
 RELEASE_V3_DIR = f"{DATASET_SOURCES_DIR}/mixed/pv_pd_v3"
+RELEASE_DIR = _bundle.release_dir(_BUNDLE_MANIFEST)   # release mà gói đang dùng được đánh giá trên đó (v3 cho gói cũ, v4 cho gói v4b)
 PARTITION_SCHEME = "label_alpha_0_1"  # scheme mà FedAvg v7 và 5 Local-only v7 dùng (bundle local/combined_summary.json)
 # Ảnh mẫu có nhãn thật cho trang Chẩn đoán: nguồn (gitignored) và bản đã chép vào web (đi theo git, lên server)
 DEMO_IMAGES_DIR = "data/demo_images"
@@ -110,7 +126,7 @@ COMMUNITY_BASE_HEAD_NPZ = f"{COMMUNITY_FL_DIR}/base_head.npz"
 COMMUNITY_EVAL_FEATURES_NPZ = f"{COMMUNITY_FL_DIR}/eval_features.npz"
 COMMUNITY_STATE_DIR = f"{COMMUNITY_FL_DIR}/state"
 COMMUNITY_DEMO_PACKS_DIR = "artifacts/community_demo_packs"  # scripts/build_community_demo_packs.py: gói ảnh nhỏ cho client demo trên trình duyệt
-COMMUNITY_MODEL_ID = "demo_fedavg_v7"  # backbone đóng băng + head khởi điểm lấy từ model này (qua cổng web_visible)
+COMMUNITY_MODEL_ID = _bundle.community_model_id(_BUNDLE_MANIFEST)  # backbone đóng băng + head khởi điểm lấy từ model này (qua cổng web_visible)
 
 # ---------------------------------------------------------------------------
 # Canonical slots (chỉ được ghi bởi run khoa học thật, không bao giờ bởi smoke)
@@ -148,7 +164,7 @@ CANONICAL_RESOLVED_CONFIG = f"results/fedavg/{CANONICAL_RUN_ID}/resolved_config.
 
 # Published demo bundle (hash-verified, pretrained mixed PV+PlantDoc)
 DEMO_IMPORT_MANIFEST_JSON = f"{DEMO_BUNDLE_DIR}/import_manifest.json"
-DEMO_PROTOCOL_ID = "mixed_pv_pd_v3_pretrained_seed42_validation"
+DEMO_PROTOCOL_ID = _bundle.protocol_id(_BUNDLE_MANIFEST)
 
 # Thư mục quét .pt để chắc chắn mọi checkpoint trên đĩa đều có tên trong danh mục
 # Chỉ loại ở gốc repo (không loại thư mục trùng tên nằm sâu trong artifacts/...)
@@ -157,6 +173,7 @@ CHECKPOINT_SCAN_EXCLUDE_ROOT = (".venv", ".git", ".tmp-agent", ".zcode", "tmp")
 CHECKPOINT_SCAN_EXCLUDE_ANY = ("__pycache__", "pytest-of-", "torchinductor_")
 REPORT_EXPERIMENTS_GLOB = "artifacts/report_experiments"
 WEB_RUNS_GLOB = "artifacts/web_runs"
+MODEL_BUNDLES_PREFIX = _bundle.BUNDLES_DIR      # gói mô hình dựng từ các run (scripts/import_run_bundle.py); gói không phải gói đang dùng là bản lưu để lùi
 TRAIN_V4_RUNS_PREFIX = "runs/v4"           # đầu ra scripts/train_v4.py (runs/v4, runs/v4b...) kéo về từ máy GPU thuê, ngoài git
 KAGGLE_RESULTS_DIR = "results/fedavg"
 

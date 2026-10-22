@@ -139,7 +139,7 @@ def _load_split_logits(evidence: dict[str, Any], split: str, rows: list, cal_row
         prefix = "val_"
     else:
         path = store / "holdout_logits.npz"
-        manifest_sha = _sha256(reg.abs_path(reg.RELEASE_V3_DIR) / "manifests" / f"{reg.HOLDOUT_SPLIT}.jsonl")
+        manifest_sha = _sha256(reg.abs_path(reg.RELEASE_DIR) / "manifests" / f"{reg.HOLDOUT_SPLIT}.jsonl")
         fingerprint = hashlib.sha256(json.dumps([manifest_sha, len(rows), checkpoints], sort_keys=True).encode()).hexdigest()
         prefix = "test_"
     if not path.is_file():
@@ -242,7 +242,7 @@ def build_report(rng_seed: int = SEED) -> dict[str, Any]:
     evidence = load_evidence()
     if not evidence.get("available"):
         raise RuntimeError(f"bundle không hợp lệ: {evidence.get('reason')}")
-    release = reg.abs_path(reg.RELEASE_V3_DIR)
+    release = reg.abs_path(reg.RELEASE_DIR)
     manifests = release / "manifests"
     if not (manifests / "val.jsonl").is_file():
         raise FileNotFoundError(f"thiếu dataset ở {reg.DATASET_SOURCES_DIR}")

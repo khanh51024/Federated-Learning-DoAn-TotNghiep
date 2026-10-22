@@ -50,8 +50,12 @@ def training_report(evidence: dict[str, Any], load_json) -> dict[str, Any]:
         if hist and [h[key] for h in hist] != list(range(1, len(hist) + 1)):
             raise ValueError("training report: lịch sử bị đứt vòng")
     fed = next(m for m in models if m["model_id"] == "fedavg")
-    if report["transport_mode"] != "in_process_simulation" or len(fed["history"]) != fed["selected_step"]:
+    # Gói cũ ghi lịch sử đến vòng được chọn; gói train_v4 ghi mọi vòng đã chạy (completed_steps) và vòng được chọn nằm trong đó.
+    history_length_ok = len(fed["history"]) == fed["selected_step"] or (
+        len(fed["history"]) == fed.get("completed_steps") and fed["selected_step"] <= len(fed["history"]))
+    if report["transport_mode"] != "in_process_simulation" or not history_length_ok:
         raise ValueError("training report: runtime/lịch sử không khớp")
+    delta_recorded = report.get("delta_l2_recorded", True)
     for row in fed["history"]:
         clients = row["clients"]
         if len(clients) != len(evidence["shard_counts"]) or {c["client_id"] for c in clients} != set(evidence["shard_counts"]):
@@ -61,6 +65,10 @@ def training_report(evidence: dict[str, Any], load_json) -> dict[str, Any]:
             if client["sample_count_n_k"] != n or abs(client["weight_p_k"] - n / sum(evidence["shard_counts"].values())) > 1e-9:
                 raise ValueError("training report: sai trọng số client")
             learnable, total = client.get("delta_l2_learnable"), client.get("delta_l2")
+            if not delta_recorded:
+                if learnable is not None or total is not None:
+                    raise ValueError("training report: delta_l2 khai là chưa ghi nhưng có giá trị")
+                continue
             if not all(isinstance(x, (int, float)) and math.isfinite(x) for x in (learnable, total)) or not 0 <= learnable <= total + 1e-3:
                 raise ValueError("training report: delta_l2_learnable thiếu hoặc không hợp lệ")
     splits = {s["name"]: s for s in report["release"]["splits"]}
@@ -74,5 +82,5 @@ def training_report(evidence: dict[str, Any], load_json) -> dict[str, Any]:
     # The page draws Centralized only from these fields; per-epoch duration stays in the committed report.
     projected_models = _rounded([{**m, "history": [{k: v for k, v in row.items() if k != "duration_sec"} for row in m["history"]]}
                                  if m["model_id"] == "centralized" else m for m in models])
-    return {"available": True, "models": projected_models,
+    return {"available": True, "models": projected_models, "delta_l2_recorded": delta_recorded, "note": report.get("note"),
             **{k: report[k] for k in ("transport_mode", "release", "checkpoint_sha256", "seed")}}
