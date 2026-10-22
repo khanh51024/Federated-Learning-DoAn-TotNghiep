@@ -780,6 +780,11 @@ body[data-route="chan-doan"] .top-header { margin-bottom: var(--space-2); }
 #local-view .verdict-grid, #pv-view .verdict-grid, #comm-view .verdict-grid { margin-top: 0; gap: var(--space-3); }
 .diag-bar .diag-control-grid { gap: var(--space-2); }
 .diag-bar .diag-options { align-items: flex-end; }
+/* điện thoại: nhãn dài ("Nhãn thật (nếu biết, để chấm đúng/sai)") không được đẩy ô chọn ra ngoài khung */
+@media (max-width: 520px) {
+  .diag-bar .diag-options .form-group { flex-direction: column; align-items: stretch; gap: var(--space-1); }
+  .diag-bar .diag-options .form-group label { white-space: normal; }
+}
 .diag-bar .diag-options .form-group { min-width: 240px; flex: 1 1 240px; }
 .diag-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .diag-tabs { margin-bottom: 0; }
