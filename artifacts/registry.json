@@ -2870,9 +2870,27 @@
       "paths": [
         "runs/v4b/centralized_s123/checkpoint_best.pt",
         "runs/v4b/centralized_s2026/checkpoint_best.pt",
-        "runs/v4b/centralized_s42/checkpoint_best.pt"
+        "runs/v4b/centralized_s42/checkpoint_best.pt",
+        "runs/v4b/fedavg_s123/checkpoint_best.pt",
+        "runs/v4b/fedavg_s2026/checkpoint_best.pt",
+        "runs/v4b/fedavg_s42/checkpoint_best.pt",
+        "runs/v4b/local_c0_s123/checkpoint_best.pt",
+        "runs/v4b/local_c0_s2026/checkpoint_best.pt",
+        "runs/v4b/local_c0_s42/checkpoint_best.pt",
+        "runs/v4b/local_c1_s123/checkpoint_best.pt",
+        "runs/v4b/local_c1_s2026/checkpoint_best.pt",
+        "runs/v4b/local_c1_s42/checkpoint_best.pt",
+        "runs/v4b/local_c2_s123/checkpoint_best.pt",
+        "runs/v4b/local_c2_s2026/checkpoint_best.pt",
+        "runs/v4b/local_c2_s42/checkpoint_best.pt",
+        "runs/v4b/local_c3_s123/checkpoint_best.pt",
+        "runs/v4b/local_c3_s2026/checkpoint_best.pt",
+        "runs/v4b/local_c3_s42/checkpoint_best.pt",
+        "runs/v4b/local_c4_s123/checkpoint_best.pt",
+        "runs/v4b/local_c4_s2026/checkpoint_best.pt",
+        "runs/v4b/local_c4_s42/checkpoint_best.pt"
       ],
-      "count": 3
+      "count": 21
     },
     {
       "group_id": "web_runs",
@@ -2974,7 +2992,7 @@
   },
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-22T09:46:28",
+      "generated_at": "2026-10-22T10:50:15",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -2986,7 +3004,7 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-22T09:46:31",
+      "generated_at": "2026-10-22T10:50:17",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
@@ -3021,16 +3039,16 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-22T09:46:36",
+      "generated_at": "2026-10-22T10:50:20",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
     },
     "checkpoint_catalog": {
       "status": "complete",
-      "total_pt_files": 75,
+      "total_pt_files": 93,
       "in_models": 15,
-      "in_groups": 60,
+      "in_groups": 78,
       "unclassified": [],
       "source": "quét đĩa (scripts/build_registry.py)"
     }

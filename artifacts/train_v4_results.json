@@ -1,0 +1,1232 @@
+{
+ "evidence": "đo trên checkpoint tốt nhất (chọn theo val) của từng run; PlantWild đo ở máy này; tập thử v4 đo trên máy GPU (logits_best.npz)",
+ "runs": {
+  "centralized_s123": {
+   "method": "centralized",
+   "seed": 123,
+   "client": null,
+   "best_step": 35,
+   "val_selection_score": 0.9023,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.9945,
+    "top1_ci95": [
+     0.993,
+     0.9958
+    ],
+    "top3": 0.9995
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.5814,
+    "top1_ci95": [
+     0.5116,
+     0.6513
+    ],
+    "top3": 0.814
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.9276,
+    "top1_ci95": [
+     0.9166,
+     0.9386
+    ],
+    "top3": 0.9808
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.3685,
+    "top1_ci95": [
+     0.3485,
+     0.3893
+    ],
+    "top3": 0.5625
+   },
+   "plantwild_healthy_as_disease": 0.4053
+  },
+  "centralized_s2026": {
+   "method": "centralized",
+   "seed": 2026,
+   "client": null,
+   "best_step": 38,
+   "val_selection_score": 0.9037,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.9949,
+    "top1_ci95": [
+     0.9935,
+     0.9962
+    ],
+    "top3": 0.9996
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.5581,
+    "top1_ci95": [
+     0.4826,
+     0.6337
+    ],
+    "top3": 0.8256
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.9209,
+    "top1_ci95": [
+     0.9094,
+     0.9319
+    ],
+    "top3": 0.9808
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.3663,
+    "top1_ci95": [
+     0.3477,
+     0.3867
+    ],
+    "top3": 0.5634
+   },
+   "plantwild_healthy_as_disease": 0.417
+  },
+  "centralized_s42": {
+   "method": "centralized",
+   "seed": 42,
+   "client": null,
+   "best_step": 32,
+   "val_selection_score": 0.909,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.992,
+    "top1_ci95": [
+     0.9903,
+     0.9936
+    ],
+    "top3": 0.9992
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.5872,
+    "top1_ci95": [
+     0.5116,
+     0.6628
+    ],
+    "top3": 0.8779
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.9185,
+    "top1_ci95": [
+     0.9065,
+     0.93
+    ],
+    "top3": 0.9779
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.3715,
+    "top1_ci95": [
+     0.3524,
+     0.3911
+    ],
+    "top3": 0.5664
+   },
+   "plantwild_healthy_as_disease": 0.4061
+  },
+  "fedavg_s123": {
+   "method": "fedavg",
+   "seed": 123,
+   "client": null,
+   "best_step": 32,
+   "val_selection_score": 0.808,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.9688,
+    "top1_ci95": [
+     0.9654,
+     0.9721
+    ],
+    "top3": 0.9982
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.4302,
+    "top1_ci95": [
+     0.3547,
+     0.5058
+    ],
+    "top3": 0.7733
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.8332,
+    "top1_ci95": [
+     0.8169,
+     0.849
+    ],
+    "top3": 0.9559
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.3008,
+    "top1_ci95": [
+     0.283,
+     0.3199
+    ],
+    "top3": 0.5256
+   },
+   "plantwild_healthy_as_disease": 0.429
+  },
+  "fedavg_s2026": {
+   "method": "fedavg",
+   "seed": 2026,
+   "client": null,
+   "best_step": 39,
+   "val_selection_score": 0.8146,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.9686,
+    "top1_ci95": [
+     0.9653,
+     0.972
+    ],
+    "top3": 0.9981
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.4012,
+    "top1_ci95": [
+     0.3312,
+     0.4709
+    ],
+    "top3": 0.7616
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.8337,
+    "top1_ci95": [
+     0.8174,
+     0.8495
+    ],
+    "top3": 0.9612
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.2969,
+    "top1_ci95": [
+     0.2786,
+     0.316
+    ],
+    "top3": 0.52
+   },
+   "plantwild_healthy_as_disease": 0.444
+  },
+  "fedavg_s42": {
+   "method": "fedavg",
+   "seed": 42,
+   "client": null,
+   "best_step": 32,
+   "val_selection_score": 0.8103,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.9681,
+    "top1_ci95": [
+     0.9647,
+     0.9715
+    ],
+    "top3": 0.9986
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.3837,
+    "top1_ci95": [
+     0.314,
+     0.4536
+    ],
+    "top3": 0.7326
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.8269,
+    "top1_ci95": [
+     0.8097,
+     0.8428
+    ],
+    "top3": 0.9636
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.2964,
+    "top1_ci95": [
+     0.2773,
+     0.3142
+    ],
+    "top3": 0.5161
+   },
+   "plantwild_healthy_as_disease": 0.4331
+  },
+  "local_c0_s123": {
+   "method": "local",
+   "seed": 123,
+   "client": 0,
+   "best_step": 25,
+   "val_selection_score": 0.2814,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.5226,
+    "top1_ci95": [
+     0.5138,
+     0.5328
+    ],
+    "top3": 0.5792
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.1047,
+    "top1_ci95": [
+     0.0581,
+     0.1512
+    ],
+    "top3": 0.1744
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.4367,
+    "top1_ci95": [
+     0.4142,
+     0.4583
+    ],
+    "top3": 0.5877
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.178,
+    "top1_ci95": [
+     0.1623,
+     0.1936
+    ],
+    "top3": 0.283
+   },
+   "plantwild_healthy_as_disease": 0.7085
+  },
+  "local_c0_s2026": {
+   "method": "local",
+   "seed": 2026,
+   "client": 0,
+   "best_step": 13,
+   "val_selection_score": 0.2903,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.5298,
+    "top1_ci95": [
+     0.5205,
+     0.5397
+    ],
+    "top3": 0.5735
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.1163,
+    "top1_ci95": [
+     0.0698,
+     0.1629
+    ],
+    "top3": 0.1919
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.4784,
+    "top1_ci95": [
+     0.4559,
+     0.5
+    ],
+    "top3": 0.5892
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.178,
+    "top1_ci95": [
+     0.1632,
+     0.1931
+    ],
+    "top3": 0.2973
+   },
+   "plantwild_healthy_as_disease": 0.653
+  },
+  "local_c0_s42": {
+   "method": "local",
+   "seed": 42,
+   "client": 0,
+   "best_step": 21,
+   "val_selection_score": 0.2794,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.5269,
+    "top1_ci95": [
+     0.5178,
+     0.5367
+    ],
+    "top3": 0.5806
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.1105,
+    "top1_ci95": [
+     0.064,
+     0.157
+    ],
+    "top3": 0.1744
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.4487,
+    "top1_ci95": [
+     0.4276,
+     0.4708
+    ],
+    "top3": 0.5872
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.1762,
+    "top1_ci95": [
+     0.1606,
+     0.1923
+    ],
+    "top3": 0.293
+   },
+   "plantwild_healthy_as_disease": 0.6921
+  },
+  "local_c1_s123": {
+   "method": "local",
+   "seed": 123,
+   "client": 1,
+   "best_step": 34,
+   "val_selection_score": 0.2841,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.4904,
+    "top1_ci95": [
+     0.4808,
+     0.4993
+    ],
+    "top3": 0.538
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.2093,
+    "top1_ci95": [
+     0.1512,
+     0.2733
+    ],
+    "top3": 0.3953
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.4621,
+    "top1_ci95": [
+     0.4406,
+     0.4827
+    ],
+    "top3": 0.5374
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.128,
+    "top1_ci95": [
+     0.115,
+     0.1419
+    ],
+    "top3": 0.2543
+   },
+   "plantwild_healthy_as_disease": 0.2565
+  },
+  "local_c1_s2026": {
+   "method": "local",
+   "seed": 2026,
+   "client": 1,
+   "best_step": 39,
+   "val_selection_score": 0.285,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.4816,
+    "top1_ci95": [
+     0.4721,
+     0.4908
+    ],
+    "top3": 0.5368
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.2209,
+    "top1_ci95": [
+     0.157,
+     0.2849
+    ],
+    "top3": 0.4244
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.4616,
+    "top1_ci95": [
+     0.4401,
+     0.4827
+    ],
+    "top3": 0.5331
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.1376,
+    "top1_ci95": [
+     0.1237,
+     0.1515
+    ],
+    "top3": 0.2535
+   },
+   "plantwild_healthy_as_disease": 0.2554
+  },
+  "local_c1_s42": {
+   "method": "local",
+   "seed": 42,
+   "client": 1,
+   "best_step": 29,
+   "val_selection_score": 0.2777,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.4907,
+    "top1_ci95": [
+     0.4814,
+     0.4998
+    ],
+    "top3": 0.5391
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.2209,
+    "top1_ci95": [
+     0.1628,
+     0.2849
+    ],
+    "top3": 0.3663
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.4616,
+    "top1_ci95": [
+     0.4396,
+     0.4827
+    ],
+    "top3": 0.5379
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.1328,
+    "top1_ci95": [
+     0.1198,
+     0.1467
+    ],
+    "top3": 0.2491
+   },
+   "plantwild_healthy_as_disease": 0.2269
+  },
+  "local_c2_s123": {
+   "method": "local",
+   "seed": 123,
+   "client": 2,
+   "best_step": 20,
+   "val_selection_score": 0.3088,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.3159,
+    "top1_ci95": [
+     0.307,
+     0.3245
+    ],
+    "top3": 0.4078
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.3488,
+    "top1_ci95": [
+     0.2791,
+     0.4186
+    ],
+    "top3": 0.4477
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.3816,
+    "top1_ci95": [
+     0.361,
+     0.4037
+    ],
+    "top3": 0.489
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.1072,
+    "top1_ci95": [
+     0.0946,
+     0.1198
+    ],
+    "top3": 0.2192
+   },
+   "plantwild_healthy_as_disease": 0.2634
+  },
+  "local_c2_s2026": {
+   "method": "local",
+   "seed": 2026,
+   "client": 2,
+   "best_step": 36,
+   "val_selection_score": 0.3055,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.3128,
+    "top1_ci95": [
+     0.304,
+     0.3213
+    ],
+    "top3": 0.4139
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.3256,
+    "top1_ci95": [
+     0.2616,
+     0.3955
+    ],
+    "top3": 0.4593
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.3591,
+    "top1_ci95": [
+     0.3394,
+     0.3802
+    ],
+    "top3": 0.4827
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.1068,
+    "top1_ci95": [
+     0.0946,
+     0.1194
+    ],
+    "top3": 0.2157
+   },
+   "plantwild_healthy_as_disease": 0.2831
+  },
+  "local_c2_s42": {
+   "method": "local",
+   "seed": 42,
+   "client": 2,
+   "best_step": 32,
+   "val_selection_score": 0.2988,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.297,
+    "top1_ci95": [
+     0.2884,
+     0.3055
+    ],
+    "top3": 0.4031
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.3256,
+    "top1_ci95": [
+     0.2616,
+     0.3953
+    ],
+    "top3": 0.436
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.3365,
+    "top1_ci95": [
+     0.3178,
+     0.3571
+    ],
+    "top3": 0.4746
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.112,
+    "top1_ci95": [
+     0.0994,
+     0.1241
+    ],
+    "top3": 0.214
+   },
+   "plantwild_healthy_as_disease": 0.3681
+  },
+  "local_c3_s123": {
+   "method": "local",
+   "seed": 123,
+   "client": 3,
+   "best_step": 39,
+   "val_selection_score": 0.3219,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.5344,
+    "top1_ci95": [
+     0.5252,
+     0.5436
+    ],
+    "top3": 0.6243
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.3372,
+    "top1_ci95": [
+     0.2616,
+     0.4128
+    ],
+    "top3": 0.4884
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.4214,
+    "top1_ci95": [
+     0.4003,
+     0.4425
+    ],
+    "top3": 0.5355
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.25,
+    "top1_ci95": [
+     0.2318,
+     0.2682
+    ],
+    "top3": 0.3802
+   },
+   "plantwild_healthy_as_disease": 0.5213
+  },
+  "local_c3_s2026": {
+   "method": "local",
+   "seed": 2026,
+   "client": 3,
+   "best_step": 28,
+   "val_selection_score": 0.3187,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.5315,
+    "top1_ci95": [
+     0.5225,
+     0.5406
+    ],
+    "top3": 0.623
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.3779,
+    "top1_ci95": [
+     0.3023,
+     0.4535
+    ],
+    "top3": 0.4884
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.4228,
+    "top1_ci95": [
+     0.4012,
+     0.4439
+    ],
+    "top3": 0.536
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.2391,
+    "top1_ci95": [
+     0.2214,
+     0.2565
+    ],
+    "top3": 0.3715
+   },
+   "plantwild_healthy_as_disease": 0.5144
+  },
+  "local_c3_s42": {
+   "method": "local",
+   "seed": 42,
+   "client": 3,
+   "best_step": 37,
+   "val_selection_score": 0.3231,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.5386,
+    "top1_ci95": [
+     0.5296,
+     0.5477
+    ],
+    "top3": 0.6274
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.3547,
+    "top1_ci95": [
+     0.2791,
+     0.4302
+    ],
+    "top3": 0.4942
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.4147,
+    "top1_ci95": [
+     0.3936,
+     0.4358
+    ],
+    "top3": 0.5331
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.2357,
+    "top1_ci95": [
+     0.2183,
+     0.2535
+    ],
+    "top3": 0.3815
+   },
+   "plantwild_healthy_as_disease": 0.5403
+  },
+  "local_c4_s123": {
+   "method": "local",
+   "seed": 123,
+   "client": 4,
+   "best_step": 11,
+   "val_selection_score": 0.3155,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.5373,
+    "top1_ci95": [
+     0.528,
+     0.5466
+    ],
+    "top3": 0.601
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.1453,
+    "top1_ci95": [
+     0.093,
+     0.2035
+    ],
+    "top3": 0.3663
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.3322,
+    "top1_ci95": [
+     0.3111,
+     0.3528
+    ],
+    "top3": 0.5005
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.1532,
+    "top1_ci95": [
+     0.1385,
+     0.1684
+    ],
+    "top3": 0.2869
+   },
+   "plantwild_healthy_as_disease": 0.6684
+  },
+  "local_c4_s2026": {
+   "method": "local",
+   "seed": 2026,
+   "client": 4,
+   "best_step": 23,
+   "val_selection_score": 0.309,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.552,
+    "top1_ci95": [
+     0.5425,
+     0.5614
+    ],
+    "top3": 0.6064
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.1802,
+    "top1_ci95": [
+     0.1221,
+     0.2384
+    ],
+    "top3": 0.3837
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.3269,
+    "top1_ci95": [
+     0.3058,
+     0.3471
+    ],
+    "top3": 0.5221
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.1497,
+    "top1_ci95": [
+     0.1363,
+     0.1641
+    ],
+    "top3": 0.2843
+   },
+   "plantwild_healthy_as_disease": 0.6764
+  },
+  "local_c4_s42": {
+   "method": "local",
+   "seed": 42,
+   "client": 4,
+   "best_step": 36,
+   "val_selection_score": 0.3098,
+   "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+   "plantvillage_test": {
+    "n": 10843,
+    "top1": 0.5519,
+    "top1_ci95": [
+     0.5425,
+     0.5612
+    ],
+    "top3": 0.6099
+   },
+   "plantdoc_holdout_v3": {
+    "n": 172,
+    "top1": 0.1744,
+    "top1_ci95": [
+     0.1163,
+     0.2326
+    ],
+    "top3": 0.3547
+   },
+   "field_same_source_test": {
+    "n": 2086,
+    "top1": 0.325,
+    "top1_ci95": [
+     0.3039,
+     0.3456
+    ],
+    "top3": 0.5331
+   },
+   "own_photos_test": {
+    "n": 0
+   },
+   "plantwild_strict": {
+    "n": 2304,
+    "top1": 0.1523,
+    "top1_ci95": [
+     0.1385,
+     0.1662
+    ],
+    "top3": 0.2878
+   },
+   "plantwild_healthy_as_disease": 0.6837
+  }
+ },
+ "summary": {
+  "centralized": {
+   "seeds": [
+    42,
+    123,
+    2026
+   ],
+   "clients_per_seed": {
+    "123": 1,
+    "2026": 1,
+    "42": 1
+   },
+   "plantvillage_test": {
+    "mean": 0.9938,
+    "std": 0.0016
+   },
+   "plantdoc_holdout_v3": {
+    "mean": 0.5756,
+    "std": 0.0154
+   },
+   "field_same_source_test": {
+    "mean": 0.9223,
+    "std": 0.0047
+   },
+   "plantwild_strict": {
+    "mean": 0.3688,
+    "std": 0.0026
+   },
+   "plantwild_healthy_as_disease": {
+    "mean": 0.4095,
+    "std": 0.0065
+   }
+  },
+  "fedavg": {
+   "seeds": [
+    42,
+    123,
+    2026
+   ],
+   "clients_per_seed": {
+    "123": 1,
+    "2026": 1,
+    "42": 1
+   },
+   "plantvillage_test": {
+    "mean": 0.9685,
+    "std": 0.0004
+   },
+   "plantdoc_holdout_v3": {
+    "mean": 0.405,
+    "std": 0.0235
+   },
+   "field_same_source_test": {
+    "mean": 0.8313,
+    "std": 0.0038
+   },
+   "plantwild_strict": {
+    "mean": 0.298,
+    "std": 0.0024
+   },
+   "plantwild_healthy_as_disease": {
+    "mean": 0.4354,
+    "std": 0.0078
+   }
+  },
+  "local": {
+   "seeds": [
+    42,
+    123,
+    2026
+   ],
+   "clients_per_seed": {
+    "123": 5,
+    "2026": 5,
+    "42": 5
+   },
+   "plantvillage_test": {
+    "mean": 0.4809,
+    "std": 0.0007
+   },
+   "plantdoc_holdout_v3": {
+    "mean": 0.2368,
+    "std": 0.0076
+   },
+   "field_same_source_test": {
+    "mean": 0.4046,
+    "std": 0.0065
+   },
+   "plantwild_strict": {
+    "mean": 0.1624,
+    "std": 0.0008
+   },
+   "plantwild_healthy_as_disease": {
+    "mean": 0.4874,
+    "std": 0.0133
+   }
+  }
+ },
+ "checks": [
+  {
+   "id": "A_centralized_plantvillage",
+   "rule": ">= 0,90 top-1 PlantVillage test",
+   "value": 0.9938,
+   "pass": true
+  },
+  {
+   "id": "A_centralized_field_same_source",
+   "rule": ">= 0,90 top-1 ngoài đồng cùng nguồn",
+   "value": 0.9223,
+   "pass": true
+  },
+  {
+   "id": "B_centralized_plantwild_65",
+   "rule": ">= 0,65 top-1 PlantWild bệnh",
+   "value": 0.3688,
+   "pass": false
+  },
+  {
+   "id": "web1_centralized_plantwild_plus10",
+   "rule": ">= 0.431 và cận dưới CI mọi hạt giống > 0.331",
+   "value": 0.3688,
+   "ci_low_min": 0.3477,
+   "pass": false
+  },
+  {
+   "id": "web2_centralized_plantdoc_holdout",
+   "rule": ">= 0.614 (không giảm quá 2 điểm)",
+   "value": 0.5756,
+   "pass": false
+  },
+  {
+   "id": "web4_centralized_healthy_as_disease",
+   "rule": "< 0,60 (nhãn ngầm định, chỉ báo xu hướng)",
+   "value": 0.4095,
+   "pass": true
+  },
+  {
+   "id": "web5_centralized_three_seeds",
+   "rule": "đủ 3 hạt giống",
+   "value": 3,
+   "pass": true
+  },
+  {
+   "id": "A_fedavg_plantvillage",
+   "rule": ">= 0,90 top-1 PlantVillage test",
+   "value": 0.9685,
+   "pass": true
+  },
+  {
+   "id": "A_fedavg_field_same_source",
+   "rule": ">= 0,90 top-1 ngoài đồng cùng nguồn",
+   "value": 0.8313,
+   "pass": false
+  },
+  {
+   "id": "B_fedavg_plantwild_65",
+   "rule": ">= 0,65 top-1 PlantWild bệnh",
+   "value": 0.298,
+   "pass": false
+  },
+  {
+   "id": "web1_fedavg_plantwild_plus10",
+   "rule": ">= 0.418 và cận dưới CI mọi hạt giống > 0.318",
+   "value": 0.298,
+   "ci_low_min": 0.2773,
+   "pass": false
+  },
+  {
+   "id": "web2_fedavg_plantdoc_holdout",
+   "rule": ">= 0.480 (không giảm quá 2 điểm)",
+   "value": 0.405,
+   "pass": false
+  },
+  {
+   "id": "web4_fedavg_healthy_as_disease",
+   "rule": "< 0,60 (nhãn ngầm định, chỉ báo xu hướng)",
+   "value": 0.4354,
+   "pass": true
+  },
+  {
+   "id": "web5_fedavg_three_seeds",
+   "rule": "đủ 3 hạt giống",
+   "value": 3,
+   "pass": true
+  }
+ ],
+ "local_only_ceiling_top1_percent": {
+  "client_00": {
+   "classes_seen": 22,
+   "plantvillage_val": 63.7,
+   "plantdoc_val": 40.5,
+   "plantwild": 65.8
+  },
+  "client_01": {
+   "classes_seen": 22,
+   "plantvillage_val": 57.9,
+   "plantdoc_val": 43.5,
+   "plantwild": 63.2
+  },
+  "client_02": {
+   "classes_seen": 22,
+   "plantvillage_val": 57.8,
+   "plantdoc_val": 61.3,
+   "plantwild": 60.7
+  },
+  "client_03": {
+   "classes_seen": 24,
+   "plantvillage_val": 70.6,
+   "plantdoc_val": 81.8,
+   "plantwild": 60.9
+  },
+  "client_04": {
+   "classes_seen": 26,
+   "plantvillage_val": 74.6,
+   "plantdoc_val": 63.2,
+   "plantwild": 68.1
+  }
+ },
+ "not_checked_here": "Ngưỡng 3 (PlantVillage không giảm quá 0,5 điểm) cần số của mô hình cũ trên cùng tập: so bằng scripts/evaluate_published_models.py; D (cổng từ chối) phải hiệu chỉnh lại cho mô hình mới bằng scripts/eval_ood_gate.py."
+}

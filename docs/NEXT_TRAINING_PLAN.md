@@ -265,6 +265,36 @@ Kết luận: lấy mẫu cân bằng và logit adjustment không giúp; 40 epoc
 - ở máy này: `SSH_TARGET=... SSH_PORT=... SSH_KEY=... REMOTE_OUT=cropfed/runs/v4b LOCAL_OUT=runs/v4b bash scripts/remote/pull_runs.sh` (10 phút một lần, bỏ `checkpoint_last.pt`);
 - sau đó `python scripts/eval_trained_v4.py --runs runs/v4b`.
 
+### 5.8 Kết quả đợt chính v4b (2026-10-22, 21 run)
+
+Đợt chạy: công thức chốt ở mục 5.7 (`gpu_v2`, batch 128, lr 0,02, bf16, 40 epoch/vòng); 3 hạt giống (42, 123, 2026) × Centralized, FedAvg, 5 Local-only.
+- Máy: RTX 3090 24 GB, Ryzen 9 5900XT. Ba hạt giống chạy song song, mất 1 giờ 50 phút (08:45–10:36), GPU dùng 100%.
+- Release `68e57451…`, mã `93c5f80fd`. Kết quả ở `runs/v4b/` (ngoài git); đánh giá ở `artifacts/train_v4_results.json` (`scripts/eval_trained_v4.py`, PlantWild đo ở máy này).
+
+| Trung bình 3 hạt giống (top-1) | PlantVillage test | Ngoài đồng cùng nguồn (không gồm PlantDoc) | PlantDoc giữ riêng (172 lá) | PlantWild bệnh (2.304 ảnh) | Lá khỏe PlantWild bị đoán thành bệnh |
+|---|---:|---:|---:|---:|---:|
+| Centralized | **99,38%** | **92,23%** | 57,56% | 36,88% | 40,95% |
+| FedAvg | 96,85% | 83,13% | 40,50% | 29,80% | 43,54% |
+| Local-only (trung bình 5 client) | 48,09% | 40,46% | 23,68% | 16,24% | 48,74% |
+| *Mô hình đang công bố: Centralized / FedAvg* | *99,23% / 93,34%* | *—* | *63,37% / 50,00%* | *33,07% / 31,81%* | *86,9% / 94,0%* |
+
+Độ lệch giữa các hạt giống nhỏ: PlantVillage ±0,2 điểm, PlantDoc ±1,5–2,4 điểm, PlantWild ±0,3 điểm.
+Local-only theo từng client (PlantVillage): 52,7 / 48,8 / 30,9 / 53,5 / 54,7%. Client 2 thấp nhất vì shard nhỏ nhất (6.647 ảnh).
+
+**Theo ngưỡng mục 5.4:**
+- **Đạt:** Centralized ≥ 90% với PlantVillage và với ảnh ngoài đồng cùng nguồn; FedAvg ≥ 90% với PlantVillage; tỉ lệ lá khỏe bị đoán thành bệnh < 60% cho cả hai; đủ 3 hạt giống.
+- **Không đạt:**
+  - PlantWild ≥ 65%, hoặc tăng ≥ 10 điểm (Centralized +3,8; FedAvg −2,0);
+  - PlantDoc giữ riêng giảm không quá 2 điểm (Centralized −5,8; FedAvg −9,5);
+  - FedAvg với ảnh ngoài đồng cùng nguồn đạt ≥ 90% (83,1%).
+
+Vì vậy theo quy tắc đã đặt trước, **chưa nhập mô hình mới lên web**.
+
+**Diễn giải:**
+- PlantDoc gộp hai phần (441 lá) của Centralized là 56,2% so với 57,6% của mô hình cũ, gần như ngang. Mô hình cũ lệch 9,5 điểm giữa phần kiểm tra và phần giữ riêng, nên mức giảm ở phần giữ riêng một phần là nhiễu.
+- FedAvg thì giảm thật (gộp 441 lá: 37,9% so với 48,3%). Giả thuyết chưa kiểm chứng: lr 0,02 và batch 128 được chọn trên Centralized làm các client trôi xa nhau khi dữ liệu lệch nhãn (α = 0,1).
+- Khoảng cách Centralized − FedAvg lớn nhất ở ảnh ngoài đồng (cùng nguồn khoảng 9 điểm, PlantDoc khoảng 17 điểm) và nhỏ ở PlantVillage (khoảng 2,5 điểm).
+
 ### 5.5 Việc đã làm sẵn
 - Tập thử ngoài đồng và công cụ đo: `scripts/build_external_eval_set.py`, `scripts/eval_external_set.py`, `scripts/eval_inference_variants.py`.
 - Bộ tăng cường ảnh và kiểm khô (vẽ lưới ảnh, chạy một batch qua MobileNetV3-Small trên CPU): `src/data/robust_transforms.py`, `scripts/preview_augmentations.py`.

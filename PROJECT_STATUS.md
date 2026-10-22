@@ -1,6 +1,6 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-22 09:46 · sinh tự bởi `scripts/update_status.py`
+> **Cập nhật lúc:** 2026-10-22 10:50 · sinh tự bởi `scripts/update_status.py`
 > **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (3 mục BLOCKED cần dữ liệu/máy train, 4 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
@@ -24,7 +24,7 @@
 
 | # | Hạng mục | Trạng thái | Bằng chứng (máy kiểm) |
 |---|---|---|---|
-| 1 | Registry v2 + danh mục mọi checkpoint trên đĩa | ✅ XONG | schema v2; 18 model; 75 file .pt đều có tên (15 trong model, 60 trong nhóm) |
+| 1 | Registry v2 + danh mục mọi checkpoint trên đĩa | ✅ XONG | schema v2; 18 model; 93 file .pt đều có tên (15 trong model, 78 trong nhóm) |
 | 2 | Smoke cách ly khỏi slot canonical | ✅ XONG | slot canonical không chứa smoke; 3 checkpoint smoke nằm ở artifacts/checkpoints/smoke/ |
 | 3 | Một engine train (pipeline cũ gom vào legacy/) | ✅ XONG | engine duy nhất là src/; pipeline Kaggle/stage* nằm trong legacy/ (chạy riêng: pytest legacy/tests) |
 | 4 | Web tách router/service, inference đi một cửa | ✅ XONG | app.py chỉ mount router; inference chỉ đi qua web/services/model_service.py (cổng web_visible) |
@@ -147,7 +147,7 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
 |---|---|---|---|
 | `kaggle_run_lfs_pointer` | 6 | historical | Checkpoint run Kaggle canonical: chỉ còn con trỏ Git-LFS, bytes thật KHÔNG có trên máy (repo không có remote) — cần tải lại từ Kaggle |
 | `report_experiments_smoke` | 36 | quarantined | Run report_experiments mode=smoke (ảnh nhiễu ngẫu nhiên, accuracy 0.0263) — cấm dùng trong luận văn |
-| `train_v4_runs` | 3 | technical_demo | Checkpoint đợt train v4 (scripts/train_v4.py, máy GPU thuê) chưa đánh giá/promote — số liệu chỉ dùng sau scripts/eval_trained_v4.py |
+| `train_v4_runs` | 21 | technical_demo | Checkpoint đợt train v4 (scripts/train_v4.py, máy GPU thuê) chưa đánh giá/promote — số liệu chỉ dùng sau scripts/eval_trained_v4.py |
 | `web_runs` | 15 | technical_demo | Checkpoint từ run do web khởi động (smoke Flower hoặc demo huấn luyện); chưa có bằng chứng khoa học |
 
 ## 5. Chất lượng nhận diện (số công bố, tái đánh giá cục bộ, test giữ riêng)
@@ -241,7 +241,7 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
 | Pre-demo check | **technical_demo_ready** | artifacts/pre_demo_check.json |
 | Final acceptance | technical **pass** / scientific **blocked** | 4 blocker khoa học — **CŨ**: mã nguồn đã đổi kể từ lần chạy |
 | Network artifact | **CHƯA CÓ run mạng khoa học (artifact hiện tại là smoke kỹ thuật)** | artifacts/network_artifact_validation.json |
-| Danh mục checkpoint | **complete** | 75 file .pt, vô danh: 0 |
+| Danh mục checkpoint | **complete** | 93 file .pt, vô danh: 0 |
 
 ## 7. Nhật ký (khối dưới đây TỰ TAY SỬA)
 
@@ -417,6 +417,9 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
   loại FieldVitis Isariopsis (nhãn chưa xác minh) và cà chua đa lớp (không có từ điển lớp). Phiên kia đúng ở hai điểm, đã nhận: "ngoài đồng sẵn sàng" đếm trước khi chia split (đếm lại trong train: chỉ 12/38 lớp có
   >= 300 ảnh từ >= 2 nguồn; tập thử ngoài đồng gần như không có nguồn lạ) và 286 cặp cùng lá cosine >= 0,95 nằm ở hai split ở các nguồn chưa trích đặc trưng (nay gộp nhóm cho mọi nguồn, còn 0 cặp).
   Release dựng lại, SHA `68e57451...`, 52464 ảnh train, hợp đồng bộ chạy 12/12. 5 lớp vẫn thiếu ảnh ngoài đồng (< 100). Chưa train, chưa triển khai.
+- 2026-10-22 (đợt train chính v4b, 21 run trên máy GPU thuê): công thức mới (tăng cường trên GPU, batch 128, bf16) nhanh gấp khoảng 3 lần đợt đầu; 3 hạt giống song song mất 1 giờ 50 phút.
+  Trung bình 3 hạt giống: Centralized PlantVillage 99,4%, ngoài đồng cùng nguồn 92,2%, PlantDoc giữ riêng 57,6%, PlantWild 36,9%, lá khỏe bị đoán thành bệnh 41% (cũ 87%).
+  FedAvg tương ứng 96,9 / 83,1 / 40,5 / 29,8 / 44%. Không đạt ngưỡng PlantWild và PlantDoc nên chưa nhập lên web (`artifacts/train_v4_results.json`, `docs/NEXT_TRAINING_PLAN.md` mục 5.8).
 <!-- ROADMAP-END -->
 
 ## 8. Cách đồng bộ
