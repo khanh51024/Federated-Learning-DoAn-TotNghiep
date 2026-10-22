@@ -6,6 +6,13 @@ WORK="${1:-$HOME/cropfed}"
 CUDA_TAG="${CUDA_TAG:-cu128}"   # bánh xe PyTorch dựng cho CUDA 12.8 chạy được trên driver mới hơn (driver CUDA 13.x tương thích ngược)
 mkdir -p "$WORK"
 cd "$WORK"
+# Ảnh "CUDA ... Ubuntu" của nơi thuê không có sẵn python3/tmux (gặp ở máy thuê đầu tiên): tự cài khi chạy bằng root
+if ! command -v python3 >/dev/null || ! python3 -m venv --help >/dev/null 2>&1 || ! command -v tmux >/dev/null; then
+  if [ "$(id -u)" = 0 ] && command -v apt-get >/dev/null; then
+    DEBIAN_FRONTEND=noninteractive apt-get update -qq
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 python3-venv python3-pip tmux
+  fi
+fi
 command -v python3 >/dev/null || { echo "thiếu python3"; exit 1; }
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv
 python3 -m venv venv

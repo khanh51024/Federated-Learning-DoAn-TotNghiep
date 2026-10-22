@@ -33,5 +33,5 @@ for seed in $SEEDS; do
   done
 done
 echo "$(date '+%F %T') hết đợt, mã thoát $status"
-touch "$OUT/ALL_FINISHED"
+touch "$OUT/FINISHED_seeds_${SEEDS// /_}"
 exit $status

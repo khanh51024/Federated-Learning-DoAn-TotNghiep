@@ -241,7 +241,29 @@ Quy trình:
 | E | biến thể tốt nhất + học 192 px |
 | F | biến thể tốt nhất + `gpu_v2_ta` |
 
-Chênh dưới 0,5 điểm thì chọn bản rẻ hơn. Đợt chính chạy bằng `RECIPE="..." OUT_DIR=... bash scripts/remote/run_all.sh`.
+Chênh dưới 0,5 điểm thì chọn bản rẻ hơn.
+
+**Kết quả ablation** (Centralized seed 42, chỉ so trên val; một hạt giống nên chênh dưới khoảng 1 điểm coi là nhiễu):
+
+| Biến thể | Điểm chọn tốt nhất | TB 5 epoch cuối | Giây/epoch |
+|---|---:|---:|---:|
+| Run mốc `robust_v1`, 40 epoch | 0,894 | 0,889 | 54,5 |
+| A40 `gpu_v2`, 40 epoch | 0,908 | 0,906 | 24,7 |
+| A `gpu_v2`, 20 epoch | 0,899 | 0,895 | 24,5 |
+| A128 (batch 128, lr 0,02) | 0,898 | 0,891 | 18,9 |
+| Abf (bf16) | 0,900 | 0,894 | 22,9 |
+| B lấy mẫu cân bằng p = 1 | 0,898 | 0,893 | 24,4 |
+| C lấy mẫu p = 0,5 | 0,900 | 0,896 | 24,3 |
+| D = C + logit adjustment τ = 1 | 0,899 | 0,892 | 24,3 |
+
+E (192 px), F (TrivialAugment) và G (batch 128 + bf16 cùng lúc) đang chạy thì máy thuê bị thu hồi, chưa có kết quả.
+Kết luận: lấy mẫu cân bằng và logit adjustment không giúp; 40 epoch hơn 20 epoch khoảng 1 điểm; batch 128 và bf16 giữ độ chính xác mà nhanh hơn.
+**Công thức đợt chính:** `RECIPE="--aug gpu_v2 --channels-last --batch-size 128 --lr 0.02 --amp bf16"`, 40 epoch, trọng số miền như cũ.
+
+**Chạy đợt chính trên máy nhiều luồng CPU** (máy thuê có thể bị thu hồi giữa chừng, nên kéo kết quả về liên tục):
+- trên máy GPU: `RELEASE_SHA=<sha> RECIPE="..." OUT_DIR=~/cropfed/runs/v4b bash code/scripts/remote/run_parallel.sh` (mỗi hạt giống một phiên tmux, worker chia theo `nproc`);
+- ở máy này: `SSH_TARGET=... SSH_PORT=... SSH_KEY=... REMOTE_OUT=cropfed/runs/v4b LOCAL_OUT=runs/v4b bash scripts/remote/pull_runs.sh` (10 phút một lần, bỏ `checkpoint_last.pt`);
+- sau đó `python scripts/eval_trained_v4.py --runs runs/v4b`.
 
 ### 5.5 Việc đã làm sẵn
 - Tập thử ngoài đồng và công cụ đo: `scripts/build_external_eval_set.py`, `scripts/eval_external_set.py`, `scripts/eval_inference_variants.py`.
