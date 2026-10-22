@@ -1,0 +1,3484 @@
+{
+  "protocol_id": "mixed_pv_pd_v4_pretrained_seed42_validation",
+  "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+  "validation_manifest_sha256": "f370f9fe873b874b7ec64a247831a951d0f9108bbd67a06f8b97cfa0d3e6f355",
+  "w0_fingerprint": "a3937527052a339e840b2f092abd30460ecda00b13e5a163c6a822528a612bb6",
+  "seed": 42,
+  "schema_version": 2,
+  "bundle_id": "v4b_s42",
+  "checkpoint_sha256": {
+    "centralized": "a4ea0dcc8ef34eec529207ad1c015001f5554119e2a9eaa1f4760f200885dcbb",
+    "fedavg": "cd1c8f603bd9cd1bb485346454e83d18658a2ac08d51f35c7e29a255335fbb45",
+    "local_00": "3e6cc0019d2906004f028e844bc06144098b21e78aa772557be2ce4413a4d2c9",
+    "local_01": "cf46acf7fd19bdbcec9e988e3276e42c7487b58ba8e7ae3cfd47fae6dfbecbf7",
+    "local_02": "a7a2561ed95f997d8006b64ac54ced996ee948843a85350746a429c09aef6914",
+    "local_03": "4547b8c57bd486b8b78025658a3450e9ddb1d5a8106e46f60cd78bed2ae7d8b6",
+    "local_04": "d13b72fdb7b2d370b9de922ed06d8e8079ce6cd8201debf866c4a3cfaf3dbe3b"
+  },
+  "models": [
+    {
+      "model_id": "centralized",
+      "selected_step": 33,
+      "checkpoint_bytes": 6364181,
+      "config": {
+        "batch_size": 128,
+        "lr": 0.02,
+        "optimizer": "SGD động lượng 0.9, weight decay 0.0001",
+        "weight_decay": null,
+        "amp": "bf16",
+        "init": "ImageNet-1K V1 + đầu 38 lớp theo hạt giống",
+        "preprocessing_version": "canonical_v1",
+        "scheduler_policy": "khởi động 1 epoch, sau đó cosine về 0",
+        "train_transform": "gpu_v2 (get_cpu_train_transform + src/training/gpu_augment.py)",
+        "loss_weighting": "domain_balanced",
+        "selection": "mean macro-F1 over val sources with >= 30 images",
+        "units": "epoch",
+        "epochs": 40
+      },
+      "validation_overall": {
+        "count": 6746,
+        "supported_classes": 38,
+        "top1_accuracy": 0.9624962941002075,
+        "macro_f1_supported": 0.9568396575994808,
+        "crop_accuracy": 0.9879928846723984,
+        "high_confidence_wrong_count_0_9": 10
+      },
+      "completed_steps": 40,
+      "total_runtime_seconds": 1729.7,
+      "status": "completed",
+      "history": [
+        {
+          "epoch": 1,
+          "train_loss": 1.3480511636550778,
+          "val_loss": null,
+          "val_accuracy": 0.8332,
+          "plantdoc_macro_f1_supported": 0.3904,
+          "plantvillage_macro_f1_supported": 0.8131,
+          "lr": 0.02,
+          "selection_score": 0.7333,
+          "duration_sec": 77.5
+        },
+        {
+          "epoch": 2,
+          "train_loss": 1.028330215123704,
+          "val_loss": null,
+          "val_accuracy": 0.8949,
+          "plantdoc_macro_f1_supported": 0.499,
+          "plantvillage_macro_f1_supported": 0.9229,
+          "lr": 0.02,
+          "selection_score": 0.7863,
+          "duration_sec": 45.3
+        },
+        {
+          "epoch": 3,
+          "train_loss": 0.9642768434069076,
+          "val_loss": null,
+          "val_accuracy": 0.8927,
+          "plantdoc_macro_f1_supported": 0.4177,
+          "plantvillage_macro_f1_supported": 0.9181,
+          "lr": 0.019967573081342102,
+          "selection_score": 0.7678,
+          "duration_sec": 45.0
+        },
+        {
+          "epoch": 4,
+          "train_loss": 0.933781304203835,
+          "val_loss": null,
+          "val_accuracy": 0.933,
+          "plantdoc_macro_f1_supported": 0.5237,
+          "plantvillage_macro_f1_supported": 0.9648,
+          "lr": 0.019870502626379127,
+          "selection_score": 0.8465,
+          "duration_sec": 44.8
+        },
+        {
+          "epoch": 5,
+          "train_loss": 0.9034381760588213,
+          "val_loss": null,
+          "val_accuracy": 0.934,
+          "plantdoc_macro_f1_supported": 0.5129,
+          "plantvillage_macro_f1_supported": 0.9669,
+          "lr": 0.019709418174260522,
+          "selection_score": 0.868,
+          "duration_sec": 44.6
+        },
+        {
+          "epoch": 6,
+          "train_loss": 0.8872164126829826,
+          "val_loss": null,
+          "val_accuracy": 0.9183,
+          "plantdoc_macro_f1_supported": 0.5658,
+          "plantvillage_macro_f1_supported": 0.9317,
+          "lr": 0.019485364419471456,
+          "selection_score": 0.8563,
+          "duration_sec": 45.0
+        },
+        {
+          "epoch": 7,
+          "train_loss": 0.8704448675520357,
+          "val_loss": null,
+          "val_accuracy": 0.916,
+          "plantdoc_macro_f1_supported": 0.5472,
+          "plantvillage_macro_f1_supported": 0.9343,
+          "lr": 0.019199794436588244,
+          "selection_score": 0.8402,
+          "duration_sec": 45.1
+        },
+        {
+          "epoch": 8,
+          "train_loss": 0.8570271847123742,
+          "val_loss": null,
+          "val_accuracy": 0.9492,
+          "plantdoc_macro_f1_supported": 0.5399,
+          "plantvillage_macro_f1_supported": 0.9819,
+          "lr": 0.018854560256532097,
+          "selection_score": 0.8712,
+          "duration_sec": 45.1
+        },
+        {
+          "epoch": 9,
+          "train_loss": 0.8499718259187252,
+          "val_loss": null,
+          "val_accuracy": 0.9462,
+          "plantdoc_macro_f1_supported": 0.5306,
+          "plantvillage_macro_f1_supported": 0.9845,
+          "lr": 0.01845190085543795,
+          "selection_score": 0.859,
+          "duration_sec": 44.7
+        },
+        {
+          "epoch": 10,
+          "train_loss": 0.8414218410481473,
+          "val_loss": null,
+          "val_accuracy": 0.9493,
+          "plantdoc_macro_f1_supported": 0.5619,
+          "plantvillage_macro_f1_supported": 0.9781,
+          "lr": 0.017994427634035012,
+          "selection_score": 0.8834,
+          "duration_sec": 44.5
+        },
+        {
+          "epoch": 11,
+          "train_loss": 0.8316320179075175,
+          "val_loss": null,
+          "val_accuracy": 0.9532,
+          "plantdoc_macro_f1_supported": 0.5405,
+          "plantvillage_macro_f1_supported": 0.9905,
+          "lr": 0.01748510748171101,
+          "selection_score": 0.8747,
+          "duration_sec": 44.7
+        },
+        {
+          "epoch": 12,
+          "train_loss": 0.8224946510940836,
+          "val_loss": null,
+          "val_accuracy": 0.9511,
+          "plantdoc_macro_f1_supported": 0.5527,
+          "plantvillage_macro_f1_supported": 0.9864,
+          "lr": 0.016927243535095997,
+          "selection_score": 0.8922,
+          "duration_sec": 45.0
+        },
+        {
+          "epoch": 13,
+          "train_loss": 0.8155643036177188,
+          "val_loss": null,
+          "val_accuracy": 0.9508,
+          "plantdoc_macro_f1_supported": 0.5559,
+          "plantvillage_macro_f1_supported": 0.9892,
+          "lr": 0.01632445375595377,
+          "selection_score": 0.8672,
+          "duration_sec": 44.7
+        },
+        {
+          "epoch": 14,
+          "train_loss": 0.8096650947554513,
+          "val_loss": null,
+          "val_accuracy": 0.9463,
+          "plantdoc_macro_f1_supported": 0.5421,
+          "plantvillage_macro_f1_supported": 0.9834,
+          "lr": 0.015680647467311556,
+          "selection_score": 0.8797,
+          "duration_sec": 44.8
+        },
+        {
+          "epoch": 15,
+          "train_loss": 0.8060468398568542,
+          "val_loss": null,
+          "val_accuracy": 0.9225,
+          "plantdoc_macro_f1_supported": 0.5551,
+          "plantvillage_macro_f1_supported": 0.9451,
+          "lr": 0.015,
+          "selection_score": 0.8568,
+          "duration_sec": 44.8
+        },
+        {
+          "epoch": 16,
+          "train_loss": 0.797926390596409,
+          "val_loss": null,
+          "val_accuracy": 0.9432,
+          "plantdoc_macro_f1_supported": 0.5485,
+          "plantvillage_macro_f1_supported": 0.9767,
+          "lr": 0.01428692561403054,
+          "selection_score": 0.8667,
+          "duration_sec": 44.6
+        },
+        {
+          "epoch": 17,
+          "train_loss": 0.7932026157222095,
+          "val_loss": null,
+          "val_accuracy": 0.9564,
+          "plantdoc_macro_f1_supported": 0.605,
+          "plantvillage_macro_f1_supported": 0.9884,
+          "lr": 0.013546048870425357,
+          "selection_score": 0.8897,
+          "duration_sec": 44.3
+        },
+        {
+          "epoch": 18,
+          "train_loss": 0.7868513111371607,
+          "val_loss": null,
+          "val_accuracy": 0.9518,
+          "plantdoc_macro_f1_supported": 0.5807,
+          "plantvillage_macro_f1_supported": 0.9782,
+          "lr": 0.012782174639164527,
+          "selection_score": 0.8966,
+          "duration_sec": 43.5
+        },
+        {
+          "epoch": 19,
+          "train_loss": 0.7880866820581732,
+          "val_loss": null,
+          "val_accuracy": 0.9554,
+          "plantdoc_macro_f1_supported": 0.5523,
+          "plantvillage_macro_f1_supported": 0.9856,
+          "lr": 0.012000256937760445,
+          "selection_score": 0.8977,
+          "duration_sec": 43.0
+        },
+        {
+          "epoch": 20,
+          "train_loss": 0.780985309569419,
+          "val_loss": null,
+          "val_accuracy": 0.9469,
+          "plantdoc_macro_f1_supported": 0.5799,
+          "plantvillage_macro_f1_supported": 0.977,
+          "lr": 0.01120536680255323,
+          "selection_score": 0.8884,
+          "duration_sec": 41.8
+        },
+        {
+          "epoch": 21,
+          "train_loss": 0.7782778726841263,
+          "val_loss": null,
+          "val_accuracy": 0.9597,
+          "plantdoc_macro_f1_supported": 0.5731,
+          "plantvillage_macro_f1_supported": 0.9921,
+          "lr": 0.010402659401094153,
+          "selection_score": 0.8914,
+          "duration_sec": 41.1
+        },
+        {
+          "epoch": 22,
+          "train_loss": 0.772476871044907,
+          "val_loss": null,
+          "val_accuracy": 0.9518,
+          "plantdoc_macro_f1_supported": 0.5632,
+          "plantvillage_macro_f1_supported": 0.9829,
+          "lr": 0.009597340598905851,
+          "selection_score": 0.8788,
+          "duration_sec": 40.8
+        },
+        {
+          "epoch": 23,
+          "train_loss": 0.7704457163483531,
+          "val_loss": null,
+          "val_accuracy": 0.9555,
+          "plantdoc_macro_f1_supported": 0.5598,
+          "plantvillage_macro_f1_supported": 0.9915,
+          "lr": 0.00879463319744677,
+          "selection_score": 0.8834,
+          "duration_sec": 42.1
+        },
+        {
+          "epoch": 24,
+          "train_loss": 0.767715793806229,
+          "val_loss": null,
+          "val_accuracy": 0.9582,
+          "plantdoc_macro_f1_supported": 0.5846,
+          "plantvillage_macro_f1_supported": 0.9926,
+          "lr": 0.007999743062239557,
+          "selection_score": 0.8951,
+          "duration_sec": 41.3
+        },
+        {
+          "epoch": 25,
+          "train_loss": 0.7654479440664075,
+          "val_loss": null,
+          "val_accuracy": 0.9598,
+          "plantdoc_macro_f1_supported": 0.5911,
+          "plantvillage_macro_f1_supported": 0.9916,
+          "lr": 0.007217825360835474,
+          "selection_score": 0.8993,
+          "duration_sec": 40.4
+        },
+        {
+          "epoch": 26,
+          "train_loss": 0.7643148754383958,
+          "val_loss": null,
+          "val_accuracy": 0.9539,
+          "plantdoc_macro_f1_supported": 0.561,
+          "plantvillage_macro_f1_supported": 0.9776,
+          "lr": 0.006453951129574643,
+          "selection_score": 0.8798,
+          "duration_sec": 39.9
+        },
+        {
+          "epoch": 27,
+          "train_loss": 0.7607804577901037,
+          "val_loss": null,
+          "val_accuracy": 0.9586,
+          "plantdoc_macro_f1_supported": 0.6069,
+          "plantvillage_macro_f1_supported": 0.9909,
+          "lr": 0.005713074385969456,
+          "selection_score": 0.9008,
+          "duration_sec": 40.3
+        },
+        {
+          "epoch": 28,
+          "train_loss": 0.7572266816293077,
+          "val_loss": null,
+          "val_accuracy": 0.9533,
+          "plantdoc_macro_f1_supported": 0.5772,
+          "plantvillage_macro_f1_supported": 0.9856,
+          "lr": 0.005000000000000003,
+          "selection_score": 0.8942,
+          "duration_sec": 40.4
+        },
+        {
+          "epoch": 29,
+          "train_loss": 0.7567022148520891,
+          "val_loss": null,
+          "val_accuracy": 0.9594,
+          "plantdoc_macro_f1_supported": 0.5705,
+          "plantvillage_macro_f1_supported": 0.9929,
+          "lr": 0.004319352532688443,
+          "selection_score": 0.897,
+          "duration_sec": 40.2
+        },
+        {
+          "epoch": 30,
+          "train_loss": 0.7558336132872064,
+          "val_loss": null,
+          "val_accuracy": 0.9615,
+          "plantdoc_macro_f1_supported": 0.5821,
+          "plantvillage_macro_f1_supported": 0.9924,
+          "lr": 0.0036755462440462286,
+          "selection_score": 0.9084,
+          "duration_sec": 39.6
+        },
+        {
+          "epoch": 31,
+          "train_loss": 0.7527589603108799,
+          "val_loss": null,
+          "val_accuracy": 0.9616,
+          "plantdoc_macro_f1_supported": 0.5814,
+          "plantvillage_macro_f1_supported": 0.9937,
+          "lr": 0.003072756464904006,
+          "selection_score": 0.9043,
+          "duration_sec": 39.6
+        },
+        {
+          "epoch": 32,
+          "train_loss": 0.7523213834724763,
+          "val_loss": null,
+          "val_accuracy": 0.9589,
+          "plantdoc_macro_f1_supported": 0.5813,
+          "plantvillage_macro_f1_supported": 0.9916,
+          "lr": 0.002514892518288988,
+          "selection_score": 0.9026,
+          "duration_sec": 39.8
+        },
+        {
+          "epoch": 33,
+          "train_loss": 0.7508742602069991,
+          "val_loss": null,
+          "val_accuracy": 0.9628,
+          "plantdoc_macro_f1_supported": 0.5903,
+          "plantvillage_macro_f1_supported": 0.9926,
+          "lr": 0.0020055723659649907,
+          "selection_score": 0.909,
+          "duration_sec": 39.6
+        },
+        {
+          "epoch": 34,
+          "train_loss": 0.7503080237162626,
+          "val_loss": null,
+          "val_accuracy": 0.9604,
+          "plantdoc_macro_f1_supported": 0.566,
+          "plantvillage_macro_f1_supported": 0.994,
+          "lr": 0.001548099144562054,
+          "selection_score": 0.8956,
+          "duration_sec": 39.9
+        },
+        {
+          "epoch": 35,
+          "train_loss": 0.7480623618100031,
+          "val_loss": null,
+          "val_accuracy": 0.9618,
+          "plantdoc_macro_f1_supported": 0.5849,
+          "plantvillage_macro_f1_supported": 0.9929,
+          "lr": 0.001145439743467902,
+          "selection_score": 0.9029,
+          "duration_sec": 39.4
+        },
+        {
+          "epoch": 36,
+          "train_loss": 0.7489843481959058,
+          "val_loss": null,
+          "val_accuracy": 0.9625,
+          "plantdoc_macro_f1_supported": 0.5925,
+          "plantvillage_macro_f1_supported": 0.9933,
+          "lr": 0.0008002055634117578,
+          "selection_score": 0.9064,
+          "duration_sec": 39.4
+        },
+        {
+          "epoch": 37,
+          "train_loss": 0.7477605179265783,
+          "val_loss": null,
+          "val_accuracy": 0.9625,
+          "plantdoc_macro_f1_supported": 0.589,
+          "plantvillage_macro_f1_supported": 0.9937,
+          "lr": 0.0005146355805285452,
+          "selection_score": 0.9066,
+          "duration_sec": 40.6
+        },
+        {
+          "epoch": 38,
+          "train_loss": 0.7474867438862839,
+          "val_loss": null,
+          "val_accuracy": 0.9628,
+          "plantdoc_macro_f1_supported": 0.5894,
+          "plantvillage_macro_f1_supported": 0.9933,
+          "lr": 0.0002905818257394799,
+          "selection_score": 0.9069,
+          "duration_sec": 40.5
+        },
+        {
+          "epoch": 39,
+          "train_loss": 0.7466730162587679,
+          "val_loss": null,
+          "val_accuracy": 0.9626,
+          "plantdoc_macro_f1_supported": 0.5875,
+          "plantvillage_macro_f1_supported": 0.9934,
+          "lr": 0.00012949737362087156,
+          "selection_score": 0.9067,
+          "duration_sec": 41.1
+        },
+        {
+          "epoch": 40,
+          "train_loss": 0.7466651239421317,
+          "val_loss": null,
+          "val_accuracy": 0.9622,
+          "plantdoc_macro_f1_supported": 0.5907,
+          "plantvillage_macro_f1_supported": 0.9934,
+          "lr": 3.2426918657900704e-05,
+          "selection_score": 0.9055,
+          "duration_sec": 40.9
+        }
+      ],
+      "train_accuracy_by_source": null
+    },
+    {
+      "model_id": "fedavg",
+      "selected_step": 33,
+      "checkpoint_bytes": 6364181,
+      "config": {
+        "batch_size": 128,
+        "lr": 0.02,
+        "optimizer": "SGD động lượng 0.9, weight decay 0.0001",
+        "weight_decay": null,
+        "amp": "bf16",
+        "init": "ImageNet-1K V1 + đầu 38 lớp theo hạt giống",
+        "preprocessing_version": "canonical_v1",
+        "scheduler_policy": "khởi động 1 vòng, sau đó cosine về 0",
+        "train_transform": "gpu_v2 (get_cpu_train_transform + src/training/gpu_augment.py)",
+        "loss_weighting": "domain_balanced",
+        "selection": "mean macro-F1 over val sources with >= 30 images",
+        "units": "vòng",
+        "rounds": 40,
+        "local_epochs": 1,
+        "client_optimizer": "SGD động lượng 0.9, weight decay 0.0001",
+        "optimizer_state": "làm mới mỗi vòng ở từng client"
+      },
+      "validation_overall": {
+        "count": 6746,
+        "supported_classes": 38,
+        "top1_accuracy": 0.9119478209309221,
+        "macro_f1_supported": 0.9027133719005567,
+        "crop_accuracy": 0.9764304773198933,
+        "high_confidence_wrong_count_0_9": 1
+      },
+      "completed_steps": 40,
+      "total_runtime_seconds": 1762.3,
+      "status": "completed",
+      "history": [
+        {
+          "train_loss": 1.3951467903584385,
+          "val_loss": null,
+          "val_accuracy": 0.4155,
+          "plantdoc_macro_f1_supported": 0.1155,
+          "plantvillage_macro_f1_supported": 0.2975,
+          "lr": 0.02,
+          "selection_score": 0.2884,
+          "duration_sec": 105.5,
+          "round": 1,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 1.305060481755932,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 1.3032186885210846,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 1.5482360463366933,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 1.410918283876791,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 1.486427098757815,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 1.1144521682500041,
+          "val_loss": null,
+          "val_accuracy": 0.6456,
+          "plantdoc_macro_f1_supported": 0.2628,
+          "plantvillage_macro_f1_supported": 0.5727,
+          "lr": 0.02,
+          "selection_score": 0.4825,
+          "duration_sec": 20.8,
+          "round": 2,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 1.0577393788862821,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 1.0520205179197673,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 1.1988249368841206,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 1.1089566306202754,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 1.194267250354763,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 1.0262057551612884,
+          "val_loss": null,
+          "val_accuracy": 0.733,
+          "plantdoc_macro_f1_supported": 0.3715,
+          "plantvillage_macro_f1_supported": 0.709,
+          "lr": 0.019967573081342102,
+          "selection_score": 0.532,
+          "duration_sec": 29.7,
+          "round": 3,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.9835446946288243,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.9711359833418869,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 1.0996509527324356,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 1.024515982878258,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 1.086833565985933,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.9826894640099414,
+          "val_loss": null,
+          "val_accuracy": 0.7652,
+          "plantdoc_macro_f1_supported": 0.3655,
+          "plantvillage_macro_f1_supported": 0.756,
+          "lr": 0.019870502626379127,
+          "selection_score": 0.5728,
+          "duration_sec": 41.9,
+          "round": 4,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.950091002780003,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.9374021850408434,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 1.0468401070266662,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.970557351313043,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 1.0357156284705085,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.9606625838166326,
+          "val_loss": null,
+          "val_accuracy": 0.8025,
+          "plantdoc_macro_f1_supported": 0.3985,
+          "plantvillage_macro_f1_supported": 0.8211,
+          "lr": 0.019709418174260522,
+          "selection_score": 0.6336,
+          "duration_sec": 41.5,
+          "round": 5,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.929284715466926,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.9190118868146437,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 1.0131500230367083,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.952920828690906,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 1.0119926952225238,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.9363725087961747,
+          "val_loss": null,
+          "val_accuracy": 0.8165,
+          "plantdoc_macro_f1_supported": 0.4093,
+          "plantvillage_macro_f1_supported": 0.8495,
+          "lr": 0.019485364419471456,
+          "selection_score": 0.6071,
+          "duration_sec": 42.1,
+          "round": 6,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.9052822293192568,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8910095773458215,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9871762078992402,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.9408229348837865,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.9829237330073626,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.9237929705430827,
+          "val_loss": null,
+          "val_accuracy": 0.8429,
+          "plantdoc_macro_f1_supported": 0.43,
+          "plantvillage_macro_f1_supported": 0.8758,
+          "lr": 0.019199794436588244,
+          "selection_score": 0.7347,
+          "duration_sec": 42.2,
+          "round": 7,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8941001528286412,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8842774690467026,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9844201037592147,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.9199939905541296,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.9638677498508966,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.9171874185174136,
+          "val_loss": null,
+          "val_accuracy": 0.8298,
+          "plantdoc_macro_f1_supported": 0.3971,
+          "plantvillage_macro_f1_supported": 0.8444,
+          "lr": 0.018854560256532097,
+          "selection_score": 0.7127,
+          "duration_sec": 42.2,
+          "round": 8,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8881752117189288,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8733522648297836,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9695645856448398,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.9082567847018503,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.9690045039486673,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8997033337044547,
+          "val_loss": null,
+          "val_accuracy": 0.8449,
+          "plantdoc_macro_f1_supported": 0.4193,
+          "plantvillage_macro_f1_supported": 0.8796,
+          "lr": 0.01845190085543795,
+          "selection_score": 0.7205,
+          "duration_sec": 41.5,
+          "round": 9,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8710258741750592,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8634265941750064,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.960702798842523,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.9017548705820546,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.9310260558057749,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.893783959968947,
+          "val_loss": null,
+          "val_accuracy": 0.8543,
+          "plantdoc_macro_f1_supported": 0.4429,
+          "plantvillage_macro_f1_supported": 0.9018,
+          "lr": 0.017994427634035012,
+          "selection_score": 0.6862,
+          "duration_sec": 41.8,
+          "round": 10,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.861811004496643,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8556789143358139,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9486736850270799,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.9001640312076893,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.9306050959916914,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8824728710439842,
+          "val_loss": null,
+          "val_accuracy": 0.8679,
+          "plantdoc_macro_f1_supported": 0.4218,
+          "plantvillage_macro_f1_supported": 0.9106,
+          "lr": 0.01748510748171101,
+          "selection_score": 0.7385,
+          "duration_sec": 42.7,
+          "round": 11,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8596384565499352,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8474340571807373,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9421807270902287,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8831996872531874,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.9079447649308984,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8773771598267056,
+          "val_loss": null,
+          "val_accuracy": 0.8721,
+          "plantdoc_macro_f1_supported": 0.4225,
+          "plantvillage_macro_f1_supported": 0.9178,
+          "lr": 0.016927243535095997,
+          "selection_score": 0.7458,
+          "duration_sec": 41.3,
+          "round": 12,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8510012391994736,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8448455108363271,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9431704387317587,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.877711577890528,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.9012189678708046,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8727293651581709,
+          "val_loss": null,
+          "val_accuracy": 0.8823,
+          "plantdoc_macro_f1_supported": 0.4534,
+          "plantvillage_macro_f1_supported": 0.9229,
+          "lr": 0.01632445375595377,
+          "selection_score": 0.7591,
+          "duration_sec": 40.4,
+          "round": 13,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8526336118104829,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8360866030760842,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9525675204744621,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8713368714212174,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8873281777003126,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8686466945135726,
+          "val_loss": null,
+          "val_accuracy": 0.8756,
+          "plantdoc_macro_f1_supported": 0.4567,
+          "plantvillage_macro_f1_supported": 0.9164,
+          "lr": 0.015680647467311556,
+          "selection_score": 0.7528,
+          "duration_sec": 40.7,
+          "round": 14,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8443836815489815,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8353835215122744,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9313365786492026,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.869923098044539,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8919106948214873,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8606780210066518,
+          "val_loss": null,
+          "val_accuracy": 0.8807,
+          "plantdoc_macro_f1_supported": 0.4282,
+          "plantvillage_macro_f1_supported": 0.9288,
+          "lr": 0.015,
+          "selection_score": 0.7516,
+          "duration_sec": 42.4,
+          "round": 15,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8382485563534753,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8284478478370114,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9216506565461863,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8641826668805709,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8802517950240621,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8571364990436962,
+          "val_loss": null,
+          "val_accuracy": 0.8913,
+          "plantdoc_macro_f1_supported": 0.4229,
+          "plantvillage_macro_f1_supported": 0.9362,
+          "lr": 0.01428692561403054,
+          "selection_score": 0.78,
+          "duration_sec": 43.3,
+          "round": 16,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8332245531967651,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8287283453885468,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9196983395939897,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8587207813557768,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8751613947073462,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8525773650846135,
+          "val_loss": null,
+          "val_accuracy": 0.8964,
+          "plantdoc_macro_f1_supported": 0.4384,
+          "plantvillage_macro_f1_supported": 0.9427,
+          "lr": 0.013546048870425357,
+          "selection_score": 0.7878,
+          "duration_sec": 42.4,
+          "round": 17,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8315484450102998,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8223788096880079,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9216845945539341,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8602887024180582,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8611129052782577,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8524708519779366,
+          "val_loss": null,
+          "val_accuracy": 0.8945,
+          "plantdoc_macro_f1_supported": 0.4383,
+          "plantvillage_macro_f1_supported": 0.9391,
+          "lr": 0.012782174639164527,
+          "selection_score": 0.7901,
+          "duration_sec": 41.5,
+          "round": 18,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8271290656948577,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8227525279862715,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9255516175060178,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8559000109302719,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8661976820860069,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8479137632110452,
+          "val_loss": null,
+          "val_accuracy": 0.8953,
+          "plantdoc_macro_f1_supported": 0.4083,
+          "plantvillage_macro_f1_supported": 0.9399,
+          "lr": 0.012000256937760445,
+          "selection_score": 0.7825,
+          "duration_sec": 41.0,
+          "round": 19,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.823866853708896,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8201630627993756,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9178044224603205,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8491764062147411,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.861673729793929,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8427362699837863,
+          "val_loss": null,
+          "val_accuracy": 0.8945,
+          "plantdoc_macro_f1_supported": 0.4364,
+          "plantvillage_macro_f1_supported": 0.9408,
+          "lr": 0.01120536680255323,
+          "selection_score": 0.7792,
+          "duration_sec": 42.5,
+          "round": 20,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8201475416285191,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8128582650382773,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9228758773929968,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8418036513278517,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8529829983650049,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8411030058747025,
+          "val_loss": null,
+          "val_accuracy": 0.8996,
+          "plantdoc_macro_f1_supported": 0.467,
+          "plantvillage_macro_f1_supported": 0.9443,
+          "lr": 0.010402659401094153,
+          "selection_score": 0.7863,
+          "duration_sec": 43.8,
+          "round": 21,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8233399406090257,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8135046289613805,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9021573847929517,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8443349678791041,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8512880727624218,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8414718475210138,
+          "val_loss": null,
+          "val_accuracy": 0.9036,
+          "plantdoc_macro_f1_supported": 0.4204,
+          "plantvillage_macro_f1_supported": 0.9485,
+          "lr": 0.009597340598905851,
+          "selection_score": 0.7914,
+          "duration_sec": 45.6,
+          "round": 22,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8169830082446403,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8108112510424685,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9199743246483376,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8439404533771014,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8529265222678102,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8345589534519011,
+          "val_loss": null,
+          "val_accuracy": 0.9036,
+          "plantdoc_macro_f1_supported": 0.4487,
+          "plantvillage_macro_f1_supported": 0.9467,
+          "lr": 0.00879463319744677,
+          "selection_score": 0.7843,
+          "duration_sec": 45.6,
+          "round": 23,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8128304382915618,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8106593079077923,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9072242852743719,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8386039023715164,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8385069615827575,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8367855183764373,
+          "val_loss": null,
+          "val_accuracy": 0.9038,
+          "plantdoc_macro_f1_supported": 0.4602,
+          "plantvillage_macro_f1_supported": 0.9482,
+          "lr": 0.007999743062239557,
+          "selection_score": 0.7907,
+          "duration_sec": 45.3,
+          "round": 24,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8163909760767147,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8099340070620563,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9087831564051452,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8455358103033679,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8390442476966107,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8340269194659219,
+          "val_loss": null,
+          "val_accuracy": 0.9054,
+          "plantdoc_macro_f1_supported": 0.4564,
+          "plantvillage_macro_f1_supported": 0.9477,
+          "lr": 0.007217825360835474,
+          "selection_score": 0.8008,
+          "duration_sec": 44.3,
+          "round": 25,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8108466164311056,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.807600898928663,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.906484333863021,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8416417356566626,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8394789449397417,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.833488482689216,
+          "val_loss": null,
+          "val_accuracy": 0.905,
+          "plantdoc_macro_f1_supported": 0.4657,
+          "plantvillage_macro_f1_supported": 0.9468,
+          "lr": 0.006453951129574643,
+          "selection_score": 0.7907,
+          "duration_sec": 42.4,
+          "round": 26,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8105931438115129,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8093429407503635,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9029237814051452,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8443056037917466,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8357177011352419,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8335058452341239,
+          "val_loss": null,
+          "val_accuracy": 0.9103,
+          "plantdoc_macro_f1_supported": 0.4695,
+          "plantvillage_macro_f1_supported": 0.9552,
+          "lr": 0.005713074385969456,
+          "selection_score": 0.7934,
+          "duration_sec": 43.0,
+          "round": 27,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.809860591549363,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8090196752576768,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9090781673123214,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8429115533855636,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8345587762730339,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8340577155228421,
+          "val_loss": null,
+          "val_accuracy": 0.9096,
+          "plantdoc_macro_f1_supported": 0.4677,
+          "plantvillage_macro_f1_supported": 0.9556,
+          "lr": 0.005000000000000003,
+          "selection_score": 0.7939,
+          "duration_sec": 43.6,
+          "round": 28,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8139928956139849,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8088812641668806,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9060234527794494,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.837361134861926,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8383677395679089,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.83177692182437,
+          "val_loss": null,
+          "val_accuracy": 0.9103,
+          "plantdoc_macro_f1_supported": 0.4495,
+          "plantvillage_macro_f1_supported": 0.9575,
+          "lr": 0.004319352532688443,
+          "selection_score": 0.7974,
+          "duration_sec": 44.3,
+          "round": 29,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8116156770952544,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8098264189600975,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9121595474227094,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8382637637686168,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8261145955443814,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8341751607360887,
+          "val_loss": null,
+          "val_accuracy": 0.9109,
+          "plantdoc_macro_f1_supported": 0.4592,
+          "plantvillage_macro_f1_supported": 0.9575,
+          "lr": 0.0036755462440462286,
+          "selection_score": 0.7943,
+          "duration_sec": 45.1,
+          "round": 30,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8104304206483177,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8102708881297579,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9143852049091695,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8419865019956561,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.833408688353488,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.83682665230035,
+          "val_loss": null,
+          "val_accuracy": 0.9127,
+          "plantdoc_macro_f1_supported": 0.4773,
+          "plantvillage_macro_f1_supported": 0.9574,
+          "lr": 0.003072756464904006,
+          "selection_score": 0.7903,
+          "duration_sec": 44.9,
+          "round": 31,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.813656869301709,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8108796630420837,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9167505812067474,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8441847868244386,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8379055674666831,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8390240576626246,
+          "val_loss": null,
+          "val_accuracy": 0.9121,
+          "plantdoc_macro_f1_supported": 0.4574,
+          "plantvillage_macro_f1_supported": 0.9619,
+          "lr": 0.002514892518288988,
+          "selection_score": 0.7975,
+          "duration_sec": 45.2,
+          "round": 32,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8160607613059815,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8128859138439826,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.920251117750489,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8530734558346497,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8344205182882939,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8431551791846623,
+          "val_loss": null,
+          "val_accuracy": 0.9139,
+          "plantdoc_macro_f1_supported": 0.4526,
+          "plantvillage_macro_f1_supported": 0.9613,
+          "lr": 0.0020055723659649907,
+          "selection_score": 0.8103,
+          "duration_sec": 44.9,
+          "round": 33,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8191170361018921,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8192041253688734,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9256653318696404,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8538055747031197,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8394011798443156,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8470731093058284,
+          "val_loss": null,
+          "val_accuracy": 0.9136,
+          "plantdoc_macro_f1_supported": 0.4537,
+          "plantvillage_macro_f1_supported": 0.9627,
+          "lr": 0.001548099144562054,
+          "selection_score": 0.799,
+          "duration_sec": 46.8,
+          "round": 34,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8220129719567788,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8237604981930545,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9409801884308711,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8603765743117454,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8356156746154163,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.854392022348056,
+          "val_loss": null,
+          "val_accuracy": 0.9136,
+          "plantdoc_macro_f1_supported": 0.4527,
+          "plantvillage_macro_f1_supported": 0.963,
+          "lr": 0.001145439743467902,
+          "selection_score": 0.7997,
+          "duration_sec": 45.5,
+          "round": 35,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8289922608148318,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8290627205221965,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9573168581690988,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.866806427969508,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8409748786607437,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8609323621924858,
+          "val_loss": null,
+          "val_accuracy": 0.9137,
+          "plantdoc_macro_f1_supported": 0.45,
+          "plantvillage_macro_f1_supported": 0.964,
+          "lr": 0.0008002055634117578,
+          "selection_score": 0.7993,
+          "duration_sec": 45.5,
+          "round": 36,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8348531259536889,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8365337452420666,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 0.9678812751523244,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8742838027473767,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8444575177638615,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8756583075657544,
+          "val_loss": null,
+          "val_accuracy": 0.914,
+          "plantdoc_macro_f1_supported": 0.4536,
+          "plantvillage_macro_f1_supported": 0.9651,
+          "lr": 0.0005146355805285452,
+          "selection_score": 0.7979,
+          "duration_sec": 45.8,
+          "round": 37,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8431938056715877,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8508976756960482,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 1.0040416347365353,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.8936371603682444,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8513148245979352,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.8945067604189567,
+          "val_loss": null,
+          "val_accuracy": 0.913,
+          "plantdoc_macro_f1_supported": 0.4522,
+          "plantvillage_macro_f1_supported": 0.9645,
+          "lr": 0.0002905818257394799,
+          "selection_score": 0.7946,
+          "duration_sec": 45.2,
+          "round": 38,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8526920997606241,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.869700534198315,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 1.045186327008425,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.9193541509470552,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8630796873714627,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.917211761173498,
+          "val_loss": null,
+          "val_accuracy": 0.9134,
+          "plantdoc_macro_f1_supported": 0.448,
+          "plantvillage_macro_f1_supported": 0.9638,
+          "lr": 0.00012949737362087156,
+          "selection_score": 0.8038,
+          "duration_sec": 43.8,
+          "round": 39,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.8724600583180743,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.8975598383639124,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 1.0853676059218444,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.9428463573987363,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8738315151725485,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        },
+        {
+          "train_loss": 0.93959895866679,
+          "val_loss": null,
+          "val_accuracy": 0.9128,
+          "plantdoc_macro_f1_supported": 0.4537,
+          "plantvillage_macro_f1_supported": 0.9641,
+          "lr": 3.2426918657900704e-05,
+          "selection_score": 0.7997,
+          "duration_sec": 44.3,
+          "round": 40,
+          "clients": [
+            {
+              "client_id": "client_00",
+              "train_loss": 0.89052635280766,
+              "optimizer_steps_applied": 103,
+              "sample_count_n_k": 13107,
+              "weight_p_k": 0.24982845379688928,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_01",
+              "train_loss": 0.9193874427978788,
+              "optimizer_steps_applied": 92,
+              "sample_count_n_k": 11691,
+              "weight_p_k": 0.22283851784080513,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_02",
+              "train_loss": 1.1277528719488115,
+              "optimizer_steps_applied": 52,
+              "sample_count_n_k": 6647,
+              "weight_p_k": 0.12669640134187252,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_03",
+              "train_loss": 0.9628815898961977,
+              "optimizer_steps_applied": 70,
+              "sample_count_n_k": 8863,
+              "weight_p_k": 0.16893488868557488,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            },
+            {
+              "client_id": "client_04",
+              "train_loss": 0.8922321185268591,
+              "optimizer_steps_applied": 95,
+              "sample_count_n_k": 12156,
+              "weight_p_k": 0.2317017383348582,
+              "delta_l2": null,
+              "delta_l2_learnable": null,
+              "payload_down_bytes": 6275944,
+              "payload_up_bytes": 6275944
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model_id": "local_00",
+      "selected_step": 22,
+      "checkpoint_bytes": 6364181,
+      "config": {
+        "batch_size": 128,
+        "lr": 0.02,
+        "optimizer": "SGD động lượng 0.9, weight decay 0.0001",
+        "weight_decay": null,
+        "amp": "bf16",
+        "init": "ImageNet-1K V1 + đầu 38 lớp theo hạt giống",
+        "preprocessing_version": "canonical_v1",
+        "scheduler_policy": "khởi động 1 epoch, sau đó cosine về 0",
+        "train_transform": "gpu_v2 (get_cpu_train_transform + src/training/gpu_augment.py)",
+        "loss_weighting": "domain_balanced",
+        "selection": "mean macro-F1 over val sources with >= 30 images",
+        "units": "epoch",
+        "epochs": 40
+      },
+      "validation_overall": {
+        "count": 6746,
+        "supported_classes": 38,
+        "top1_accuracy": 0.47287281351912247,
+        "macro_f1_supported": 0.3239912113076095,
+        "crop_accuracy": 0.7268010672991402,
+        "high_confidence_wrong_count_0_9": 177
+      },
+      "completed_steps": 40,
+      "total_runtime_seconds": 610.7,
+      "status": "completed",
+      "history": []
+    },
+    {
+      "model_id": "local_01",
+      "selected_step": 30,
+      "checkpoint_bytes": 6364181,
+      "config": {
+        "batch_size": 128,
+        "lr": 0.02,
+        "optimizer": "SGD động lượng 0.9, weight decay 0.0001",
+        "weight_decay": null,
+        "amp": "bf16",
+        "init": "ImageNet-1K V1 + đầu 38 lớp theo hạt giống",
+        "preprocessing_version": "canonical_v1",
+        "scheduler_policy": "khởi động 1 epoch, sau đó cosine về 0",
+        "train_transform": "gpu_v2 (get_cpu_train_transform + src/training/gpu_augment.py)",
+        "loss_weighting": "domain_balanced",
+        "selection": "mean macro-F1 over val sources with >= 30 images",
+        "units": "epoch",
+        "epochs": 40
+      },
+      "validation_overall": {
+        "count": 6746,
+        "supported_classes": 38,
+        "top1_accuracy": 0.4885858286391936,
+        "macro_f1_supported": 0.31118278128425514,
+        "crop_accuracy": 0.7509635339460421,
+        "high_confidence_wrong_count_0_9": 217
+      },
+      "completed_steps": 40,
+      "total_runtime_seconds": 551.9,
+      "status": "completed",
+      "history": []
+    },
+    {
+      "model_id": "local_02",
+      "selected_step": 33,
+      "checkpoint_bytes": 6364181,
+      "config": {
+        "batch_size": 128,
+        "lr": 0.02,
+        "optimizer": "SGD động lượng 0.9, weight decay 0.0001",
+        "weight_decay": null,
+        "amp": "bf16",
+        "init": "ImageNet-1K V1 + đầu 38 lớp theo hạt giống",
+        "preprocessing_version": "canonical_v1",
+        "scheduler_policy": "khởi động 1 epoch, sau đó cosine về 0",
+        "train_transform": "gpu_v2 (get_cpu_train_transform + src/training/gpu_augment.py)",
+        "loss_weighting": "domain_balanced",
+        "selection": "mean macro-F1 over val sources with >= 30 images",
+        "units": "epoch",
+        "epochs": 40
+      },
+      "validation_overall": {
+        "count": 6746,
+        "supported_classes": 38,
+        "top1_accuracy": 0.3072932107915802,
+        "macro_f1_supported": 0.22985642939962853,
+        "crop_accuracy": 0.6537207233916394,
+        "high_confidence_wrong_count_0_9": 205
+      },
+      "completed_steps": 40,
+      "total_runtime_seconds": 422.7,
+      "status": "completed",
+      "history": []
+    },
+    {
+      "model_id": "local_03",
+      "selected_step": 38,
+      "checkpoint_bytes": 6364181,
+      "config": {
+        "batch_size": 128,
+        "lr": 0.02,
+        "optimizer": "SGD động lượng 0.9, weight decay 0.0001",
+        "weight_decay": null,
+        "amp": "bf16",
+        "init": "ImageNet-1K V1 + đầu 38 lớp theo hạt giống",
+        "preprocessing_version": "canonical_v1",
+        "scheduler_policy": "khởi động 1 epoch, sau đó cosine về 0",
+        "train_transform": "gpu_v2 (get_cpu_train_transform + src/training/gpu_augment.py)",
+        "loss_weighting": "domain_balanced",
+        "selection": "mean macro-F1 over val sources with >= 30 images",
+        "units": "epoch",
+        "epochs": 40
+      },
+      "validation_overall": {
+        "count": 6746,
+        "supported_classes": 38,
+        "top1_accuracy": 0.4768751852949896,
+        "macro_f1_supported": 0.3430433975773183,
+        "crop_accuracy": 0.8442039727245775,
+        "high_confidence_wrong_count_0_9": 428
+      },
+      "completed_steps": 40,
+      "total_runtime_seconds": 472.0,
+      "status": "completed",
+      "history": []
+    },
+    {
+      "model_id": "local_04",
+      "selected_step": 37,
+      "checkpoint_bytes": 6364181,
+      "config": {
+        "batch_size": 128,
+        "lr": 0.02,
+        "optimizer": "SGD động lượng 0.9, weight decay 0.0001",
+        "weight_decay": null,
+        "amp": "bf16",
+        "init": "ImageNet-1K V1 + đầu 38 lớp theo hạt giống",
+        "preprocessing_version": "canonical_v1",
+        "scheduler_policy": "khởi động 1 epoch, sau đó cosine về 0",
+        "train_transform": "gpu_v2 (get_cpu_train_transform + src/training/gpu_augment.py)",
+        "loss_weighting": "domain_balanced",
+        "selection": "mean macro-F1 over val sources with >= 30 images",
+        "units": "epoch",
+        "epochs": 40
+      },
+      "validation_overall": {
+        "count": 6746,
+        "supported_classes": 38,
+        "top1_accuracy": 0.4768751852949896,
+        "macro_f1_supported": 0.38050794642903585,
+        "crop_accuracy": 0.8024014230655203,
+        "high_confidence_wrong_count_0_9": 151
+      },
+      "completed_steps": 40,
+      "total_runtime_seconds": 538.0,
+      "status": "completed",
+      "history": []
+    }
+  ],
+  "sources": {
+    "artifacts/model_bundles/v4b_s42/centralized/validation_metrics.json": "5fd4d139ebd6868d6ca2166495da469cba33429e0fbd7531fa3fd2e85a533815",
+    "artifacts/model_bundles/v4b_s42/centralized/summary.json": "27c0e823ac2a2d745b92e5019ba31e579c496124ceaae6f561ff35c70ca1c569",
+    "artifacts/model_bundles/v4b_s42/fedavg/validation_metrics.json": "c02a8c463a4c8627a45f664e47fb7b6534d23539e889e49605529eb73877d01e",
+    "artifacts/model_bundles/v4b_s42/fedavg/summary.json": "c1ec6269801b86b542695a7894b279031aef21e979659146bd1fa5e0282cb678",
+    "artifacts/model_bundles/v4b_s42/local/client_00/validation_metrics.json": "f4981a71c23a3ebbd7ba33438ccbef7be618c1ff7b1524036222f1c73575d162",
+    "artifacts/model_bundles/v4b_s42/local/client_00/summary.json": "4e6ba09e4c24599266e341f2780b32009bb0c1f3e4393efd1dec1bb5384d62f1",
+    "artifacts/model_bundles/v4b_s42/local/client_01/validation_metrics.json": "fa0b5ac0e8f048bdec422d3628d153a369d1d83c1625a14795af58e2f81a5685",
+    "artifacts/model_bundles/v4b_s42/local/client_01/summary.json": "82fa41c41622815741bf995c05f39e42a1d1554a43a7f51e1a223d525c9ec9b3",
+    "artifacts/model_bundles/v4b_s42/local/client_02/validation_metrics.json": "28a0dc548b1722ffc49d81145c36465d8ab5df93a59fa24cf6bc100b446e9b1f",
+    "artifacts/model_bundles/v4b_s42/local/client_02/summary.json": "c91954981374ee31c28d839339e54503e84f5ad078e5784a7de6beeb0b2cd3fe",
+    "artifacts/model_bundles/v4b_s42/local/client_03/validation_metrics.json": "d274518fbf55749b816fd2b5ab16af16dbcffff9bd3f5aef1497ad9c23809af7",
+    "artifacts/model_bundles/v4b_s42/local/client_03/summary.json": "5bd57cff7e81658f6aa39c4593708d64ae0c384375ec004ab852a6a55cde39c6",
+    "artifacts/model_bundles/v4b_s42/local/client_04/validation_metrics.json": "2318c9794af3b69cf3c582911277f3acd07e060b307114a572fbca48b3946a75",
+    "artifacts/model_bundles/v4b_s42/local/client_04/summary.json": "85d0180b0a02c05fdc5b2c08b0dd001fe45f5593e545c278603f1d25a0c36e58"
+  },
+  "delta_l2_recorded": false,
+  "release": {
+    "name": "mixed_pv_pd_v4",
+    "crop_policy": "bbox_margin_8pct_v1",
+    "splits": [
+      {
+        "name": "train",
+        "count": 52464,
+        "by_source": {
+          "field_other": 14256,
+          "plantdoc": 3085,
+          "plantvillage": 35123
+        },
+        "manifest_sha256": "e894f1872cba0ea6db7c484ee7c37da645b58e963b76536b2a9f03c098770111"
+      },
+      {
+        "name": "val",
+        "count": 6746,
+        "by_source": {
+          "field_other": 2133,
+          "plantdoc": 269,
+          "plantvillage": 4344
+        },
+        "manifest_sha256": "f370f9fe873b874b7ec64a247831a951d0f9108bbd67a06f8b97cfa0d3e6f355"
+      },
+      {
+        "name": "calibration",
+        "count": 7005,
+        "by_source": {
+          "field_other": 2683,
+          "plantdoc": 388,
+          "plantvillage": 3934
+        },
+        "manifest_sha256": "851299ae0d83a8459ccc59470aa174e2d350a5f9cb4e2e4d86dfb8e6f4e5e1dd"
+      },
+      {
+        "name": "legacy_diagnostic_test",
+        "count": 13101,
+        "by_source": {
+          "field_other": 2086,
+          "plantdoc": 172,
+          "plantvillage": 10843
+        },
+        "manifest_sha256": "02741cd8714e3498cb767644a62e46cca8bdbd2d7c5221fdcaa4bb20c7de0bcf"
+      },
+      {
+        "name": "quarantine",
+        "count": 5030,
+        "by_source": {
+          "plantdoc": 4969,
+          "plantvillage": 61
+        },
+        "manifest_sha256": "8a236b7324cbcd320331ad6f3420da51f338f7c6650126bb4867f87496b0be22"
+      }
+    ]
+  },
+  "transport_mode": "in_process_simulation",
+  "note": "Lịch sử lấy từ history.jsonl của các run train_v4 (40 vòng FedAvg, chọn vòng 33). Byte mỗi chiều là kích thước float32 của trạng thái mô hình, mô phỏng trong tiến trình, không phải lưu lượng mạng đo được; độ lệch ‖Δ‖₂ của từng client chưa được ghi lại."
+}

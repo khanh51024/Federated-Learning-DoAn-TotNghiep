@@ -1,0 +1,73 @@
+{
+ "evidence": "đối chiếu manifest release đã kiểm hash; không phải kiểm tra từng checkpoint được huấn luyện trên split nào",
+ "scope": "split của release. Việc từng checkpoint train trên đúng split này dựa vào release_manifest_sha256 ghi trong metadata checkpoint (web kiểm mỗi lần suy luận) và n_k từng client khớp tóm tắt huấn luyện công bố.",
+ "release_name": "mixed_pv_pd_v4",
+ "release_binding": {
+  "pinned_release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+  "sha256_of_stored_file": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+  "sha256_with_crlf_terminator": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+  "matches_pinned": true,
+  "note": "git lưu file với LF; hash khớp khi thêm CRLF cuối file (cách file nằm trên máy nhóm train)"
+ },
+ "validation_manifest_sha256": "f370f9fe873b874b7ec64a247831a951d0f9108bbd67a06f8b97cfa0d3e6f355",
+ "manifest_hashes_match_files": {
+  "train": true,
+  "val": true,
+  "calibration": true
+ },
+ "counts": {
+  "train": 52464,
+  "val": 6746,
+  "calibration": 7005
+ },
+ "pairwise_overlaps": {
+  "train__val": {
+   "group_id": 0,
+   "parent_scene_id": 0,
+   "byte_sha256": 0,
+   "sample_id": 0,
+   "image_id": 0
+  },
+  "train__calibration": {
+   "group_id": 0,
+   "parent_scene_id": 0,
+   "byte_sha256": 0,
+   "sample_id": 0,
+   "image_id": 0
+  },
+  "val__calibration": {
+   "group_id": 0,
+   "parent_scene_id": 0,
+   "byte_sha256": 0,
+   "sample_id": 0,
+   "image_id": 0
+  }
+ },
+ "partitions": {
+  "iid": {
+   "clients": 5,
+   "samples": 52464,
+   "unique_samples": 52464,
+   "disjoint": true,
+   "subset_of_train": true,
+   "union_equals_train": true,
+   "groups_split_across_clients": 0
+  },
+  "label_alpha_0_1": {
+   "clients": 5,
+   "samples": 52464,
+   "unique_samples": 52464,
+   "disjoint": true,
+   "subset_of_train": true,
+   "union_equals_train": true,
+   "groups_split_across_clients": 0
+  }
+ },
+ "image_bytes": {
+  "verified": true,
+  "checked": 66215,
+  "hash_mismatch": 0,
+  "missing_files": 0
+ },
+ "passed": true
+}

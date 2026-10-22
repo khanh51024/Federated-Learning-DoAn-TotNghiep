@@ -86,13 +86,14 @@ def test_compare_with_recorded_accepts_every_count_that_rounds_to_the_recorded_v
     assert ev.compare_with_recorded({"count": 10842, "correct": 10759}, recorded)["reproduced"] is False
 
 
-def test_selection_effect_is_measured_for_both_models_of_the_active_bundle():
-    """Gói train_v4 chỉ ghi macro-F1 PlantDoc theo epoch/vòng: hiệu ứng chọn checkpoint phải đo được cho Centralized và FedAvg."""
+def test_selection_effect_is_measured_from_the_epoch_history_of_the_active_bundle():
+    """Gói train_v4 chỉ ghi macro-F1 PlantDoc theo epoch/vòng; gói cũ ghi accuracy và không có lịch sử FedAvg."""
     effect = st.selection_effect()
     assert effect["available"] is True
-    for block in (effect, effect["fedavg"]):
-        assert block["available"] is True and block["value_kind"] in ("accuracy", "macro_f1")
+    blocks = [effect] + ([effect["fedavg"]] if effect["fedavg"]["available"] else [])
+    for block in blocks:
+        assert block["value_kind"] in ("accuracy", "macro_f1")
         assert 1 <= block["chosen_epoch"] <= block["epochs"] and 1 <= block["chosen_rank_among_epochs"] <= block["epochs"]
         assert block["chosen_plantdoc_value"] <= block["max_plantdoc_value"] + 1e-12
         assert 0.0 <= block["last_plantdoc_value"] <= 1.0
-    assert effect["fedavg_note"] == ""
+    assert (effect["fedavg_note"] == "") == effect["fedavg"]["available"]

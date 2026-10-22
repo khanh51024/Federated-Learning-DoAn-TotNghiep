@@ -206,7 +206,10 @@ def _selection_block(model_id: str) -> dict[str, Any]:
     from src import bundle
 
     directory = model_id
-    summary = json.loads(reg.abs_path(f"{reg.DEMO_BUNDLE_DIR}/{directory}/summary.json").read_text(encoding="utf-8"))
+    try:
+        summary = json.loads(reg.abs_path(f"{reg.DEMO_BUNDLE_DIR}/{directory}/summary.json").read_text(encoding="utf-8"))
+    except OSError:
+        return {"available": False, "reason": f"{directory}/summary.json không có trong gói"}
     history = summary.get("history") or []
     selected = summary.get("best_epoch", summary.get("best_round"))
     points = []

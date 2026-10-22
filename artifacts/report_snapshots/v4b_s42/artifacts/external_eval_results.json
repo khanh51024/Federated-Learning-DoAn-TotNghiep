@@ -1,0 +1,1976 @@
+{
+ "evidence": "tập ngoài đồng PlantWild đã loại ảnh trùng; chưa từng nằm trong train/val/test của đồ án",
+ "manifest": "data/external/plantwild_overlap_manifest.json",
+ "manifest_sha256": "5adba619df55e4b0cb9f94565fecd67cc3307acab0141e5c64391db93d91b5db",
+ "images": 5045,
+ "unreadable_images": 0,
+ "checkpoint_sha256": {
+  "centralized": "a4ea0dcc8ef34eec529207ad1c015001f5554119e2a9eaa1f4760f200885dcbb",
+  "fedavg": "cd1c8f603bd9cd1bb485346454e83d18658a2ac08d51f35c7e29a255335fbb45",
+  "local_00": "3e6cc0019d2906004f028e844bc06144098b21e78aa772557be2ce4413a4d2c9",
+  "local_01": "cf46acf7fd19bdbcec9e988e3276e42c7487b58ba8e7ae3cfd47fae6dfbecbf7",
+  "local_02": "a7a2561ed95f997d8006b64ac54ced996ee948843a85350746a429c09aef6914",
+  "local_03": "4547b8c57bd486b8b78025658a3450e9ddb1d5a8106e46f60cd78bed2ae7d8b6",
+  "local_04": "d13b72fdb7b2d370b9de922ed06d8e8079ce6cd8201debf866c4a3cfaf3dbe3b"
+ },
+ "license_note": "PlantWild CC BY-NC-ND 4.0: chỉ dùng để đánh giá.",
+ "caveat": "ext_healthy dùng nhãn ngầm định (thư mục '<cây> leaf'). PlantWild lấy từ Google nên vẫn có thể còn ảnh gần trùng với dữ liệu train mà dHash 64 bit không bắt được; số này là cận trên của độ chính xác ngoài đồng.",
+ "tiers": {
+  "strict": {
+   "n": 2304,
+   "classes": 21,
+   "models": {
+    "centralized": {
+     "base": {
+      "top1": 37.15,
+      "top3": 56.64,
+      "crop_accuracy": 61.37,
+      "macro_f1_supported": 34.18,
+      "top1_ci95": {
+       "estimate": 37.15,
+       "low": 35.24,
+       "high": 39.19,
+       "clusters": 2304
+      },
+      "selective_answering": {
+       "table": {
+        "coverage_100": {
+         "answered": 2304,
+         "accuracy": 37.15,
+         "min_confidence": 0.0683
+        },
+        "coverage_80": {
+         "answered": 1843,
+         "accuracy": 42.65,
+         "min_confidence": 0.2472
+        },
+        "coverage_60": {
+         "answered": 1382,
+         "accuracy": 51.01,
+         "min_confidence": 0.3685
+        },
+        "coverage_40": {
+         "answered": 922,
+         "accuracy": 61.93,
+         "min_confidence": 0.5441
+        }
+       },
+       "auroc_confidence_detects_wrong": 0.7765
+      }
+     },
+     "base+oracle_crop": {
+      "top1": 58.29,
+      "top3": 86.07,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 59.05,
+      "top1_ci95": {
+       "estimate": 58.29,
+       "low": 56.42,
+       "high": 60.42,
+       "clusters": 2304
+      }
+     },
+     "flip_tta": {
+      "top1": 37.41,
+      "top3": 56.81,
+      "crop_accuracy": 61.55,
+      "macro_f1_supported": 34.3,
+      "top1_ci95": {
+       "estimate": 37.41,
+       "low": 35.46,
+       "high": 39.37,
+       "clusters": 2304
+      }
+     },
+     "flip_tta+oracle_crop": {
+      "top1": 58.72,
+      "top3": 86.68,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 59.61,
+      "top1_ci95": {
+       "estimate": 58.72,
+       "low": 56.68,
+       "high": 60.81,
+       "clusters": 2304
+      }
+     },
+     "multi_tta": {
+      "top1": 40.19,
+      "top3": 60.68,
+      "crop_accuracy": 62.76,
+      "macro_f1_supported": 36.56,
+      "top1_ci95": {
+       "estimate": 40.19,
+       "low": 38.19,
+       "high": 42.1,
+       "clusters": 2304
+      }
+     },
+     "multi_tta+oracle_crop": {
+      "top1": 61.33,
+      "top3": 87.8,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 61.58,
+      "top1_ci95": {
+       "estimate": 61.33,
+       "low": 59.33,
+       "high": 63.28,
+       "clusters": 2304
+      }
+     },
+     "letterbox": {
+      "top1": 30.95,
+      "top3": 51.35,
+      "crop_accuracy": 55.73,
+      "macro_f1_supported": 28.57,
+      "top1_ci95": {
+       "estimate": 30.95,
+       "low": 28.95,
+       "high": 32.9,
+       "clusters": 2304
+      }
+     },
+     "letterbox+oracle_crop": {
+      "top1": 55.03,
+      "top3": 85.16,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 55.93,
+      "top1_ci95": {
+       "estimate": 55.03,
+       "low": 53.04,
+       "high": 57.03,
+       "clusters": 2304
+      }
+     },
+     "letterbox_tta": {
+      "top1": 31.6,
+      "top3": 51.69,
+      "crop_accuracy": 56.25,
+      "macro_f1_supported": 28.72,
+      "top1_ci95": {
+       "estimate": 31.6,
+       "low": 29.73,
+       "high": 33.55,
+       "clusters": 2304
+      }
+     },
+     "letterbox_tta+oracle_crop": {
+      "top1": 55.12,
+      "top3": 85.2,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 56.01,
+      "top1_ci95": {
+       "estimate": 55.12,
+       "low": 53.08,
+       "high": 57.12,
+       "clusters": 2304
+      }
+     },
+     "all_views": {
+      "top1": 39.32,
+      "top3": 59.77,
+      "crop_accuracy": 62.8,
+      "macro_f1_supported": 35.65,
+      "top1_ci95": {
+       "estimate": 39.32,
+       "low": 37.33,
+       "high": 41.32,
+       "clusters": 2304
+      }
+     },
+     "all_views+oracle_crop": {
+      "top1": 60.59,
+      "top3": 87.67,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 60.6,
+      "top1_ci95": {
+       "estimate": 60.59,
+       "low": 58.72,
+       "high": 62.67,
+       "clusters": 2304
+      }
+     }
+    },
+    "fedavg": {
+     "base": {
+      "top1": 29.64,
+      "top3": 51.61,
+      "crop_accuracy": 55.77,
+      "macro_f1_supported": 29.05,
+      "top1_ci95": {
+       "estimate": 29.64,
+       "low": 27.82,
+       "high": 31.47,
+       "clusters": 2304
+      },
+      "selective_answering": {
+       "table": {
+        "coverage_100": {
+         "answered": 2304,
+         "accuracy": 29.64,
+         "min_confidence": 0.0713
+        },
+        "coverage_80": {
+         "answered": 1843,
+         "accuracy": 34.51,
+         "min_confidence": 0.1818
+        },
+        "coverage_60": {
+         "answered": 1382,
+         "accuracy": 40.96,
+         "min_confidence": 0.2463
+        },
+        "coverage_40": {
+         "answered": 922,
+         "accuracy": 49.02,
+         "min_confidence": 0.3339
+        }
+       },
+       "auroc_confidence_detects_wrong": 0.7531
+      }
+     },
+     "base+oracle_crop": {
+      "top1": 52.6,
+      "top3": 85.2,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 54.99,
+      "top1_ci95": {
+       "estimate": 52.6,
+       "low": 50.48,
+       "high": 54.69,
+       "clusters": 2304
+      }
+     },
+     "flip_tta": {
+      "top1": 29.6,
+      "top3": 51.95,
+      "crop_accuracy": 56.94,
+      "macro_f1_supported": 28.76,
+      "top1_ci95": {
+       "estimate": 29.6,
+       "low": 27.73,
+       "high": 31.42,
+       "clusters": 2304
+      }
+     },
+     "flip_tta+oracle_crop": {
+      "top1": 51.95,
+      "top3": 85.29,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 54.27,
+      "top1_ci95": {
+       "estimate": 51.95,
+       "low": 49.87,
+       "high": 53.95,
+       "clusters": 2304
+      }
+     },
+     "multi_tta": {
+      "top1": 32.42,
+      "top3": 55.21,
+      "crop_accuracy": 58.94,
+      "macro_f1_supported": 31.07,
+      "top1_ci95": {
+       "estimate": 32.42,
+       "low": 30.51,
+       "high": 34.38,
+       "clusters": 2304
+      }
+     },
+     "multi_tta+oracle_crop": {
+      "top1": 54.34,
+      "top3": 87.72,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 56.15,
+      "top1_ci95": {
+       "estimate": 54.34,
+       "low": 52.26,
+       "high": 56.34,
+       "clusters": 2304
+      }
+     },
+     "letterbox": {
+      "top1": 28.3,
+      "top3": 48.22,
+      "crop_accuracy": 53.21,
+      "macro_f1_supported": 26.37,
+      "top1_ci95": {
+       "estimate": 28.3,
+       "low": 26.47,
+       "high": 30.12,
+       "clusters": 2304
+      }
+     },
+     "letterbox+oracle_crop": {
+      "top1": 53.47,
+      "top3": 84.03,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 54.61,
+      "top1_ci95": {
+       "estimate": 53.47,
+       "low": 51.43,
+       "high": 55.51,
+       "clusters": 2304
+      }
+     },
+     "letterbox_tta": {
+      "top1": 28.69,
+      "top3": 48.35,
+      "crop_accuracy": 53.65,
+      "macro_f1_supported": 26.79,
+      "top1_ci95": {
+       "estimate": 28.69,
+       "low": 26.82,
+       "high": 30.6,
+       "clusters": 2304
+      }
+     },
+     "letterbox_tta+oracle_crop": {
+      "top1": 53.26,
+      "top3": 83.98,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 54.46,
+      "top1_ci95": {
+       "estimate": 53.26,
+       "low": 51.26,
+       "high": 55.25,
+       "clusters": 2304
+      }
+     },
+     "all_views": {
+      "top1": 32.2,
+      "top3": 54.99,
+      "crop_accuracy": 58.42,
+      "macro_f1_supported": 30.47,
+      "top1_ci95": {
+       "estimate": 32.2,
+       "low": 30.34,
+       "high": 34.03,
+       "clusters": 2304
+      }
+     },
+     "all_views+oracle_crop": {
+      "top1": 54.56,
+      "top3": 86.85,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 56.14,
+      "top1_ci95": {
+       "estimate": 54.56,
+       "low": 52.56,
+       "high": 56.51,
+       "clusters": 2304
+      }
+     }
+    },
+    "ensemble": {
+     "base": {
+      "top1": 37.2,
+      "top3": 56.77,
+      "crop_accuracy": 61.89,
+      "macro_f1_supported": 34.33,
+      "top1_ci95": {
+       "estimate": 37.2,
+       "low": 35.24,
+       "high": 39.28,
+       "clusters": 2304
+      },
+      "selective_answering": {
+       "table": {
+        "coverage_100": {
+         "answered": 2304,
+         "accuracy": 37.2,
+         "min_confidence": 0.0757
+        },
+        "coverage_80": {
+         "answered": 1843,
+         "accuracy": 43.46,
+         "min_confidence": 0.2031
+        },
+        "coverage_60": {
+         "answered": 1382,
+         "accuracy": 51.3,
+         "min_confidence": 0.2918
+        },
+        "coverage_40": {
+         "answered": 922,
+         "accuracy": 62.36,
+         "min_confidence": 0.4073
+        }
+       },
+       "auroc_confidence_detects_wrong": 0.7827
+      }
+     },
+     "base+oracle_crop": {
+      "top1": 57.81,
+      "top3": 87.59,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 58.53,
+      "top1_ci95": {
+       "estimate": 57.81,
+       "low": 55.73,
+       "high": 59.77,
+       "clusters": 2304
+      }
+     },
+     "flip_tta": {
+      "top1": 37.37,
+      "top3": 57.25,
+      "crop_accuracy": 61.76,
+      "macro_f1_supported": 34.43,
+      "top1_ci95": {
+       "estimate": 37.37,
+       "low": 35.42,
+       "high": 39.28,
+       "clusters": 2304
+      }
+     },
+     "flip_tta+oracle_crop": {
+      "top1": 58.12,
+      "top3": 87.37,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 58.97,
+      "top1_ci95": {
+       "estimate": 58.12,
+       "low": 55.99,
+       "high": 60.11,
+       "clusters": 2304
+      }
+     },
+     "multi_tta": {
+      "top1": 39.76,
+      "top3": 60.29,
+      "crop_accuracy": 63.45,
+      "macro_f1_supported": 36.33,
+      "top1_ci95": {
+       "estimate": 39.76,
+       "low": 37.8,
+       "high": 41.71,
+       "clusters": 2304
+      }
+     },
+     "multi_tta+oracle_crop": {
+      "top1": 60.11,
+      "top3": 89.58,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 60.71,
+      "top1_ci95": {
+       "estimate": 60.11,
+       "low": 58.16,
+       "high": 62.07,
+       "clusters": 2304
+      }
+     },
+     "letterbox": {
+      "top1": 31.86,
+      "top3": 52.39,
+      "crop_accuracy": 55.99,
+      "macro_f1_supported": 29.11,
+      "top1_ci95": {
+       "estimate": 31.86,
+       "low": 29.99,
+       "high": 33.68,
+       "clusters": 2304
+      }
+     },
+     "letterbox+oracle_crop": {
+      "top1": 56.38,
+      "top3": 85.59,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 56.85,
+      "top1_ci95": {
+       "estimate": 56.38,
+       "low": 54.3,
+       "high": 58.46,
+       "clusters": 2304
+      }
+     },
+     "letterbox_tta": {
+      "top1": 32.12,
+      "top3": 52.13,
+      "crop_accuracy": 55.82,
+      "macro_f1_supported": 29.31,
+      "top1_ci95": {
+       "estimate": 32.12,
+       "low": 30.08,
+       "high": 33.98,
+       "clusters": 2304
+      }
+     },
+     "letterbox_tta+oracle_crop": {
+      "top1": 56.16,
+      "top3": 85.33,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 56.73,
+      "top1_ci95": {
+       "estimate": 56.16,
+       "low": 54.21,
+       "high": 58.2,
+       "clusters": 2304
+      }
+     },
+     "all_views": {
+      "top1": 38.63,
+      "top3": 59.38,
+      "crop_accuracy": 62.46,
+      "macro_f1_supported": 34.62,
+      "top1_ci95": {
+       "estimate": 38.63,
+       "low": 36.68,
+       "high": 40.71,
+       "clusters": 2304
+      }
+     },
+     "all_views+oracle_crop": {
+      "top1": 59.98,
+      "top3": 89.06,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 59.93,
+      "top1_ci95": {
+       "estimate": 59.98,
+       "low": 57.86,
+       "high": 62.02,
+       "clusters": 2304
+      }
+     }
+    },
+    "local_00": {
+     "base": {
+      "top1": 17.62,
+      "top3": 29.3,
+      "crop_accuracy": 48.78,
+      "macro_f1_supported": 9.61,
+      "top1_ci95": {
+       "estimate": 17.62,
+       "low": 16.06,
+       "high": 19.19,
+       "clusters": 2304
+      },
+      "selective_answering": {
+       "table": {
+        "coverage_100": {
+         "answered": 2304,
+         "accuracy": 17.62,
+         "min_confidence": 0.0877
+        },
+        "coverage_80": {
+         "answered": 1843,
+         "accuracy": 20.62,
+         "min_confidence": 0.2861
+        },
+        "coverage_60": {
+         "answered": 1382,
+         "accuracy": 24.31,
+         "min_confidence": 0.4109
+        },
+        "coverage_40": {
+         "answered": 922,
+         "accuracy": 29.72,
+         "min_confidence": 0.5895
+        }
+       },
+       "auroc_confidence_detects_wrong": 0.7287
+      }
+     },
+     "base+oracle_crop": {
+      "top1": 40.45,
+      "top3": 72.01,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 35.57,
+      "top1_ci95": {
+       "estimate": 40.45,
+       "low": 38.5,
+       "high": 42.4,
+       "clusters": 2304
+      }
+     }
+    },
+    "local_01": {
+     "base": {
+      "top1": 13.28,
+      "top3": 24.91,
+      "crop_accuracy": 42.49,
+      "macro_f1_supported": 7.98,
+      "top1_ci95": {
+       "estimate": 13.28,
+       "low": 11.93,
+       "high": 14.71,
+       "clusters": 2304
+      },
+      "selective_answering": {
+       "table": {
+        "coverage_100": {
+         "answered": 2304,
+         "accuracy": 13.28,
+         "min_confidence": 0.095
+        },
+        "coverage_80": {
+         "answered": 1843,
+         "accuracy": 14.81,
+         "min_confidence": 0.271
+        },
+        "coverage_60": {
+         "answered": 1382,
+         "accuracy": 18.02,
+         "min_confidence": 0.3987
+        },
+        "coverage_40": {
+         "answered": 922,
+         "accuracy": 21.69,
+         "min_confidence": 0.542
+        }
+       },
+       "auroc_confidence_detects_wrong": 0.7036
+      }
+     },
+     "base+oracle_crop": {
+      "top1": 41.62,
+      "top3": 71.96,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 39.87,
+      "top1_ci95": {
+       "estimate": 41.62,
+       "low": 39.71,
+       "high": 43.58,
+       "clusters": 2304
+      }
+     }
+    },
+    "local_02": {
+     "base": {
+      "top1": 11.2,
+      "top3": 21.4,
+      "crop_accuracy": 41.88,
+      "macro_f1_supported": 6.11,
+      "top1_ci95": {
+       "estimate": 11.2,
+       "low": 9.85,
+       "high": 12.54,
+       "clusters": 2304
+      },
+      "selective_answering": {
+       "table": {
+        "coverage_100": {
+         "answered": 2304,
+         "accuracy": 11.2,
+         "min_confidence": 0.0854
+        },
+        "coverage_80": {
+         "answered": 1843,
+         "accuracy": 12.53,
+         "min_confidence": 0.3285
+        },
+        "coverage_60": {
+         "answered": 1382,
+         "accuracy": 13.68,
+         "min_confidence": 0.4827
+        },
+        "coverage_40": {
+         "answered": 922,
+         "accuracy": 15.73,
+         "min_confidence": 0.6463
+        }
+       },
+       "auroc_confidence_detects_wrong": 0.6346
+      }
+     },
+     "base+oracle_crop": {
+      "top1": 38.89,
+      "top3": 70.18,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 32.84,
+      "top1_ci95": {
+       "estimate": 38.89,
+       "low": 36.85,
+       "high": 40.93,
+       "clusters": 2304
+      }
+     }
+    },
+    "local_03": {
+     "base": {
+      "top1": 23.57,
+      "top3": 38.15,
+      "crop_accuracy": 46.96,
+      "macro_f1_supported": 14.54,
+      "top1_ci95": {
+       "estimate": 23.57,
+       "low": 21.92,
+       "high": 25.35,
+       "clusters": 2304
+      },
+      "selective_answering": {
+       "table": {
+        "coverage_100": {
+         "answered": 2304,
+         "accuracy": 23.57,
+         "min_confidence": 0.0733
+        },
+        "coverage_80": {
+         "answered": 1843,
+         "accuracy": 27.73,
+         "min_confidence": 0.2707
+        },
+        "coverage_60": {
+         "answered": 1382,
+         "accuracy": 32.85,
+         "min_confidence": 0.3968
+        },
+        "coverage_40": {
+         "answered": 922,
+         "accuracy": 40.13,
+         "min_confidence": 0.5633
+        }
+       },
+       "auroc_confidence_detects_wrong": 0.7573
+      }
+     },
+     "base+oracle_crop": {
+      "top1": 45.23,
+      "top3": 77.56,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 37.08,
+      "top1_ci95": {
+       "estimate": 45.23,
+       "low": 43.14,
+       "high": 47.22,
+       "clusters": 2304
+      }
+     }
+    },
+    "local_04": {
+     "base": {
+      "top1": 15.23,
+      "top3": 28.78,
+      "crop_accuracy": 45.92,
+      "macro_f1_supported": 9.82,
+      "top1_ci95": {
+       "estimate": 15.23,
+       "low": 13.72,
+       "high": 16.75,
+       "clusters": 2304
+      },
+      "selective_answering": {
+       "table": {
+        "coverage_100": {
+         "answered": 2304,
+         "accuracy": 15.23,
+         "min_confidence": 0.0875
+        },
+        "coverage_80": {
+         "answered": 1843,
+         "accuracy": 17.31,
+         "min_confidence": 0.2316
+        },
+        "coverage_60": {
+         "answered": 1382,
+         "accuracy": 20.26,
+         "min_confidence": 0.3266
+        },
+        "coverage_40": {
+         "answered": 922,
+         "accuracy": 24.84,
+         "min_confidence": 0.4346
+        }
+       },
+       "auroc_confidence_detects_wrong": 0.6956
+      }
+     },
+     "base+oracle_crop": {
+      "top1": 37.59,
+      "top3": 69.1,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 36.66,
+      "top1_ci95": {
+       "estimate": 37.59,
+       "low": 35.68,
+       "high": 39.58,
+       "clusters": 2304
+      }
+     }
+    }
+   },
+   "per_class_recall_base": {
+    "centralized": {
+     "Apple___Apple_scab": {
+      "n": 246,
+      "recall": 0.2439
+     },
+     "Apple___Black_rot": {
+      "n": 76,
+      "recall": 0.0526
+     },
+     "Apple___Cedar_apple_rust": {
+      "n": 136,
+      "recall": 0.3456
+     },
+     "Cherry_(including_sour)___Powdery_mildew": {
+      "n": 31,
+      "recall": 0.0323
+     },
+     "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
+      "n": 89,
+      "recall": 0.7528
+     },
+     "Corn_(maize)___Common_rust_": {
+      "n": 153,
+      "recall": 0.7778
+     },
+     "Corn_(maize)___Northern_Leaf_Blight": {
+      "n": 111,
+      "recall": 0.0721
+     },
+     "Grape___Black_rot": {
+      "n": 113,
+      "recall": 0.3097
+     },
+     "Orange___Haunglongbing_(Citrus_greening)": {
+      "n": 133,
+      "recall": 0.0376
+     },
+     "Pepper,_bell___Bacterial_spot": {
+      "n": 56,
+      "recall": 0.0893
+     },
+     "Potato___Early_blight": {
+      "n": 101,
+      "recall": 0.2574
+     },
+     "Potato___Late_blight": {
+      "n": 95,
+      "recall": 0.3158
+     },
+     "Squash___Powdery_mildew": {
+      "n": 163,
+      "recall": 0.7055
+     },
+     "Strawberry___Leaf_scorch": {
+      "n": 35,
+      "recall": 0.7143
+     },
+     "Tomato___Bacterial_spot": {
+      "n": 100,
+      "recall": 0.03
+     },
+     "Tomato___Early_blight": {
+      "n": 151,
+      "recall": 0.2649
+     },
+     "Tomato___Late_blight": {
+      "n": 147,
+      "recall": 0.3741
+     },
+     "Tomato___Leaf_Mold": {
+      "n": 142,
+      "recall": 0.6408
+     },
+     "Tomato___Septoria_leaf_spot": {
+      "n": 91,
+      "recall": 0.5934
+     },
+     "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+      "n": 76,
+      "recall": 0.7763
+     },
+     "Tomato___Tomato_mosaic_virus": {
+      "n": 59,
+      "recall": 0.1186
+     }
+    },
+    "fedavg": {
+     "Apple___Apple_scab": {
+      "n": 246,
+      "recall": 0.187
+     },
+     "Apple___Black_rot": {
+      "n": 76,
+      "recall": 0.0526
+     },
+     "Apple___Cedar_apple_rust": {
+      "n": 136,
+      "recall": 0.3676
+     },
+     "Cherry_(including_sour)___Powdery_mildew": {
+      "n": 31,
+      "recall": 0.0323
+     },
+     "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot": {
+      "n": 89,
+      "recall": 0.8202
+     },
+     "Corn_(maize)___Common_rust_": {
+      "n": 153,
+      "recall": 0.3333
+     },
+     "Corn_(maize)___Northern_Leaf_Blight": {
+      "n": 111,
+      "recall": 0.1892
+     },
+     "Grape___Black_rot": {
+      "n": 113,
+      "recall": 0.2389
+     },
+     "Orange___Haunglongbing_(Citrus_greening)": {
+      "n": 133,
+      "recall": 0.0677
+     },
+     "Pepper,_bell___Bacterial_spot": {
+      "n": 56,
+      "recall": 0.0357
+     },
+     "Potato___Early_blight": {
+      "n": 101,
+      "recall": 0.297
+     },
+     "Potato___Late_blight": {
+      "n": 95,
+      "recall": 0.3368
+     },
+     "Squash___Powdery_mildew": {
+      "n": 163,
+      "recall": 0.5337
+     },
+     "Strawberry___Leaf_scorch": {
+      "n": 35,
+      "recall": 0.8
+     },
+     "Tomato___Bacterial_spot": {
+      "n": 100,
+      "recall": 0.19
+     },
+     "Tomato___Early_blight": {
+      "n": 151,
+      "recall": 0.2715
+     },
+     "Tomato___Late_blight": {
+      "n": 147,
+      "recall": 0.3061
+     },
+     "Tomato___Leaf_Mold": {
+      "n": 142,
+      "recall": 0.3028
+     },
+     "Tomato___Septoria_leaf_spot": {
+      "n": 91,
+      "recall": 0.2527
+     },
+     "Tomato___Tomato_Yellow_Leaf_Curl_Virus": {
+      "n": 76,
+      "recall": 0.6447
+     },
+     "Tomato___Tomato_mosaic_virus": {
+      "n": 59,
+      "recall": 0.0339
+     }
+    }
+   },
+   "top_confusions_centralized": [
+    {
+     "target": "Corn_(maize)___Northern_Leaf_Blight",
+     "predicted": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+     "count": 79
+    },
+    {
+     "target": "Tomato___Bacterial_spot",
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "count": 52
+    },
+    {
+     "target": "Apple___Apple_scab",
+     "predicted": "Apple___Cedar_apple_rust",
+     "count": 36
+    },
+    {
+     "target": "Potato___Late_blight",
+     "predicted": "Tomato___Late_blight",
+     "count": 35
+    },
+    {
+     "target": "Orange___Haunglongbing_(Citrus_greening)",
+     "predicted": "Apple___healthy",
+     "count": 31
+    },
+    {
+     "target": "Tomato___Early_blight",
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "count": 30
+    },
+    {
+     "target": "Tomato___Late_blight",
+     "predicted": "Tomato___Leaf_Mold",
+     "count": 25
+    },
+    {
+     "target": "Apple___Cedar_apple_rust",
+     "predicted": "Apple___Apple_scab",
+     "count": 24
+    },
+    {
+     "target": "Tomato___Early_blight",
+     "predicted": "Tomato___Leaf_Mold",
+     "count": 24
+    },
+    {
+     "target": "Corn_(maize)___Common_rust_",
+     "predicted": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+     "count": 23
+    },
+    {
+     "target": "Tomato___Tomato_mosaic_virus",
+     "predicted": "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
+     "count": 22
+    },
+    {
+     "target": "Apple___Apple_scab",
+     "predicted": "Strawberry___Leaf_scorch",
+     "count": 20
+    }
+   ]
+  },
+  "healthy_assumed": {
+   "n": 2741,
+   "classes": 12,
+   "models": {
+    "centralized": {
+     "base": {
+      "top1": 18.39,
+      "top3": 35.17,
+      "crop_accuracy": 23.97,
+      "macro_f1_supported": 21.46,
+      "top1_ci95": {
+       "estimate": 18.39,
+       "low": 16.96,
+       "high": 19.77,
+       "clusters": 2741
+      },
+      "selective_answering": {
+       "table": {
+        "coverage_100": {
+         "answered": 2741,
+         "accuracy": 18.39,
+         "min_confidence": 0.0763
+        },
+        "coverage_80": {
+         "answered": 2193,
+         "accuracy": 20.75,
+         "min_confidence": 0.2088
+        },
+        "coverage_60": {
+         "answered": 1645,
+         "accuracy": 23.59,
+         "min_confidence": 0.3033
+        },
+        "coverage_40": {
+         "answered": 1096,
+         "accuracy": 26.73,
+         "min_confidence": 0.4253
+        }
+       },
+       "auroc_confidence_detects_wrong": 0.6679
+      },
+      "predicted_as_disease_share": 40.61
+     },
+     "base+oracle_crop": {
+      "top1": 70.16,
+      "top3": 96.79,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 82.09,
+      "top1_ci95": {
+       "estimate": 70.16,
+       "low": 68.48,
+       "high": 71.91,
+       "clusters": 2741
+      }
+     },
+     "flip_tta": {
+      "top1": 18.31,
+      "top3": 35.5,
+      "crop_accuracy": 23.6,
+      "macro_f1_supported": 21.5,
+      "top1_ci95": {
+       "estimate": 18.31,
+       "low": 17.0,
+       "high": 19.66,
+       "clusters": 2741
+      }
+     },
+     "flip_tta+oracle_crop": {
+      "top1": 70.45,
+      "top3": 96.97,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 82.23,
+      "top1_ci95": {
+       "estimate": 70.45,
+       "low": 68.7,
+       "high": 72.24,
+       "clusters": 2741
+      }
+     },
+     "multi_tta": {
+      "top1": 20.76,
+      "top3": 37.54,
+      "crop_accuracy": 25.98,
+      "macro_f1_supported": 24.39,
+      "top1_ci95": {
+       "estimate": 20.76,
+       "low": 19.26,
+       "high": 22.22,
+       "clusters": 2741
+      }
+     },
+     "multi_tta+oracle_crop": {
+      "top1": 70.92,
+      "top3": 96.97,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 82.86,
+      "top1_ci95": {
+       "estimate": 70.92,
+       "low": 69.28,
+       "high": 72.53,
+       "clusters": 2741
+      }
+     },
+     "letterbox": {
+      "top1": 14.34,
+      "top3": 29.26,
+      "crop_accuracy": 20.14,
+      "macro_f1_supported": 18.26,
+      "top1_ci95": {
+       "estimate": 14.34,
+       "low": 13.1,
+       "high": 15.65,
+       "clusters": 2741
+      }
+     },
+     "letterbox+oracle_crop": {
+      "top1": 64.57,
+      "top3": 94.78,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 76.71,
+      "top1_ci95": {
+       "estimate": 64.57,
+       "low": 62.79,
+       "high": 66.36,
+       "clusters": 2741
+      }
+     },
+     "letterbox_tta": {
+      "top1": 14.52,
+      "top3": 28.75,
+      "crop_accuracy": 20.25,
+      "macro_f1_supported": 18.5,
+      "top1_ci95": {
+       "estimate": 14.52,
+       "low": 13.21,
+       "high": 15.8,
+       "clusters": 2741
+      }
+     },
+     "letterbox_tta+oracle_crop": {
+      "top1": 64.36,
+      "top3": 94.64,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 76.29,
+      "top1_ci95": {
+       "estimate": 64.36,
+       "low": 62.5,
+       "high": 66.11,
+       "clusters": 2741
+      }
+     },
+     "all_views": {
+      "top1": 19.63,
+      "top3": 35.39,
+      "crop_accuracy": 25.14,
+      "macro_f1_supported": 23.42,
+      "top1_ci95": {
+       "estimate": 19.63,
+       "low": 18.17,
+       "high": 21.23,
+       "clusters": 2741
+      }
+     },
+     "all_views+oracle_crop": {
+      "top1": 69.14,
+      "top3": 96.64,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 81.14,
+      "top1_ci95": {
+       "estimate": 69.14,
+       "low": 67.38,
+       "high": 70.78,
+       "clusters": 2741
+      }
+     }
+    },
+    "fedavg": {
+     "base": {
+      "top1": 16.64,
+      "top3": 31.08,
+      "crop_accuracy": 22.51,
+      "macro_f1_supported": 20.96,
+      "top1_ci95": {
+       "estimate": 16.64,
+       "low": 15.29,
+       "high": 18.1,
+       "clusters": 2741
+      },
+      "selective_answering": {
+       "table": {
+        "coverage_100": {
+         "answered": 2741,
+         "accuracy": 16.64,
+         "min_confidence": 0.0693
+        },
+        "coverage_80": {
+         "answered": 2193,
+         "accuracy": 19.24,
+         "min_confidence": 0.1682
+        },
+        "coverage_60": {
+         "answered": 1645,
+         "accuracy": 21.88,
+         "min_confidence": 0.2265
+        },
+        "coverage_40": {
+         "answered": 1096,
+         "accuracy": 25.91,
+         "min_confidence": 0.3015
+        }
+       },
+       "auroc_confidence_detects_wrong": 0.6929
+      },
+      "predicted_as_disease_share": 43.31
+     },
+     "base+oracle_crop": {
+      "top1": 69.57,
+      "top3": 96.83,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 81.68,
+      "top1_ci95": {
+       "estimate": 69.57,
+       "low": 67.78,
+       "high": 71.43,
+       "clusters": 2741
+      }
+     },
+     "flip_tta": {
+      "top1": 16.67,
+      "top3": 31.23,
+      "crop_accuracy": 22.25,
+      "macro_f1_supported": 21.07,
+      "top1_ci95": {
+       "estimate": 16.67,
+       "low": 15.36,
+       "high": 18.06,
+       "clusters": 2741
+      }
+     },
+     "flip_tta+oracle_crop": {
+      "top1": 70.08,
+      "top3": 96.86,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 81.97,
+      "top1_ci95": {
+       "estimate": 70.08,
+       "low": 68.33,
+       "high": 71.76,
+       "clusters": 2741
+      }
+     },
+     "multi_tta": {
+      "top1": 18.24,
+      "top3": 34.18,
+      "crop_accuracy": 23.5,
+      "macro_f1_supported": 22.52,
+      "top1_ci95": {
+       "estimate": 18.24,
+       "low": 16.82,
+       "high": 19.7,
+       "clusters": 2741
+      }
+     },
+     "multi_tta+oracle_crop": {
+      "top1": 71.65,
+      "top3": 96.83,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 83.41,
+      "top1_ci95": {
+       "estimate": 71.65,
+       "low": 69.97,
+       "high": 73.29,
+       "clusters": 2741
+      }
+     },
+     "letterbox": {
+      "top1": 12.29,
+      "top3": 26.23,
+      "crop_accuracy": 19.08,
+      "macro_f1_supported": 17.06,
+      "top1_ci95": {
+       "estimate": 12.29,
+       "low": 11.09,
+       "high": 13.46,
+       "clusters": 2741
+      }
+     },
+     "letterbox+oracle_crop": {
+      "top1": 62.42,
+      "top3": 95.22,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 75.25,
+      "top1_ci95": {
+       "estimate": 62.42,
+       "low": 60.56,
+       "high": 64.32,
+       "clusters": 2741
+      }
+     },
+     "letterbox_tta": {
+      "top1": 12.33,
+      "top3": 26.19,
+      "crop_accuracy": 19.01,
+      "macro_f1_supported": 17.15,
+      "top1_ci95": {
+       "estimate": 12.33,
+       "low": 11.09,
+       "high": 13.5,
+       "clusters": 2741
+      }
+     },
+     "letterbox_tta+oracle_crop": {
+      "top1": 62.28,
+      "top3": 95.37,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 75.03,
+      "top1_ci95": {
+       "estimate": 62.28,
+       "low": 60.42,
+       "high": 64.03,
+       "clusters": 2741
+      }
+     },
+     "all_views": {
+      "top1": 17.44,
+      "top3": 32.25,
+      "crop_accuracy": 22.8,
+      "macro_f1_supported": 22.08,
+      "top1_ci95": {
+       "estimate": 17.44,
+       "low": 16.12,
+       "high": 18.86,
+       "clusters": 2741
+      }
+     },
+     "all_views+oracle_crop": {
+      "top1": 69.32,
+      "top3": 96.46,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 81.38,
+      "top1_ci95": {
+       "estimate": 69.32,
+       "low": 67.57,
+       "high": 71.03,
+       "clusters": 2741
+      }
+     }
+    },
+    "ensemble": {
+     "base": {
+      "top1": 19.12,
+      "top3": 33.86,
+      "crop_accuracy": 24.66,
+      "macro_f1_supported": 22.61,
+      "top1_ci95": {
+       "estimate": 19.12,
+       "low": 17.62,
+       "high": 20.54,
+       "clusters": 2741
+      },
+      "selective_answering": {
+       "table": {
+        "coverage_100": {
+         "answered": 2741,
+         "accuracy": 19.12,
+         "min_confidence": 0.0696
+        },
+        "coverage_80": {
+         "answered": 2193,
+         "accuracy": 21.93,
+         "min_confidence": 0.1786
+        },
+        "coverage_60": {
+         "answered": 1645,
+         "accuracy": 24.92,
+         "min_confidence": 0.2533
+        },
+        "coverage_40": {
+         "answered": 1096,
+         "accuracy": 29.2,
+         "min_confidence": 0.3357
+        }
+       },
+       "auroc_confidence_detects_wrong": 0.6887
+      },
+      "predicted_as_disease_share": 40.64
+     },
+     "base+oracle_crop": {
+      "top1": 71.76,
+      "top3": 97.37,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 83.08,
+      "top1_ci95": {
+       "estimate": 71.76,
+       "low": 70.08,
+       "high": 73.4,
+       "clusters": 2741
+      }
+     },
+     "flip_tta": {
+      "top1": 18.86,
+      "top3": 34.0,
+      "crop_accuracy": 24.19,
+      "macro_f1_supported": 22.41,
+      "top1_ci95": {
+       "estimate": 18.86,
+       "low": 17.44,
+       "high": 20.32,
+       "clusters": 2741
+      }
+     },
+     "flip_tta+oracle_crop": {
+      "top1": 71.91,
+      "top3": 97.26,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 83.3,
+      "top1_ci95": {
+       "estimate": 71.91,
+       "low": 70.27,
+       "high": 73.66,
+       "clusters": 2741
+      }
+     },
+     "multi_tta": {
+      "top1": 21.05,
+      "top3": 37.25,
+      "crop_accuracy": 26.34,
+      "macro_f1_supported": 24.96,
+      "top1_ci95": {
+       "estimate": 21.05,
+       "low": 19.63,
+       "high": 22.55,
+       "clusters": 2741
+      }
+     },
+     "multi_tta+oracle_crop": {
+      "top1": 72.71,
+      "top3": 97.34,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 84.13,
+      "top1_ci95": {
+       "estimate": 72.71,
+       "low": 71.03,
+       "high": 74.35,
+       "clusters": 2741
+      }
+     },
+     "letterbox": {
+      "top1": 14.48,
+      "top3": 28.09,
+      "crop_accuracy": 20.47,
+      "macro_f1_supported": 18.67,
+      "top1_ci95": {
+       "estimate": 14.48,
+       "low": 13.17,
+       "high": 15.8,
+       "clusters": 2741
+      }
+     },
+     "letterbox+oracle_crop": {
+      "top1": 63.92,
+      "top3": 95.29,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 76.07,
+      "top1_ci95": {
+       "estimate": 63.92,
+       "low": 62.2,
+       "high": 65.71,
+       "clusters": 2741
+      }
+     },
+     "letterbox_tta": {
+      "top1": 14.41,
+      "top3": 28.13,
+      "crop_accuracy": 20.39,
+      "macro_f1_supported": 18.55,
+      "top1_ci95": {
+       "estimate": 14.41,
+       "low": 13.13,
+       "high": 15.76,
+       "clusters": 2741
+      }
+     },
+     "letterbox_tta+oracle_crop": {
+      "top1": 64.47,
+      "top3": 95.22,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 76.5,
+      "top1_ci95": {
+       "estimate": 64.47,
+       "low": 62.68,
+       "high": 66.33,
+       "clusters": 2741
+      }
+     },
+     "all_views": {
+      "top1": 20.32,
+      "top3": 34.44,
+      "crop_accuracy": 25.54,
+      "macro_f1_supported": 24.52,
+      "top1_ci95": {
+       "estimate": 20.32,
+       "low": 18.86,
+       "high": 21.82,
+       "clusters": 2741
+      }
+     },
+     "all_views+oracle_crop": {
+      "top1": 70.67,
+      "top3": 96.83,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 82.37,
+      "top1_ci95": {
+       "estimate": 70.67,
+       "low": 68.88,
+       "high": 72.27,
+       "clusters": 2741
+      }
+     }
+    },
+    "local_00": {
+     "base": {
+      "top1": 7.77,
+      "top3": 17.8,
+      "crop_accuracy": 16.71,
+      "macro_f1_supported": 8.84,
+      "top1_ci95": {
+       "estimate": 7.77,
+       "low": 6.82,
+       "high": 8.87,
+       "clusters": 2741
+      },
+      "selective_answering": {
+       "table": {
+        "coverage_100": {
+         "answered": 2741,
+         "accuracy": 7.77,
+         "min_confidence": 0.0755
+        },
+        "coverage_80": {
+         "answered": 2193,
+         "accuracy": 8.62,
+         "min_confidence": 0.2272
+        },
+        "coverage_60": {
+         "answered": 1645,
+         "accuracy": 10.03,
+         "min_confidence": 0.3274
+        },
+        "coverage_40": {
+         "answered": 1096,
+         "accuracy": 12.04,
+         "min_confidence": 0.466
+        }
+       },
+       "auroc_confidence_detects_wrong": 0.6789
+      },
+      "predicted_as_disease_share": 69.21
+     },
+     "base+oracle_crop": {
+      "top1": 52.02,
+      "top3": 85.88,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 62.96,
+      "top1_ci95": {
+       "estimate": 52.02,
+       "low": 50.16,
+       "high": 53.89,
+       "clusters": 2741
+      }
+     }
+    },
+    "local_01": {
+     "base": {
+      "top1": 11.89,
+      "top3": 24.37,
+      "crop_accuracy": 15.91,
+      "macro_f1_supported": 7.7,
+      "top1_ci95": {
+       "estimate": 11.89,
+       "low": 10.69,
+       "high": 13.06,
+       "clusters": 2741
+      },
+      "selective_answering": {
+       "table": {
+        "coverage_100": {
+         "answered": 2741,
+         "accuracy": 11.89,
+         "min_confidence": 0.0836
+        },
+        "coverage_80": {
+         "answered": 2193,
+         "accuracy": 12.95,
+         "min_confidence": 0.2394
+        },
+        "coverage_60": {
+         "answered": 1645,
+         "accuracy": 13.86,
+         "min_confidence": 0.356
+        },
+        "coverage_40": {
+         "answered": 1096,
+         "accuracy": 15.05,
+         "min_confidence": 0.4971
+        }
+       },
+       "auroc_confidence_detects_wrong": 0.5967
+      },
+      "predicted_as_disease_share": 22.69
+     },
+     "base+oracle_crop": {
+      "top1": 62.46,
+      "top3": 92.19,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 67.02,
+      "top1_ci95": {
+       "estimate": 62.46,
+       "low": 60.67,
+       "high": 64.21,
+       "clusters": 2741
+      }
+     }
+    },
+    "local_02": {
+     "base": {
+      "top1": 9.38,
+      "top3": 17.4,
+      "crop_accuracy": 15.69,
+      "macro_f1_supported": 5.89,
+      "top1_ci95": {
+       "estimate": 9.38,
+       "low": 8.28,
+       "high": 10.51,
+       "clusters": 2741
+      },
+      "selective_answering": {
+       "table": {
+        "coverage_100": {
+         "answered": 2741,
+         "accuracy": 9.38,
+         "min_confidence": 0.0709
+        },
+        "coverage_80": {
+         "answered": 2193,
+         "accuracy": 10.58,
+         "min_confidence": 0.2856
+        },
+        "coverage_60": {
+         "answered": 1645,
+         "accuracy": 12.34,
+         "min_confidence": 0.4263
+        },
+        "coverage_40": {
+         "answered": 1096,
+         "accuracy": 15.78,
+         "min_confidence": 0.5964
+        }
+       },
+       "auroc_confidence_detects_wrong": 0.7077
+      },
+      "predicted_as_disease_share": 36.81
+     },
+     "base+oracle_crop": {
+      "top1": 56.91,
+      "top3": 87.16,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 66.73,
+      "top1_ci95": {
+       "estimate": 56.91,
+       "low": 54.98,
+       "high": 58.63,
+       "clusters": 2741
+      }
+     }
+    },
+    "local_03": {
+     "base": {
+      "top1": 8.79,
+      "top3": 19.37,
+      "crop_accuracy": 15.83,
+      "macro_f1_supported": 8.05,
+      "top1_ci95": {
+       "estimate": 8.79,
+       "low": 7.7,
+       "high": 9.89,
+       "clusters": 2741
+      },
+      "selective_answering": {
+       "table": {
+        "coverage_100": {
+         "answered": 2741,
+         "accuracy": 8.79,
+         "min_confidence": 0.0589
+        },
+        "coverage_80": {
+         "answered": 2193,
+         "accuracy": 9.62,
+         "min_confidence": 0.2174
+        },
+        "coverage_60": {
+         "answered": 1645,
+         "accuracy": 10.33,
+         "min_confidence": 0.3311
+        },
+        "coverage_40": {
+         "answered": 1096,
+         "accuracy": 10.77,
+         "min_confidence": 0.4827
+        }
+       },
+       "auroc_confidence_detects_wrong": 0.5879
+      },
+      "predicted_as_disease_share": 54.03
+     },
+     "base+oracle_crop": {
+      "top1": 53.89,
+      "top3": 86.57,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 63.9,
+      "top1_ci95": {
+       "estimate": 53.89,
+       "low": 52.02,
+       "high": 55.75,
+       "clusters": 2741
+      }
+     }
+    },
+    "local_04": {
+     "base": {
+      "top1": 9.3,
+      "top3": 20.58,
+      "crop_accuracy": 19.04,
+      "macro_f1_supported": 13.19,
+      "top1_ci95": {
+       "estimate": 9.3,
+       "low": 8.21,
+       "high": 10.36,
+       "clusters": 2741
+      },
+      "selective_answering": {
+       "table": {
+        "coverage_100": {
+         "answered": 2741,
+         "accuracy": 9.3,
+         "min_confidence": 0.0728
+        },
+        "coverage_80": {
+         "answered": 2193,
+         "accuracy": 10.94,
+         "min_confidence": 0.2112
+        },
+        "coverage_60": {
+         "answered": 1645,
+         "accuracy": 12.83,
+         "min_confidence": 0.3028
+        },
+        "coverage_40": {
+         "answered": 1096,
+         "accuracy": 14.69,
+         "min_confidence": 0.4206
+        }
+       },
+       "auroc_confidence_detects_wrong": 0.6963
+      },
+      "predicted_as_disease_share": 68.37
+     },
+     "base+oracle_crop": {
+      "top1": 56.4,
+      "top3": 94.24,
+      "crop_accuracy": 100.0,
+      "macro_f1_supported": 68.55,
+      "top1_ci95": {
+       "estimate": 56.4,
+       "low": 54.58,
+       "high": 58.15,
+       "clusters": 2741
+      }
+     }
+    }
+   },
+   "per_class_recall_base": {
+    "centralized": {
+     "Apple___healthy": {
+      "n": 421,
+      "recall": 0.1188
+     },
+     "Blueberry___healthy": {
+      "n": 265,
+      "recall": 0.1019
+     },
+     "Cherry_(including_sour)___healthy": {
+      "n": 276,
+      "recall": 0.0109
+     },
+     "Corn_(maize)___healthy": {
+      "n": 153,
+      "recall": 0.451
+     },
+     "Grape___healthy": {
+      "n": 194,
+      "recall": 0.6443
+     },
+     "Peach___healthy": {
+      "n": 150,
+      "recall": 0.14
+     },
+     "Pepper,_bell___healthy": {
+      "n": 233,
+      "recall": 0.0386
+     },
+     "Potato___healthy": {
+      "n": 247,
+      "recall": 0.0202
+     },
+     "Raspberry___healthy": {
+      "n": 171,
+      "recall": 0.5205
+     },
+     "Soybean___healthy": {
+      "n": 231,
+      "recall": 0.0866
+     },
+     "Strawberry___healthy": {
+      "n": 190,
+      "recall": 0.2421
+     },
+     "Tomato___healthy": {
+      "n": 210,
+      "recall": 0.1905
+     }
+    },
+    "fedavg": {
+     "Apple___healthy": {
+      "n": 421,
+      "recall": 0.0618
+     },
+     "Blueberry___healthy": {
+      "n": 265,
+      "recall": 0.0792
+     },
+     "Cherry_(including_sour)___healthy": {
+      "n": 276,
+      "recall": 0.0072
+     },
+     "Corn_(maize)___healthy": {
+      "n": 153,
+      "recall": 0.4837
+     },
+     "Grape___healthy": {
+      "n": 194,
+      "recall": 0.3454
+     },
+     "Peach___healthy": {
+      "n": 150,
+      "recall": 0.16
+     },
+     "Pepper,_bell___healthy": {
+      "n": 233,
+      "recall": 0.0558
+     },
+     "Potato___healthy": {
+      "n": 247,
+      "recall": 0.0202
+     },
+     "Raspberry___healthy": {
+      "n": 171,
+      "recall": 0.6082
+     },
+     "Soybean___healthy": {
+      "n": 231,
+      "recall": 0.0866
+     },
+     "Strawberry___healthy": {
+      "n": 190,
+      "recall": 0.2211
+     },
+     "Tomato___healthy": {
+      "n": 210,
+      "recall": 0.2762
+     }
+    }
+   },
+   "top_confusions_centralized": [
+    {
+     "target": "Strawberry___healthy",
+     "predicted": "Raspberry___healthy",
+     "count": 68
+    },
+    {
+     "target": "Cherry_(including_sour)___healthy",
+     "predicted": "Apple___Cedar_apple_rust",
+     "count": 50
+    },
+    {
+     "target": "Apple___healthy",
+     "predicted": "Grape___healthy",
+     "count": 47
+    },
+    {
+     "target": "Apple___healthy",
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "count": 42
+    },
+    {
+     "target": "Apple___healthy",
+     "predicted": "Tomato___healthy",
+     "count": 40
+    },
+    {
+     "target": "Potato___healthy",
+     "predicted": "Raspberry___healthy",
+     "count": 40
+    },
+    {
+     "target": "Cherry_(including_sour)___healthy",
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "count": 39
+    },
+    {
+     "target": "Soybean___healthy",
+     "predicted": "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
+     "count": 38
+    },
+    {
+     "target": "Tomato___healthy",
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "count": 37
+    },
+    {
+     "target": "Apple___healthy",
+     "predicted": "Peach___healthy",
+     "count": 35
+    },
+    {
+     "target": "Potato___healthy",
+     "predicted": "Apple___healthy",
+     "count": 34
+    },
+    {
+     "target": "Potato___healthy",
+     "predicted": "Grape___healthy",
+     "count": 33
+    }
+   ]
+  }
+ }
+}

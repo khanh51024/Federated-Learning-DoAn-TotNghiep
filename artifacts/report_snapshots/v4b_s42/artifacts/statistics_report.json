@@ -1,0 +1,501 @@
+{
+ "evidence": "thống kê trên logits đã lưu của lần chấm cục bộ (không chạy lại mô hình); bootstrap theo cụm, McNemar chính xác",
+ "protocol_id": "mixed_pv_pd_v4_pretrained_seed42_validation",
+ "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+ "validation_manifest_sha256": "f370f9fe873b874b7ec64a247831a951d0f9108bbd67a06f8b97cfa0d3e6f355",
+ "checkpoint_sha256": {
+  "centralized": "a4ea0dcc8ef34eec529207ad1c015001f5554119e2a9eaa1f4760f200885dcbb",
+  "fedavg": "cd1c8f603bd9cd1bb485346454e83d18658a2ac08d51f35c7e29a255335fbb45",
+  "local_00": "3e6cc0019d2906004f028e844bc06144098b21e78aa772557be2ce4413a4d2c9",
+  "local_01": "cf46acf7fd19bdbcec9e988e3276e42c7487b58ba8e7ae3cfd47fae6dfbecbf7",
+  "local_02": "a7a2561ed95f997d8006b64ac54ced996ee948843a85350746a429c09aef6914",
+  "local_03": "4547b8c57bd486b8b78025658a3450e9ddb1d5a8106e46f60cd78bed2ae7d8b6",
+  "local_04": "d13b72fdb7b2d370b9de922ed06d8e8079ce6cd8201debf866c4a3cfaf3dbe3b"
+ },
+ "bootstrap_resamples": 2000,
+ "bootstrap_seed": 20261011,
+ "cluster_definition": {
+  "plantdoc": "parent_scene_id",
+  "plantvillage": "group_id (nhóm lá của release)"
+ },
+ "reshoot_heuristic": "ảnh PlantVillage thuộc nhóm một-ảnh có ảnh train cùng lớp, cùng tiền tố tên, số thứ tự ±1 — ƯỚC LƯỢNG ảnh chụp lại cùng lá, không phải phát hiện chắc chắn",
+ "splits": {
+  "val": {
+   "available": true,
+   "name": "validation",
+   "manifest_sha256": "f370f9fe873b874b7ec64a247831a951d0f9108bbd67a06f8b97cfa0d3e6f355",
+   "count": 6746,
+   "used_for_checkpoint_selection": true,
+   "by_source": {
+    "plantdoc": {
+     "count": 269,
+     "clusters": 115,
+     "models": {
+      "centralized": {
+       "correct": 152,
+       "estimate": 0.5650557620817844,
+       "low": 0.4742647058823529,
+       "high": 0.6597730985148607,
+       "clusters": 115
+      },
+      "fedavg": {
+       "correct": 101,
+       "estimate": 0.3754646840148699,
+       "low": 0.2927611521181001,
+       "high": 0.4653896761133603,
+       "clusters": 115
+      },
+      "local_00": {
+       "correct": 58,
+       "estimate": 0.21561338289962825,
+       "low": 0.13461363636363635,
+       "high": 0.3093568002740665,
+       "clusters": 115
+      },
+      "local_01": {
+       "correct": 46,
+       "estimate": 0.17100371747211895,
+       "low": 0.10652222938144329,
+       "high": 0.2443629908103592,
+       "clusters": 115
+      },
+      "local_02": {
+       "correct": 80,
+       "estimate": 0.29739776951672864,
+       "low": 0.2,
+       "high": 0.39339627896613183,
+       "clusters": 115
+      },
+      "local_03": {
+       "correct": 73,
+       "estimate": 0.27137546468401486,
+       "low": 0.2,
+       "high": 0.3554771623361423,
+       "clusters": 115
+      },
+      "local_04": {
+       "correct": 20,
+       "estimate": 0.07434944237918216,
+       "low": 0.037037037037037035,
+       "high": 0.1204854437204069,
+       "clusters": 115
+      }
+     },
+     "pairs": {
+      "centralized_vs_fedavg": {
+       "a": "centralized",
+       "b": "fedavg",
+       "a_right_b_wrong": 65,
+       "a_wrong_b_right": 14,
+       "p_value": 5.194941262584353e-09,
+       "difference_ci": {
+        "estimate": 0.1895910780669145,
+        "low": 0.11195872879139811,
+        "high": 0.2689848003629763,
+        "clusters": 115
+       }
+      },
+      "fedavg_vs_best_local": {
+       "a": "fedavg",
+       "b": "local_02",
+       "a_right_b_wrong": 77,
+       "a_wrong_b_right": 56,
+       "p_value": 0.08249129252516199,
+       "difference_ci": {
+        "estimate": 0.07806691449814127,
+        "low": -0.06233269151055664,
+        "high": 0.23109148770770566,
+        "clusters": 115
+       }
+      }
+     }
+    },
+    "plantvillage": {
+     "count": 4344,
+     "clusters": 1660,
+     "models": {
+      "centralized": {
+       "correct": 4324,
+       "estimate": 0.9953959484346224,
+       "low": 0.9930792946190368,
+       "high": 0.9975369871484677,
+       "clusters": 1660
+      },
+      "fedavg": {
+       "correct": 4201,
+       "estimate": 0.9670810313075506,
+       "low": 0.959044644677563,
+       "high": 0.9743718376395997,
+       "clusters": 1660
+      },
+      "local_00": {
+       "correct": 2251,
+       "estimate": 0.5181860036832413,
+       "low": 0.4842543734252042,
+       "high": 0.5526059691863995,
+       "clusters": 1660
+      },
+      "local_01": {
+       "correct": 2122,
+       "estimate": 0.48848987108655617,
+       "low": 0.453945017889737,
+       "high": 0.5224994749582671,
+       "clusters": 1660
+      },
+      "local_02": {
+       "correct": 1270,
+       "estimate": 0.2923572744014733,
+       "low": 0.25782985686737825,
+       "high": 0.3276503910092889,
+       "clusters": 1660
+      },
+      "local_03": {
+       "correct": 2303,
+       "estimate": 0.5301565377532228,
+       "low": 0.4967511821181786,
+       "high": 0.562935705734566,
+       "clusters": 1660
+      },
+      "local_04": {
+       "correct": 2414,
+       "estimate": 0.5557090239410681,
+       "low": 0.5178302229180914,
+       "high": 0.5900211814544599,
+       "clusters": 1660
+      }
+     },
+     "pairs": {
+      "centralized_vs_fedavg": {
+       "a": "centralized",
+       "b": "fedavg",
+       "a_right_b_wrong": 125,
+       "a_wrong_b_right": 2,
+       "p_value": 9.555593577834375e-35,
+       "difference_ci": {
+        "estimate": 0.028314917127071824,
+        "low": 0.021599264705882353,
+        "high": 0.03601447782147654,
+        "clusters": 1660
+       }
+      },
+      "fedavg_vs_best_local": {
+       "a": "fedavg",
+       "b": "local_04",
+       "a_right_b_wrong": 1832,
+       "a_wrong_b_right": 45,
+       "p_value": 0.0,
+       "difference_ci": {
+        "estimate": 0.4113720073664825,
+        "low": 0.3758892762261246,
+        "high": 0.4454674249976103,
+        "clusters": 1660
+       }
+      }
+     },
+     "same_leaf_sensitivity": {
+      "ungrouped_images": 1053,
+      "ungrouped_with_adjacent_train_number": 808,
+      "models": {
+       "centralized": {
+        "all": 0.9953959484346224,
+        "grouped_only": 0.9957459738681252,
+        "without_suspected_reshoots": 0.995475113122172,
+        "suspected_reshoots_only": 0.995049504950495
+       },
+       "fedavg": {
+        "all": 0.9670810313075506,
+        "grouped_only": 0.9683986630203586,
+        "without_suspected_reshoots": 0.9683257918552036,
+        "suspected_reshoots_only": 0.9616336633663366
+       },
+       "local_00": {
+        "all": 0.5181860036832413,
+        "grouped_only": 0.4873898511090854,
+        "without_suspected_reshoots": 0.49038461538461536,
+        "suspected_reshoots_only": 0.6398514851485149
+       },
+       "local_01": {
+        "all": 0.48848987108655617,
+        "grouped_only": 0.5281069583713157,
+        "without_suspected_reshoots": 0.5299773755656109,
+        "suspected_reshoots_only": 0.3069306930693069
+       },
+       "local_02": {
+        "all": 0.2923572744014733,
+        "grouped_only": 0.3403220905499848,
+        "without_suspected_reshoots": 0.3223981900452489,
+        "suspected_reshoots_only": 0.1608910891089109
+       },
+       "local_03": {
+        "all": 0.5301565377532228,
+        "grouped_only": 0.5436037678517168,
+        "without_suspected_reshoots": 0.5514705882352942,
+        "suspected_reshoots_only": 0.4368811881188119
+       },
+       "local_04": {
+        "all": 0.5557090239410681,
+        "grouped_only": 0.5919173503494378,
+        "without_suspected_reshoots": 0.5735294117647058,
+        "suspected_reshoots_only": 0.4777227722772277
+       }
+      }
+     }
+    }
+   }
+  },
+  "test": {
+   "available": true,
+   "name": "legacy_diagnostic_test",
+   "manifest_sha256": "02741cd8714e3498cb767644a62e46cca8bdbd2d7c5221fdcaa4bb20c7de0bcf",
+   "count": 13101,
+   "used_for_checkpoint_selection": false,
+   "by_source": {
+    "plantdoc": {
+     "count": 172,
+     "clusters": 96,
+     "models": {
+      "centralized": {
+       "correct": 103,
+       "estimate": 0.5988372093023255,
+       "low": 0.5109285714285714,
+       "high": 0.6867562273634414,
+       "clusters": 96
+      },
+      "fedavg": {
+       "correct": 69,
+       "estimate": 0.4011627906976744,
+       "low": 0.3006517057690128,
+       "high": 0.4966559335842029,
+       "clusters": 96
+      },
+      "local_00": {
+       "correct": 19,
+       "estimate": 0.11046511627906977,
+       "low": 0.05880221653878943,
+       "high": 0.17647871303217416,
+       "clusters": 96
+      },
+      "local_01": {
+       "correct": 41,
+       "estimate": 0.23837209302325582,
+       "low": 0.14861832986832987,
+       "high": 0.3351110763454318,
+       "clusters": 96
+      },
+      "local_02": {
+       "correct": 56,
+       "estimate": 0.32558139534883723,
+       "low": 0.1958041958041958,
+       "high": 0.46318609022556373,
+       "clusters": 96
+      },
+      "local_03": {
+       "correct": 59,
+       "estimate": 0.3430232558139535,
+       "low": 0.23266910537800026,
+       "high": 0.4601226993865031,
+       "clusters": 96
+      },
+      "local_04": {
+       "correct": 30,
+       "estimate": 0.1744186046511628,
+       "low": 0.102803738317757,
+       "high": 0.25842696629213485,
+       "clusters": 96
+      }
+     },
+     "pairs": {
+      "centralized_vs_fedavg": {
+       "a": "centralized",
+       "b": "fedavg",
+       "a_right_b_wrong": 47,
+       "a_wrong_b_right": 13,
+       "p_value": 1.2146708022957309e-05,
+       "difference_ci": {
+        "estimate": 0.19767441860465115,
+        "low": 0.10928464977645305,
+        "high": 0.2981417933495762,
+        "clusters": 96
+       }
+      },
+      "fedavg_vs_best_local": {
+       "a": "fedavg",
+       "b": "local_02",
+       "a_right_b_wrong": 50,
+       "a_wrong_b_right": 37,
+       "p_value": 0.1979791406725175,
+       "difference_ci": {
+        "estimate": 0.0755813953488372,
+        "low": -0.07539304710687941,
+        "high": 0.2397328767123287,
+        "clusters": 96
+       }
+      }
+     }
+    },
+    "plantvillage": {
+     "count": 10843,
+     "clusters": 4147,
+     "models": {
+      "centralized": {
+       "correct": 10769,
+       "estimate": 0.9931753204832611,
+       "low": 0.9910690911441091,
+       "high": 0.9951015839188202,
+       "clusters": 4147
+      },
+      "fedavg": {
+       "correct": 10500,
+       "estimate": 0.9683666881859264,
+       "low": 0.9634904105689293,
+       "high": 0.9729347575395925,
+       "clusters": 4147
+      },
+      "local_00": {
+       "correct": 5712,
+       "estimate": 0.526791478373144,
+       "low": 0.5059407156697195,
+       "high": 0.5488083501641742,
+       "clusters": 4147
+      },
+      "local_01": {
+       "correct": 5334,
+       "estimate": 0.4919302775984506,
+       "low": 0.4706408830175412,
+       "high": 0.5136676393631836,
+       "clusters": 4147
+      },
+      "local_02": {
+       "correct": 3154,
+       "estimate": 0.2908789080512773,
+       "low": 0.2680554290744813,
+       "high": 0.31283866608509825,
+       "clusters": 4147
+      },
+      "local_03": {
+       "correct": 5802,
+       "estimate": 0.5350917642718804,
+       "low": 0.5133012605265963,
+       "high": 0.5557475838043602,
+       "clusters": 4147
+      },
+      "local_04": {
+       "correct": 5976,
+       "estimate": 0.5511389836761044,
+       "low": 0.5294076616600075,
+       "high": 0.5722444282126802,
+       "clusters": 4147
+      }
+     },
+     "pairs": {
+      "centralized_vs_fedavg": {
+       "a": "centralized",
+       "b": "fedavg",
+       "a_right_b_wrong": 292,
+       "a_wrong_b_right": 23,
+       "p_value": 1.596461362325925e-60,
+       "difference_ci": {
+        "estimate": 0.024808632297334685,
+        "low": 0.020719951989334295,
+        "high": 0.02902770331722561,
+        "clusters": 4147
+       }
+      },
+      "fedavg_vs_best_local": {
+       "a": "fedavg",
+       "b": "local_04",
+       "a_right_b_wrong": 4624,
+       "a_wrong_b_right": 100,
+       "p_value": 0.0,
+       "difference_ci": {
+        "estimate": 0.417227704509822,
+        "low": 0.3959209917209929,
+        "high": 0.4402053099315277,
+        "clusters": 4147
+       }
+      }
+     },
+     "same_leaf_sensitivity": {
+      "ungrouped_images": 2633,
+      "ungrouped_with_adjacent_train_number": 2015,
+      "models": {
+       "centralized": {
+        "all": 0.9931753204832611,
+        "grouped_only": 0.9930572472594397,
+        "without_suspected_reshoots": 0.9928636157680109,
+        "suspected_reshoots_only": 0.9945409429280397
+       },
+       "fedavg": {
+        "all": 0.9683666881859264,
+        "grouped_only": 0.9700365408038977,
+        "without_suspected_reshoots": 0.9702084277299502,
+        "suspected_reshoots_only": 0.9602977667493796
+       },
+       "local_00": {
+        "all": 0.526791478373144,
+        "grouped_only": 0.49756394640682094,
+        "without_suspected_reshoots": 0.5046443135478025,
+        "suspected_reshoots_only": 0.6238213399503723
+       },
+       "local_01": {
+        "all": 0.4919302775984506,
+        "grouped_only": 0.5315468940316687,
+        "without_suspected_reshoots": 0.5361350249207069,
+        "suspected_reshoots_only": 0.29826302729528537
+       },
+       "local_02": {
+        "all": 0.2908789080512773,
+        "grouped_only": 0.33629719853836787,
+        "without_suspected_reshoots": 0.31898504757589485,
+        "suspected_reshoots_only": 0.16774193548387098
+       },
+       "local_03": {
+        "all": 0.5350917642718804,
+        "grouped_only": 0.5477466504263094,
+        "without_suspected_reshoots": 0.5535795197100136,
+        "suspected_reshoots_only": 0.45409429280397023
+       },
+       "local_04": {
+        "all": 0.5511389836761044,
+        "grouped_only": 0.5866017052375152,
+        "without_suspected_reshoots": 0.567512460353421,
+        "suspected_reshoots_only": 0.4794044665012407
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "selection_effect": {
+  "available": true,
+  "model": "centralized",
+  "value_kind": "macro_f1",
+  "selection_metric": "mean macro-F1 over val sources with >= 30 images",
+  "epochs": 40,
+  "chosen_epoch": 33,
+  "chosen_plantdoc_value": 0.5903,
+  "last_epoch": 40,
+  "last_plantdoc_value": 0.5907,
+  "max_plantdoc_value": 0.6069,
+  "chosen_rank_among_epochs": 6,
+  "fedavg": {
+   "available": true,
+   "model": "fedavg",
+   "value_kind": "macro_f1",
+   "selection_metric": "mean macro-F1 over val sources with >= 30 images",
+   "epochs": 40,
+   "chosen_epoch": 33,
+   "chosen_plantdoc_value": 0.4526,
+   "last_epoch": 40,
+   "last_plantdoc_value": 0.4537,
+   "max_plantdoc_value": 0.4773,
+   "chosen_rank_among_epochs": 16
+  },
+  "fedavg_note": ""
+ },
+ "best_local_chosen_on_val": {
+  "plantdoc": "local_02",
+  "plantvillage": "local_04"
+ }
+}

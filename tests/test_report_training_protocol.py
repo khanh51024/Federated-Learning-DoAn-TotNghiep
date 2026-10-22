@@ -21,6 +21,8 @@ def source():
 
 def _bundle_training():
     manifest = bundle.load_manifest()
+    if not manifest.get("training"):
+        pytest.skip("gói cũ không có khối `training`; báo cáo cấu hình của nó là bản chụp trong artifacts/report_snapshots")
     return manifest, manifest["training"]
 
 
@@ -72,6 +74,8 @@ def test_rejects_misleading_report(source, tamper):
         # gói khai chưa ghi độ lệch nhưng báo cáo có số: web không được vẽ số không có nguồn
         fed["history"][0]["clients"][0]["delta_l2"] = 1.0
     elif tamper == "drift_flag_flipped":
+        if report.get("delta_l2_recorded") is not False:
+            pytest.skip("gói này đã ghi độ lệch cập nhật; không có trường hợp khai ghi nhưng thiếu số")
         bad["delta_l2_recorded"] = True
     elif tamper == "split":
         next(s for s in bad["release"]["splits"] if s["name"] == "val")["by_source"]["plantdoc"] += 1

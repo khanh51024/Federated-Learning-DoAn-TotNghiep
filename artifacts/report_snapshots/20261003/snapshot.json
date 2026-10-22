@@ -1,6 +1,6 @@
 {
  "bundle_dir": "artifacts/branch_demo/20261003",
- "created_utc": "2026-10-22T05:15:05Z",
+ "created_utc": "2026-10-22T06:33:01Z",
  "reports": [
   "artifacts/local_reeval_report.json",
   "artifacts/holdout_eval_report.json",
