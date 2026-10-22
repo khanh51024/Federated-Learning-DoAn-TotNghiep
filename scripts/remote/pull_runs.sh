@@ -11,7 +11,8 @@ EXPECTED="${EXPECTED:-21}"
 SSH=(ssh -i "$SSH_KEY" -p "$SSH_PORT" -o IdentitiesOnly=yes -o PasswordAuthentication=no -o ConnectTimeout=20 -o ServerAliveInterval=30 "$SSH_TARGET")
 mkdir -p "$LOCAL_OUT"
 while true; do
-  if ! remote_done=$("${SSH[@]}" "cd '$REMOTE_OUT' 2>/dev/null && for d in */DONE; do [ -f \"\$d\" ] && echo \"\${d%/DONE}\"; done"); then
+  # `exit 0` ở cuối: chưa có run nào xong thì vòng lặp trả mã 1, không được nhầm thành mất kết nối (ssh lỗi trả 255)
+  if ! remote_done=$("${SSH[@]}" "cd '$REMOTE_OUT' 2>/dev/null && for d in */DONE; do [ -f \"\$d\" ] && echo \"\${d%/DONE}\"; done; exit 0"); then
     echo "$(date '+%F %T') không kết nối được máy GPU, thử lại sau 60 giây"
     sleep 60
     continue
