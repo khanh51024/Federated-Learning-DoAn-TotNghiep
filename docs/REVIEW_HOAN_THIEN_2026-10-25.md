@@ -211,3 +211,34 @@ Phát hiện thêm khi làm P0:
 - `PROJECT_STATUS.md` có câu minh họa Local-only viết cứng trong `scripts/update_status.py` ("Bacterial_spot: c02 có 1.549 ảnh và đạt 99%") sai với phân hoạch v4 (client 04 có 1.624/2.023 ảnh, đạt 100%; client 02 chỉ 36 ảnh, đạt 26%). Câu này nay được sinh từ số liệu.
 - Số lớp mỗi client ghi trong tài liệu (19–26 và 20–27) sai; đo từ phân hoạch là 22–26/38.
 - Cổng `plantvillage_real_data` trước đây thuộc protocol scratch cũ (`data/partitions_stage2_scratch_v3`), không liên quan tới gói v4b.
+
+### Tiến độ GĐ4 (cập nhật 2026-10-26, chạy trên CPU)
+
+Chi tiết và bảng số ở `docs/GD4_NEN_LUONG_TU_HOA_2026-10-26.md`. Nguồn số là `artifacts/gd4_compression.json`, đo trên tập giữ riêng 13.101 ảnh.
+
+| Việc | Trạng thái | Kết quả chính |
+|---|---|---|
+| Nén trọng số khi truyền (đo một lần) | Xong | fp16 còn 51% dung lượng; int8 trên độ lệch so với trọng số khởi tạo còn 27%, chỉ 10–14 ảnh đổi dự đoán |
+| Lượng tử hóa int8 mô hình suy luận | Xong | Có chọn lớp còn 2,12 MB (34%), top-1 giảm 0,03–0,07 điểm. Lượng tử hóa mọi lớp làm mô hình sụp đổ (10–13%). Chưa thấy nhanh hơn rõ rệt trên CPU |
+| Tìm nguyên nhân sụp đổ | Xong | Lớp conv đầu và các lớp depthwise nhạy với int8; kết luận "int8 phá hủy mô hình" ngày 21/10 đến từ việc lượng tử hóa `running_var` của BatchNorm, đã đính chính |
+| Nén ở mỗi vòng trong lúc huấn luyện | Chưa | Cần GPU |
+| Đo độ trễ trên trình duyệt hoặc điện thoại | Chưa | Mới đo trên một laptop |
+| Huấn luyện có tính đến lượng tử hóa (QAT) | Chưa | Cần GPU |
+
+### Ước tính mức hoàn thiện cập nhật (2026-10-26)
+
+Cùng trọng số với mục 2:
+
+| Hạng mục | Mục 2 (25/10) | Nay | Lý do |
+|---|---:|---:|---|
+| A. Hệ thống phần mềm | 90% | 90% | không đổi |
+| B. GĐ1 | 95% | 95% | không đổi |
+| C. GĐ2 | 35% | 40% | có cách chia α mới và kịch bản chạy; chưa có run |
+| D. GĐ3 | 5% | 25% | 5 thuật toán đã cài và kiểm thử; chưa có số thí nghiệm |
+| E. GĐ4 | 40% | 70% | đo xong nén khi truyền và lượng tử hóa suy luận; còn nén ở mỗi vòng, đo trên thiết bị, QAT |
+| F. GĐ5 | 30% | 30% | không đổi |
+| G. Quyển báo cáo | 25% | 25% | không đổi |
+| H. Chuẩn bị bảo vệ | 30% | 35% | bộ hỏi đáp theo số v4b, đã gộp `main` và gắn tag |
+| **Tổng có trọng số** | **≈46%** | **≈52%** | |
+
+Phần còn lại chủ yếu cần máy GPU (GĐ2, GĐ3, GĐ5, nén ở mỗi vòng) và việc viết quyển báo cáo, slide.

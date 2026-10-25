@@ -83,6 +83,7 @@ FULLFRAME_CROP_POLICY = "bbox_margin_8pct_v1"
 INFERENCE_VARIANTS_JSON = "artifacts/inference_variants_eval.json"  # scripts/eval_inference_variants.py (TTA, giữ tỉ lệ, chọn loại cây, từ chối khi không chắc)
 EXTERNAL_EVAL_SET_JSON = "artifacts/external_eval_set.json"  # scripts/build_external_eval_set.py (PlantWild, tập ảnh ngoài đồng đã loại ảnh trùng)
 WEIGHT_EXCHANGE_AUDIT_JSON = "artifacts/weight_exchange_audit.json"  # scripts/audit_weight_exchange.py (đường truyền, làm tròn khi gộp, độ nhạy nén)
+GD4_COMPRESSION_JSON = "artifacts/gd4_compression.json"  # scripts/eval_gd4_compression.py (GĐ4: nén trọng số khi truyền, lượng tử hóa int8 suy luận)
 MODEL_WEIGHT_COMPARISON_JSON = "artifacts/model_weight_comparison.json"  # scripts/compare_model_weights.py (khoảng cách trọng số, CKA, nội suy Centralized-FedAvg)
 AGGREGATION_EQUIVALENCE_JSON = "artifacts/aggregation_equivalence.json"  # scripts/aggregation_equivalence.py (FedSGD trùng GD tập trung, client drift)
 EXTERNAL_EVAL_RESULTS_JSON = "artifacts/external_eval_results.json"  # scripts/eval_external_set.py (7 mô hình trên PlantWild đã loại ảnh trùng)

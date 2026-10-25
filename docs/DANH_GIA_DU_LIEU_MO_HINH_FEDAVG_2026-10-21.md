@@ -24,7 +24,8 @@ Ngày lập: 2026-10-21. Phạm vi: ba nhánh huấn luyện `train-local-only`,
 6. **Trọng số gửi qua lại giữa server và client không bị thay đổi.** Cả 244 tensor của bảy mô hình đi qua đường tuần tự hóa của
    Flower và giao thức protobuf mà không khác một byte nào. Phép gộp float64 so với float32 làm 38,2% phần tử trọng số lệch tối đa
    3,8·10⁻⁶ và không đổi dự đoán của ảnh nào trong 4.613 ảnh kiểm tra. Nếu trọng số bị nén thì phép kiểm phát hiện được: float16 đổi dự đoán
-   6 ảnh, bfloat16 đổi 71 ảnh, int8 làm độ chính xác tụt còn 2,8%.
+   6 ảnh, bfloat16 đổi 71 ảnh, int8 làm độ chính xác tụt còn 2,8%. (Đính chính 2026-10-26: phép int8 này lượng tử hóa cả thống kê phương sai của
+   BatchNorm; chỉ lượng tử hóa trọng số thì gần như không mất độ chính xác. Xem `docs/GD4_NEN_LUONG_TU_HOA_2026-10-26.md` mục 5.)
 7. **Khoảng cách giữa FedAvg và Centralized không do việc truyền hay gộp trọng số.** Với FedSGD, mô hình gộp trùng gradient descent
    tập trung tới 4,9·10⁻¹⁴ (float64). Chênh lệch chỉ xuất hiện khi mỗi client chạy nhiều bước cục bộ trên dữ liệu lệch nhãn và tăng
    khi α giảm. Hai checkpoint đã công bố còn khác nhau ở bộ tối ưu (AdamW so với SGD không động lượng), nên khoảng cách trọng số
@@ -203,6 +204,13 @@ Không có float16, lượng tử hóa hay nén ở bất kỳ bước nào trê
 
 Nguồn: `artifacts/weight_exchange_audit.json`. Phép gộp ở `src/federated/strategy.py` (float64 rồi làm tròn một lần) đúng như thiết kế; nén xuống float16 gần như vô hại nhưng không bit-exact,
 còn int8 phá hủy mô hình. Đồng thời, các phép nén cho thấy phép so byte đủ nhạy để phát hiện sai lệch thật.
+
+> **Đính chính (2026-10-26).** Phép "int8 mỗi tensor" ở bảng trên lượng tử hóa **mọi** tensor số thực, kể cả `running_var` của BatchNorm. Kiểm lại trên gói v4b:
+> - Chỉ riêng việc lượng tử hóa `running_var` đã làm độ chính xác còn khoảng 4%, vì ở vài lớp đầu tới một phần ba số kênh có phương sai bị làm tròn về 0.
+> - Chỉ lượng tử hóa trọng số (tensor từ 2 chiều trở lên) thì top-1 trên tập giữ riêng 13.101 ảnh chỉ giảm 0,1–0,4 điểm.
+> - Nén độ lệch so với trọng số khởi tạo gần như không mất gì: 10–14 ảnh đổi dự đoán.
+>
+> Vậy câu "int8 phá hủy mô hình" chỉ đúng với cách nén đã dùng ở bảng trên. Chi tiết: `docs/GD4_NEN_LUONG_TU_HOA_2026-10-26.md`.
 
 ### 4.3 Phép gộp không gây sai số; chênh lệch đến từ học cục bộ
 

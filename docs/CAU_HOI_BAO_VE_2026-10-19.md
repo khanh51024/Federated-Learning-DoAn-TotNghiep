@@ -111,7 +111,9 @@ và tách kết quả theo nguồn PlantVillage/PlantDoc; Macro-F1 chỉ tính t
 
 **16. [CB] Dùng mô hình gì? Vì sao chọn MobileNetV3-Small?**
 Gợi ý: MobileNetV3-Small, đầu ra 38 nhóm, khởi tạo từ trọng số ImageNet (pretrained, theo mã giao thức). Nhẹ, ít tham số, phù hợp truyền
-trọng số nhiều vòng trong FL và chạy được trên CPU/trình duyệt (phần trích đặc trưng xuất ONNX chỉ khoảng 6 MB).
+trọng số nhiều vòng trong FL và chạy được trên CPU/trình duyệt (phần trích đặc trưng xuất ONNX chỉ khoảng 6 MB). Lượng tử hóa int8 có chọn
+lớp (khối SE, lớp tuyến tính, pointwise nửa sau) còn 2,12 MB mà top-1 chỉ giảm 0,03–0,07 điểm; lượng tử hóa mọi lớp làm mô hình sụp đổ
+(còn 10–13%) vì lớp conv đầu và các lớp depthwise nhạy với int8 (GĐ4).
 
 **17. [TB] Ba cách huấn luyện được so sánh là gì và mục đích của từng cách?**
 Gợi ý: Centralized (gom ảnh, mức tham chiếu), FedAvg (học liên kết, phương pháp đề xuất), Local-only (5 mô hình, mỗi client tự học,
@@ -151,7 +153,9 @@ Gợi ý: mỗi lượt gửi là toàn bộ trọng số MobileNetV3-Small dạ
 đo trong lúc huấn luyện); 5 client × 2 chiều × 40 vòng ≈ 2,5 GB cho cả lần huấn luyện. Phần cộng đồng chỉ gửi lớp cuối 155.800 byte
 (khoảng 156 KB) nên nhẹ hơn khoảng 40 lần. Đã đo thật một lần giữa laptop và máy chủ Oracle qua Internet (2 client × 380 ảnh × 3 vòng):
 RTT 46,7 ms, tốc độ 31–34 MB/s, một vòng 22,8 s trong đó truyền khoảng 0,8 s, nên thời gian chủ yếu là tính toán. Chưa có phép đo
-trong mạng LAN và chưa ghi số byte thật trong lúc huấn luyện 5 client.
+trong mạng LAN và chưa ghi số byte thật trong lúc huấn luyện 5 client. Nén khi gửi (GĐ4, đo một lần trên mô hình đã huấn luyện, tập giữ riêng
+13.101 ảnh): fp16 còn 51% dung lượng; int8 trên độ lệch so với trọng số khởi tạo còn 27% mà chỉ 10–14 ảnh đổi dự đoán
+(`docs/GD4_NEN_LUONG_TU_HOA_2026-10-26.md`); chưa đo ảnh hưởng của việc nén ở mỗi vòng lên hội tụ.
 Trên web: Phụ lục D, "Nhật ký chi tiết từng client".
 
 ---
@@ -345,8 +349,8 @@ phiên bản. Mô hình cộng đồng tách khỏi 7 mô hình đã kiểm hash
 **52. [NC] Nếu có thêm thời gian, em sẽ làm gì trước?**
 Gợi ý: theo thứ tự ảnh hưởng tới kết luận: (1) chạy FedAvg và Local-only ở thêm các mức α (1,0; 0,5; `iid`), 3 hạt giống, để vẽ đường
 khoảng cách với Centralized theo mức lệch dữ liệu, kèm một lần chạy Flower thật có đo byte và độ lệch trọng số từng client; (2)
-FedProx, FedBN, SCAFFOLD, MOON so với FedAvg trên cùng phân hoạch; (3) lượng tử hóa mô hình và nén cập nhật, đo đánh đổi dung lượng –
-độ chính xác; (4) thu ảnh ngoài đồng đủ nhóm có chuyên gia gán nhãn, khóa trước một tập kiểm tra cuối; (5) bước phát hiện và cắt lá;
+FedProx, FedBN, SCAFFOLD, MOON so với FedAvg trên cùng phân hoạch; (3) nén cập nhật ở mỗi vòng FedAvg (đo một lần đã cho thấy int8 trên độ lệch gần như
+không mất gì) và huấn luyện có tính đến lượng tử hóa cho các lớp depthwise; (4) thu ảnh ngoài đồng đủ nhóm có chuyên gia gán nhãn, khóa trước một tập kiểm tra cuối; (5) bước phát hiện và cắt lá;
 (6) secure aggregation hoặc DP; (7) thí nghiệm client lỗi/tấn công. Lộ trình chi tiết ở `docs/REVIEW_HOAN_THIEN_2026-10-25.md`.
 Trên web: chương 5 mục 5.3.
 

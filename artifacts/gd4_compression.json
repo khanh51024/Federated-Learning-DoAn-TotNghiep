@@ -1,0 +1,3126 @@
+{
+ "evidence": "dựng lại một lần từ mô hình đã huấn luyện; không phải huấn luyện liên kết có nén ở mỗi vòng. Hiệu chuẩn ONNX int8 dùng ảnh split calibration, đánh giá trên split riêng.",
+ "protocol_id": "mixed_pv_pd_v4_pretrained_seed42_validation",
+ "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+ "bundle_id": "v4b_s42",
+ "split": "legacy_diagnostic_test",
+ "count": 13101,
+ "seed_w0": 42,
+ "schemes": [
+  "fp32",
+  "fp16",
+  "int8_per_tensor",
+  "int8_per_channel",
+  "delta_int8_per_tensor",
+  "delta_int8_per_channel"
+ ],
+ "environment": {
+  "cpu_count": 16,
+  "torch": "2.14.0+cpu",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "threads_accuracy_pass": 6,
+  "latency": "một ảnh 224x224, một luồng, trung vị của 100 lần chạy"
+ },
+ "models": {
+  "centralized": {
+   "checkpoint_sha256": "a4ea0dcc8ef34eec529207ad1c015001f5554119e2a9eaa1f4760f200885dcbb",
+   "weights_transport": {
+    "fp32": {
+     "payload_bytes": 6275944,
+     "payload_ratio": 1.0,
+     "predictions_changed": 0,
+     "n": 13101,
+     "top1": 0.9769,
+     "macro_f1": 0.9717,
+     "plantvillage_top1": 0.9932,
+     "field_top1": 0.899,
+     "field_macro_f1": 0.7483,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.5988,
+       "macro_f1": 0.6359
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.9932,
+       "macro_f1": 0.9903
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.9405,
+       "macro_f1": 0.9421
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.9574,
+       "macro_f1": 0.9783
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.9902,
+       "macro_f1": 0.9909
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.5672,
+       "macro_f1": 0.5443
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.8113,
+       "macro_f1": 0.6155
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.83,
+       "macro_f1": 0.8238
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      }
+     },
+     "selection_score": 0.8656,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    },
+    "fp16": {
+     "payload_bytes": 3194456,
+     "payload_ratio": 0.509,
+     "predictions_changed": 3,
+     "n": 13101,
+     "top1": 0.9771,
+     "macro_f1": 0.9718,
+     "plantvillage_top1": 0.9934,
+     "field_top1": 0.899,
+     "field_macro_f1": 0.7483,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.5988,
+       "macro_f1": 0.6359
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.9934,
+       "macro_f1": 0.9906
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.9405,
+       "macro_f1": 0.9421
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.9574,
+       "macro_f1": 0.9783
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.9902,
+       "macro_f1": 0.9909
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.5672,
+       "macro_f1": 0.5443
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.8113,
+       "macro_f1": 0.6144
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.83,
+       "macro_f1": 0.8238
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      }
+     },
+     "selection_score": 0.8655,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    },
+    "int8_per_tensor": {
+     "payload_bytes": 1653928,
+     "payload_ratio": 0.2635,
+     "predictions_changed": 106,
+     "n": 13101,
+     "top1": 0.9743,
+     "macro_f1": 0.9682,
+     "plantvillage_top1": 0.9912,
+     "field_top1": 0.8928,
+     "field_macro_f1": 0.7366,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.6047,
+       "macro_f1": 0.6428
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.9912,
+       "macro_f1": 0.9868
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.9286,
+       "macro_f1": 0.9333
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.9574,
+       "macro_f1": 0.9783
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.9902,
+       "macro_f1": 0.9909
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.4179,
+       "macro_f1": 0.3579
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.7736,
+       "macro_f1": 0.5344
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.8375,
+       "macro_f1": 0.8303
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      }
+     },
+     "selection_score": 0.8413,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    },
+    "int8_per_channel": {
+     "payload_bytes": 1693736,
+     "payload_ratio": 0.2699,
+     "predictions_changed": 51,
+     "n": 13101,
+     "top1": 0.9761,
+     "macro_f1": 0.9703,
+     "plantvillage_top1": 0.9928,
+     "field_top1": 0.8959,
+     "field_macro_f1": 0.7385,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.5756,
+       "macro_f1": 0.615
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.9928,
+       "macro_f1": 0.9892
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.9315,
+       "macro_f1": 0.9322
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.9574,
+       "macro_f1": 0.9783
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.9888,
+       "macro_f1": 0.9895
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.5672,
+       "macro_f1": 0.5443
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.7925,
+       "macro_f1": 0.5891
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.8375,
+       "macro_f1": 0.8312
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      }
+     },
+     "selection_score": 0.8608,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    },
+    "delta_int8_per_tensor": {
+     "payload_bytes": 1653928,
+     "payload_ratio": 0.2635,
+     "predictions_changed": 14,
+     "n": 13101,
+     "top1": 0.9772,
+     "macro_f1": 0.9719,
+     "plantvillage_top1": 0.9935,
+     "field_top1": 0.899,
+     "field_macro_f1": 0.7468,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.593,
+       "macro_f1": 0.6299
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.9935,
+       "macro_f1": 0.9908
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.9375,
+       "macro_f1": 0.9398
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.9574,
+       "macro_f1": 0.9783
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.9916,
+       "macro_f1": 0.9922
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.5672,
+       "macro_f1": 0.5443
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.8113,
+       "macro_f1": 0.6159
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.8325,
+       "macro_f1": 0.8247
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      }
+     },
+     "selection_score": 0.8651,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    },
+    "delta_int8_per_channel": {
+     "payload_bytes": 1693736,
+     "payload_ratio": 0.2699,
+     "predictions_changed": 10,
+     "n": 13101,
+     "top1": 0.9771,
+     "macro_f1": 0.9719,
+     "plantvillage_top1": 0.9935,
+     "field_top1": 0.8981,
+     "field_macro_f1": 0.746,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.593,
+       "macro_f1": 0.6261
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.9935,
+       "macro_f1": 0.9909
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.9375,
+       "macro_f1": 0.9398
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.9574,
+       "macro_f1": 0.9783
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.9902,
+       "macro_f1": 0.9909
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.5672,
+       "macro_f1": 0.5443
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.8113,
+       "macro_f1": 0.6123
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.83,
+       "macro_f1": 0.8238
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      }
+     },
+     "selection_score": 0.8642,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    }
+   },
+   "onnx": {
+    "fp32_bytes": 6236849,
+    "calibration_images": 256,
+    "calibration_batches": 32,
+    "node_groups": {
+     "first": 1,
+     "depthwise": 11,
+     "pointwise": 22,
+     "se": 18,
+     "gemm": 2
+    },
+    "variants": {
+     "int8_all": {
+      "bytes": 1888929,
+      "quantized_nodes": "tất cả"
+     },
+     "int8_se_gemm": {
+      "bytes": 3088239,
+      "quantized_nodes": 20
+     },
+     "int8_se_gemm_pw_late": {
+      "bytes": 2119295,
+      "quantized_nodes": 31
+     }
+    },
+    "onnx_fp32": {
+     "predictions_changed_vs_pytorch_fp32": 0,
+     "n": 13101,
+     "top1": 0.9769,
+     "macro_f1": 0.9717,
+     "plantvillage_top1": 0.9932,
+     "field_top1": 0.899,
+     "field_macro_f1": 0.7483,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.5988,
+       "macro_f1": 0.6359
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.9932,
+       "macro_f1": 0.9903
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.9405,
+       "macro_f1": 0.9421
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.9574,
+       "macro_f1": 0.9783
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.9902,
+       "macro_f1": 0.9909
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.5672,
+       "macro_f1": 0.5443
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.8113,
+       "macro_f1": 0.6155
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.83,
+       "macro_f1": 0.8238
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      }
+     },
+     "selection_score": 0.8656,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    },
+    "onnx_int8_all": {
+     "predictions_changed_vs_pytorch_fp32": 11360,
+     "n": 13101,
+     "top1": 0.1307,
+     "macro_f1": 0.0905,
+     "plantvillage_top1": 0.1148,
+     "field_top1": 0.2068,
+     "field_macro_f1": 0.1163,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.064,
+       "macro_f1": 0.0732
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.1148,
+       "macro_f1": 0.0766
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.0714,
+       "macro_f1": 0.1702
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 0.2778,
+       "macro_f1": 0.4348
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 0.0741,
+       "macro_f1": 0.1379
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.2128,
+       "macro_f1": 0.3509
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.3212,
+       "macro_f1": 0.265
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 0.3571,
+       "macro_f1": 0.4546
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.4328,
+       "macro_f1": 0.3364
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 0.3333,
+       "macro_f1": 0.5
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.5566,
+       "macro_f1": 0.3762
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.0025,
+       "macro_f1": 0.0032
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      }
+     },
+     "selection_score": 0.2369,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    },
+    "onnx_int8_se_gemm": {
+     "predictions_changed_vs_pytorch_fp32": 13,
+     "n": 13101,
+     "top1": 0.9766,
+     "macro_f1": 0.9712,
+     "plantvillage_top1": 0.9932,
+     "field_top1": 0.8973,
+     "field_macro_f1": 0.746,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.593,
+       "macro_f1": 0.6328
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.9932,
+       "macro_f1": 0.9907
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.9315,
+       "macro_f1": 0.9347
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.9574,
+       "macro_f1": 0.9783
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.9916,
+       "macro_f1": 0.9922
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.5522,
+       "macro_f1": 0.5261
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.8113,
+       "macro_f1": 0.6155
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.83,
+       "macro_f1": 0.8238
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      }
+     },
+     "selection_score": 0.8631,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    },
+    "onnx_int8_se_gemm_pw_late": {
+     "predictions_changed_vs_pytorch_fp32": 43,
+     "n": 13101,
+     "top1": 0.9766,
+     "macro_f1": 0.9712,
+     "plantvillage_top1": 0.993,
+     "field_top1": 0.8981,
+     "field_macro_f1": 0.7424,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.593,
+       "macro_f1": 0.6196
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.993,
+       "macro_f1": 0.99
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.9286,
+       "macro_f1": 0.9317
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.9574,
+       "macro_f1": 0.9783
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.9916,
+       "macro_f1": 0.9919
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.5075,
+       "macro_f1": 0.4756
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.8113,
+       "macro_f1": 0.6155
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.845,
+       "macro_f1": 0.8395
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      }
+     },
+     "selection_score": 0.8584,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    }
+   },
+   "latency": {
+    "pytorch_fp32_ms": 24.91,
+    "onnx_fp32_ms": 6.48,
+    "onnx_int8_all_ms": 8.44,
+    "onnx_int8_se_gemm_ms": 5.41,
+    "onnx_int8_se_gemm_pw_late_ms": 5.18
+   }
+  },
+  "fedavg": {
+   "checkpoint_sha256": "cd1c8f603bd9cd1bb485346454e83d18658a2ac08d51f35c7e29a255335fbb45",
+   "weights_transport": {
+    "fp32": {
+     "payload_bytes": 6275944,
+     "payload_ratio": 1.0,
+     "predictions_changed": 0,
+     "n": 13101,
+     "top1": 0.9388,
+     "macro_f1": 0.9282,
+     "plantvillage_top1": 0.9684,
+     "field_top1": 0.7967,
+     "field_macro_f1": 0.6587,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.4012,
+       "macro_f1": 0.4827
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.9684,
+       "macro_f1": 0.9589
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.7917,
+       "macro_f1": 0.7978
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.9043,
+       "macro_f1": 0.9497
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.9397,
+       "macro_f1": 0.9426
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 0.9505,
+       "macro_f1": 0.9558
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.2687,
+       "macro_f1": 0.2168
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 0.9683,
+       "macro_f1": 0.9839
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 0.6667,
+       "macro_f1": 0.8
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.7358,
+       "macro_f1": 0.454
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.66,
+       "macro_f1": 0.5965
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      }
+     },
+     "selection_score": 0.7581,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    },
+    "fp16": {
+     "payload_bytes": 3194456,
+     "payload_ratio": 0.509,
+     "predictions_changed": 5,
+     "n": 13101,
+     "top1": 0.9389,
+     "macro_f1": 0.9283,
+     "plantvillage_top1": 0.9685,
+     "field_top1": 0.7967,
+     "field_macro_f1": 0.658,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.4012,
+       "macro_f1": 0.4827
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.9685,
+       "macro_f1": 0.9591
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.7917,
+       "macro_f1": 0.7978
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.9043,
+       "macro_f1": 0.9497
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.9397,
+       "macro_f1": 0.9426
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 0.9505,
+       "macro_f1": 0.9558
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.2687,
+       "macro_f1": 0.2168
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 0.9683,
+       "macro_f1": 0.9839
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 0.6667,
+       "macro_f1": 0.8
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.7358,
+       "macro_f1": 0.454
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.66,
+       "macro_f1": 0.5973
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      }
+     },
+     "selection_score": 0.7582,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    },
+    "int8_per_tensor": {
+     "payload_bytes": 1653928,
+     "payload_ratio": 0.2635,
+     "predictions_changed": 319,
+     "n": 13101,
+     "top1": 0.9353,
+     "macro_f1": 0.9259,
+     "plantvillage_top1": 0.9625,
+     "field_top1": 0.8047,
+     "field_macro_f1": 0.6515,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.4012,
+       "macro_f1": 0.4681
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.9625,
+       "macro_f1": 0.9539
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.8214,
+       "macro_f1": 0.8224
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.9255,
+       "macro_f1": 0.9613
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.9397,
+       "macro_f1": 0.9426
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 0.9451,
+       "macro_f1": 0.945
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.5672,
+       "macro_f1": 0.4709
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 0.9683,
+       "macro_f1": 0.9839
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 0.6667,
+       "macro_f1": 0.8
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.7547,
+       "macro_f1": 0.4429
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.625,
+       "macro_f1": 0.5606
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      }
+     },
+     "selection_score": 0.7774,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    },
+    "int8_per_channel": {
+     "payload_bytes": 1693736,
+     "payload_ratio": 0.2699,
+     "predictions_changed": 302,
+     "n": 13101,
+     "top1": 0.9344,
+     "macro_f1": 0.924,
+     "plantvillage_top1": 0.9629,
+     "field_top1": 0.7976,
+     "field_macro_f1": 0.6498,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.4186,
+       "macro_f1": 0.4942
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.9629,
+       "macro_f1": 0.9532
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.8155,
+       "macro_f1": 0.8201
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.7447,
+       "macro_f1": 0.8537
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.9369,
+       "macro_f1": 0.9392
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 0.9505,
+       "macro_f1": 0.9532
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.3433,
+       "macro_f1": 0.2936
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 0.9841,
+       "macro_f1": 0.992
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 0.6667,
+       "macro_f1": 0.8
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.7358,
+       "macro_f1": 0.4337
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.665,
+       "macro_f1": 0.6083
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      }
+     },
+     "selection_score": 0.7583,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    },
+    "delta_int8_per_tensor": {
+     "payload_bytes": 1653928,
+     "payload_ratio": 0.2635,
+     "predictions_changed": 14,
+     "n": 13101,
+     "top1": 0.9389,
+     "macro_f1": 0.9284,
+     "plantvillage_top1": 0.9682,
+     "field_top1": 0.7985,
+     "field_macro_f1": 0.6591,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.4012,
+       "macro_f1": 0.4827
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.9682,
+       "macro_f1": 0.9587
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.7946,
+       "macro_f1": 0.8006
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.9043,
+       "macro_f1": 0.9497
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.9397,
+       "macro_f1": 0.9426
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 0.9505,
+       "macro_f1": 0.9558
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.2687,
+       "macro_f1": 0.2168
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 0.9683,
+       "macro_f1": 0.9839
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 0.6667,
+       "macro_f1": 0.8
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.7453,
+       "macro_f1": 0.4596
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.665,
+       "macro_f1": 0.6005
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      }
+     },
+     "selection_score": 0.7592,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    },
+    "delta_int8_per_channel": {
+     "payload_bytes": 1693736,
+     "payload_ratio": 0.2699,
+     "predictions_changed": 10,
+     "n": 13101,
+     "top1": 0.9389,
+     "macro_f1": 0.9284,
+     "plantvillage_top1": 0.9682,
+     "field_top1": 0.7981,
+     "field_macro_f1": 0.6597,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.4012,
+       "macro_f1": 0.4827
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.9682,
+       "macro_f1": 0.9587
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.7946,
+       "macro_f1": 0.8019
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.9043,
+       "macro_f1": 0.9497
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.9397,
+       "macro_f1": 0.9426
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 0.956,
+       "macro_f1": 0.9613
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.2687,
+       "macro_f1": 0.2168
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 0.9683,
+       "macro_f1": 0.9839
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 0.6667,
+       "macro_f1": 0.8
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.7358,
+       "macro_f1": 0.454
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.6625,
+       "macro_f1": 0.5976
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      }
+     },
+     "selection_score": 0.759,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    }
+   },
+   "onnx": {
+    "fp32_bytes": 6236849,
+    "calibration_images": 256,
+    "calibration_batches": 32,
+    "node_groups": {
+     "first": 1,
+     "depthwise": 11,
+     "pointwise": 22,
+     "se": 18,
+     "gemm": 2
+    },
+    "variants": {
+     "int8_all": {
+      "bytes": 1888929,
+      "quantized_nodes": "tất cả"
+     },
+     "int8_se_gemm": {
+      "bytes": 3088237,
+      "quantized_nodes": 20
+     },
+     "int8_se_gemm_pw_late": {
+      "bytes": 2119295,
+      "quantized_nodes": 31
+     }
+    },
+    "onnx_fp32": {
+     "predictions_changed_vs_pytorch_fp32": 0,
+     "n": 13101,
+     "top1": 0.9388,
+     "macro_f1": 0.9282,
+     "plantvillage_top1": 0.9684,
+     "field_top1": 0.7967,
+     "field_macro_f1": 0.6587,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.4012,
+       "macro_f1": 0.4827
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.9684,
+       "macro_f1": 0.9589
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.7917,
+       "macro_f1": 0.7978
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.9043,
+       "macro_f1": 0.9497
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.9397,
+       "macro_f1": 0.9426
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 0.9505,
+       "macro_f1": 0.9558
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.2687,
+       "macro_f1": 0.2168
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 0.9683,
+       "macro_f1": 0.9839
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 0.6667,
+       "macro_f1": 0.8
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.7358,
+       "macro_f1": 0.454
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.66,
+       "macro_f1": 0.5965
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      }
+     },
+     "selection_score": 0.7581,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    },
+    "onnx_int8_all": {
+     "predictions_changed_vs_pytorch_fp32": 11748,
+     "n": 13101,
+     "top1": 0.0998,
+     "macro_f1": 0.0536,
+     "plantvillage_top1": 0.0795,
+     "field_top1": 0.1975,
+     "field_macro_f1": 0.0953,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.0174,
+       "macro_f1": 0.0168
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.0795,
+       "macro_f1": 0.0413
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.0208,
+       "macro_f1": 0.07
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 0.6111,
+       "macro_f1": 0.7586
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 0.1111,
+       "macro_f1": 0.2
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.4255,
+       "macro_f1": 0.597
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.331,
+       "macro_f1": 0.2556
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 0.4505,
+       "macro_f1": 0.3923
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.1493,
+       "macro_f1": 0.1092
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 0.6667,
+       "macro_f1": 0.8
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 0.3333,
+       "macro_f1": 0.5
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.1038,
+       "macro_f1": 0.1024
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      }
+     },
+     "selection_score": 0.2168,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    },
+    "onnx_int8_se_gemm": {
+     "predictions_changed_vs_pytorch_fp32": 47,
+     "n": 13101,
+     "top1": 0.9392,
+     "macro_f1": 0.9288,
+     "plantvillage_top1": 0.9683,
+     "field_top1": 0.7994,
+     "field_macro_f1": 0.6591,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.3953,
+       "macro_f1": 0.4724
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.9683,
+       "macro_f1": 0.9588
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.8036,
+       "macro_f1": 0.8095
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.9149,
+       "macro_f1": 0.9556
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.9397,
+       "macro_f1": 0.9425
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 0.9505,
+       "macro_f1": 0.9558
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.2687,
+       "macro_f1": 0.2168
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 0.9683,
+       "macro_f1": 0.9839
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 0.6667,
+       "macro_f1": 0.8
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.7453,
+       "macro_f1": 0.4592
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.6625,
+       "macro_f1": 0.6004
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      }
+     },
+     "selection_score": 0.7595,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    },
+    "onnx_int8_se_gemm_pw_late": {
+     "predictions_changed_vs_pytorch_fp32": 138,
+     "n": 13101,
+     "top1": 0.9381,
+     "macro_f1": 0.9278,
+     "plantvillage_top1": 0.9671,
+     "field_top1": 0.7989,
+     "field_macro_f1": 0.6545,
+     "by_source": {
+      "PlantDoc": {
+       "n": 172,
+       "top1": 0.407,
+       "macro_f1": 0.4782
+      },
+      "PlantVillage": {
+       "n": 10843,
+       "top1": 0.9671,
+       "macro_f1": 0.9573
+      },
+      "hf_plant_pathology_2021": {
+       "n": 336,
+       "top1": 0.7887,
+       "macro_f1": 0.7953
+      },
+      "inat_apple___healthy": {
+       "n": 2,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_cerasi": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_grape___black_rot": {
+       "n": 2,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "inat_raspberry___healthy": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_strawberry___healthy": {
+       "n": 3,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "inat_wm_apple___cedar_apple_rust": {
+       "n": 2,
+       "top1": 0.5,
+       "macro_f1": 0.6667
+      },
+      "inat_wm_strawberry___leaf_scorch": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_ccmt_ghana_maize_healthy": {
+       "n": 18,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_cherry_kg": {
+       "n": 27,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_chilli_bd": {
+       "n": 94,
+       "top1": 0.9149,
+       "macro_f1": 0.9556
+      },
+      "mendeley_corn_leaf_disease": {
+       "n": 713,
+       "top1": 0.9383,
+       "macro_f1": 0.9412
+      },
+      "mendeley_esca_grape": {
+       "n": 182,
+       "top1": 0.967,
+       "macro_f1": 0.9723
+      },
+      "mendeley_grape_leaf_18k": {
+       "n": 1,
+       "top1": 0.0,
+       "macro_f1": 0.0
+      },
+      "mendeley_maize_bd_healthy": {
+       "n": 67,
+       "top1": 0.2687,
+       "macro_f1": 0.2168
+      },
+      "mendeley_orange_hlb": {
+       "n": 63,
+       "top1": 0.9683,
+       "macro_f1": 0.9839
+      },
+      "mendeley_peach_pakistan": {
+       "n": 3,
+       "top1": 0.6667,
+       "macro_f1": 0.8
+      },
+      "mendeley_potato_bangladesh": {
+       "n": 1,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_potato_ethiopia": {
+       "n": 44,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_bangladesh": {
+       "n": 106,
+       "top1": 0.7453,
+       "macro_f1": 0.4399
+      },
+      "mendeley_tomato_field_unlabeled": {
+       "n": 4,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      },
+      "mendeley_tomato_pakistan": {
+       "n": 400,
+       "top1": 0.6625,
+       "macro_f1": 0.6059
+      },
+      "zenodo_asdid_soybean_healthy": {
+       "n": 14,
+       "top1": 1.0,
+       "macro_f1": 1.0
+      }
+     },
+     "selection_score": 0.7588,
+     "selection_sources": [
+      "PlantDoc",
+      "PlantVillage",
+      "hf_plant_pathology_2021",
+      "mendeley_chilli_bd",
+      "mendeley_corn_leaf_disease",
+      "mendeley_esca_grape",
+      "mendeley_maize_bd_healthy",
+      "mendeley_orange_hlb",
+      "mendeley_potato_ethiopia",
+      "mendeley_tomato_bangladesh",
+      "mendeley_tomato_pakistan"
+     ]
+    }
+   },
+   "latency": {
+    "pytorch_fp32_ms": 17.25,
+    "onnx_fp32_ms": 5.77,
+    "onnx_int8_all_ms": 7.83,
+    "onnx_int8_se_gemm_ms": 5.2,
+    "onnx_int8_se_gemm_pw_late_ms": 5.14
+   }
+  }
+ }
+}

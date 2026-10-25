@@ -397,6 +397,10 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
   (không ghi đè), tag `v0.3.0-v4b-20261026`. Cài FedProx, FedBN, SCAFFOLD, FedAvgM, MOON (`src/federated/algorithms.py`, `scripts/train_v4.py --algo`), 22 test đơn vị; ghi `delta_l2` và byte
   từng client trong `history.jsonl`; dựng thêm cách chia client α = 0,5; 1,0; 10 và hai hạt giống chia khác cho α = 0,1 (`scripts/build_extra_partitions.py`, ngoài `release_manifest.json`
   nên mã băm release không đổi). CHƯA chạy thí nghiệm nào của GĐ2/GĐ3 vì cần máy GPU; kế hoạch, lệnh và ước lượng giờ chạy ở `docs/NEXT_TRAINING_PLAN.md` mục 5.10.
+- 2026-10-26 (GĐ4 trên CPU, `docs/GD4_NEN_LUONG_TU_HOA_2026-10-26.md`, `scripts/eval_gd4_compression.py`, `artifacts/gd4_compression.json`; tập giữ riêng 13.101 ảnh): nén trọng số khi truyền,
+  đo một lần: fp16 còn 51% dung lượng; int8 trên độ lệch so với trọng số khởi tạo còn 27% với 10–14 ảnh đổi dự đoán; int8 trên trọng số tuyệt đối mất 0,1–0,4 điểm. Lượng tử hóa
+  tĩnh int8 ONNX: mọi lớp thì sụp đổ (10–13%); chỉ khối SE, Gemm và pointwise nửa sau thì còn 2,12 MB (34%), top-1 giảm 0,03–0,07 điểm; chưa thấy nhanh hơn rõ rệt trên CPU. Lớp conv
+  đầu và depthwise là phần nhạy. Đính chính tài liệu 21/10: "int8 phá hủy mô hình" do lượng tử hóa cả `running_var` của BatchNorm. Chưa đo nén ở mỗi vòng huấn luyện (cần GPU).
 <!-- ROADMAP-END -->
 
 ## 8. Cách đồng bộ
