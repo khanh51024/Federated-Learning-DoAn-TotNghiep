@@ -57,7 +57,7 @@ ALLOWED_DOCS = {
     "UI_UX_REVIEW_2026-10-14.md", "REVIEW_TOAN_DIEN_2026-10-16.md", "REVIEW_WEB_2026-10-19.md",
     "CAU_HOI_BAO_VE_2026-10-19.md", "DANH_GIA_DU_LIEU_MO_HINH_FEDAVG_2026-10-21.md", "HUONG_DAN_DO_TOC_DO_LAN.md",
     "DATASET_V4.md", "HUONG_DAN_CHUP_ANH.md", "CONG_TU_CHOI_ANH_KHONG_PHAI_LA.md",
-    "THAY_MO_HINH_WEB.md", "REPORT_WORD_WEB_2026-10-20.md",
+    "THAY_MO_HINH_WEB.md", "REPORT_WORD_WEB_2026-10-20.md", "REVIEW_HOAN_THIEN_2026-10-25.md",
 }
 # Số liệu từng xuất hiện trong tài liệu cũ và mâu thuẫn với artifact: không được quay lại docs hiện hành.
 FORBIDDEN_NUMBERS = ("97,12", "97.12", "90,44", "90.44")
