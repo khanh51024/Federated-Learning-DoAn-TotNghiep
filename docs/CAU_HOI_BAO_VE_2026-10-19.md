@@ -47,8 +47,9 @@ Trên web: chương 5, hạn chế "Riêng tư chưa tuyệt đối".
 
 **7. [NC] Khác nhau giữa FedAvg và FedSGD, FedProx, SCAFFOLD?**
 Gợi ý: FedSGD gửi gradient mỗi bước (tốn truyền thông); FedAvg cho client học nhiều bước rồi gửi trọng số. FedProx thêm số hạng
-μ/2·‖w − w_global‖² để kéo client không trôi xa; SCAFFOLD dùng biến điều khiển để hiệu chỉnh client drift. Dự án chỉ cài FedAvg;
-FedProx/SCAFFOLD là hướng phát triển cho dữ liệu lệch nặng.
+μ/2·‖w − w_global‖² để kéo client không trôi xa; SCAFFOLD dùng biến điều khiển để hiệu chỉnh client drift. Dự án dùng FedAvg cho kết quả chính; FedProx, FedBN, SCAFFOLD,
+FedAvgM và MOON đã được cài trong `src/federated/algorithms.py` và kiểm thử đơn vị, nhưng chưa chạy thí nghiệm (kế hoạch ở
+`docs/NEXT_TRAINING_PLAN.md` mục 5.10), nên chưa có số so sánh.
 
 **8. [NC] BatchNorm xử lý thế nào khi gộp FedAvg?**
 Gợi ý: trong `aggregate_fedavg` (`src/federated/strategy.py`), tensor số thực (weight, bias, running_mean, running_var) lấy trung bình

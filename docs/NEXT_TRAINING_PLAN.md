@@ -311,6 +311,40 @@ Vì vậy theo quy tắc đã đặt trước, mô hình mới **không đủ đ
 - **Cách nói với hội đồng:** nêu rõ web dùng v4b, nêu cả hai cột trên, nêu 7 ngưỡng chưa đạt và nói đây là lựa chọn của người thực hiện. Không dùng cụm "đã đạt ngưỡng nhập".
 - **Đường lùi:** `scripts/swap_web_models.py --rollback` về gói cũ, xem `docs/THAY_MO_HINH_WEB.md`.
 
+### 5.10 Đợt GĐ2 và GĐ3 (mã đã sẵn sàng, chưa chạy; chuẩn bị ngày 2026-10-26)
+
+**Mục tiêu.** GĐ2: vẽ đường khoảng cách FedAvg – Centralized theo mức lệch dữ liệu. GĐ3: so FedProx, FedBN, SCAFFOLD, FedAvgM, MOON với FedAvg trên cùng phân hoạch, cùng công thức v4b (SGD động lượng 0,9, lr 0,02, batch 128, bf16, 40 vòng, 1 epoch cục bộ).
+
+**Đã có trong mã (kiểm bằng `tests/test_fed_algorithms.py`, `tests/test_extra_partitions.py` và chạy thử trên CPU):**
+- `src/federated/algorithms.py`: sáu thuật toán qua `scripts/train_v4.py --method fedavg --algo {fedavg,fedprox,fedbn,scaffold,fedavgm,moon}`; `--algo fedavg` đi đúng đường cũ của v4b. Tham số: `--prox-mu`, `--moon-mu`, `--moon-tau`, `--server-momentum`, `--server-lr`. Trạng thái thuật toán được lưu trong `checkpoint_last.pt` nên chạy tiếp sau khi bị ngắt vẫn đúng.
+- Mỗi run học liên kết nay ghi vào `history.jsonl`, theo từng client và từng vòng: `delta_l2` (độ lệch trọng số so với mô hình toàn cục), `delta_l2_without_bn`, `bytes_up`, `bytes_down` (byte tính từ kích thước tensor, chưa đo trên đường truyền). Với FedAvg thường: 6.275.944 byte mỗi chiều; SCAFFOLD gần gấp đôi.
+- `scripts/build_extra_partitions.py` đã dựng (trong `data/dataset_sources/mixed/pv_pd_v4/partitions_extra/`, ngoài git) các cách chia: `label_alpha_0_5`, `label_alpha_1_0`, `label_alpha_10_0` (hạt giống chia 42) và `label_alpha_0_1_p123`, `label_alpha_0_1_p2026` (α = 0,1, hạt giống chia khác để đo dao động do cách chia). Mã băm release không đổi; manifest riêng `extra_manifest.json` ghi mã băm từng shard và kiểm toán rò rỉ (tách rời, hợp đúng tập train, không cắt nhóm ảnh). Số lớp mỗi client: α = 0,5 → 34–36; α = 1,0 → 36–38; α = 10 → 38; α = 0,1 → 17–26 tùy hạt giống chia.
+- `scripts/remote/run_sweep.sh` (chạy qua `RUN_SCRIPT=run_sweep.sh scripts/remote/run_parallel.sh`) chạy ma trận cách chia × thuật toán × hạt giống, `LOCAL=1` thêm 5 Local-only mỗi cách chia.
+
+**Giới hạn của cách cài, cần nói thẳng khi báo cáo:**
+- SCAFFOLD bản gốc phân tích cho SGD thuần; ở đây client dùng động lượng 0,9 nên tốc độ học hiệu dụng của biến điều khiển là lr/(1 − 0,9). Đây là xấp xỉ.
+- FedBN không có một mô hình toàn cục duy nhất. Mô hình dùng để chọn checkpoint và so với các cách khác gộp BatchNorm theo FedAvg; mô hình cá nhân hóa (trọng số toàn cục + BatchNorm riêng của client) được chấm riêng ở `final.json` mục `personalized`, trên val và tập giữ riêng của toàn bộ 38 lớp, không phải trên dữ liệu riêng của client.
+- MOON dùng đặc trưng 1024 chiều của MobileNetV3-Small, không có đầu chiếu; chậm hơn FedAvg do thêm hai lượt chạy xuôi.
+- FedAvgM chỉ áp động lượng lên tham số học được; thống kê BatchNorm vẫn lấy trung bình thường.
+
+**Kế hoạch chạy** (hạt giống 42, 123, 2026; thời gian đo từ `history.jsonl` của đợt v4b khi ba hạt giống chạy song song trên một RTX 3090: FedAvg 29 phút, Centralized 29 phút, Local-only 7–10 phút mỗi client; MOON và SCAFFOLD chậm hơn nên có thể 1,3–1,6 lần):
+1. **GĐ2** (FedAvg + Local-only × 3 hạt giống × `iid`, `label_alpha_10_0`, `label_alpha_1_0`, `label_alpha_0_5`): 12 run FedAvg và 60 run Local-only, khoảng 5–6 giờ. Centralized dùng lại run v4b (không phụ thuộc cách chia).
+2. **Chọn tham số GĐ3** (chỉ hạt giống 42, α = 0,1, chọn theo điểm val, không dùng tập giữ riêng): FedProx μ ∈ {0,001; 0,01; 0,1}, MOON μ ∈ {0,1; 1; 10}, FedAvgM η_s ∈ {0,05; 0,1; 0,3}; 9 run, khoảng 2 giờ.
+3. **GĐ3 chính thức** (tham số đã chọn): FedProx, FedBN, SCAFFOLD, FedAvgM, MOON × α ∈ {0,1; 0,5} × 3 hạt giống = 30 run, khoảng 6–8 giờ.
+4. **Dao động do cách chia:** FedAvg × `label_alpha_0_1_p123`, `label_alpha_0_1_p2026` × 3 hạt giống huấn luyện = 6 run, khoảng 1 giờ.
+
+Tổng khoảng 14–17 giờ GPU. Lệnh mẫu trên máy GPU, sau khi giải nén `train_data_v4.tar` và `train_code.tar` dựng lại bằng `scripts/pack_train_bundle.py` (bản cũ đã xóa để giải phóng đĩa):
+
+```bash
+# GĐ2
+RUN_SCRIPT=run_sweep.sh LOCAL=1 RELEASE_SHA=<sha trong bundle.json> OUT_DIR=~/cropfed/runs/sweep bash code/scripts/remote/run_parallel.sh
+# GĐ3: chọn tham số (một hạt giống)
+RUN_SCRIPT=run_sweep.sh SEEDS=42 SCHEMES=label_alpha_0_1 ALGOS="fedprox:0.001 fedprox:0.01 fedprox:0.1 moon:0.1 moon:1 moon:10 fedavgm:0.05 fedavgm:0.1 fedavgm:0.3" \
+  RELEASE_SHA=<sha> OUT_DIR=~/cropfed/runs/sweep bash code/scripts/remote/run_parallel.sh
+```
+
+**Việc còn lại trước khi báo cáo số:** viết `scripts/eval_sweep_v4.py` (gộp theo cách chia × thuật toán, trung bình ± độ lệch chuẩn qua hạt giống, đo PlantWild như `scripts/eval_trained_v4.py` nhưng ghi sang tệp riêng, không đè `artifacts/train_v4_results.json`), vẽ đường theo α, và bảng so thuật toán kèm số byte và `delta_l2`.
+
 ### 5.5 Việc đã làm sẵn
 - Tập thử ngoài đồng và công cụ đo: `scripts/build_external_eval_set.py`, `scripts/eval_external_set.py`, `scripts/eval_inference_variants.py`.
 - Bộ tăng cường ảnh và kiểm khô (vẽ lưới ảnh, chạy một batch qua MobileNetV3-Small trên CPU): `src/data/robust_transforms.py`, `scripts/preview_augmentations.py`.

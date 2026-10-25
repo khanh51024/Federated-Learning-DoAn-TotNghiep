@@ -60,12 +60,15 @@ def logit_adjustment(prior: list[float], tau: float, floor: float = 1e-4) -> Any
 
 
 def train_epoch(model: Any, loader: Any, optimizer: Any, scaler: Any, device: Any, sample_weights: Any, label_smoothing: float,
-                augment: Any = None, logit_adjust: Any = None, channels_last: bool = False, amp_dtype: str = "fp16") -> dict[str, float]:
+                augment: Any = None, logit_adjust: Any = None, channels_last: bool = False, amp_dtype: str = "fp16",
+                hooks: Any = None) -> dict[str, float]:
     """Một lượt qua `loader`. Mất mát = cross-entropy (label smoothing) có trọng số từng mẫu, chuẩn hóa theo tổng trọng số của batch.
 
     `augment`: hàm tăng cường chạy trên thiết bị (batch uint8 -> float đã chuẩn hóa, src/training/gpu_augment.py); None khi loader đã trả ảnh chuẩn hóa.
     `logit_adjust`: vector [38] cộng vào logit trước khi tính mất mát (`logit_adjustment`).
-    `amp_dtype`: "fp16" (cần GradScaler, mỗi bước một lần đồng bộ để kiểm tràn số) hoặc "bf16" (không cần GradScaler; truyền scaler đã tắt)."""
+    `amp_dtype`: "fp16" (cần GradScaler, mỗi bước một lần đồng bộ để kiểm tràn số) hoặc "bf16" (không cần GradScaler; truyền scaler đã tắt).
+    `hooks`: đối tượng của src/federated/algorithms.py (`extra_loss` cộng vào mất mát, `adjust_gradients` chỉnh gradient trước bước tối ưu);
+    None = học như cũ. `loss` trả về luôn là cross-entropy, không gồm số hạng phụ."""
     import torch
 
     model.train()
@@ -92,10 +95,18 @@ def train_epoch(model: Any, loader: Any, optimizer: Any, scaler: Any, device: An
             logits = model(images)
             trained = logits.float() if adjust is None else logits.float() + adjust
             loss = (criterion(trained, labels) * weights).sum() / weights.sum()
-        scaler.scale(loss).backward()
+            objective = loss
+            if hooks is not None:
+                extra = hooks.extra_loss(model, images, logits)
+                if extra is not None:
+                    objective = loss + extra
+        scaler.scale(objective).backward()
+        if hooks is not None:
+            scaler.unscale_(optimizer)          # gradient về thang thật trước khi thuật toán cộng số hạng hiệu chỉnh (không làm gì khi bộ chia thang tắt)
+            hooks.adjust_gradients(model)
         scaler.step(optimizer)
         scaler.update()
-        finite &= torch.isfinite(loss.detach())
+        finite &= torch.isfinite(objective.detach())
         total_loss += loss.detach() * len(labels)
         correct += (logits.detach().argmax(1) == labels).sum()
         seen += len(labels)

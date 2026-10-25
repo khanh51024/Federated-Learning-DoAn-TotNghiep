@@ -39,13 +39,15 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from src.federated.algorithms import ALGORITHMS  # noqa: E402
 from src.training.data import (NUM_CLIENTS, ManifestDataset, balanced_sampling_weights, class_prior, domain_balanced_weights,  # noqa: E402
-                                load_release, load_shard)
+                                extra_manifest_sha256, load_release, load_shard)
 from src.training.loop import cosine_lr, logit_adjustment, make_loader, make_optimizer, predict, train_epoch  # noqa: E402
 from src.training.metrics import summarize  # noqa: E402
 
 CODE_FILES = ("scripts/train_v4.py", "src/training/data.py", "src/training/loop.py", "src/training/metrics.py", "src/data/robust_transforms.py",
-              "src/training/gpu_augment.py", "src/federated/strategy.py", "src/model/mobilenetv3.py", "src/common/image_io.py")
+              "src/training/gpu_augment.py", "src/federated/strategy.py", "src/federated/algorithms.py", "src/model/mobilenetv3.py",
+              "src/common/image_io.py")
 AUG_DESCRIPTION = {
     "robust_v1": "robust_v1 (src/data/robust_transforms.py)",
     "gpu_v2": "gpu_v2 (get_cpu_train_transform + src/training/gpu_augment.py)",
@@ -137,17 +139,26 @@ def main() -> int:
     parser.add_argument("--channels-last", action="store_true", help="bố cục bộ nhớ channels_last (nhanh hơn với fp16 trên GPU)")
     parser.add_argument("--tag", default="", help="hậu tố tên run (ablation)")
     parser.add_argument("--amp", choices=("fp16", "bf16"), default="fp16", help="kiểu số khi học trên GPU; bf16 không cần GradScaler (bớt một lần đồng bộ mỗi bước)")
+    parser.add_argument("--algo", choices=ALGORITHMS, default="fedavg",
+                        help="thuật toán học liên kết (chỉ với --method fedavg): fedavg, fedprox, fedbn, scaffold, fedavgm, moon (src/federated/algorithms.py)")
+    parser.add_argument("--prox-mu", type=float, default=0.01, help="FedProx: hệ số μ của (μ/2)·‖w − w_toàn_cục‖²")
+    parser.add_argument("--moon-mu", type=float, default=1.0, help="MOON: hệ số của mất mát đối chiếu")
+    parser.add_argument("--moon-tau", type=float, default=0.5, help="MOON: nhiệt độ của mất mát đối chiếu")
+    parser.add_argument("--server-momentum", type=float, default=0.9, help="FedAvgM: động lượng β phía máy chủ")
+    parser.add_argument("--server-lr", type=float, default=0.1, help="FedAvgM: tốc độ học η_s phía máy chủ (hiệu dụng η_s/(1−β))")
     args = parser.parse_args()
 
     import torch
 
     from src.data.robust_transforms import get_cpu_train_transform, get_eval_transform, get_robust_train_transform
     from src.training.gpu_augment import GpuAugment
-    from src.federated.strategy import aggregate_fedavg
+    from src.federated.algorithms import make_algorithm, state_bytes, update_norms
     from src.model.mobilenetv3 import get_parameters, set_parameters
 
     if args.method == "local" and args.client is None:
         parser.error("--method local cần --client")
+    if args.algo != "fedavg" and args.method != "fedavg":
+        parser.error("--algo chỉ dùng với --method fedavg")
     if not args.expected_release_sha and not args.limit:
         parser.error("cần --expected-release-sha (SHA-256 của release_manifest.json) khi chạy thật")
     release_dir = args.release_dir or args.dataset_root / "mixed" / "pv_pd_v4"
@@ -183,6 +194,12 @@ def main() -> int:
         "git_commit": git_commit(), "torch": torch.__version__, "device": str(device),
         "gpu": torch.cuda.get_device_name(0) if device.type == "cuda" else None, "python": platform.python_version(),
     }
+    if args.method != "centralized" and args.scheme not in release["meta"]["partition_shard_hashes"]:
+        config["partition_extra_manifest_sha256"] = extra_manifest_sha256(release_dir)   # cách chia bổ sung (scripts/build_extra_partitions.py)
+    if args.algo != "fedavg":      # chỉ ghi khi khác FedAvg: cấu hình của run FedAvg thường giữ nguyên như đợt v4b
+        config["algorithm"] = {"name": args.algo, **{"fedprox": {"mu": args.prox_mu}, "moon": {"mu": args.moon_mu, "tau": args.moon_tau},
+                                                       "fedavgm": {"beta": args.server_momentum, "server_lr": args.server_lr},
+                                                       "scaffold": {"momentum": args.momentum}}.get(args.algo, {})}
     config_path = run_dir / "config.json"
     if config_path.is_file():
         previous = json.loads(config_path.read_text(encoding="utf-8"))
@@ -225,6 +242,8 @@ def main() -> int:
         model = model.to(memory_format=torch.channels_last)
     steps_total = args.budget * (args.local_epochs if args.method == "local" else 1)
     optimizer = make_optimizer(model, args.lr, args.momentum, args.weight_decay) if args.method != "fedavg" else None
+    algo = make_algorithm(args.algo, model, NUM_CLIENTS, mu=args.prox_mu, moon_mu=args.moon_mu, moon_tau=args.moon_tau,
+                          server_momentum=args.server_momentum, server_lr=args.server_lr, momentum=args.momentum)
     use_scaler = device.type == "cuda" and args.amp == "fp16"
     scaler = torch.amp.GradScaler("cuda", enabled=use_scaler)
     start, best = 0, {"score": -1.0, "step": None}
@@ -234,6 +253,7 @@ def main() -> int:
         model.load_state_dict(state["model_state"])
         if optimizer is not None:
             optimizer.load_state_dict(state["optimizer_state"])
+        algo.load_state_dict(state.get("algo_state") or {})
         scaler.load_state_dict(state["scaler_state"])
         start, best = state["step"] + 1, state["best"]
         torch.set_rng_state(state["torch_rng"])
@@ -252,14 +272,28 @@ def main() -> int:
             updates, client_stats = [], []
             for k, (loader, w) in enumerate(zip(loaders, weights)):
                 local = copy.deepcopy(model)
+                start_state = algo.start_state(k, parent)
+                if start_state is not parent:
+                    set_parameters(local, start_state)                                   # FedBN: BatchNorm riêng của client
+                hooks = algo.make_hooks(k, local, parent, lr, device)
                 local_opt = make_optimizer(local, lr, args.momentum, args.weight_decay)   # trạng thái bộ tối ưu của client làm mới mỗi vòng
                 local_scaler = torch.amp.GradScaler("cuda", enabled=use_scaler)
                 stats = [train_epoch(local, loader, local_opt, local_scaler, device, w, args.label_smoothing, augments[k], adjusts[k], args.channels_last,
-                                     args.amp) for _ in range(args.local_epochs)]
-                updates.append({"weights": get_parameters(local), "num_examples": len(train_sets[k]), "client_id": k})
-                client_stats.append({"client": k, "loss": stats[-1]["loss"], "steps": sum(s["steps"] for s in stats)})
-                del local, local_opt
-            set_parameters(model, aggregate_fedavg(updates, parent_weights=parent))
+                                     args.amp, hooks=hooks) for _ in range(args.local_epochs)]
+                client_steps = sum(s["steps"] for s in stats)
+                local_state = get_parameters(local)
+                l2, l2_without_bn = update_norms(local_state, parent, algo.bn_keys)
+                extra_up, extra_down = algo.extra_bytes(parent)
+                algo.after_local(k, local, parent, lr, client_steps, len(train_sets[k]))
+                updates.append({"weights": local_state, "num_examples": len(train_sets[k]), "client_id": k})
+                # byte: trọng số float32/int64 gửi thô (chưa nén), cộng phần phụ của thuật toán; tính từ kích thước tensor, chưa đo trên đường truyền
+                client_stats.append({"client": k, "loss": stats[-1]["loss"], "steps": client_steps, "delta_l2": round(l2, 4),
+                                     "delta_l2_without_bn": round(l2_without_bn, 4), "bytes_up": state_bytes(local_state) + extra_up,
+                                     "bytes_down": state_bytes(parent) + extra_down})
+                if hooks is not None:
+                    hooks.close()
+                del local, local_opt, hooks
+            set_parameters(model, algo.aggregate(updates, parent))
             train_info = {"clients": client_stats, "steps": sum(c["steps"] for c in client_stats)}
         else:
             for group in optimizer.param_groups:
@@ -272,10 +306,13 @@ def main() -> int:
             stream.write(json.dumps(record, ensure_ascii=False) + "\n")
         if val["selection_score"] is not None and val["selection_score"] > best["score"]:
             best = {"score": val["selection_score"], "step": step}
-            save(best_path, {"model_state": model.state_dict(), "step": step, "selection_score": val["selection_score"], "method": args.method,
-                             "seed": args.seed, "client": args.client, "release_manifest_sha256": release["sha256"], "code_fingerprint": config["code_fingerprint"]})
+            best_payload = {"model_state": model.state_dict(), "step": step, "selection_score": val["selection_score"], "method": args.method,
+                            "seed": args.seed, "client": args.client, "release_manifest_sha256": release["sha256"], "code_fingerprint": config["code_fingerprint"]}
+            if args.algo == "fedbn":
+                best_payload["client_bn"] = algo.client_bn          # BatchNorm riêng từng client tại bước tốt nhất, để chấm mô hình cá nhân hóa
+            save(best_path, best_payload)
         save(last_path, {"model_state": model.state_dict(), "optimizer_state": optimizer.state_dict() if optimizer is not None else None,
-                         "scaler_state": scaler.state_dict(), "step": step, "best": best, "torch_rng": torch.get_rng_state(),
+                         "algo_state": algo.state_dict(), "scaler_state": scaler.state_dict(), "step": step, "best": best, "torch_rng": torch.get_rng_state(),
                          "numpy_rng": np.random.get_state(), "python_rng": random.getstate(), "aug_rng": [g.get_state() for g in aug_generators]})
         print(f"[train] {run_dir.name} {step + 1}/{steps_total} lr {lr:.4f} val top1 {val['top1']} chọn {val['selection_score']} "
               f"(tốt nhất {best['score']} ở bước {best['step']}) {record['seconds']}s", flush=True)
@@ -286,6 +323,18 @@ def main() -> int:
     np.savez_compressed(run_dir / "logits_best.npz", **logits, **{f"{n}_sample_ids": np.array([r["sample_id"] for r in eval_rows[n]]) for n in eval_rows})
     final = {"run": run_dir.name, "best_step": state["step"], "selection_score": state["selection_score"], "config": config,
              **{name: summarize(logits[name], eval_rows[name]) for name in eval_rows}}
+    if args.algo == "fedbn":
+        # Mô hình cá nhân hóa của FedBN: trọng số toàn cục + BatchNorm riêng của từng client; chấm trên val và tập giữ riêng (mô hình toàn cục ở trên dùng BN đã gộp)
+        global_state = get_parameters(model)
+        personalized, personal_logits = {}, {}
+        for k in range(NUM_CLIENTS):
+            set_parameters(model, {**global_state, **state["client_bn"][k]})
+            personal = {name: predict(model, eval_loaders[name], device, args.channels_last, args.amp) for name in ("val", "legacy_diagnostic_test")}
+            personalized[f"client_{k}"] = {name: summarize(personal[name], eval_rows[name]) for name in personal}
+            personal_logits.update({f"{name}_client_{k}": value for name, value in personal.items()})
+        set_parameters(model, global_state)
+        np.savez_compressed(run_dir / "logits_personalized.npz", **personal_logits)
+        final["personalized"] = personalized
     (run_dir / "final.json").write_text(json.dumps(final, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     (run_dir / "DONE").write_text(time.strftime("%Y-%m-%dT%H:%M:%S") + "\n", encoding="utf-8")
     print(f"[train] {run_dir.name}: xong; bước tốt nhất {state['step']}, test top1 {final['legacy_diagnostic_test']['top1']}")

@@ -39,11 +39,39 @@ def load_release(release_dir: Path, expected_sha: str | None) -> dict[str, Any]:
     return {"sha256": actual, "meta": meta, **{name: read_jsonl(release_dir / "manifests" / f"{name}.jsonl") for name in SPLITS}}
 
 
+EXTRA_DIR = "partitions_extra"
+EXTRA_MANIFEST = "extra_manifest.json"
+
+
+def load_extra_manifest(release_dir: Path, release: dict[str, Any]) -> dict[str, Any] | None:
+    """Cách chia bổ sung (scripts/build_extra_partitions.py) nằm ngoài release_manifest.json để mã băm release không đổi; manifest riêng của
+    chúng phải ghi đúng mã băm release đang dùng. None khi không có."""
+    path = release_dir / EXTRA_DIR / EXTRA_MANIFEST
+    if not path.is_file():
+        return None
+    extra = json.loads(path.read_text(encoding="utf-8"))
+    if extra.get("release_manifest_sha256") != release["sha256"]:
+        raise SystemExit(f"{path} dựng cho release {extra.get('release_manifest_sha256')}, khác release đang dùng {release['sha256']}")
+    return extra
+
+
+def extra_manifest_sha256(release_dir: Path) -> str | None:
+    path = release_dir / EXTRA_DIR / EXTRA_MANIFEST
+    return sha256_file(path) if path.is_file() else None
+
+
 def load_shard(release_dir: Path, scheme: str, client: int, release: dict[str, Any]) -> list[dict[str, Any]]:
-    path = release_dir / "partitions" / scheme / f"client_{client:02d}.jsonl"
-    expected = release["meta"]["partition_shard_hashes"][scheme][path.name]
+    name = f"client_{client:02d}.jsonl"
+    in_release = release["meta"]["partition_shard_hashes"].get(scheme)
+    if in_release is not None:
+        path, expected = release_dir / "partitions" / scheme / name, in_release[name]
+    else:
+        extra = load_extra_manifest(release_dir, release)
+        if extra is None or scheme not in extra["schemes"]:
+            raise SystemExit(f"cách chia '{scheme}' không có trong release_manifest.json cũng không có trong {EXTRA_DIR}/{EXTRA_MANIFEST}")
+        path, expected = release_dir / EXTRA_DIR / scheme / name, extra["schemes"][scheme]["shard_sha256"][name]
     if sha256_file(path) != expected:
-        raise SystemExit(f"{path} khác mã băm trong release_manifest.json")
+        raise SystemExit(f"{path} khác mã băm đã ghim")
     return read_jsonl(path)
 
 

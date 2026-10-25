@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (0 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)",
+  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (0 mục BLOCKED cần dữ liệu/máy train, 2 mục kỹ thuật chưa XONG)",
   "canonical_run_id": "20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62",
   "dataset_truth": {
     "source": "data/partitions_stage2_scratch_v3/suite.json",
@@ -253,8 +253,8 @@
     {
       "id": "full_tests",
       "title": "Full tests pass trên mã nguồn hiện tại",
-      "status": "XONG",
-      "detail": "technical_acceptance=pass lúc 2026-10-26T00:18:58 (gồm test mạng, 92 file test) với mã nguồn có dấu vân tay 4476387546d3; thay mã sau thời điểm này thì phải chạy lại",
+      "status": "CHƯA",
+      "detail": "kết quả cũ (2026-10-26T00:18:58) không còn khớp mã nguồn hiện tại — chạy lại --full-gates",
       "unlock": []
     },
     {
@@ -330,8 +330,8 @@
     {
       "id": "release",
       "title": "Release sạch (mọi gate kỹ thuật XONG)",
-      "status": "XONG",
-      "detail": "mọi mục kỹ thuật XONG; trước khi nộp vẫn phải `git status` sạch và gắn tag",
+      "status": "CHƯA",
+      "detail": "còn mục kỹ thuật chưa XONG: ['full_tests']",
       "unlock": []
     }
   ],

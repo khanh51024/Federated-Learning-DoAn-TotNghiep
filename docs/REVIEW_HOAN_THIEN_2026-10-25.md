@@ -193,8 +193,19 @@ Bộ phát hiện lá cho ảnh nguyên khung; ảnh tự chụp theo `docs/HUON
 | Cổng nghiệm thu khoa học kiểm gói v4b | Xong một phần | `scripts/pre_demo_check.py` nay kiểm dữ liệu release, nguồn gốc gói và đủ 3 hạt giống của v4b. Còn một cảnh báo thật: chưa có run mạng Flower bằng dữ liệu thật (thuộc P1) |
 | Cập nhật tài liệu còn số cũ | Xong | Bộ hỏi đáp, `COMMUNITY_FL`, `WEB_DEMO_GD1_GD2`, `DATASET_V4`, `EXPERIMENT_PROTOCOL`, `RUNBOOK`, `AWS_DEPLOYMENT_GUIDE` |
 | Tệp móc LFS chưa theo dõi | Xong | Bốn tệp trong `scripts/hooks/` được thêm vào kho |
-| Hợp nhất vào `main`, gắn tag | Chưa | `origin/main` có lịch sử khác với nhánh đang làm (hai commit ngày 2026-09-12), nên cần quyết định cách hợp nhất trước khi đụng tới `main` |
+| Hợp nhất vào `main`, gắn tag | Xong (2026-10-26) | `origin/main` chỉ có 2 commit và 1 tệp README của Khanh, lịch sử không chung. Đã gộp bằng merge commit `925630b70` (README của nhánh này được giữ, bản cũ còn trong lịch sử `f1e7388a2`) và đẩy lên `main` dạng fast-forward, không ghi đè. Tag `v0.3.0-v4b-20261026` |
 | Báo cáo Word và slide | Chưa | Thuộc P5 và P6 |
+
+### Tiến độ P1, P2 (cập nhật 2026-10-26, phần không cần GPU)
+
+| Việc | Trạng thái | Ghi chú |
+|---|---|---|
+| Cài FedProx, FedBN, SCAFFOLD, FedAvgM, MOON | Xong mã, chưa có số thí nghiệm | `src/federated/algorithms.py`, nối vào `scripts/train_v4.py --algo`; 22 test đơn vị, chạy thử trên CPU cả sáu thuật toán và chạy tiếp từ checkpoint. Giới hạn của cách cài ở `docs/NEXT_TRAINING_PLAN.md` mục 5.10 |
+| Ghi độ lệch trọng số và số byte từng client | Xong | `history.jsonl` có `delta_l2`, `delta_l2_without_bn`, `bytes_up`, `bytes_down` cho run học liên kết mới |
+| Cách chia client cho α = 0,5; 1,0; 10 và hai hạt giống chia khác | Xong | `scripts/build_extra_partitions.py`; mã băm release không đổi; kiểm toán rò rỉ đạt |
+| Kịch bản chạy ma trận trên máy GPU | Xong | `scripts/remote/run_sweep.sh` |
+| Chạy thí nghiệm GĐ2 và GĐ3 | Chưa | Cần máy GPU, khoảng 14–17 giờ GPU (mục 5.10) |
+| Bộ gộp kết quả đợt này (`scripts/eval_sweep_v4.py`) | Chưa | Viết khi có run |
 
 Phát hiện thêm khi làm P0:
 - `PROJECT_STATUS.md` có câu minh họa Local-only viết cứng trong `scripts/update_status.py` ("Bacterial_spot: c02 có 1.549 ảnh và đạt 99%") sai với phân hoạch v4 (client 04 có 1.624/2.023 ảnh, đạt 100%; client 02 chỉ 36 ảnh, đạt 26%). Câu này nay được sinh từ số liệu.
