@@ -110,11 +110,13 @@ Các mức độ thực nghiệm:
 | :--- | :--- |
 | **"Trọng số gửi về server có bị tính sai hay không?"** | Trả lời bằng Unit Test toán học độc lập (`tests/test_fedavg.py`) kiểm tra scalar $100(1) + 300(3) / 400 = 2.500000$ và tensor conv 4D. Toàn bộ quá trình kiểm soát bằng SHA-256. |
 | **"Loss khác Latency như thế nào?"** | Tách bạch rõ ràng: Loss là hàm mục tiêu toán học (CrossEntropy), Latency là thời gian vật lý (giây / ms). |
-| **"Confidence của 1 ảnh có phải Accuracy mô hình không?"** | Không. Web hiện xác suất softmax thô của ảnh đó kèm xác suất đã hiệu chuẩn (temperature scaling, T fit trên tập calibration riêng); accuracy là tỷ lệ đúng trên tập test giữ riêng 11.015 ảnh (protocol hiện hành) hoặc 10.921 ảnh (protocol scratch cũ). |
+| **"Confidence của 1 ảnh có phải Accuracy mô hình không?"** | Không. Web hiện xác suất softmax thô của ảnh đó kèm xác suất đã hiệu chuẩn (temperature scaling, T fit trên tập calibration riêng); accuracy là tỷ lệ đúng trên tập test giữ riêng 13.101 ảnh (protocol hiện hành v4, mục 8; 11.015 ảnh ở protocol v3 cũ) hoặc 10.921 ảnh (protocol scratch cũ). |
 | **"Federated Learning có bảo mật tuyệt đối không?"** | Không có bảo mật tuyệt đối; FL chỉ bảo vệ ảnh thô không rời biên, vẫn cần DP/SecAgg để chống lại tấn công tái tạo đặc trưng (Reconstruction Attack). |
 | **"Số validation có bị chọn cho đẹp không?"** | Có hiệu ứng chọn: checkpoint được chọn theo macro-F1 PlantDoc trên chính validation (Centralized: epoch 22 là epoch có accuracy PlantDoc cao nhất trong 83 epoch). Vì vậy nhóm chấm thêm trên tập test giữ riêng chưa từng dùng để chọn và báo cáo khoảng tin cậy theo cụm (mục 7). |
 
-## 7. Hạn chế của phép đánh giá hiện hành (protocol `mixed_pv_pd_v3_pretrained_seed42_validation`)
+## 7. Hạn chế của phép đánh giá (protocol `mixed_pv_pd_v3_pretrained_seed42_validation`, bản lịch sử)
+
+> Mục này giữ nguyên để tra cứu số của gói v3 (nay chỉ dùng để lùi). Protocol hiện hành là v4: xem mục 8. Các hạn chế "một hạt giống", "so sánh chưa công bằng" và số ảnh tập giữ riêng dưới đây **không còn đúng với v4b** (3 hạt giống, cùng công thức, 13.101 ảnh).
 
 Số liệu kiểm bằng `scripts/evaluate_published_models.py` (`--holdout`) và `scripts/report_statistics.py`; mọi con số dưới đây truy được
 về `artifacts/holdout_eval_report.json` và `artifacts/statistics_report.json`.

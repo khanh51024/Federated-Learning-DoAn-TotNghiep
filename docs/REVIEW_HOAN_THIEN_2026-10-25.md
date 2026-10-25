@@ -184,3 +184,19 @@ Bộ phát hiện lá cho ảnh nguyên khung; ảnh tự chụp theo `docs/HUON
 - Đối chiếu trực tiếp: kết quả 14 ngưỡng đặt trước, bundle đang dùng, số mô hình web đang phục vụ (8), khác biệt giữa `main` và nhánh hiện tại, phân hoạch có trong release v4.
 - Chưa chạy lại bộ kiểm thử đầy đủ và chưa kiểm thử giao diện; số lượng kiểm thử lấy từ `artifacts/final_acceptance.json` (mã nguồn chưa đổi từ thời điểm đó).
 - Phần trăm hoàn thiện là ước tính; các trọng số do người rà soát chọn.
+
+## 7. Tiến độ P0 (cập nhật 2026-10-26)
+
+| Việc P0 | Trạng thái | Ghi chú |
+|---|---|---|
+| Ghi quyết định đưa v4b lên web | Xong | `docs/NEXT_TRAINING_PLAN.md` mục 5.9 (số hai phía, cách nói với hội đồng, đường lùi) |
+| Cổng nghiệm thu khoa học kiểm gói v4b | Xong một phần | `scripts/pre_demo_check.py` nay kiểm dữ liệu release, nguồn gốc gói và đủ 3 hạt giống của v4b. Còn một cảnh báo thật: chưa có run mạng Flower bằng dữ liệu thật (thuộc P1) |
+| Cập nhật tài liệu còn số cũ | Xong | Bộ hỏi đáp, `COMMUNITY_FL`, `WEB_DEMO_GD1_GD2`, `DATASET_V4`, `EXPERIMENT_PROTOCOL`, `RUNBOOK`, `AWS_DEPLOYMENT_GUIDE` |
+| Tệp móc LFS chưa theo dõi | Xong | Bốn tệp trong `scripts/hooks/` được thêm vào kho |
+| Hợp nhất vào `main`, gắn tag | Chưa | `origin/main` có lịch sử khác với nhánh đang làm (hai commit ngày 2026-09-12), nên cần quyết định cách hợp nhất trước khi đụng tới `main` |
+| Báo cáo Word và slide | Chưa | Thuộc P5 và P6 |
+
+Phát hiện thêm khi làm P0:
+- `PROJECT_STATUS.md` có câu minh họa Local-only viết cứng trong `scripts/update_status.py` ("Bacterial_spot: c02 có 1.549 ảnh và đạt 99%") sai với phân hoạch v4 (client 04 có 1.624/2.023 ảnh, đạt 100%; client 02 chỉ 36 ảnh, đạt 26%). Câu này nay được sinh từ số liệu.
+- Số lớp mỗi client ghi trong tài liệu (19–26 và 20–27) sai; đo từ phân hoạch là 22–26/38.
+- Cổng `plantvillage_real_data` trước đây thuộc protocol scratch cũ (`data/partitions_stage2_scratch_v3`), không liên quan tới gói v4b.

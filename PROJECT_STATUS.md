@@ -1,6 +1,6 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-10-25 23:41 · sinh tự bởi `scripts/update_status.py`
+> **Cập nhật lúc:** 2026-10-26 00:19 · sinh tự bởi `scripts/update_status.py`
 > **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (0 mục BLOCKED cần dữ liệu/máy train, 0 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
@@ -34,7 +34,7 @@
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
 | 9 | Test không ghi đè artifact đang track | ✅ XONG | test không tham chiếu artifacts/checkpoints/metrics (dùng tmp_path) |
 | 10 | Dependency khai báo một nơi (pyproject = requirements) | ✅ XONG | 17 dependency trùng giữa pyproject.toml và requirements.txt; ghim cũ nằm ở legacy/pyproject.toml |
-| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-25T23:41:51 (gồm test mạng, 91 file test) với mã nguồn có dấu vân tay 2be4ce39444e; thay mã sau thời điểm này thì phải chạy lại |
+| 11 | Full tests pass trên mã nguồn hiện tại | ✅ XONG | technical_acceptance=pass lúc 2026-10-26T00:18:58 (gồm test mạng, 92 file test) với mã nguồn có dấu vân tay 4476387546d3; thay mã sau thời điểm này thì phải chạy lại |
 | 12 | Kiểm chứng provenance & checkpoint canonical | ✅ XONG | gói v4b_s42: con trỏ ghim mã băm manifest; 7 checkpoint khớp artifact_manifest; release 68e574519a1a… và validation khớp; mã huấn luyện 9dcbcbf6684d… (commit 93c5f80fd); W0 tính lại từ hạt giống 42. Slot canonical của pipeline Kaggle cũ không còn checkpoint nhưng không phục vụ web. |
 | 13 | Audit leakage theo từng run | ✅ XONG | release mixed_pv_pd_v4: train 52.464 / val 6.746 / calibration 7.005 rời nhau trên 5 khóa (giao nhau tổng = 0); 2 partition đều là tập con train; 66.215 ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train) |
 | 14 | Đánh giá PlantDoc theo từng lớp (từ số công bố) | ✅ XONG | PlantDoc phủ 13/38 lớp; 8 lớp recall<50% (204/269 ảnh); FedAvg tệ hơn Centralized ở 9/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5) |
@@ -143,7 +143,7 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
 | Tomato_mosaic_virus | 0 | 129 | 251 | 0 | 13 | 393 |
 | healthy | 0 | 2028 | 1 | 0 | 94 | 2123 |
 
-- Mỗi lớp bệnh dồn gần như vào một client; Local-only không nhận ra bệnh mà shard của nó không có ảnh (khớp recall công bố, vd. Bacterial_spot: c02 có 1.549 ảnh và đạt 99%, bốn client còn lại 0%). Đây là minh họa trực tiếp cho giá trị của FedAvg.
+- Mỗi lớp bệnh dồn gần như vào một vài client; Local-only chỉ nhận ra tốt bệnh mà shard của nó có nhiều ảnh (vd. Bacterial_spot trên ảnh PlantVillage kiểm tra, theo số ảnh train giảm dần: c04: 1.624 ảnh, recall 100%; c01: 355 ảnh, recall 97%; c02: 36 ảnh, recall 26%; c00: 4 ảnh, recall 1%; c03: 4 ảnh, recall 14%). Đây là minh họa trực tiếp cho giá trị của FedAvg.
 
 **Tái đánh giá CỤC BỘ trên CPU (6.746 ảnh validation; calibration 7.005 ảnh tách biệt val):**
 
@@ -205,7 +205,7 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
 |---|---|---|
 | Provenance checkpoint canonical | **unverified** | lỗi: fedavg_checkpoint_missing, centralized_checkpoint_missing |
 | Pre-demo check | **technical_demo_ready** | artifacts/pre_demo_check.json |
-| Final acceptance | technical **pass** / scientific **blocked** | 4 blocker khoa học |
+| Final acceptance | technical **pass** / scientific **blocked** | 1 blocker khoa học |
 | Network artifact | **CHƯA CÓ run mạng khoa học (artifact hiện tại là smoke kỹ thuật)** | artifacts/network_artifact_validation.json |
 | Danh mục checkpoint | **complete** | 100 file .pt, vô danh: 0 |
 
@@ -386,6 +386,12 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
 - 2026-10-22 (đợt train chính v4b, 21 run trên máy GPU thuê): công thức mới (tăng cường trên GPU, batch 128, bf16) nhanh gấp khoảng 3 lần đợt đầu; 3 hạt giống song song mất 1 giờ 50 phút.
   Trung bình 3 hạt giống: Centralized PlantVillage 99,4%, ngoài đồng cùng nguồn 92,2%, PlantDoc giữ riêng 57,6%, PlantWild 36,9%, lá khỏe bị đoán thành bệnh 41% (cũ 87%).
   FedAvg tương ứng 96,9 / 83,1 / 40,5 / 29,8 / 44%. Không đạt ngưỡng PlantWild và PlantDoc nên chưa nhập lên web (`artifacts/train_v4_results.json`, `docs/NEXT_TRAINING_PLAN.md` mục 5.8).
+  (Đính chính ngày 2026-10-26: cùng ngày 22/10 web đã chuyển sang v4b theo quyết định của người thực hiện đề tài, trái kết luận "chưa nhập"; xem `docs/NEXT_TRAINING_PLAN.md` mục 5.9.)
+- 2026-10-26 (rà soát mức hoàn thiện và gỡ mâu thuẫn, P0): `docs/REVIEW_HOAN_THIEN_2026-10-25.md` chấm khoảng 46% theo GĐ1–GĐ5 và nêu lộ trình P0–P6. Đã làm: (1) cổng `pre_demo_check`
+  kiểm gói v4b đang dùng (dữ liệu release, nguồn gốc gói, đủ 3 hạt giống) thay vì slot Kaggle cũ; cổng "run mạng Flower thật" vẫn cảnh báo vì chưa làm; test `tests/test_pre_demo_check.py`.
+  (2) Ghi quyết định đưa v4b lên web ở `docs/NEXT_TRAINING_PLAN.md` mục 5.9. (3) Cập nhật số v4b cho bộ hỏi đáp bảo vệ, `COMMUNITY_FL`, `WEB_DEMO_GD1_GD2`, `DATASET_V4`,
+  `EXPERIMENT_PROTOCOL`, `RUNBOOK`, `AWS_DEPLOYMENT_GUIDE`. (4) Sửa số lớp mỗi client trong tài liệu (22–26/38, đo từ phân hoạch) và câu minh họa Bacterial_spot tự sinh trong mục 5 của file này
+  (bản cũ nói c02 có 1.549 ảnh, sai với phân hoạch v4: c04 có 1.624/2.023 ảnh). Chưa làm: hợp nhất vào `main` (lịch sử `origin/main` khác), gắn tag, Word/slide.
 <!-- ROADMAP-END -->
 
 ## 8. Cách đồng bộ

@@ -244,11 +244,11 @@ Bảng nói trước những gì khả thi, để không hứa quá mức. Căn 
 | FedAvg | > 90% khả thi nếu cấu hình công bằng (93,3% hiện có, run Kaggle cũ 99,09%) | thấp hơn Centralized vài điểm khi dữ liệu lệch nhãn (α = 0,1) | như Centralized, trừ vài điểm |
 | Local-only | **không thể** với cách chia α = 0,1 | **không thể** | **không thể** |
 
-Trần cụ thể của từng client tính từ phân vùng v4 `label_alpha_0_1` (mỗi client chỉ thấy 19–26/38 lớp) nằm ở `artifacts/data_gap_report.json`, mục `local_only_ceiling_top1_percent`.
+Trần cụ thể của từng client tính từ phân vùng v4 `label_alpha_0_1` (mỗi client chỉ thấy 22–26/38 lớp) nằm ở `artifacts/data_gap_report.json`, mục `local_only_ceiling_top1_percent`.
 
-- Mỗi client Local-only chỉ thấy 20–27/38 lớp nên không thể đoán đúng lớp chưa từng học; đây là điều thí nghiệm muốn chứng minh. Muốn Local-only cao thì phải chia IID (phân vùng `iid` có sẵn trong release để minh họa), khi đó bài toán non-IID mất ý nghĩa.
+- Mỗi client Local-only chỉ thấy 22–26/38 lớp nên không thể đoán đúng lớp chưa từng học; đây là điều thí nghiệm muốn chứng minh. Muốn Local-only cao thì phải chia IID (phân vùng `iid` có sẵn trong release để minh họa), khi đó bài toán non-IID mất ý nghĩa.
 - Bằng chứng cho cột ảnh nguồn chưa từng thấy: nghiên cứu 221 nghìn ảnh cho khoảng 99% khi cùng ruộng và 64–88% khi ruộng mới; baseline tốt nhất đã công bố trên PlantWild khoảng 61%.
-- **Chưa đo được độ chính xác của mô hình trên v4** (chưa train). Phép đo không cần train (kNN trên đặc trưng DINOv2-small đóng băng, thư viện v3 so với v4) ghi ở mục 4.
+- **Độ chính xác trên v4 đã đo ở đợt huấn luyện v4b (2026-10-22, 21 lượt chạy, 3 hạt giống):** Centralized đạt 92,2% trên ảnh ngoài đồng cùng nguồn (qua mục tiêu 90%), FedAvg 83,1% (chưa qua); với ảnh từ nguồn lạ (PlantWild) chỉ 36,9% và 29,8%. Số đầy đủ ở `docs/NEXT_TRAINING_PLAN.md` mục 5.8 và `artifacts/train_v4_results.json`. Trước đợt này chỉ có phép đo không cần train (kNN trên đặc trưng DINOv2-small đóng băng, thư viện v3 so với v4) ghi ở mục 4.
 - **Nhãn kiểm bằng AI không phải nhãn chuyên gia.** Mọi quyết định nhận/loại nhóm trong `data/label_review_ext/decisions_ai.json` mang `reviewer = ai_screening` (xem ảnh lưới bằng mắt). Quy tắc `apply_label_review.py` cho phép tệp quyết định của người đứng sau để ghi đè; nên để người có chuyên môn xem lại ít nhất các nhóm đã nhận.
 - Nhãn ánh xạ gần đúng: "frog eye leaf spot" (Plant Pathology 2021) → `Apple___Black_rot` (cùng tác nhân *Botryosphaeria obtusa*) là alias, không phải khớp tên.
 - Lớp còn thiếu ảnh ngoài đồng sau các vòng tìm (iNaturalist, Wikimedia, bộ dữ liệu công khai): xem bảng ở mục 4; cần ảnh tự chụp (`docs/HUONG_DAN_CHUP_ANH.md`, kiểm bằng `scripts/check_own_photos.py`). Báo cáo độ chính xác sau này phải báo riêng các lớp dưới 100 ảnh, không gộp vào trung bình.

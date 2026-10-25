@@ -36,9 +36,9 @@ Nút **Nền tối/Nền sáng** ở góc phải thanh trên cùng đổi giao d
 
 Khoảng 3 phút cho phần chính (chương 1, chương 2, Demo chẩn đoán); chương 3 đến 5 và Phụ lục mở khi hội đồng hỏi sâu.
 
-1. **Giới thiệu (chương 1):** đọc đề tài ở khung đầu, chỉ sơ đồ FedAvg, đọc ba câu hỏi nghiên cứu rồi dải kết quả chính (99% — 93% — 45–55% trên ảnh chụp trong phòng).
+1. **Giới thiệu (chương 1):** đọc đề tài ở khung đầu, chỉ sơ đồ FedAvg, đọc ba câu hỏi nghiên cứu rồi dải kết quả chính (tập kiểm tra PlantVillage, ảnh chụp trong phòng: Centralized 99,5% — FedAvg 96,7% — Local-only 29–56%; ảnh ngoài đồng thấp hơn nhiều: PlantDoc 56,5% — 37,6% — 7–30%).
 2. **Dữ liệu (chương 2):** nói ba tập ảnh và mục đích từng tập, rồi mỗi nơi có số ảnh rất chênh giữa các nhóm (nhiều nhóm gần như chỉ nằm ở một nơi), chỉ ví dụ Tomato — Bacterial spot và bảng 38 nhóm × 5 client. Chuyển sang "Tỉ lệ nhận đúng" để thấy ô không có ảnh thì mô hình học riêng nhận đúng 0%. Không diễn giải trung bình Local-only thành một checkpoint.
-3. **Kết quả (chương 4):** biểu đồ và bảng bảy mô hình (GĐ1: Centralized v6 và năm Local-only v7; GĐ2: FedAvg v7, α=0,1, seed 42; đây là **một** kịch bản đã công bố). Tab "Tập giữ riêng và thống kê" trả lời "số này có bị đẹp hơn thật không"; tab "Độ tin cậy xác suất" nói rõ softmax gốc tự tin quá mức trên ảnh ngoài đồng.
+3. **Kết quả (chương 4):** biểu đồ và bảng bảy mô hình (GĐ1: Centralized v4b và năm Local-only v4b; GĐ2: FedAvg v4b, α=0,1, hạt giống 42, cùng công thức huấn luyện; bảng ba hạt giống 42/123/2026 có ở cùng chương; đây là **một** mức lệch dữ liệu). Tab "Tập giữ riêng và thống kê" trả lời "số này có bị đẹp hơn thật không"; tab "Độ tin cậy xác suất" nói rõ softmax gốc tự tin quá mức trên ảnh ngoài đồng.
 4. **Demo chẩn đoán:** bấm một ảnh mẫu (chọn "Nhận đúng trung bình" hoặc "thấp" để có cả mô hình đúng lẫn sai, ví dụ ảnh #12 Tomato — Bacterial spot); bảy mô hình trả lời cùng lúc, kèm câu "Vì sao?". Bật Grad-CAM để thấy vùng mô hình nhìn (gợi ý trực quan, không phải bằng chứng nhân quả). Các mô hình dùng checkpoint đã kiểm SHA-256 và resize 224×224 (`canonical_v1`). Bộ phân loại nhận ảnh **vùng lá đã cắt**; kết quả một ảnh không phải độ chính xác ngoài thực địa.
 5. **Demo học phân tán:** người có mã tham gia huấn luyện lớp cuối ngay trong trình duyệt trên ảnh của mình và gửi trọng số về máy chủ để gộp theo vòng; ảnh không rời máy. Chỉ hoạt động khi máy chủ có artifact và biến môi trường của tính năng, và người quản trị đã mở phiên — xem [COMMUNITY_FL.md](COMMUNITY_FL.md). Đây là bằng chứng học thật rõ nhất khi trình bày.
 6. **Kết luận và hạn chế (chương 5):** trả lời ba câu hỏi, đọc danh sách hạn chế nêu thẳng, nói hướng phát triển.
@@ -73,13 +73,19 @@ fallback). Sau khi đổi checkpoint hoặc bundle, chạy `python scripts/updat
 
 ## Nguồn đối chứng đã ghim
 
+**Gói đang dùng (từ 2026-10-22): `artifacts/model_bundles/v4b_s42/`**, dựng từ đợt huấn luyện v4b bằng `scripts/train_v4.py`
+(mã huấn luyện commit `93c5f80fdb824d44460bf4538d6c063bce4517b1`, release dữ liệu `mixed_pv_pd_v4` mã băm `68e574519a1a…`). Con trỏ
+`artifacts/active_bundle.json` ghim mã băm manifest. Cách thay hoặc lùi gói: [THAY_MO_HINH_WEB.md](THAY_MO_HINH_WEB.md).
+
+**Gói cũ (dùng để lùi, không phải gói đang chạy):**
+
 | Phương pháp | Nhánh | Commit |
 |---|---|---|
 | Centralized v6 | `train-centralized-v6` | `2294de21c93e28d611013a75413995a128b303b7` |
 | FedAvg v7 | `train-fedavg-non-iid-v7` | `b37488fbaf99d94cc0d66e66a9649c99dd9e1257` |
 | 5 Local-only v7 | `train-local-only-a01-v7` | `6de4c6b99805399673dc0a41ab97aeefd7099943` |
 
-Bundle đã nhập nằm ở `artifacts/branch_demo/20261003/`. `import_manifest.json` ghi seed, 38 lớp, transform, hash release/validation/W0 và commit. Mọi file trong `artifact_manifest.json` được kiểm SHA-256 mỗi khi web nạp số liệu hoặc checkpoint. Chỉ xác nhận **tính toàn vẹn artifact đã công bố**; ảnh gốc `dataset/mixed/pv_pd_v3`, manifest ảnh và W0 không có ở máy chủ demo, nên máy chủ không tái chạy phép đo hay huấn luyện ảnh thật. Việc tái đánh giá và audit rò rỉ đã chạy ở máy phát triển có dataset (`scripts/evaluate_published_models.py`, `scripts/audit_release_leakage.py`); web chỉ đọc báo cáo của chúng qua `/api/evidence/summary` và đối chiếu hash với bundle.
+Gói cũ đã nhập nằm ở `artifacts/branch_demo/20261003/`. `import_manifest.json` ghi seed, 38 lớp, transform, hash release/validation/W0 và commit. Mọi file trong `artifact_manifest.json` được kiểm SHA-256 mỗi khi web nạp số liệu hoặc checkpoint. Chỉ xác nhận **tính toàn vẹn artifact đã công bố**; ảnh gốc `dataset/mixed/pv_pd_v3`, manifest ảnh và W0 không có ở máy chủ demo, nên máy chủ không tái chạy phép đo hay huấn luyện ảnh thật. Việc tái đánh giá và audit rò rỉ đã chạy ở máy phát triển có dataset (`scripts/evaluate_published_models.py`, `scripts/audit_release_leakage.py`); web chỉ đọc báo cáo của chúng qua `/api/evidence/summary` và đối chiếu hash với bundle.
 
 Trong checkout mới, khi đích `artifacts/branch_demo/20261003/` chưa tồn tại, có thể nhập lại từ ba clone GitHub sạch. Đặt các clone lần lượt ở `.tmp-agent/branch-demo-import/sources/{centralized,fedavg,local}`, rồi chạy:
 

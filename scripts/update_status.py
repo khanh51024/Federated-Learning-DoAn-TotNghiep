@@ -877,10 +877,25 @@ def _shard_table_lines() -> list[str]:
         cells = [str(clients[n]["per_class"][cls]) for n in names]
         out.append(f"| {cls.split('___', 1)[1]} | " + " | ".join(cells) + f" | {report['totals_all_clients'][cls]} |")
     out.append("")
-    out.append("- Mỗi lớp bệnh dồn gần như vào một client; Local-only không nhận ra bệnh mà shard của nó không có ảnh "
-               "(khớp recall công bố, vd. Bacterial_spot: c02 có 1.549 ảnh và đạt 99%, bốn client còn lại 0%). "
-               "Đây là minh họa trực tiếp cho giá trị của FedAvg.")
+    out.append("- Mỗi lớp bệnh dồn gần như vào một vài client; Local-only chỉ nhận ra tốt bệnh mà shard của nó có nhiều ảnh"
+               + (_local_only_example(report) or ".") + " Đây là minh họa trực tiếp cho giá trị của FedAvg.")
     return out
+
+
+def _local_only_example(report: dict[str, Any]) -> str:
+    """Ví dụ Bacterial_spot: số ảnh train từng client và recall PlantVillage của mô hình Local-only tương ứng (đọc từ số liệu, không ghi tay)."""
+    cls = "Tomato___Bacterial_spot"
+    reeval = load_json(reg.abs_path(reg.LOCAL_REEVAL_JSON)) or {}
+    parts: list[tuple[int, str]] = []
+    for name, info in sorted(report["clients"].items()):
+        count = info["per_class"].get(cls)
+        recall = (((reeval.get("models") or {}).get(name.replace("client_", "local_")) or {}).get("by_source") or {}) \
+            .get("plantvillage", {}).get("per_class_recall", {}).get(cls, {}).get("recall")
+        if count is None or recall is None:
+            return ""
+        parts.append((count, f"{name.replace('client_', 'c')}: {vn(count)} ảnh, recall {recall:.0%}"))
+    parts.sort(key=lambda p: -p[0])
+    return f" (vd. Bacterial_spot trên ảnh PlantVillage kiểm tra, theo số ảnh train giảm dần: {'; '.join(text for _, text in parts)})."
 
 
 def quality_section(registry: dict[str, Any]) -> list[str]:

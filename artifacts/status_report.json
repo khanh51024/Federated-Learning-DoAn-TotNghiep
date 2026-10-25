@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-10-25T23:31:36",
+      "generated_at": "2026-10-26T00:09:28",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,42 +145,27 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-10-25T23:31:48",
+      "generated_at": "2026-10-26T00:09:41",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
     "final_acceptance": {
-      "generated_at": "2026-10-25T23:41:51",
-      "code_fingerprint": "2be4ce39444e30e26db0fa570b73250cc2f16bbb1e7f0ecd5fda75972a75f87b",
+      "generated_at": "2026-10-26T00:18:58",
+      "code_fingerprint": "4476387546d3590d7ad8af9e479667955caf060e0d9b0bea341f654d6dc5fd9c",
       "technical": "pass",
       "scientific": "blocked",
       "readiness_overall": "technical_demo_ready",
       "scientific_blockers": [
         {
-          "name": "plantvillage_real_data",
-          "status": "warn",
-          "detail": "No --dataset-root supplied; scientific training cannot be validated."
-        },
-        {
-          "name": "canonical_provenance",
-          "status": "warn",
-          "detail": "UNVERIFIED: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing', 'scientific_stage2_incomplete']"
-        },
-        {
           "name": "network_global_artifact",
           "status": "warn",
           "detail": "chưa có run mạng KHOA HỌC: checkpoint hiện có chỉ là smoke kỹ thuật (require_real=False, all_real=False, real_test=False)"
-        },
-        {
-          "name": "multiseed_real_summary",
-          "status": "warn",
-          "detail": "no complete verified multi-seed real summary yet"
         }
       ],
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-10-25T23:31:45",
+      "generated_at": "2026-10-26T00:09:37",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
@@ -269,7 +254,7 @@
       "id": "full_tests",
       "title": "Full tests pass trên mã nguồn hiện tại",
       "status": "XONG",
-      "detail": "technical_acceptance=pass lúc 2026-10-25T23:41:51 (gồm test mạng, 91 file test) với mã nguồn có dấu vân tay 2be4ce39444e; thay mã sau thời điểm này thì phải chạy lại",
+      "detail": "technical_acceptance=pass lúc 2026-10-26T00:18:58 (gồm test mạng, 92 file test) với mã nguồn có dấu vân tay 4476387546d3; thay mã sau thời điểm này thì phải chạy lại",
       "unlock": []
     },
     {

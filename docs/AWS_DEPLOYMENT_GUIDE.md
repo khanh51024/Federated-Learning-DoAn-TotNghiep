@@ -1,5 +1,9 @@
 # Hướng Dẫn Triển Khai Hệ Thống Federated Learning Trên AWS EC2 (End-to-End)
 
+> **Lưu ý (2026-10-25):** hệ thống công khai đã chuyển từ AWS EC2 sang máy ảo Oracle Cloud từ 2026-10-14. Tài liệu này mô tả cách dựng trên
+> EC2 và giữ để tham khảo cấu hình chung (Flower, FastAPI, nginx, systemd). Quy trình phát hành, kiểm tra và quay lui đang dùng nằm ở
+> [SERVER_DEPLOY_20261005.md](SERVER_DEPLOY_20261005.md) (mục mới nhất) và [RUNBOOK.md](RUNBOOK.md).
+
 Tài liệu này hướng dẫn chi tiết từng bước (End-to-End) cách triển khai **Hệ thống Máy chủ Federated Learning (Flower Server)** và **Web Dashboard (FastAPI)** lên VPS **Amazon Web Services (AWS EC2)**, đồng thời kết nối các **Client (PC cá nhân / Laptop / Máy thuê)** từ xa qua Internet.
 
 ---

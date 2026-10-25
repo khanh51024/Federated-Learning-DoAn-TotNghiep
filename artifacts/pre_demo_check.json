@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-25T23:31:48",
+  "generated_at": "2026-10-26T00:09:41",
   "overall": "technical_demo_ready",
   "fail_count": 0,
-  "warn_count": 4,
+  "warn_count": 1,
   "checks": [
     {
       "name": "flower_installed",
@@ -20,14 +20,14 @@
       "detail": "all required scripts exist"
     },
     {
-      "name": "plantvillage_real_data",
-      "status": "warn",
-      "detail": "No --dataset-root supplied; scientific training cannot be validated."
+      "name": "release_data",
+      "status": "pass",
+      "detail": "release mixed_pv_pd_v4 68e574519a1a…: audit rò rỉ đạt và khớp gói v4b_s42"
     },
     {
       "name": "canonical_provenance",
-      "status": "warn",
-      "detail": "UNVERIFIED: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing', 'scientific_stage2_incomplete']"
+      "status": "pass",
+      "detail": "gói v4b_s42: con trỏ ghim mã băm manifest; 7 checkpoint khớp artifact_manifest; release 68e574519a1a… và validation khớp; mã huấn luyện 9dcbcbf6684d… (commit 93c5f80fd); W0 tính lại từ hạt giống 42. Slot canonical của pipeline Kaggle cũ không còn checkpoint nhưng không phục vụ web. [pipeline Kaggle cũ, chỉ còn metrics: unverified]"
     },
     {
       "name": "network_global_artifact",
@@ -36,8 +36,8 @@
     },
     {
       "name": "multiseed_real_summary",
-      "status": "warn",
-      "detail": "no complete verified multi-seed real summary yet"
+      "status": "pass",
+      "detail": "3 hạt giống [42, 123, 2026] × 7 mô hình (Centralized, FedAvg, 5 Local-only) cùng release 68e574519a1a…, cùng thiết lập huấn luyện; mean ± độ lệch chuẩn ở trang Kết quả (artifacts/train_v4_results.json). 7/14 ngưỡng đặt trước đạt; chưa đạt: B_centralized_plantwild_65, web1_centralized_plantwild_plus10, web2_centralized_plantdoc_holdout, A_fedavg_field_same_source, B_fedavg_plantwild_65, web1_fedavg_plantwild_plus10, web2_fedavg_plantdoc_holdout."
     }
   ],
   "meaning": {

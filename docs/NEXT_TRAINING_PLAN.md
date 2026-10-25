@@ -175,7 +175,7 @@ Mục tiêu "trên 90%" được tách theo loại ảnh, vì không có cách n
 PlantWild: baseline tốt nhất đã công bố khoảng 61%):
 - **A (cùng nguồn)**: Centralized và FedAvg ≥ 90% top-1 trên PlantVillage và trên phần ngoài đồng cùng nguồn giữ riêng của v4 (`legacy_diagnostic_test` ngoài đồng, ảnh tự chụp phần thử).
 - **B (nguồn chưa từng thấy)**: PlantWild ≥ 65% top-1; ≥ 90% chỉ khi có điều kiện kèm (top-3, hoặc người dùng chọn đúng loại cây cộng từ chối ảnh mô hình không chắc).
-- **C (Local-only)**: báo kèm trần lý thuyết theo từng client (`artifacts/data_gap_report.json`, mục `local_only_ceiling_top1_percent`, tính từ phân vùng v4); mỗi client chỉ thấy 19–26/38 lớp nên không thể đạt 90% trên cách chia α = 0,1.
+- **C (Local-only)**: báo kèm trần lý thuyết theo từng client (`artifacts/data_gap_report.json`, mục `local_only_ceiling_top1_percent`, tính từ phân vùng v4); mỗi client chỉ thấy 22–26/38 lớp nên không thể đạt 90% trên cách chia α = 0,1.
 - **D (ảnh không phải lá)**: cổng từ chối phải loại ≥ 90% ảnh `general` ở ngưỡng nhận ≥ 95% ảnh lá (`docs/CONG_TU_CHOI_ANH_KHONG_PHAI_LA.md`). Xác suất lớn nhất của mô hình hiện có không đạt (loại 7,6–8,4%);
   kNN trên đặc trưng DINOv2-small đạt (loại 93,0%). Mô hình mới và thư viện mới phải hiệu chỉnh ngưỡng lại trên nửa hiệu chỉnh rồi báo trên nửa báo cáo.
 
@@ -288,12 +288,28 @@ Local-only theo từng client (PlantVillage): 52,7 / 48,8 / 30,9 / 53,5 / 54,7%.
   - PlantDoc giữ riêng giảm không quá 2 điểm (Centralized −5,8; FedAvg −9,5);
   - FedAvg với ảnh ngoài đồng cùng nguồn đạt ≥ 90% (83,1%).
 
-Vì vậy theo quy tắc đã đặt trước, **chưa nhập mô hình mới lên web**.
+Vì vậy theo quy tắc đã đặt trước, mô hình mới **không đủ điều kiện nhập lên web**. Web vẫn đang phục vụ v4b theo quyết định của người thực hiện đề tài, xem mục 5.9.
 
 **Diễn giải:**
 - PlantDoc gộp hai phần (441 lá) của Centralized là 56,2% so với 57,6% của mô hình cũ, gần như ngang. Mô hình cũ lệch 9,5 điểm giữa phần kiểm tra và phần giữ riêng, nên mức giảm ở phần giữ riêng một phần là nhiễu.
 - FedAvg thì giảm thật (gộp 441 lá: 37,9% so với 48,3%). Giả thuyết chưa kiểm chứng: lr 0,02 và batch 128 được chọn trên Centralized làm các client trôi xa nhau khi dữ liệu lệch nhãn (α = 0,1).
 - Khoảng cách Centralized − FedAvg lớn nhất ở ảnh ngoài đồng (cùng nguồn khoảng 9 điểm, PlantDoc khoảng 17 điểm) và nhỏ ở PlantVillage (khoảng 2,5 điểm).
+
+### 5.9 Web dùng v4b dù chưa đạt ngưỡng nhập (ghi nhận ngày 2026-10-25)
+
+- **Hiện trạng:** từ 2026-10-22 (commit `700ffac3e`), `artifacts/active_bundle.json` trỏ tới `artifacts/model_bundles/v4b_s42`; máy chủ chạy gói này. Điều này trái với kết luận ở mục 5.8 (7/14 ngưỡng đạt, 7 ngưỡng chưa đạt).
+- **Người quyết định:** người thực hiện đề tài, sau khi biết kết quả mục 5.8. Đây là ngoại lệ so với quy tắc đặt trước, không phải kết quả của quy tắc.
+- **Số liệu hai phía** (trung bình 3 hạt giống với v4b; mô hình cũ là gói `branch_demo/20261003`, một hạt giống):
+
+| Chỉ số | Mô hình cũ (C / F) | v4b (C / F) | Hướng |
+|---|---|---|---|
+| Lá khỏe PlantWild bị đoán thành bệnh | 86,9% / 94,0% | 41,0% / 43,5% | v4b tốt hơn |
+| PlantWild bệnh | 33,07% / 31,81% | 36,88% / 29,80% | C tốt hơn, F kém hơn |
+| PlantDoc giữ riêng (172 lá) | 63,37% / 50,00% | 57,56% / 40,50% | v4b kém hơn |
+| PlantVillage test | 99,23% / 93,34% | 99,38% / 96,85% | v4b tốt hơn |
+
+- **Cách nói với hội đồng:** nêu rõ web dùng v4b, nêu cả hai cột trên, nêu 7 ngưỡng chưa đạt và nói đây là lựa chọn của người thực hiện. Không dùng cụm "đã đạt ngưỡng nhập".
+- **Đường lùi:** `scripts/swap_web_models.py --rollback` về gói cũ, xem `docs/THAY_MO_HINH_WEB.md`.
 
 ### 5.5 Việc đã làm sẵn
 - Tập thử ngoài đồng và công cụ đo: `scripts/build_external_eval_set.py`, `scripts/eval_external_set.py`, `scripts/eval_inference_variants.py`.

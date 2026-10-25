@@ -16,7 +16,10 @@
 
 ## 0. Kiểm tra dataset gốc (điều kiện cho mọi run khoa học)
 
-Hiện tại **CHƯA CÓ** PlantVillage gốc trên máy này. Khi có, đặt ở một thư mục
+Mục này chỉ dành cho protocol scratch cũ `stage2_scratch_clean_v3`. Protocol hiện hành (gói v4b) dùng release dữ liệu `mixed_pv_pd_v4`
+ở `data/dataset_sources/mixed/pv_pd_v4` (mục 6c) và được kiểm bằng `release_leakage_audit.json`; `scripts/pre_demo_check.py` tự dùng
+cách kiểm này khi gói web dựng từ `train_v4`. Thư mục PlantVillage gốc có ở `data/dataset_sources/PlantVillage-Dataset/raw/color`
+nhưng chưa chạy preflight scratch trên đó. Muốn chạy protocol scratch cũ, đặt PlantVillage ở một thư mục
 chứa trực tiếp 38 thư mục class (ví dụ `D:\PlantVillage`) và preflight:
 
 ```powershell
@@ -102,9 +105,12 @@ bổ sung của hệ thống, không phải chức năng mặc định của Fed
 ## 6. Gate cuối trước khi nộp/demo
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\update_status.py --full-gates   # chạy pytest toàn bộ (chậm, ~15 phút vì test mạng Flower)
-.\.venv\Scripts\python.exe scripts\pre_demo_check.py --dataset-root D:\PlantVillage
+.\.venv\Scripts\python.exe scripts\update_status.py --full-gates   # chạy pytest toàn bộ (chậm, khoảng 10 phút vì test mạng Flower)
+.\.venv\Scripts\python.exe scripts\pre_demo_check.py               # gói v4b: không cần --dataset-root
 ```
+
+Với gói v4b, ba cổng khoa học đã kiểm gói đang dùng (dữ liệu release, nguồn gốc gói, đủ 3 hạt giống). Cổng còn lại là run mạng Flower
+bằng dữ liệu thật (`network_global_artifact`), chưa làm. Với protocol scratch cũ vẫn dùng `--dataset-root D:\PlantVillage`.
 
 Bật hook chặn commit khi `PROJECT_STATUS.md` lệch: `git config core.hooksPath scripts/hooks`
 (hook chạy `update_status.py --check`; sửa bằng `python scripts/update_status.py`).
@@ -153,7 +159,11 @@ Server demo không có dataset: các báo cáo trên được sinh ở máy này
 
 ## 7. Nhận kết quả train ngoài (bundle mới)
 
-Train chạy ở Kaggle/branch `train-*`, xuất bundle có `artifact_manifest.json` + SHA-256. Trên máy này:
+**Cách hiện hành (đợt train từ `scripts/train_v4.py`, ví dụ v4b):** thay gói web bằng một lệnh `scripts/swap_web_models.py --runs runs/<đợt> --seed 42 --name <tên> --label <nhãn>`;
+lùi bằng `--rollback <thư mục gói>`. Chi tiết, kiểm tra trước khi thay và cách ghim con trỏ `artifacts/active_bundle.json`: [THAY_MO_HINH_WEB.md](THAY_MO_HINH_WEB.md).
+Không sửa `src/registry.py` bằng tay.
+
+**Cách cũ (bundle nhập từ nhánh `train-*` trên Kaggle),** chỉ còn dùng để dựng lại gói `artifacts/branch_demo/`: bundle có `artifact_manifest.json` + SHA-256. Trên máy này:
 
 ```powershell
 # 1. đặt 3 nhánh nguồn dưới một thư mục, rồi import + kiểm hash vào artifacts/branch_demo/<ngày>/

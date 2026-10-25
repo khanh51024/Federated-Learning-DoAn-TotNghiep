@@ -8,11 +8,11 @@ Mô hình cộng đồng tách khỏi bảy mô hình đã kiểm hash; số đo
 
 ## Phạm vi: học gì, không học gì
 
-- Backbone MobileNetV3-Small và hai lớp `classifier[0..1]` của **FedAvg v7 được đóng băng** (SHA-256 của checkpoint đã ghim).
+- Backbone MobileNetV3-Small và hai lớp `classifier[0..1]` của **FedAvg v4b được đóng băng** (SHA-256 của checkpoint đã ghim).
   Phần này chạy trong trình duyệt bằng onnxruntime-web (wasm, một luồng) để ra vector đặc trưng 1024 chiều.
 - Chỉ **`classifier.3`** (38 × 1024 + 38 = 38.950 tham số, 155.800 byte float32) được huấn luyện bằng softmax regression viết thuần JS
   trong Web Worker. Đây là *federated fine-tuning lớp cuối*, không phải huấn luyện lại cả mạng.
-- Khởi điểm vòng 0 là head của FedAvg v7. Mỗi vòng gộp tạo một phiên bản head mới (v1, v2, …) lưu theo SHA-256.
+- Khởi điểm vòng 0 là head của FedAvg v4b. Mỗi vòng gộp tạo một phiên bản head mới (v1, v2, …) lưu theo SHA-256.
 - Không có: secure aggregation, huấn luyện lại backbone, nhãn do chuyên gia kiểm, phép đo khoa học trên ảnh ngoài đồng.
 
 ## Kiến trúc và luồng
@@ -49,7 +49,7 @@ Dữ liệu cộng đồng nằm ở `artifacts/community_fl/` (gitignored; đư
 | `GET /api/community/round?have=<sha>` | token | Vòng, hạn, số cập nhật, head cha (bỏ qua nếu `have` đã khớp) |
 | `POST /api/community/update` | token | `{round_id, parent_sha, head, num_examples, label_counts[38], local, dp_applied}` |
 | `GET /api/community/history?limit=` | không | Các vòng đã gộp/bị từ chối, các phiên bản và chỉ số giám sát (không có định danh người) |
-| `POST /api/community/predict` | không | Ảnh → dự đoán của mô hình cộng đồng so với FedAvg v7 (qua cổng registry của FedAvg v7) |
+| `POST /api/community/predict` | không | Ảnh → dự đoán của mô hình cộng đồng so với FedAvg v4b (qua cổng registry của FedAvg v4b) |
 | `/api/community/admin/*` | tài khoản `COMMUNITY_ADMIN_USER` (mặc định `admin`) + mật khẩu `COMMUNITY_ADMIN_TOKEN`; `Basic` hoặc `Bearer <mật khẩu>` | Cấu hình, phát/thu hồi mã, đóng vòng, khôi phục phiên bản |
 
 Lỗi trả `{"detail": {"code", "message"}}` với `message` tiếng Việt; giao diện hiện `message`. Mã chính: `bad_code` 403,
@@ -177,25 +177,27 @@ Số mô phỏng cũ (6 vòng, 5 seed, không có mã trong repo) đã được 
 
 Chạy `python scripts/build_community_sim_features.py` rồi `python scripts/simulate_community.py` (mã: `src/federated/community_sim.py`, bản port numpy của `trainSoftmax`/`splitHoldout`/`makeRng` trong `community-math.js`, đã kiểm khớp JS bằng `tests/test_community_js.py`). Báo cáo: `artifacts/community_fl/simulation_report.json`; web hiện ở chương 4, mục 4.5 và ở trang Học phân tán.
 
-- Kho người tham gia: 4225 ảnh của split calibration (37 nhóm; không giao train và validation). Mỗi người 30–100 ảnh, học 3 epoch, lr 0.01, batch 16, giữ lại 20% để kiểm.
+- Kho người tham gia: 4322 ảnh của split calibration (37 nhóm, trong đó 388 ảnh PlantDoc; không giao train và validation). Mỗi người 30–100 ảnh, học 3 epoch, lr 0.01, batch 16, giữ lại 20% để kiểm.
 - Máy chủ mô phỏng gọi đúng `check_update`, `aggregate_heads` (trần `n_cap`), `gate_decision` của `src/federated/community.py`; cổng chạy trên tập giám sát validation như production.
-- Số báo cáo trên **test giữ riêng 11015 ảnh** (chưa dùng để chọn mô hình). Mô hình gốc FedAvg v7: chính xác 92.66%, macro-recall 89.86%, PlantDoc 50.0% (172 ảnh).
+- Số báo cáo trên **test giữ riêng 11015 ảnh** (10.843 PlantVillage + 172 PlantDoc, chưa dùng để chọn mô hình; không gồm 2.086 ảnh ngoài đồng bộ khác). Mô hình gốc FedAvg v4b (hạt giống 42): chính xác 95.95%, macro-recall 94.62%, PlantVillage 96.84%, PlantDoc 40.1% (172 ảnh).
 - 20 vòng, 5 seed. Bảng: thay đổi độ chính xác (điểm phần trăm) so với mô hình gốc ở vòng cuối, trung bình các seed.
 
 | Người tham gia | K=3 | K=10 | K=25 |
 |---|---|---|---|
-| Ảnh bất kỳ (IID) | +1,66 | +1,83 | +1,97 |
-| Mỗi người 3 nhóm | +0,39 | +1,47 | +1,50 |
-| Mỗi người 1 nhóm | −0,67 | +0,60 | +1,05 |
-| Chỉ ảnh ngoài đồng (PlantDoc) | +0,19 | −0,21 | −0,01 |
+| Ảnh bất kỳ (IID) | +0,97 | +1,03 | +1,07 |
+| Mỗi người 3 nhóm | +0,23 | +0,85 | +1,03 |
+| Mỗi người 1 nhóm | −0,37 | +0,26 | +0,59 |
+| Chỉ ảnh ngoài đồng (PlantDoc) | −0,32 | −0,48 | −0,41 |
+
+Số PlantDoc (điểm phần trăm, cùng cách tính, có cổng): ảnh bất kỳ +6,40 / +5,93 / +5,58; mỗi người 3 nhóm +6,05 / +7,09 / +5,12; mỗi người 1 nhóm +3,84 / +2,79 / +3,02; chỉ ảnh ngoài đồng +14,88 / +15,70 / +16,05 (K=3 / K=10 / K=25). Mức tăng PlantDoc lớn hơn nhiều so với bản mô phỏng v7 (v7 gần như không đổi); mô hình gốc v4b có PlantDoc thấp hơn (40,1% so với 50,0% của v7), nguyên nhân của chênh lệch chưa được kiểm chứng.
 
 Đối chứng không có cổng giám sát (K=10):
 
-- Ảnh bất kỳ (IID), K=10: chính xác +1,92 (không cổng) so với +1,83 (có cổng); PlantDoc +0,47 so với +0,12.
-- Mỗi người 3 nhóm, K=10: chính xác +1,55 (không cổng) so với +1,47 (có cổng); PlantDoc −0,47 so với 0,00.
-- Chỉ ảnh ngoài đồng (PlantDoc), K=10: chính xác −0,78 (không cổng) so với −0,21 (có cổng); PlantDoc −1,40 so với −0,23.
+- Ảnh bất kỳ (IID), K=10: chính xác +1,03 (không cổng) so với +1,03 (có cổng); PlantDoc +5,93 so với +5,93.
+- Mỗi người 3 nhóm, K=10: chính xác +0,84 (không cổng) so với +0,85 (có cổng); PlantDoc +6,86 so với +7,09.
+- Chỉ ảnh ngoài đồng (PlantDoc), K=10: chính xác −1,27 (không cổng) so với −0,48 (có cổng); PlantDoc +15,00 so với +15,70.
 
-Đọc kết quả: dữ liệu người tham gia đủ đa dạng thì mô hình chung nhích lên khoảng 1–2 điểm; mỗi người một nhóm bệnh thì cần K lớn; ảnh ngoài đồng gần như không tăng (đặc trưng đóng băng học chủ yếu từ ảnh trong phòng) và cổng giúp tránh tụt. PlantDoc test chỉ 172 ảnh nên số PlantDoc dao động mạnh giữa các seed. Không thay thế thử nghiệm với người thật.
+Đọc kết quả: với mô hình gốc FedAvg v4b, độ chính xác tổng nhích lên khoảng 1 điểm khi dữ liệu người tham gia đa dạng; mỗi người một nhóm bệnh thì cần K lớn; khi chỉ có ảnh ngoài đồng, độ chính xác tổng giảm nhẹ (−0,3 đến −0,5 điểm) còn PlantDoc tăng mạnh (+15 điểm), và cổng giám sát giảm mức tụt của độ chính xác tổng (−1,27 xuống −0,48 ở K=10). Số liệu thay đổi so với bản mô phỏng trên FedAvg v7 trước đây. PlantDoc test chỉ 172 ảnh nên số PlantDoc dao động mạnh giữa các seed. Không thay thế thử nghiệm với người thật.
 
 ## Trọng số và độ trễ của từng vòng
 

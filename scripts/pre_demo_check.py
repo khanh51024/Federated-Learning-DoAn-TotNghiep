@@ -28,6 +28,17 @@ def load_json(path: Path) -> Dict[str, Any]:
         return {}
 
 
+def bundle_context() -> Any:
+    """(update_status, manifest) NẾU gói web đang dùng dựng từ run train_v4 (protocol đang công bố); None = dùng cách kiểm cũ (Kaggle scratch)."""
+    try:
+        from scripts import update_status as us
+
+        manifest = us._run_bundle_manifest()
+    except Exception:
+        return None
+    return (us, manifest) if manifest else None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Pre-demo readiness gate for the thesis project.")
     ap.add_argument("--dataset-root", type=Path, default=None)
@@ -66,8 +77,21 @@ def main() -> int:
         "all required scripts exist" if not missing else f"missing: {missing}",
     )
 
+    ctx = bundle_context()
+
     # Dataset gate
-    if args.dataset_root is None:
+    if args.dataset_root is None and ctx:
+        # Protocol đang công bố: dữ liệu là release v4 (không phải PlantVillage scratch) -> kiểm audit rò rỉ của release và ràng buộc với gói web
+        manifest = ctx[1]
+        audit = load_json(reg.abs_path(reg.RELEASE_LEAKAGE_AUDIT_JSON))
+        pinned = (audit.get("release_binding") or {}).get("pinned_release_manifest_sha256")
+        if audit.get("passed") is True and pinned and pinned == manifest.get("release_manifest_sha256"):
+            add(checks, "release_data", "pass",
+                f"release {audit.get('release_name')} {pinned[:12]}…: audit rò rỉ đạt và khớp gói {manifest.get('bundle_id')}")
+        else:
+            add(checks, "release_data", "warn",
+                f"audit release chưa đạt hoặc không khớp gói {manifest.get('bundle_id')} (passed={audit.get('passed')}, pinned={str(pinned)[:12]})")
+    elif args.dataset_root is None:
         add(checks, "plantvillage_real_data", "warn", "No --dataset-root supplied; scientific training cannot be validated.")
     else:
         preflight_out = reg.abs_path(reg.DATA_PREFLIGHT_DEMO_GATE_JSON)
@@ -94,7 +118,13 @@ def main() -> int:
 
     # Canonical provenance
     provenance = load_json(reg.abs_path(reg.PROVENANCE_VALIDATION_JSON))
-    if provenance.get("status") == "verified":
+    bundle_prov = ctx[0]._bundle_provenance(ctx[1]) if ctx else None
+    if bundle_prov is not None:
+        # Kết quả hiện hành là gói v4b; slot canonical của pipeline Kaggle cũ chỉ còn metrics, ngoài phạm vi cổng này
+        legacy = provenance.get("status") or "không có"
+        add(checks, "canonical_provenance", "pass" if bundle_prov.status == ctx[0].DONE else "warn",
+            f"{bundle_prov.detail} [pipeline Kaggle cũ, chỉ còn metrics: {legacy}]")
+    elif provenance.get("status") == "verified":
         add(checks, "canonical_provenance", "pass", "canonical metrics/checkpoints verified")
     else:
         issue_codes = [i.get("code") for i in provenance.get("issues", [])]
@@ -134,7 +164,11 @@ def main() -> int:
 
     # Multi-seed real summary
     multi = load_json(reg.abs_path(reg.REPORT_EXPERIMENTS_DIR) / "multiseed_real_summary.json")
-    if multi.get("scientific_valid"):
+    v4_multi = ctx[0]._v4_multiseed(ctx[1]) if ctx else None
+    if v4_multi is not None and v4_multi.status == ctx[0].DONE:
+        # Chỉ xác nhận đủ hạt giống × mô hình cùng release; ngưỡng chưa đạt nằm trong chuỗi chi tiết
+        add(checks, "multiseed_real_summary", "pass", v4_multi.detail)
+    elif multi.get("scientific_valid"):
         add(checks, "multiseed_real_summary", "pass", "3-seed real summary available and complete")
     else:
         add(checks, "multiseed_real_summary", "warn", "no complete verified multi-seed real summary yet")
