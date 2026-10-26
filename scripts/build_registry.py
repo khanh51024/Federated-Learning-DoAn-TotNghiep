@@ -425,6 +425,28 @@ def build_published_demo() -> list[dict[str, Any]]:
 # ---------------------------------------------------------------------------
 # Họ network_demo / reference / smoke
 # ---------------------------------------------------------------------------
+def _real_network_run_fields(history: dict[str, Any]) -> dict[str, Any]:
+    """Nhãn của checkpoint Flower mạng khi lịch sử chạy là run dữ liệu thật (reg.network_history_is_real); {} nếu vẫn là smoke.
+    Vẫn thuộc họ network_demo nên không bao giờ lên web."""
+    if not reg.network_history_is_real(history):
+        return {}
+    test = history["final_test_metrics"]
+    scenario = Path(str(history.get("evaluation_partition_dir") or "")).name or "?"
+    rounds = history.get("rounds")
+    n_clients = history.get("num_clients_required")
+    return {
+        "display_name": f"Flower network global (dữ liệu thật, {scenario})",
+        "protocol_id": f"network_real_localhost_stage2_scratch_v3_{scenario}",
+        "status": "network_real_data",
+        "display_label": "Flower qua mạng localhost, ảnh PlantVillage thật",
+        "metrics": {"rounds": rounds, "num_clients": n_clients, "seed": history.get("seed"),
+                    **{f"final_test_{k}": test[k] for k in ("accuracy", "macro_f1", "loss")}},
+        "notes": (f"Run Flower {n_clients} client, {rounds} vòng, client và máy chủ là tiến trình riêng trên localhost, ảnh PlantVillage thật, "
+                  f"cách chia {scenario} của protocol stage2_scratch_v3 (học từ đầu). Kiểm chứng đường học liên kết qua mạng với dữ liệu thật; "
+                  "khác protocol với gói v4b nên không so độ chính xác trực tiếp."),
+    }
+
+
 def build_network_and_reference() -> list[dict[str, Any]]:
     models: list[dict[str, Any]] = []
 
@@ -453,6 +475,8 @@ def build_network_and_reference() -> list[dict[str, Any]]:
             display_label="Network demo (không khoa học)",
             notes=note + " CẤM dùng accuracy từ các checkpoint này trong luận văn.",
         )
+        if model_id == "network_federated_global":
+            m.update(_real_network_run_fields(load_json(reg.NETWORK_FLOWER_HISTORY_JSON) or {}))
         models.append(m)
 
     m = base_model("plantvillage_traced_reference", reg.FAMILY_REFERENCE, "PlantVillage TorchScript (tham chiếu)")

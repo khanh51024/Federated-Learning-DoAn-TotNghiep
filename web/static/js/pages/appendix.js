@@ -181,6 +181,25 @@ function identityHtml(identity, evidence, summary) {
     </div>`;
 }
 
+/** Run Flower qua mạng localhost dùng ảnh thật: bằng chứng hệ thống, khác protocol với mô hình trên web. */
+function networkCard(net) {
+  if (!net?.available) {
+    return `<article class="verify-card warn"><h4>Học liên kết qua mạng trên ảnh thật</h4><p>${esc(net?.reason || "Chưa có báo cáo.")}</p></article>`;
+  }
+  const rows = (net.per_round || []).map(r => `<li>Vòng ${fmtInt(r.round)}: ${fmtInt(r.accepted_clients)}/${fmtInt(net.num_clients)} client được nhận, độ chính xác trên tập validation ${fmtPct(r.val_accuracy, 1)}${r.elapsed_s !== null ? `, ${fmtNum(r.elapsed_s / 60, 1)} phút` : ""}.</li>`).join("");
+  return `
+      <article class="verify-card ok">
+        <h4>Học liên kết qua mạng trên ảnh thật</h4>
+        <p class="verify-big mono">${fmtInt(net.num_clients)} client · ${fmtInt(net.rounds)} vòng</p>
+        <p>Máy chủ và mỗi client là một tiến trình riêng, trao đổi trọng số qua gRPC trên localhost; mọi client đọc ảnh PlantVillage thật, kiểm từng vòng.</p>
+        <details class="fold mt-3"><summary>Xem kết quả từng vòng</summary>
+        <ul>${rows}</ul>
+        <p class="field-hint mt-2">Tập test giữ riêng của cách chia cũ: top-1 ${fmtPct(net.final_test.accuracy, 1)}, macro-F1 ${fmtNum(net.final_test.macro_f1, 3)}, hạt giống ${fmtInt(net.seed)}.</p>
+        <p class="field-hint">Phạm vi: cách chia ${esc(net.scenario)} của protocol cũ (chỉ PlantVillage, học từ đầu, không dùng trọng số ImageNet). Lượt này kiểm chứng đường học liên kết qua mạng với dữ liệu thật; dữ liệu và công thức khác mô hình trên web nên không so trực tiếp với số ở chương 4.</p>
+        </details>
+      </article>`;
+}
+
 function verificationHtml(summary) {
   const re = summary?.reeval;
   const lk = summary?.leakage;
@@ -251,7 +270,7 @@ function verificationHtml(summary) {
   } else if (ho) {
     hoCard = `<article class="verify-card warn"><h4>Kiểm tra trên tập giữ riêng</h4><p>${esc(ho.reason || "Chưa có báo cáo.")}</p></article>`;
   }
-  return `<section class="verify-grid mt-4">${reCard}${hoCard}${lkCard}</section>`;
+  return `<section class="verify-grid mt-4">${reCard}${hoCard}${lkCard}${networkCard(summary?.network_run)}</section>`;
 }
 
 function section(id, letter, title, intro, body) {

@@ -226,3 +226,48 @@ def test_apply_leakage_audit_fails_closed(monkeypatch):
     none = dict(base)
     br.apply_leakage_audit([none])
     assert none["leakage_audit"] == "unknown"
+
+
+def test_network_checkpoint_is_labelled_real_only_when_the_run_used_real_data_end_to_end():
+    real_client = {"data_mode": "real"}
+    real = {
+        "require_real_clients": True, "require_real_evaluation": True, "rounds": 5, "num_clients_required": 5, "seed": 42,
+        "evaluation_partition_dir": "data/partitions_stage2_scratch_v3/label01",
+        "audit_rounds": [{"clients": [real_client] * 5}],
+        "final_test_metrics": {"accuracy": 0.4, "macro_f1": 0.3, "loss": 2.0},
+    }
+    fields = br._real_network_run_fields(real)
+    assert fields["status"] == "network_real_data" and fields["protocol_id"].endswith("label01")
+    assert fields["metrics"]["final_test_accuracy"] == 0.4 and fields["metrics"]["rounds"] == 5
+    # thiếu bất kỳ điều kiện nào thì vẫn là smoke (giữ nhãn cũ)
+    for broken in ({"require_real_clients": False}, {"require_real_evaluation": False}, {"final_test_metrics": None},
+                   {"audit_rounds": [{"clients": [real_client, {"data_mode": "synthetic"}]}]}, {"audit_rounds": []}):
+        assert br._real_network_run_fields({**real, **broken}) == {}, broken
+    assert br._real_network_run_fields({}) == {}
+
+
+def _write_network_run(root, history: dict, *, ok: bool = True, digest: str | None = None, crlf: bool = False) -> None:
+    raw = json.dumps(history, indent=2).encode("utf-8")
+    metrics = root / reg.NETWORK_FLOWER_HISTORY_JSON
+    metrics.parent.mkdir(parents=True, exist_ok=True)
+    metrics.write_bytes(raw.replace(b"\n", b"\r\n") if crlf else raw)
+    validation = root / reg.NETWORK_ARTIFACT_VALIDATION_JSON
+    validation.parent.mkdir(parents=True, exist_ok=True)
+    validation.write_text(json.dumps({"ok": ok, "details": {"metrics_sha256": digest or hashlib.sha256(raw).hexdigest()}}), encoding="utf-8")
+
+
+def test_real_network_run_requires_a_passing_validation_of_the_same_history(tmp_path, monkeypatch):
+    monkeypatch.setattr(reg, "ROOT", tmp_path)
+    real = {"require_real_clients": True, "require_real_evaluation": True, "rounds": 2, "num_clients_required": 5,
+            "audit_rounds": [{"clients": [{"data_mode": "real"}] * 5}], "final_test_metrics": {"accuracy": 0.5, "loss": 1.0, "macro_f1": 0.4}}
+    assert reg.real_network_run() is None                                  # chưa có file
+    _write_network_run(tmp_path, real)
+    assert reg.real_network_run()["rounds"] == 2
+    _write_network_run(tmp_path, real, crlf=True)                          # Git đổi LF -> CRLF: vẫn là cùng nội dung đã kiểm
+    assert reg.real_network_run() is not None
+    _write_network_run(tmp_path, real, digest="0" * 64)                    # lịch sử bị thay sau khi kiểm
+    assert reg.real_network_run() is None
+    _write_network_run(tmp_path, real, ok=False)
+    assert reg.real_network_run() is None
+    _write_network_run(tmp_path, {**real, "require_real_clients": False})  # smoke dù kiểm đạt
+    assert reg.real_network_run() is None

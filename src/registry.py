@@ -300,3 +300,32 @@ def code_fingerprint() -> str:
                 digest.update(b"\x00")
                 digest.update(hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).digest())
     return digest.hexdigest()
+
+
+def network_history_is_real(history: dict[str, Any]) -> bool:
+    """Run Flower mạng dùng ảnh thật từ đầu đến cuối: ép client và bộ đánh giá dùng ảnh thật, mọi client trong audit dùng ảnh thật,
+    có số đo trên tập test giữ riêng (cùng tiêu chí với cổng network_global_artifact của scripts/pre_demo_check.py)."""
+    clients = [c for r in history.get("audit_rounds") or [] for c in (r.get("clients") or [])]
+    test = history.get("final_test_metrics")
+    return (bool(history.get("require_real_clients")) and bool(clients) and all(c.get("data_mode") == "real" for c in clients)
+            and bool(history.get("require_real_evaluation")) and isinstance(test, dict)
+            and all(k in test for k in ("accuracy", "loss", "macro_f1")))
+
+
+def real_network_run() -> dict[str, Any] | None:
+    """Lịch sử của run Flower mạng dùng ảnh thật, hoặc None. Ngoài tiêu chí ảnh thật, báo cáo của scripts/validate_network_artifact.py
+    phải đạt và ghi đúng mã băm của file lịch sử đang có (file bị thay sau khi kiểm thì không công nhận)."""
+    history_path, validation_path = abs_path(NETWORK_FLOWER_HISTORY_JSON), abs_path(NETWORK_ARTIFACT_VALIDATION_JSON)
+    try:
+        raw = history_path.read_bytes()
+        history = json.loads(raw.decode("utf-8"))
+        validation = json.loads(validation_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(history, dict) or not isinstance(validation, dict) or validation.get("ok") is not True:
+        return None
+    # core.autocrlf=true và git archive có thể đổi LF/CRLF của file JSON: cùng nội dung ở dạng LF hay CRLF đều được công nhận
+    lf = raw.replace(b"\r\n", b"\n")
+    if (validation.get("details") or {}).get("metrics_sha256") not in {hashlib.sha256(v).hexdigest() for v in (raw, lf, lf.replace(b"\n", b"\r\n"))}:
+        return None
+    return history if network_history_is_real(history) else None

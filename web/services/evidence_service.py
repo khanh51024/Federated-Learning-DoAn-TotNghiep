@@ -1015,6 +1015,35 @@ def _gd4(evidence: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _network_run() -> Dict[str, Any]:
+    """Run Flower qua mạng localhost dùng ảnh thật (scripts/run_local_5client_scientific_network.ps1), đã qua
+    scripts/validate_network_artifact.py. Khác protocol với gói đang chạy (stage2_scratch_v3: chỉ PlantVillage, học từ đầu),
+    nên là bằng chứng hệ thống chứ không phải số đo của mô hình trên web."""
+    history = reg.real_network_run()
+    if history is None:
+        return _withheld("chưa có run Flower qua mạng dùng ảnh thật đã qua kiểm (scripts/run_local_5client_scientific_network.ps1)")
+    per_round = []
+    for audit in history.get("audit_rounds") or []:
+        val = audit.get("server_validation_metrics") or {}
+        elapsed = audit.get("round_fit_elapsed_ms")
+        per_round.append({
+            "round": _int(audit.get("round")),
+            "accepted_clients": _int(audit.get("accepted_clients")),
+            "val_accuracy": _round(val.get("accuracy")),
+            "elapsed_s": _round(elapsed / 1000.0, 1) if isinstance(elapsed, (int, float)) else None,
+        })
+    test = history["final_test_metrics"]
+    return {
+        "available": True,
+        "num_clients": _int(history.get("num_clients_required")),
+        "rounds": _int(history.get("rounds")),
+        "seed": _int(history.get("seed")),
+        "scenario": str(history.get("evaluation_partition_dir") or "").replace("\\", "/").rstrip("/").rsplit("/", 1)[-1],
+        "final_test": {"accuracy": _round(test.get("accuracy")), "macro_f1": _round(test.get("macro_f1"))},
+        "per_round": per_round,
+    }
+
+
 # Thiết lập huấn luyện phải trùng giữa các mô hình thì mới được nói "cùng điều kiện" (đơn vị epoch/vòng và cách khởi động lr khác nhau theo cách học nên không so)
 _RECIPE_KEYS = ("optimizer", "lr", "batch_size", "label_smoothing", "precision", "train_transform", "loss_weighting", "selection", "steps_total", "local_epochs")
 
@@ -1083,7 +1112,7 @@ def summary(evidence: Dict[str, Any]) -> Dict[str, Any]:
             "reason": reason,
             "identity": None,
             "checklist": _guard("checklist", lambda: _checklist(redact=True)),
-            **{name: _withheld(reason) for name in ("reeval", "plantdoc", "domain_gap", "leakage", "shards", "holdout", "statistics", "fullframe", "plantvillage_reference", "community_simulation", "training", "seeds", "facts", "fairness", "gd4")},
+            **{name: _withheld(reason) for name in ("reeval", "plantdoc", "domain_gap", "leakage", "shards", "holdout", "statistics", "fullframe", "plantvillage_reference", "community_simulation", "training", "seeds", "facts", "fairness", "gd4", "network_run")},
         }
     training = _guard("cấu hình huấn luyện", lambda: training_report(evidence, _load_json))
     seeds = _guard("các hạt giống", lambda: _seeds(evidence))
@@ -1106,5 +1135,6 @@ def summary(evidence: Dict[str, Any]) -> Dict[str, Any]:
         "seeds": seeds,
         "fairness": _guard("công bằng giữa client", lambda: _fairness(evidence)),
         "gd4": _guard("nén và lượng tử hóa (GĐ4)", lambda: _gd4(evidence)),
+        "network_run": _guard("run Flower qua mạng", _network_run),
         "checklist": _guard("checklist", _checklist),
     }

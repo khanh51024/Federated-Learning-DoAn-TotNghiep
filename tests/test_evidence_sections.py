@@ -215,3 +215,20 @@ def test_gradcam_forward_matches_the_model_forward(evidence):
         direct = model(x)
         manual = model.classifier(torch.flatten(model.avgpool(model.features(x)), 1))
     assert torch.allclose(direct, manual, atol=1e-6)
+
+
+def test_network_run_section_reads_the_validated_real_flower_run(monkeypatch):
+    history = {
+        "rounds": 2, "num_clients_required": 5, "seed": 42, "evaluation_partition_dir": "data\partitions_stage2_scratch_v3\label01",
+        "final_test_metrics": {"accuracy": 0.41234, "loss": 2.0, "macro_f1": 0.3},
+        "audit_rounds": [{"round": r, "accepted_clients": 5, "round_fit_elapsed_ms": 600000.0, "server_validation_metrics": {"accuracy": 0.2 * r}}
+                         for r in (1, 2)],
+    }
+    monkeypatch.setattr(reg, "real_network_run", lambda: history)
+    section = es._network_run()
+    assert section["available"] is True and section["scenario"] == "label01" and section["num_clients"] == 5
+    assert section["final_test"] == {"accuracy": 0.4123, "macro_f1": 0.3}
+    assert [r["val_accuracy"] for r in section["per_round"]] == [0.2, 0.4] and section["per_round"][0]["elapsed_s"] == 600.0
+    monkeypatch.setattr(reg, "real_network_run", lambda: None)
+    assert es._network_run()["available"] is False
+    assert es.summary({"available": False, "reason": "x"})["network_run"] == {"available": False, "reason": "x"}

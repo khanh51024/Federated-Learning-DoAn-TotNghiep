@@ -77,6 +77,8 @@ if ($LASTEXITCODE -ne 0) { throw "Dataset preflight failed." }
 $serverOut = Join-Path $LogDir "server.out.log"
 $serverErr = Join-Path $LogDir "server.err.log"
 $server = Start-Process -FilePath $Python -ArgumentList $serverArgs -RedirectStandardOutput $serverOut -RedirectStandardError $serverErr -PassThru
+# Windows PowerShell 5.1: khi chuyển hướng stdout/stderr, ExitCode luôn rỗng nếu không giữ Handle ngay sau khi khởi động
+$null = $server.Handle
 Start-Sleep -Seconds 3
 if ($server.HasExited) { throw "Flower server exited early. Xem $serverErr" }
 
@@ -84,7 +86,9 @@ $clients = @()
 for ($cid = 0; $cid -lt 5; $cid++) {
     $out = Join-Path $LogDir ("client_{0:D2}.out.log" -f $cid)
     $err = Join-Path $LogDir ("client_{0:D2}.err.log" -f $cid)
-    $clients += Start-Process -FilePath $Python -ArgumentList $clientCommands[$cid] -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
+    $client = Start-Process -FilePath $Python -ArgumentList $clientCommands[$cid] -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
+    $null = $client.Handle
+    $clients += $client
 }
 
 try {
