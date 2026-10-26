@@ -13,7 +13,10 @@ def test_split_for_group_is_deterministic_and_roughly_70_10_10_10():
     assert names == [split_for_group(f"g{i}", 7) for i in range(4000)]
     share = {s: names.count(s) / len(names) for s in set(names)}
     assert abs(share["train"] - 0.70) < 0.03 and all(abs(share[s] - 0.10) < 0.03 for s in ("val", "calibration", "legacy_diagnostic_test"))
-    assert split_for_group("g1", 7) != split_for_group("g1", 8) or True  # seed khác có thể đổi phía
+    # Seed nằm trong mã băm nên đổi seed thì phép chia phải đổi theo. Với tỉ lệ 70/10/10/10, xác suất một
+    # nhóm giữ nguyên phía là 0,7² + 3·0,1² = 0,52, tức khoảng 48% nhóm đổi phía.
+    changed = sum(split_for_group(f"g{i}", 7) != split_for_group(f"g{i}", 8) for i in range(4000)) / 4000
+    assert 0.40 < changed < 0.56
 
 
 def test_min_hamming_counts_bits_and_handles_empty_refs():

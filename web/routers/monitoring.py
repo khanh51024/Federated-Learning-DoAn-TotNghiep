@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import csv
 import json
+import logging
 from pathlib import Path
 from typing import Any, Dict
 
@@ -19,6 +20,7 @@ from web.state import NETWORK_DEMO, check_port_open
 from src.data.partition import calculate_data_scarcity
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.get("/api/status")
@@ -154,8 +156,8 @@ def get_clients_info(alpha: float = Query(1.0)) -> Dict[str, Any]:
                 total_samples_global = p_cfg.get("partition_metrics", {}).get("total_samples", 38984)
                 for c_item in p_cfg.get("partition_metrics", {}).get("client_details", []):
                     partition_details[c_item["client_id"]] = c_item
-        except Exception:
-            pass
+        except Exception:  # vẫn trả trang với số mặc định, nhưng phải để lại dấu vết thay vì im lặng
+            logger.warning("Không đọc được %s; dùng số liệu mặc định", part_config_file, exc_info=True)
 
     telemetry_file = reg.abs_path(reg.TELEMETRY_HISTORY_JSON)
     if not telemetry_file.exists():
@@ -170,8 +172,8 @@ def get_clients_info(alpha: float = Query(1.0)) -> Dict[str, Any]:
                     last_round = t_list[-1]
                     for cm in last_round.get("client_metrics", []):
                         last_round_telemetry[cm.get("client_id")] = cm
-        except Exception:
-            pass
+        except Exception:  # thiếu telemetry thì trang vẫn hiện, nhưng phải để lại dấu vết thay vì im lặng
+            logger.warning("Không đọc được telemetry %s", telemetry_file, exc_info=True)
 
     clients_data = []
     base_counts = [7568, 7699, 7817, 8032, 7868]

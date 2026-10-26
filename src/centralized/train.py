@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import logging
 import random
 import sys
 import time
@@ -26,6 +27,8 @@ from src import registry as reg
 from src.data.plantvillage import PlantVillageDataset
 from src.model.mobilenetv3 import create_model, get_parameters, set_parameters
 from .evaluate import evaluate
+
+logger = logging.getLogger(__name__)
 
 
 def train_one_epoch(
@@ -166,8 +169,8 @@ def run_centralized_training(
         if step_callback:
             try:
                 step_callback(epoch_record)
-            except Exception:
-                pass
+            except Exception:  # callback chỉ báo tiến độ: không được dừng huấn luyện, nhưng phải để lại dấu vết
+                logger.warning("step_callback lỗi ở epoch %s", epoch, exc_info=True)
 
         if val_metrics["accuracy"] > best_acc:
             best_acc = val_metrics["accuracy"]
@@ -212,13 +215,16 @@ def run_centralized_training(
 
     out_file = metrics_dir / "centralized_results.json"
     if smoke and out_file.exists() and not output_dir:
+        smoke_out_file = metrics_dir / "smoke_centralized_results.json"
         try:
             with open(out_file, "r", encoding="utf-8") as existing_f:
                 existing_data = json.load(existing_f)
                 if existing_data.get("epochs", 0) > 1:
-                    out_file = metrics_dir / "smoke_centralized_results.json"
-        except Exception:
-            pass
+                    out_file = smoke_out_file
+        except Exception as exc:
+            # Không đọc được file cũ thì không chắc nó không phải kết quả thật: smoke không được ghi đè lên nó.
+            logger.warning("Không đọc được %s (%s); ghi kết quả smoke sang %s", out_file, exc, smoke_out_file)
+            out_file = smoke_out_file
 
     with open(out_file, "w", encoding="utf-8") as f:
         json.dump(results_payload, f, indent=2)

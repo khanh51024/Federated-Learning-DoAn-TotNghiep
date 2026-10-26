@@ -15,6 +15,7 @@ import csv
 import copy
 import hashlib
 import json
+import logging
 import math
 import random
 import re
@@ -45,6 +46,8 @@ from .network_probe import ProbeServer
 from .strategy import aggregate_fedavg
 from .telemetry import ServerRoundTelemetry, TelemetryManager
 from .update_validator import learnable_update_stats, validate_client_update
+
+logger = logging.getLogger(__name__)
 
 
 def expected_client_contract(partition_dir: str | Path, count: int) -> Dict[int, Dict[str, Any]]:
@@ -308,8 +311,8 @@ def run_federated_simulation(
         if step_callback:
             try:
                 step_callback(round_record)
-            except Exception:
-                pass
+            except Exception:  # callback chỉ báo tiến độ: không được dừng huấn luyện, nhưng phải để lại dấu vết
+                logger.warning("step_callback lỗi ở round %s", r, exc_info=True)
 
         if eval_metrics["accuracy"] > best_acc:
             best_acc = eval_metrics["accuracy"]
@@ -349,13 +352,16 @@ def run_federated_simulation(
 
     out_file = metrics_dir / "fedavg_results.json"
     if smoke and out_file.exists() and not output_dir:
+        smoke_out_file = metrics_dir / "smoke_fedavg_results.json"
         try:
             with open(out_file, "r", encoding="utf-8") as existing_f:
                 existing_data = json.load(existing_f)
                 if existing_data.get("rounds", 0) > 1:
-                    out_file = metrics_dir / "smoke_fedavg_results.json"
-        except Exception:
-            pass
+                    out_file = smoke_out_file
+        except Exception as exc:
+            # Không đọc được file cũ thì không chắc nó không phải kết quả thật: smoke không được ghi đè lên nó.
+            logger.warning("Không đọc được %s (%s); ghi kết quả smoke sang %s", out_file, exc, smoke_out_file)
+            out_file = smoke_out_file
 
     with open(out_file, "w", encoding="utf-8") as f:
         json.dump(results_payload, f, indent=2)
