@@ -15,6 +15,7 @@ from src import registry as reg  # noqa: E402
 
 MANIFEST = ROOT / "data" / "dataset_manifest.json"
 PART_ROOT = ROOT / "data" / "partitions_stage2_scratch_v3" / "label100"
+IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png"}
 
 
 def _load_expected() -> Dict:
@@ -40,9 +41,8 @@ def _class_counts(root: Path) -> Dict[str, int]:
     for child in root.iterdir():
         if not child.is_dir():
             continue
-        n = 0
-        for ext in ("*.jpg", "*.JPG", "*.jpeg", "*.JPEG", "*.png", "*.PNG"):
-            n += sum(1 for _ in child.glob(ext))
+        # Duyệt mỗi tệp một lần: glob theo từng kiểu chữ (*.jpg rồi *.JPG) đếm hai lần trên Windows vì hệ tệp không phân biệt hoa thường
+        n = sum(1 for f in child.iterdir() if f.is_file() and f.suffix.lower() in IMAGE_SUFFIXES)
         if n:
             counts[child.name] = n
     return counts
