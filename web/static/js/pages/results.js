@@ -883,8 +883,131 @@ function buildThree() {
   draw();
 }
 
+// ───────── Tab Nén và lượng tử hóa (GĐ4) ─────────
+const TRANSPORT_LABELS = {
+  fp32: "fp32 (gốc)",
+  fp16: "fp16",
+  int8_per_tensor: "int8, một hệ số cho cả tensor",
+  int8_per_channel: "int8, một hệ số cho mỗi kênh",
+  delta_int8_per_tensor: "int8 trên độ lệch w − w0, cả tensor",
+  delta_int8_per_channel: "int8 trên độ lệch w − w0, mỗi kênh",
+};
+const ONNX_LABELS = {
+  fp32: "ONNX fp32 (gốc)",
+  int8_all: "int8 mọi lớp",
+  int8_se_gemm: "int8 khối SE và lớp tuyến tính",
+  int8_se_gemm_pw_late: "int8 khối SE, lớp tuyến tính và pointwise nửa sau",
+};
+const ACCURACY_KEYS = ["top1", "plantvillage_top1", "field_top1", "plantdoc_top1"];
+const megabytes = bytes => (bytes === null || bytes === undefined ? "—" : `${fmtNum(bytes / 1e6, 2)} MB`);
+const accuracyHead = '<th scope="col">Top-1 chung</th><th scope="col">PlantVillage</th><th scope="col">Ngoài đồng</th><th scope="col">PlantDoc</th>';
+const accuracyCells = row => ACCURACY_KEYS.map(k => `<td class="mono">${fmtPct(row[k], 2)}</td>`).join("");
+
+/** Nhận xét suy ra từ số đo của một mô hình (không viết sẵn cách nén nào tốt). */
+function compressionNotes(model) {
+  const scheme = id => model.transport.find(r => r.scheme === id);
+  const fp16 = scheme("fp16");
+  const direct = scheme("int8_per_channel");
+  const delta = scheme("delta_int8_per_channel");
+  const transport = fp16 && direct && delta
+    ? `fp16 còn ${fmtPct(fp16.payload_ratio, 0)} dung lượng, ${fmtInt(fp16.predictions_changed)} ảnh đổi dự đoán. `
+      + `int8 gửi thẳng trọng số còn ${fmtPct(direct.payload_ratio, 0)} dung lượng, ${fmtInt(direct.predictions_changed)} ảnh đổi dự đoán; `
+      + `cùng dung lượng đó, gửi int8 trên độ lệch w − w0 thì ${fmtInt(delta.predictions_changed)} ảnh đổi dự đoán. `
+      + "Máy chủ và client đều biết trọng số khởi tạo w0 nên chỉ cần gửi độ lệch."
+    : "";
+  const base = model.onnx.find(r => r.variant === "fp32");
+  const all = model.onnx.find(r => r.variant === "int8_all");
+  const partial = model.onnx.filter(r => r.variant !== "fp32" && r.variant !== "int8_all");
+  let onnx = "";
+  if (base && all && base.top1 && all.top1 < base.top1 / 2) {
+    onnx += `Lượng tử hóa mọi lớp làm mô hình sụp đổ: top-1 còn ${fmtPct(all.top1, 1)}, bản gốc ${fmtPct(base.top1, 1)}. `
+      + `Vì vậy ${fmtInt(partial.length)} biến thể còn lại chỉ lượng tử hóa các lớp ít nhạy với int8, chọn bằng phép đo độ nhạy trên tập validation (không dùng tập giữ riêng). `;
+  }
+  // "giữ độ chính xác" = top-1 chung không tụt quá 1 điểm so với bản fp32
+  const kept = base ? partial.filter(r => r.top1 !== null && r.top1 >= base.top1 - 0.01) : [];
+  if (kept.length) {
+    const smallest = kept.reduce((a, b) => (b.bytes < a.bytes ? b : a));
+    const ratio = base.latency_ms ? smallest.latency_ms / base.latency_ms : null;
+    onnx += `Biến thể nhỏ nhất mà top-1 chung không tụt quá 1 điểm (${esc(ONNX_LABELS[smallest.variant] || smallest.variant)}) nặng ${megabytes(smallest.bytes)}, bằng ${fmtPct(smallest.bytes / base.bytes, 0)} bản fp32; `
+      + `top-1 ${fmtPct(smallest.top1, 2)} so với ${fmtPct(base.top1, 2)}. `
+      + (ratio !== null && ratio > 0.85 ? `Độ trễ ${fmtNum(smallest.latency_ms, 2)} ms so với ${fmtNum(base.latency_ms, 2)} ms: trên CPU này chưa nhanh hơn rõ rệt.` : `Độ trễ ${fmtNum(smallest.latency_ms, 2)} ms so với ${fmtNum(base.latency_ms, 2)} ms.`);
+  } else if (base && partial.length) {
+    onnx += "Chưa có biến thể int8 nào giữ được top-1 chung trong vòng 1 điểm so với bản fp32.";
+  }
+  return { transport, onnx };
+}
+
+function compressionModelHtml(gd4, modelId) {
+  const model = gd4.models[modelId];
+  const base = model.onnx.find(r => r.variant === "fp32");
+  const notes = compressionNotes(model);
+  const transportRows = model.transport.map(r => `<tr><th scope="row">${esc(TRANSPORT_LABELS[r.scheme] || r.scheme)}</th>
+      <td class="mono">${megabytes(r.payload_bytes)}</td><td class="mono">${fmtPct(r.payload_ratio, 0)}</td>
+      <td class="mono">${fmtInt(r.predictions_changed)}</td>${accuracyCells(r)}</tr>`).join("");
+  const onnxRows = model.onnx.map(r => `<tr><th scope="row">${esc(ONNX_LABELS[r.variant] || r.variant)}</th>
+      <td class="mono">${megabytes(r.bytes)}</td><td class="mono">${base?.bytes ? fmtPct(r.bytes / base.bytes, 0) : "—"}</td>
+      <td class="mono">${fmtNum(r.latency_ms, 2)}</td><td class="mono">${fmtInt(r.predictions_changed)}</td>${accuracyCells(r)}</tr>`).join("");
+  return `
+    <section class="report-sub mt-4" aria-labelledby="gd4-transport">
+      ${sectionHead("4.6.1", "Gửi trọng số bằng ít byte hơn", { id: "gd4-transport", tag: "h4" })}
+      <p class="section-lead">Mỗi lượt gửi mô hình giữa client và máy chủ. Chỉ nén các tensor trọng số từ hai chiều trở lên; bias và BatchNorm giữ nguyên. "Ảnh đổi dự đoán" đếm số ảnh mà mô hình dựng lại sau khi nén đoán khác mô hình gốc.</p>
+      <div tabindex="0" role="group" aria-label="Bảng nén trọng số khi truyền, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
+        <table class="data-table wrap-head">
+          <thead><tr><th scope="col">Cách gửi</th><th scope="col">Dung lượng mỗi lượt</th><th scope="col">So với gốc</th><th scope="col">Ảnh đổi dự đoán</th>${accuracyHead}</tr></thead>
+          <tbody>${transportRows}</tbody>
+        </table>
+      </div>
+      ${notes.transport ? `<p class="field-hint mt-2">${notes.transport}</p>` : ""}
+    </section>
+    <section class="report-sub mt-5" aria-labelledby="gd4-onnx">
+      ${sectionHead("4.6.2", "Lượng tử hóa int8 mô hình suy luận", { id: "gd4-onnx", tag: "h4" })}
+      <p class="section-lead">Mô hình xuất sang ONNX rồi lượng tử hóa tĩnh int8, hiệu chuẩn bằng ${fmtInt(gd4.calibration_images)} ảnh của tập hiệu chuẩn riêng. Cùng máy, PyTorch fp32 mất ${fmtNum(model.pytorch_fp32_latency_ms, 2)} ms một ảnh.</p>
+      <div tabindex="0" role="group" aria-label="Bảng lượng tử hóa mô hình suy luận, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
+        <table class="data-table wrap-head">
+          <thead><tr><th scope="col">Biến thể</th><th scope="col">Dung lượng</th><th scope="col">So với fp32</th><th scope="col">Độ trễ CPU (ms)</th><th scope="col">Ảnh đổi dự đoán</th>${accuracyHead}</tr></thead>
+          <tbody>${onnxRows}</tbody>
+        </table>
+      </div>
+      ${notes.onnx ? `<p class="field-hint mt-2">${notes.onnx}</p>` : ""}
+    </section>`;
+}
+
+function buildCompression() {
+  const root = byId("result-compression");
+  const gd4 = ctx.summary?.gd4;
+  if (!gd4?.available) {
+    root.innerHTML = notReady();
+    return;
+  }
+  const order = ["fedavg", "centralized"].filter(id => gd4.models[id]);
+  const fieldCount = gd4.count - gd4.plantvillage_count;
+  root.innerHTML = `
+    ${sectionHead("4.6", "Nén trọng số và lượng tử hóa", { lead: "Giai đoạn 4: giảm số byte gửi giữa client và máy chủ, và thu nhỏ mô hình suy luận chạy trên máy người dùng." })}
+    <section class="callout callout-warn mt-3" role="note">
+      <b>Số đo trên mô hình đã huấn luyện của gói đang chạy.</b> ${esc(gd4.evidence.charAt(0).toUpperCase() + gd4.evidence.slice(1))}
+      Tập đo là tập giữ riêng ${fmtInt(gd4.count)} ảnh: ${fmtInt(gd4.plantvillage_count)} ảnh PlantVillage và ${fmtInt(fieldCount)} ảnh ngoài đồng, trong đó ${fmtInt(gd4.plantdoc_count)} ảnh PlantDoc.
+      Độ trễ đo trên CPU của một laptop (${esc(gd4.latency_method)}); chưa đo trên trình duyệt hay điện thoại.
+    </section>
+    <div class="panel-header-flex mt-4">
+      <p class="panel-desc">Chọn mô hình để xem số đo.</p>
+      <div class="segmented" role="radiogroup" aria-label="Mô hình">
+        ${order.map((id, i) => `<button type="button" class="segmented-option${i === 0 ? " is-active" : ""}" role="radio" aria-checked="${i === 0}" data-gd4-model="${esc(id)}">${esc(MODEL_LABELS[id] || id)}</button>`).join("")}
+      </div>
+    </div>
+    <div id="gd4-model">${compressionModelHtml(gd4, order[0])}</div>`;
+  root.querySelectorAll("[data-gd4-model]").forEach(button => {
+    button.addEventListener("click", () => {
+      root.querySelectorAll("[data-gd4-model]").forEach(b => {
+        b.classList.toggle("is-active", b === button);
+        b.setAttribute("aria-checked", String(b === button));
+      });
+      byId("gd4-model").innerHTML = compressionModelHtml(gd4, button.dataset.gd4Model);
+    });
+  });
+}
+
 const BUILDERS = {
-  summary: buildSummary, holdout: buildHoldout, errors: buildErrorAnalysis, calibration: buildCalibration, three: buildThree,
+  summary: buildSummary, holdout: buildHoldout, errors: buildErrorAnalysis, calibration: buildCalibration, three: buildThree, compression: buildCompression,
 };
 const building = new Map();
 

@@ -948,6 +948,73 @@ def _fairness(evidence: Dict[str, Any]) -> Dict[str, Any]:
     return {"available": True, "definition": str(report.get("definition") or ""), "classes_total": len(evidence.get("classes") or []), "splits": splits}
 
 
+# GĐ4: thứ tự hiển thị các cách gửi trọng số và các biến thể ONNX (khóa trong artifacts/gd4_compression.json)
+_GD4_TRANSPORT = ("fp32", "fp16", "int8_per_tensor", "int8_per_channel", "delta_int8_per_tensor", "delta_int8_per_channel")
+_GD4_ONNX = ("fp32", "int8_all", "int8_se_gemm", "int8_se_gemm_pw_late")
+
+
+def _gd4_accuracy(block: Dict[str, Any], total: int) -> Dict[str, Any]:
+    """Top-1 chung, PlantVillage, ngoài đồng (mọi ảnh không phải PlantVillage) và riêng PlantDoc của một cách nén; lỗi nếu số ảnh khác tập giữ riêng."""
+    if _int(block.get("n")) != total:
+        raise ValueError(f"số ảnh {block.get('n')} khác tập giữ riêng ({total})")
+    by_source = block.get("by_source") or {}
+    return {
+        "top1": _round(block.get("top1")),
+        "macro_f1": _round(block.get("macro_f1")),
+        "plantvillage_top1": _round(block.get("plantvillage_top1")),
+        "field_top1": _round(block.get("field_top1")),
+        "plantdoc_top1": _round((by_source.get("PlantDoc") or {}).get("top1")),
+    }
+
+
+def _gd4(evidence: Dict[str, Any]) -> Dict[str, Any]:
+    """GĐ4: nén trọng số khi truyền và lượng tử hóa int8 mô hình suy luận, đo một lần trên mô hình của gói (scripts/eval_gd4_compression.py)."""
+    report = _load_json(reg.GD4_COMPRESSION_JSON)
+    if report is None:
+        return _withheld(f"chưa có {reg.GD4_COMPRESSION_JSON} — chạy scripts/eval_gd4_compression.py")
+    total = sum(int(v) for v in reg.HOLDOUT_COUNTS.values())
+    problems = [f"{key} khác bundle đã kiểm hash" for key in ("protocol_id", "release_manifest_sha256") if report.get(key) != evidence.get(key)]
+    if report.get("split") != reg.HOLDOUT_SPLIT or _int(report.get("count")) != total:
+        problems.append("tập đánh giá khác tập giữ riêng của bundle")
+    expected = {m["model_id"]: m["checkpoint_sha256"] for m in evidence.get("models", [])}
+    reported = report.get("models") or {}
+    for model_id in MAIN_MODELS:
+        if (reported.get(model_id) or {}).get("checkpoint_sha256") != expected.get(model_id):
+            problems.append(f"SHA-256 checkpoint {model_id} khác bundle")
+    if problems:
+        return _withheld("báo cáo GĐ4 không khớp bundle: " + "; ".join(problems))
+    models: Dict[str, Any] = {}
+    for model_id in MAIN_MODELS:
+        block = reported[model_id]
+        transport = []
+        for scheme in _GD4_TRANSPORT:
+            row = block["weights_transport"][scheme]
+            transport.append({"scheme": scheme, "payload_bytes": _int(row["payload_bytes"]), "payload_ratio": _round(row["payload_ratio"]),
+                              "predictions_changed": _int(row["predictions_changed"]), **_gd4_accuracy(row, total)})
+        onnx = block["onnx"]
+        latency = block.get("latency") or {}
+        variants = []
+        for name in _GD4_ONNX:
+            row = onnx[f"onnx_{name}"]
+            size = onnx["fp32_bytes"] if name == "fp32" else onnx["variants"][name]["bytes"]
+            variants.append({"variant": name, "bytes": _int(size), "latency_ms": _round(latency.get(f"onnx_{name}_ms"), 2),
+                             "predictions_changed": _int(row["predictions_changed_vs_pytorch_fp32"]), **_gd4_accuracy(row, total)})
+        models[model_id] = {"transport": transport, "onnx": variants, "pytorch_fp32_latency_ms": _round(latency.get("pytorch_fp32_ms"), 2)}
+    environment = report.get("environment") or {}
+    first = reported[MAIN_MODELS[0]]["weights_transport"]["fp32"].get("by_source") or {}
+    return {
+        "available": True,
+        "evidence": str(report.get("evidence") or ""),
+        "count": total,
+        "plantvillage_count": _int((first.get("PlantVillage") or {}).get("n")),
+        "plantdoc_count": _int((first.get("PlantDoc") or {}).get("n")),
+        "calibration_images": _int(reported[MAIN_MODELS[0]]["onnx"].get("calibration_images")),
+        "latency_method": str(environment.get("latency") or ""),
+        "torch": str(environment.get("torch") or ""),
+        "models": models,
+    }
+
+
 # Thiết lập huấn luyện phải trùng giữa các mô hình thì mới được nói "cùng điều kiện" (đơn vị epoch/vòng và cách khởi động lr khác nhau theo cách học nên không so)
 _RECIPE_KEYS = ("optimizer", "lr", "batch_size", "label_smoothing", "precision", "train_transform", "loss_weighting", "selection", "steps_total", "local_epochs")
 
@@ -1016,7 +1083,7 @@ def summary(evidence: Dict[str, Any]) -> Dict[str, Any]:
             "reason": reason,
             "identity": None,
             "checklist": _guard("checklist", lambda: _checklist(redact=True)),
-            **{name: _withheld(reason) for name in ("reeval", "plantdoc", "domain_gap", "leakage", "shards", "holdout", "statistics", "fullframe", "plantvillage_reference", "community_simulation", "training", "seeds", "facts", "fairness")},
+            **{name: _withheld(reason) for name in ("reeval", "plantdoc", "domain_gap", "leakage", "shards", "holdout", "statistics", "fullframe", "plantvillage_reference", "community_simulation", "training", "seeds", "facts", "fairness", "gd4")},
         }
     training = _guard("cấu hình huấn luyện", lambda: training_report(evidence, _load_json))
     seeds = _guard("các hạt giống", lambda: _seeds(evidence))
@@ -1038,5 +1105,6 @@ def summary(evidence: Dict[str, Any]) -> Dict[str, Any]:
         "community_simulation": _guard("mô phỏng cộng đồng", lambda: _community_simulation(evidence)),
         "seeds": seeds,
         "fairness": _guard("công bằng giữa client", lambda: _fairness(evidence)),
+        "gd4": _guard("nén và lượng tử hóa (GĐ4)", lambda: _gd4(evidence)),
         "checklist": _guard("checklist", _checklist),
     }
