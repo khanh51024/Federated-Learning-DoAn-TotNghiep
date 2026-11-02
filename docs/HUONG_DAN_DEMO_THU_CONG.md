@@ -1,9 +1,9 @@
 # Hướng dẫn demo thủ công 9 mục
 
-Mở PowerShell tại `D:\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old`. Mọi lệnh dưới đây đã chạy thử trên laptop này, trừ Cách A của mục 8 (lệnh đó cần máy thuê còn bật, xem chú thích ở mục 8). Số trong "Sẽ thấy" là số của lần chạy thử; số của bạn có thể khác chút ở thời gian, các kết quả KHỚP thì phải giống. Mỗi cửa sổ chạy trước lệnh này một lần:
+Mở PowerShell tại `D:\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old`. Mọi lệnh dưới đây đã chạy thử trên laptop này, trừ Cách A của mục 8 (lệnh đó cần máy thuê còn bật, xem chú thích ở mục 8). Số trong "Sẽ thấy" là số của lần chạy thử; số của bạn có thể khác chút ở thời gian, các kết quả KHỚP thì phải giống. Mỗi cửa sổ PowerShell mới phải vào đúng thư mục và chạy dòng này một lần (mỗi cửa sổ giữ riêng, cửa sổ mới phải chạy lại):
 
 ```powershell
-$env:PYTHONUTF8 = 1; $env:OMP_NUM_THREADS = 2; $py = ".\.venv\Scripts\python.exe"
+cd D:\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old; $env:PYTHONUTF8 = 1; $env:OMP_NUM_THREADS = 2
 ```
 
 Đóng bớt Chrome và game: máy cần khoảng 3 GB RAM trống. Số báo cáo đầy đủ nằm ở `docs/KIEM_CHUNG_PHAN_TAN_TAP_TRUNG.md`.
@@ -17,25 +17,25 @@ Cần 3 cửa sổ PowerShell, chạy theo đúng thứ tự, mỗi vòng khoả
 **Cửa sổ 1, máy chủ.** Chờ dòng `Starting Flower Server` rồi mới mở client:
 
 ```powershell
-& $py -m src.federated.server_app --mode deployment --host 127.0.0.1 --port 18089 --rounds 2 --num-clients 2 --local-epochs 1 --seed 42 --require-real-clients --reject-suspicious-updates --max-update-norm 500 --evaluation-partition-dir tmp/speedtest/partition --probe-payload-bytes 6275944 --metrics-file tmp/demo/history.json --checkpoint-file tmp/demo/global.pt
+.\.venv\Scripts\python.exe -m src.federated.server_app --mode deployment --host 127.0.0.1 --port 18089 --rounds 2 --num-clients 2 --local-epochs 1 --seed 42 --require-real-clients --reject-suspicious-updates --max-update-norm 500 --evaluation-partition-dir tmp/speedtest/partition --probe-payload-bytes 6275944 --metrics-file tmp/demo/history.json --checkpoint-file tmp/demo/global.pt
 ```
 
 **Cửa sổ 2, client 0:**
 
 ```powershell
-& $py -m src.federated.client_app --client-id 0 --server 127.0.0.1:18089 --partition-dir tmp/speedtest/partition --dataset-root tmp/speedtest/images_client_00 --require-real-data --local-epochs 1 --seed 42
+.\.venv\Scripts\python.exe -m src.federated.client_app --client-id 0 --server 127.0.0.1:18089 --partition-dir tmp/speedtest/partition --dataset-root tmp/speedtest/images_client_00 --require-real-data --local-epochs 1 --seed 42
 ```
 
 **Cửa sổ 3, client 1:**
 
 ```powershell
-& $py -m src.federated.client_app --client-id 1 --server 127.0.0.1:18089 --partition-dir tmp/speedtest/partition --dataset-root tmp/speedtest/images_client_01 --require-real-data --local-epochs 1 --seed 42
+.\.venv\Scripts\python.exe -m src.federated.client_app --client-id 1 --server 127.0.0.1:18089 --partition-dir tmp/speedtest/partition --dataset-root tmp/speedtest/images_client_01 --require-real-data --local-epochs 1 --seed 42
 ```
 
 Thông số Flower hiện ngay ở cửa sổ 1 khi kết thúc: `round_fit_elapsed_ms`, `mean_probe_rtt_ms`, `rejected_clients`... Xem cho dễ đọc:
 
 ```powershell
-& $py scripts/demo_show.py flower --history tmp/demo/history.json
+.\.venv\Scripts\python.exe scripts/demo_show.py flower --history tmp/demo/history.json
 ```
 
 Sẽ thấy:
@@ -50,7 +50,7 @@ Vòng 1: 2 client được nhận, 0 bị từ chối; cả vòng 18.85 giây; g
 Thông số của run thật 5 client, 40 vòng trên GPU:
 
 ```powershell
-& $py scripts/demo_show.py run --run runs/v4_sweep/fedavg_s42_label_alpha_0_1_flower --every 20
+.\.venv\Scripts\python.exe scripts/demo_show.py run --run runs/v4_sweep/fedavg_s42_label_alpha_0_1_flower --every 20
 ```
 
 ## Mục 1: Gửi trọng số có sai lệch không
@@ -66,7 +66,7 @@ Băm hai chiều: 400/400 lượt khớp.
 **Chứng minh phép kiểm thật sự bắt được lỗi**, tự đổi một bit thì phải báo sai:
 
 ```powershell
-& $py -m pytest tests/test_flower_app.py -k changed_weights -v
+.\.venv\Scripts\python.exe -m pytest tests/test_flower_app.py -k changed_weights -v
 ```
 
 Sẽ thấy: `PASSED`. Test này đổi trọng số từ `2.0` thành `2.0000002` và yêu cầu run phải dừng ở cả hai chiều.
@@ -76,7 +76,7 @@ Sẽ thấy: `PASSED`. Test này đổi trọng số từ `2.0` thành `2.000000
 **Bước 1, hai bên xuất phát cùng một mô hình (W0):**
 
 ```powershell
-& $py scripts/demo_show.py w0 --seed 42 --run runs/v4_sweep/fedavg_s42_label_alpha_0_1_flower
+.\.venv\Scripts\python.exe scripts/demo_show.py w0 --seed 42 --run runs/v4_sweep/fedavg_s42_label_alpha_0_1_flower
 ```
 
 Sẽ thấy: `-> KHỚP`.
@@ -84,7 +84,7 @@ Sẽ thấy: `-> KHỚP`.
 **Bước 2, chứng minh phép gộp không gây sai lệch** (khoảng 1 phút): cho mỗi client học đúng 1 bước rồi gộp, về toán học phải trùng học tập trung. Nếu truyền hoặc gộp có lỗi thì sẽ lệch.
 
 ```powershell
-& $py scripts/verify_fedsgd_equivalence.py --quick --device cpu
+.\.venv\Scripts\python.exe scripts/verify_fedsgd_equivalence.py --quick --device cpu
 ```
 
 Sẽ thấy:
@@ -99,7 +99,7 @@ B_local_steps label_alpha_0_1 float64 K=5: lệch L2 1.318e-01 ... <- 5 bước 
 **Bước 3, so trọng số hai mô hình đã train xong:**
 
 ```powershell
-& $py scripts/demo_show.py compare --a runs/v4b/centralized_s42 --b runs/v4b/fedavg_s42
+.\.venv\Scripts\python.exe scripts/demo_show.py compare --a runs/v4b/centralized_s42 --b runs/v4b/fedavg_s42
 ```
 
 Sẽ thấy: L2 tham số 29,17; 94,72% dự đoán trùng trên 13.101 ảnh. **Đây là khác biệt do cách học, không phải lỗi truyền**, vì mục 1 đã chứng minh truyền đúng.
@@ -118,7 +118,7 @@ Sẽ thấy: L2 tham số 29,17; 94,72% dự đoán trùng trên 13.101 ảnh. *
 ## Mục 6: Huấn luyện tổng so với huấn luyện client
 
 ```powershell
-& $py scripts/demo_show.py run --run runs/v4_sweep/fedavg_s42_label_alpha_0_1_flower --every 20
+.\.venv\Scripts\python.exe scripts/demo_show.py run --run runs/v4_sweep/fedavg_s42_label_alpha_0_1_flower --every 20
 ```
 
 Sẽ thấy:
@@ -138,8 +138,8 @@ Cách đọc:
 **Chạy thật hai đường cùng một lệnh train, chỉ khác cờ** (khoảng 1,5 phút):
 
 ```powershell
-& $py scripts/train_v4.py --method centralized --seed 42 --limit 200 --budget 2 --workers 0 --device cpu --batch-size 16 --out tmp/demo/runs
-& $py scripts/train_v4.py --method fedavg --runtime flower --seed 42 --limit 200 --budget 2 --workers 0 --device cpu --batch-size 16 --out tmp/demo/runs --tag flower
+.\.venv\Scripts\python.exe scripts/train_v4.py --method centralized --seed 42 --limit 200 --budget 2 --workers 0 --device cpu --batch-size 16 --out tmp/demo/runs
+.\.venv\Scripts\python.exe scripts/train_v4.py --method fedavg --runtime flower --seed 42 --limit 200 --budget 2 --workers 0 --device cpu --batch-size 16 --out tmp/demo/runs --tag flower
 ```
 
 Chạy lại phải xóa `tmp/demo/runs` trước, nếu không lệnh sẽ báo đã xong và bỏ qua.
@@ -171,18 +171,18 @@ Chạy lại phải xóa `tmp/demo/runs` trước, nếu không lệnh sẽ báo
 3. Cửa sổ 3: `ssh -p 3000 root@n2.ckey.vn`, rồi `bash ~/cropfed/speedtest_client1.sh`.
 4. Cửa sổ 4, trên laptop:
    ```powershell
-   & $py -m src.federated.client_app --client-id 0 --server 127.0.0.1:18089 --partition-dir tmp/speedtest/partition --dataset-root tmp/speedtest/images_client_00 --require-real-data --local-epochs 2 --seed 42
+   .\.venv\Scripts\python.exe -m src.federated.client_app --client-id 0 --server 127.0.0.1:18089 --partition-dir tmp/speedtest/partition --dataset-root tmp/speedtest/images_client_00 --require-real-data --local-epochs 2 --seed 42
    ```
 5. Xong thì kéo kết quả về và xem:
    ```powershell
    scp -P 3000 root@n2.ckey.vn:cropfed/speedtest/out/wan_history.json tmp/demo/wan_history.json
-   & $py scripts/demo_show.py flower --history tmp/demo/wan_history.json
+   .\.venv\Scripts\python.exe scripts/demo_show.py flower --history tmp/demo/wan_history.json
    ```
 
 **Cách B, không còn máy thuê:** xem lại kết quả đã đo thật ngày 02/11:
 
 ```powershell
-& $py scripts/demo_show.py flower --history artifacts/network_speedtest/20261102T143913Z_wan_may_thue/wan_history.json
+.\.venv\Scripts\python.exe scripts/demo_show.py flower --history artifacts/network_speedtest/20261102T143913Z_wan_may_thue/wan_history.json
 ```
 
 Kết quả đã đo, 3 vòng:
@@ -212,7 +212,8 @@ Bảng đầy đủ ở mục 9 của `docs/KIEM_CHUNG_PHAN_TAN_TAP_TRUNG.md`, n
 
 | Hiện tượng | Xử lý |
 |---|---|
+| `The expression after '&' ... not valid` | Lệnh bản cũ dùng biến `$py` chưa đặt; dùng lệnh `.\.venv\Scripts\python.exe` trong hướng dẫn này |
 | Client báo không nối được | Chưa thấy `Starting Flower Server`, hoặc cổng đang bị chiếm: đóng hết cửa sổ cũ rồi chạy lại từ máy chủ |
-| `tmp/speedtest` không có | `& $py -m scripts.prepare_network_speedtest --out tmp/speedtest --per-class 10` |
+| `tmp/speedtest` không có | `.\.venv\Scripts\python.exe -m scripts.prepare_network_speedtest --out tmp/speedtest --per-class 10` |
 | Lệnh train báo "đã xong, bỏ qua" | Xóa `tmp/demo/runs` |
 | Hết RAM, máy treo | Đóng Chrome, game; 2 client cần khoảng 3 GB |
