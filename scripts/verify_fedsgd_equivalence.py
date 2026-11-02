@@ -153,6 +153,7 @@ def main() -> int:
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--out", type=Path, default=ROOT / "artifacts" / "fedsgd_equivalence.json")
+    parser.add_argument("--quick", action="store_true", help="bản rút gọn cho demo trên CPU, khoảng 1 phút, chỉ in ra màn hình: phép A float64 và B với K = 5; KHÔNG ghi artifacts")
     args = parser.parse_args()
 
     import torch
@@ -180,6 +181,10 @@ def main() -> int:
         report["checks"].append(entry)
         print(f"[fedsgd] {name} {scheme} {entry['dtype']} K={local_steps}: lệch L2 {entry['l2']:.3e}, lớn nhất {entry['max_abs']:.3e}, tương đối {entry['l2_relative_to_centralized_travel']:.3e}", flush=True)
 
+    if args.quick:
+        run("A_fedsgd", "label_alpha_0_1", torch.float64, 5, 1, False)
+        run("B_local_steps", "label_alpha_0_1", torch.float64, 1, 5, False)
+        return 0
     for scheme in ("label_alpha_0_1", "iid"):
         run("A_fedsgd", scheme, torch.float64, TOTAL_STEPS, 1, False)
     run("A_fedsgd", "label_alpha_0_1", torch.float32, TOTAL_STEPS, 1, False)
