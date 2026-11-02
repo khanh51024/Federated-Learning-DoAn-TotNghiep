@@ -206,6 +206,7 @@ Ba vòng đều đủ hai client thật, hash đúng và không bị từ chối
 | Cách chia | Biến thể | Toàn tập thử top-1 (%) | PlantVillage (%) | Ngoài đồng cùng nguồn (%) | PlantDoc (%) |
 |---|---|---|---|---|---|
 | toàn bộ | centralized | 97.69 ± 0.18 | 99.38 ± 0.16 | 92.23 ± 0.47 | 57.56 ± 1.54 |
+| toàn bộ | centralized+adamw | 97.80 ± 0.06 | 99.63 ± 0.02 | 91.77 ± 0.17 | 55.43 ± 1.87 |
 | iid | fedavg+flower | 96.80 ± 0.38 | 98.75 ± 0.37 | 90.09 ± 0.59 | 55.43 ± 1.34 |
 | label_alpha_0_1 | fedavg | 93.93 ± 0.12 | 96.85 ± 0.04 | 83.13 ± 0.37 | 40.50 ± 2.35 |
 | label_alpha_0_1 | fedavg+flower | 94.03 ± 0.10 | 96.81 ± 0.10 | 84.08 ± 0.42 | 39.73 ± 2.20 |
@@ -289,12 +290,12 @@ Theo file Word, đợt này bổ sung bằng chứng cho N1.2, N1.3, N2.3 và de
 
 | Nhiệm vụ | Bằng chứng và phần còn thiếu |
 |---|---|
-| N1.1 | V4b có Centralized SGD cùng công thức; chưa bổ sung đối chứng AdamW cùng release trong đợt này. |
+| N1.1 | Có Centralized SGD và AdamW đối chứng (lr 0,001), đều 3 seed trên cùng release; xem bảng mục 9. Chọn SGD làm trần chính vì cùng bộ tối ưu với client, nên khác biệt với FedAvg không đến từ bộ tối ưu; hai bản chênh rất ít. |
 | N1.2 | Đã chạy Flower ba seed và đo chênh lệch với mô phỏng ở α=0,1; kết luận theo bảng chênh lệch, không mặc định đạt tương đương. |
 | N1.3 | Run FedAvg mới có nhật ký đủ vòng, hash, delta và thời gian; chưa chạy lại Local-only để bổ sung trường nhật ký cũ còn thiếu. |
 | N1.4 | Giữ thiết kế tập niêm phong hiện có; không mở độ chính xác trong đợt này. |
 | N2.1 | FedAvg đủ năm α và ba seed; Local-only còn thiếu ở các α khác. |
-| N2.2 | Đã có phân hoạch lệch số lượng/nguồn; chưa train hai dạng này trong đợt hiện tại. |
+| N2.2 | Đã có phân hoạch lệch số lượng/nguồn; chưa có kết quả: máy thuê mất kết nối khi đang chạy khối này. |
 | N2.3 | Có accuracy mô phỏng phân phối client và độ phủ trong bảng fairness. |
 | N2.4 | Có đường Centralized/FedAvg theo α; Local-only chỉ có điểm α=0,1. |
 | N3.1 | Mã thuật toán có test; chưa có bộ thí nghiệm Flower đầy đủ cho bốn thuật toán. |

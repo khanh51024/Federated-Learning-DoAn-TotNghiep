@@ -3,6 +3,10 @@ scheme,alpha,variant,seeds,part,n,top1_mean_%,top1_std_%,macro_f1_mean_%,macro_f
 ,,centralized,3,plantdoc_holdout_v3,172,57.56,1.54,61.51,1.36,,,,,,,,,,,
 ,,centralized,3,field_same_source_test,2086,92.23,0.47,78.96,3.20,,,,,,,,,,,
 ,,centralized,3,all_test,13101,97.69,0.18,97.09,0.15,,,,,,,,,,,
+,,centralized+adamw,3,plantvillage_test,10843,99.63,0.02,99.46,0.01,-0.26,-0.40,,,,,,,,,
+,,centralized+adamw,3,plantdoc_holdout_v3,172,55.43,1.87,59.69,2.71,2.13,1.82,,,,,,,,,
+,,centralized+adamw,3,field_same_source_test,2086,91.77,0.17,79.50,0.10,0.46,-0.54,,,,,,,,,
+,,centralized+adamw,3,all_test,13101,97.80,0.06,97.20,0.08,-0.11,-0.11,,,,,,,,,
 iid,iid,fedavg+flower,3,plantvillage_test,10843,98.75,0.37,98.28,0.44,0.63,0.79,,,,,,27.3,1724,2523,1.655
 iid,iid,fedavg+flower,3,plantdoc_holdout_v3,172,55.43,1.34,58.03,0.42,2.13,3.48,,,,,,27.3,1724,2523,1.655
 iid,iid,fedavg+flower,3,field_same_source_test,2086,90.09,0.59,76.70,0.25,2.14,2.26,,,,,,27.3,1724,2523,1.655

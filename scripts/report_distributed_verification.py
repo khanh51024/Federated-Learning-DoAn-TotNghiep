@@ -283,12 +283,12 @@ def main() -> int:
                      "Chưa có hóa đơn để xác nhận tiền bị trừ thực tế; số này không gồm thời gian thuê trước batch "
                      "hoặc sau batch. Tổng thời gian vòng ở bảng run có thể chồng lấp ở khối C, không cộng thành thời gian thuê.\n"]
     sections += ["## Đối chiếu từng nhiệm vụ trong file Word\n", table(["Nhiệm vụ", "Bằng chứng và phần còn thiếu"], [
-        ['N1.1', 'V4b có Centralized SGD cùng công thức; chưa bổ sung đối chứng AdamW cùng release trong đợt này.'],
+        ['N1.1', 'Có Centralized SGD và AdamW đối chứng (lr 0,001), đều 3 seed trên cùng release; xem bảng mục 9. Chọn SGD làm trần chính vì cùng bộ tối ưu với client, nên khác biệt với FedAvg không đến từ bộ tối ưu; hai bản chênh rất ít.'],
         ['N1.2', 'Đã chạy Flower ba seed và đo chênh lệch với mô phỏng ở α=0,1; kết luận theo bảng chênh lệch, không mặc định đạt tương đương.'],
         ['N1.3', 'Run FedAvg mới có nhật ký đủ vòng, hash, delta và thời gian; chưa chạy lại Local-only để bổ sung trường nhật ký cũ còn thiếu.'],
         ['N1.4', 'Giữ thiết kế tập niêm phong hiện có; không mở độ chính xác trong đợt này.'],
         ['N2.1', 'FedAvg đủ năm α và ba seed; Local-only còn thiếu ở các α khác.'],
-        ['N2.2', 'Đã có phân hoạch lệch số lượng/nguồn; chưa train hai dạng này trong đợt hiện tại.'],
+        ['N2.2', 'Đã có phân hoạch lệch số lượng/nguồn; chưa có kết quả: máy thuê mất kết nối khi đang chạy khối này.'],
         ['N2.3', 'Có accuracy mô phỏng phân phối client và độ phủ trong bảng fairness.'],
         ['N2.4', 'Có đường Centralized/FedAvg theo α; Local-only chỉ có điểm α=0,1.'],
         ['N3.1', 'Mã thuật toán có test; chưa có bộ thí nghiệm Flower đầy đủ cho bốn thuật toán.'],
