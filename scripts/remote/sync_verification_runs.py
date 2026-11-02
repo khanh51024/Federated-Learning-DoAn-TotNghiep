@@ -47,7 +47,7 @@ def main() -> int:
             paths = remote(["find", str(root), "-mindepth", "2", "-maxdepth", "2", "-type", "f", "-name", "DONE", "-printf", "%h\n"])
             for line in sorted(paths.splitlines()):
                 path = PurePosixPath(line)
-                if path.parent != root or not re.fullmatch(r"fedavg_s(?:42|123|2026)_[a-z0-9_]+", path.name):
+                if path.parent != root or not re.fullmatch(r"(?:fedavg|centralized|local_c[0-4])_s(?:42|123|2026)_[a-z0-9_]+", path.name):
                     raise ValueError(f"unexpected run path: {line}")
                 target = out / path.name
                 if (target / "DONE").is_file():
