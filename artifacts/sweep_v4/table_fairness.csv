@@ -1,0 +1,13 @@
+scheme,alpha,variant,model,split,domain,seeds,mean_%,std_between_clients_%,best_%,worst_%,gap_best_worst_points,smallest_client_%,coverage_min
+label_alpha_0_1,0.1,fedavg,chinh,val,all,3,90.76,4.24,95.24,83.13,12.11,83.13,1.000
+label_alpha_0_1,0.1,fedavg,chinh,val,plantvillage,3,95.57,1.35,97.23,93.37,3.86,93.37,1.000
+label_alpha_0_1,0.1,fedavg,chinh,val,field,3,77.99,6.26,83.72,66.61,17.10,66.61,0.902
+label_alpha_0_1,0.1,fedavg,chinh,legacy_diagnostic_test,all,3,92.33,4.02,95.97,84.56,11.41,84.56,1.000
+label_alpha_0_1,0.1,fedavg,chinh,legacy_diagnostic_test,plantvillage,3,95.41,2.53,97.21,90.43,6.78,90.43,1.000
+label_alpha_0_1,0.1,fedavg,chinh,legacy_diagnostic_test,field,3,75.30,8.32,83.96,60.16,23.80,60.16,0.773
+label_alpha_0_1,0.1,local,chinh,val,all,3,97.09,0.30,97.52,96.68,0.84,97.04,1.000
+label_alpha_0_1,0.1,local,chinh,val,plantvillage,3,98.70,0.45,99.24,98.00,1.24,98.28,1.000
+label_alpha_0_1,0.1,local,chinh,val,field,3,90.11,2.84,94.11,87.25,6.86,93.96,0.902
+label_alpha_0_1,0.1,local,chinh,legacy_diagnostic_test,all,3,97.96,0.61,98.66,97.10,1.56,97.25,1.000
+label_alpha_0_1,0.1,local,chinh,legacy_diagnostic_test,plantvillage,3,98.74,0.57,99.30,97.85,1.46,97.91,1.000
+label_alpha_0_1,0.1,local,chinh,legacy_diagnostic_test,field,3,89.05,3.22,94.14,84.33,9.81,88.12,0.773

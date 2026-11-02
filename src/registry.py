@@ -200,6 +200,7 @@ KNOWN_PREPROCESSING = frozenset({"imagenet_eval_v1", "canonical_v1", "get_defaul
 COMMUNITY_SIMULATION_JSON = f"{COMMUNITY_FL_DIR}/simulation_report.json"  # thí nghiệm mô phỏng học phân tán cộng đồng
 REPORT_SNAPSHOTS_DIR = "artifacts/report_snapshots"  # scripts/swap_web_models.py: bản chụp báo cáo của gói đang dùng, để lùi gói
 CLIENT_FAIRNESS_JSON = "artifacts/client_fairness_report.json"  # scripts/report_client_fairness.py: độ chính xác trên lớp client có / không có ảnh học
+SWEEP_V4_DIR = "artifacts/sweep_v4"  # scripts/eval_sweep_v4.py: bảng và biểu đồ theo cách chia client × thuật toán × hạt giống
 WEB_MODEL_CHECK_JSON = "artifacts/web_model_check.json"  # scripts/web_model_check.py: dự đoán trên web so với tính toán offline
 PLANTVILLAGE_EVAL_JSON = "artifacts/plantvillage_reference_eval.json"  # đánh giá lại mô hình PlantVillage (không huấn luyện lại)
 

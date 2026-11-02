@@ -1,0 +1,16 @@
+scheme,alpha,variant,seeds,part,n,top1_mean_%,top1_std_%,macro_f1_mean_%,macro_f1_std_%,gap_top1_points,gap_macro_f1_points,gap_closure_top1,diff_vs_fedavg_points,ci95_low,ci95_high,better_significant,rounds_to_convergence,mb_total_to_convergence,mb_total,mb_total_vs_raw_images
+,,centralized,3,plantvillage_test,10843,99.38,0.16,99.06,0.13,,,,,,,,,,,
+,,centralized,3,plantdoc_holdout_v3,172,57.56,1.54,61.51,1.36,,,,,,,,,,,
+,,centralized,3,field_same_source_test,2086,92.23,0.47,78.96,3.20,,,,,,,,,,,
+,,centralized,3,all_test,13101,97.69,0.18,97.09,0.15,,,,,,,,,,,
+,,centralized,3,plantwild_strict,2304,36.88,0.26,33.88,0.26,,,,,,,,,,,
+label_alpha_0_1,0.1,fedavg,3,plantvillage_test,10843,96.85,0.04,95.96,0.10,2.53,3.10,,,,,,34.0,2259,2510,1.647
+label_alpha_0_1,0.1,fedavg,3,plantdoc_holdout_v3,172,40.50,2.35,47.43,0.91,17.05,14.08,,,,,,34.0,2259,2510,1.647
+label_alpha_0_1,0.1,fedavg,3,field_same_source_test,2086,83.13,0.37,70.80,0.26,9.11,8.15,,,,,,34.0,2259,2510,1.647
+label_alpha_0_1,0.1,fedavg,3,all_test,13101,93.93,0.12,92.90,0.17,3.77,4.18,,,,,,34.0,2259,2510,1.647
+label_alpha_0_1,0.1,fedavg,3,plantwild_strict,2304,29.80,0.24,29.12,0.10,7.07,4.76,,,,,,34.0,2259,2510,1.647
+label_alpha_0_1,0.1,local,3,plantvillage_test,10843,48.09,0.07,31.69,0.20,51.29,67.38,,,,,,,,,
+label_alpha_0_1,0.1,local,3,plantdoc_holdout_v3,172,23.68,0.76,19.29,0.45,33.88,42.22,,,,,,,,,
+label_alpha_0_1,0.1,local,3,field_same_source_test,2086,40.46,0.65,24.10,0.79,51.77,54.86,,,,,,,,,
+label_alpha_0_1,0.1,local,3,all_test,13101,46.55,0.13,31.99,0.13,51.14,65.10,,,,,,,,,
+label_alpha_0_1,0.1,local,3,plantwild_strict,2304,16.24,0.08,9.83,0.20,20.63,24.05,,,,,,,,,

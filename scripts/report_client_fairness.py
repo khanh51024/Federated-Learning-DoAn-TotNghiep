@@ -30,6 +30,36 @@ def group_accuracy(correct: np.ndarray, mask: np.ndarray) -> dict[str, Any]:
     return {"n": n, "correct": int(correct[mask].sum()) if n else 0}
 
 
+def class_recall(targets: np.ndarray, preds: np.ndarray, num_classes: int) -> np.ndarray:
+    """Recall từng lớp trên tập đo; lớp không có ảnh trong tập là NaN."""
+    recall = np.full(num_classes, np.nan)
+    for c in np.unique(targets):
+        recall[int(c)] = float(np.mean(preds[targets == c] == c))
+    return recall
+
+
+def client_accuracy(recall: np.ndarray, shard_counts: np.ndarray) -> dict[str, Any]:
+    """Độ chính xác nếu tập đo có đúng phân phối nhãn của shard client: tổng theo lớp của (tỉ lệ lớp trong shard × recall lớp).
+
+    Lớp client có ảnh nhưng tập đo không có thì bị bỏ và chuẩn hóa lại; `coverage` là phần shard còn được tính (1 = đo đủ)."""
+    covered = ~np.isnan(recall)
+    mass = float(shard_counts[covered].sum())
+    total = float(shard_counts.sum())
+    if mass == 0:
+        return {"accuracy": None, "coverage": 0.0}
+    return {"accuracy": float((shard_counts[covered] * recall[covered]).sum() / mass), "coverage": mass / total}
+
+
+def fairness_summary(by_client: list[float | None], n_k: list[int]) -> dict[str, Any]:
+    """Các chỉ số công bằng của mục 4 trong yêu cầu đề tài. Độ lệch chuẩn là độ lệch chuẩn tổng thể: 5 client là toàn bộ hệ thống, không phải mẫu."""
+    known = [(a, n) for a, n in zip(by_client, n_k) if a is not None]
+    if not known:
+        return {"mean": None, "std_between_clients": None, "best": None, "worst": None, "gap_best_worst": None, "smallest_client_accuracy": None}
+    values = np.array([a for a, _ in known])
+    return {"mean": float(values.mean()), "std_between_clients": float(values.std()), "best": float(values.max()), "worst": float(values.min()),
+            "gap_best_worst": float(values.max() - values.min()), "smallest_client_accuracy": float(min(known, key=lambda item: item[1])[0])}
+
+
 def analyze(targets: np.ndarray, logits: dict[str, np.ndarray], client_models: dict[str, str], present: dict[str, np.ndarray]) -> dict[str, Any]:
     """Mỗi client: số ảnh và số ảnh đúng của Centralized, FedAvg, Local-only của client đó, tách theo lớp client có hoặc không có ảnh học."""
     correct = {m: logits[m].argmax(axis=1) == targets for m in logits}
