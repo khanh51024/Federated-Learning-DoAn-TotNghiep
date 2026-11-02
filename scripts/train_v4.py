@@ -12,6 +12,7 @@ phòng thí nghiệm với ảnh ngoài đồng; chọn checkpoint theo macro-F1
 
 Đầu ra ở `--out/<cách>[_cK]_s<hạt giống>/`: config.json, history.jsonl, checkpoint_last.pt (để chạy tiếp khi bị ngắt), checkpoint_best.pt
 (`model_state`, cùng định dạng mô hình trên web), logits_best.npz (val, calibration, legacy_diagnostic_test), final.json, DONE.
+`calibration` là tập kiểm thử niêm phong (scripts/run_sealed_test.py): logit được lưu để khỏi chạy lại mô hình, nhưng không tóm tắt độ chính xác vào final.json.
 Chạy lại cùng lệnh sẽ tiếp tục từ checkpoint_last.pt; thư mục có DONE thì bỏ qua.
 
 Ví dụ:
@@ -48,6 +49,7 @@ from src.training.metrics import summarize  # noqa: E402
 CODE_FILES = ("scripts/train_v4.py", "src/training/data.py", "src/training/loop.py", "src/training/metrics.py", "src/data/robust_transforms.py",
               "src/training/gpu_augment.py", "src/federated/strategy.py", "src/federated/algorithms.py", "src/model/mobilenetv3.py",
               "src/common/image_io.py")
+SEALED_SPLIT = "calibration"
 AUG_DESCRIPTION = {
     "robust_v1": "robust_v1 (src/data/robust_transforms.py)",
     "gpu_v2": "gpu_v2 (get_cpu_train_transform + src/training/gpu_augment.py)",
@@ -322,7 +324,7 @@ def main() -> int:
     logits = {name: predict(model, loader, device, args.channels_last, args.amp) for name, loader in eval_loaders.items()}
     np.savez_compressed(run_dir / "logits_best.npz", **logits, **{f"{n}_sample_ids": np.array([r["sample_id"] for r in eval_rows[n]]) for n in eval_rows})
     final = {"run": run_dir.name, "best_step": state["step"], "selection_score": state["selection_score"], "config": config,
-             **{name: summarize(logits[name], eval_rows[name]) for name in eval_rows}}
+             **{name: summarize(logits[name], eval_rows[name]) for name in eval_rows if name != SEALED_SPLIT}}
     if args.algo == "fedbn":
         # Mô hình cá nhân hóa của FedBN: trọng số toàn cục + BatchNorm riêng của từng client; chấm trên val và tập giữ riêng (mô hình toàn cục ở trên dùng BN đã gộp)
         global_state = get_parameters(model)

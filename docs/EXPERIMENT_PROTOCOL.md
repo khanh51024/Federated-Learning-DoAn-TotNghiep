@@ -159,7 +159,7 @@ kiểm trùng bằng băm byte và dHash; mã băm manifest của release và c�
 `source_dataset` thành ba nhóm: `plantvillage` (ảnh trong phòng), `plantdoc` (ngoài đồng, nền phức tạp) và `field_other` (ảnh ngoài đồng từ các bộ công khai khác, nhãn do tác giả bộ
 dữ liệu gán hoặc sàng lọc bằng mắt). Release v4 gán `source_domain = "plantdoc"` cho mọi ảnh ngoài đồng nên không dùng `source_domain` để chia nhóm.
 
-**Tập đánh giá.** `val` (chọn checkpoint, báo cáo kèm cảnh báo là đã tham gia chọn), `calibration` (chỉ để fit nhiệt độ T), `legacy_diagnostic_test` (không dùng để chọn;
+**Tập đánh giá.** `val` (chọn checkpoint, báo cáo kèm cảnh báo là đã tham gia chọn), `calibration` (fit nhiệt độ T; đồng thời là tập kiểm thử niêm phong, xem mục 9), `legacy_diagnostic_test` (không dùng để chọn;
 chưa nằm trong kiểm tra trùng ảnh của `audit_release_leakage.py`), PlantWild (ảnh bệnh nguồn lạ, đo một lần sau khi train, không dùng để chọn). Chọn checkpoint theo trung bình
 macro-F1 trên các nhóm nguồn của `val` có từ 30 ảnh trở lên.
 
@@ -174,3 +174,48 @@ của một client. Phân vùng non-IID: `label_alpha_0_1` (Dirichlet α = 0,1, 
 
 **Hạn chế.** Kết quả trên PlantDoc và PlantWild thấp hơn nhiều so với ảnh cùng nguồn (PlantWild: Centralized 36,9%, FedAvg 29,8% trung bình 3 hạt giống); FedAvg chưa dò riêng tốc độ học trên dữ liệu lệch;
 chưa thử FedProx, SCAFFOLD, FedBN; năm client là phân vùng giả lập.
+
+## 9. Tập đánh giá: lựa chọn và lý do (N1.4, N5.3)
+
+**Vấn đề.** Tập PlantDoc giữ riêng chỉ có 172 ảnh, 13/38 lớp, khoảng tin cậy 95% rộng khoảng ±7 điểm; mọi tập thử hiện có đã được đọc nhiều lần nên không còn là tập niêm phong.
+
+**Lựa chọn: niêm phong split `calibration` của release v4, và khi chạy niêm phong thì gộp PlantDoc của split này với 172 ảnh giữ riêng.**
+
+| Phần | Số ảnh | Ghi chú |
+|---|---:|---|
+| PlantVillage | 3.934 | |
+| PlantDoc | 388 | 19 lớp, 144 cảnh; 97 ảnh là lá cách ly được nhận lại, nhãn chỉ qua sàng lọc bằng AI nên báo thêm một số không tính chúng |
+| Ngoài đồng khác | 2.683 | 35 lớp, 20 nguồn |
+| PlantDoc gộp với tập giữ riêng | 560 | khoảng tin cậy hẹp lại còn khoảng ±4 điểm nếu các ảnh độc lập; bootstrap theo cụm cảnh sẽ rộng hơn một chút |
+
+**Vì sao chọn cách này.**
+- Split này chưa từng dùng để học, chọn checkpoint hay chọn cấu hình, và chưa có báo cáo độ chính xác nào đọc nó (`artifacts/statistics_report.json` chỉ có `val` và `test`). Việc duy nhất đã dùng là fit nhiệt độ T cho xác suất hiển thị trên web; T không đổi dự đoán top-1.
+- Logit đã có sẵn trong `logits_best.npz` của mọi run, nên không tốn thêm giờ GPU.
+
+**Vì sao không chọn hai hướng còn lại.**
+- *Kiểm tra chéo trên PlantDoc:* PlantDoc nằm trong tập học của release v4, mỗi phần gập phải huấn luyện lại toàn bộ ma trận, tốn gấp nhiều lần ngân sách GPU.
+- *Tập mới từ kho `data/external/sources`:* 5.017 ảnh chưa vào release và không chung nhóm với release, nhưng đa số là ảnh đã **bị loại** khi kiểm nhãn (ví dụ thư mục đào "healthy" toàn ảnh quả, nhóm iNaturalist lá khỏe phần lớn là cả bụi cây hoặc cành trụi; xem `docs/DATASET_V4.md` mục 5). Lấy chúng làm tập thử sẽ cho số thấp giả tạo. Ảnh tự chụp hiện có 0 ảnh.
+
+**Giới hạn cần nói khi báo cáo.**
+- Tập này cùng nguồn với tập học, nên nó đo khả năng tổng quát trên ảnh chưa thấy của các nguồn đã biết. Khả năng với nguồn lạ vẫn đo bằng PlantWild (2.304 ảnh bệnh, không niêm phong).
+- Một phiên chụp ngô Common rust 465 ảnh nằm trọn trong split này (`docs/DATASET_V4.md` mục 4), nên phần "ngoài đồng khác" nghiêng về lớp đó; macro-F1 và bootstrap theo cụm giảm bớt ảnh hưởng nhưng không xóa hết.
+- `final.json` của 21 run v4b có sẵn tóm tắt split này từ trước khi có quy định; không báo cáo nào đọc mục đó và từ nay không được đọc.
+
+**Khóa.** `scripts/run_sealed_test.py` là đường duy nhất tính độ chính xác trên split này: cần `--confirm-final`, bắt buộc đủ 3 hạt giống và đủ ba mốc, kết quả ghi `artifacts/sealed_test_result.json` và đã có thì từ chối chạy lại, không có cờ ghi đè. `--dry-run` kiểm đủ run mà không mở logit và không tính số nào. `scripts/train_v4.py` không còn tóm tắt split này; `tests/test_run_sealed_test.py` khóa các điều trên.
+
+## 10. Sinh lại kịch bản phân hoạch non-IID
+
+Mọi cách chia dựng từ cùng tập train của release `68e57451…`, không đổi mã băm release; mã băm từng shard và kết quả kiểm toán (tách rời, hợp đúng tập train, không cắt nhóm) ghi ở `<release>/partitions_extra/extra_manifest.json`. Dựng lại một cách chia đã có mà ra shard khác thì script dừng.
+
+```bash
+python scripts/build_extra_partitions.py          # dựng toàn bộ bảng dưới
+```
+
+| Dạng lệch | Tên cách chia | Mức đo được | Trong đợt |
+|---|---|---|---|
+| Lệch nhãn | `label_alpha_0_1` (có sẵn trong release), `label_alpha_0_5`, `label_alpha_1_0`, `label_alpha_10_0`, `label_alpha_100_0`; `iid` (có sẵn) làm điểm neo | α = 100: TVD nhãn 0,03–0,04; α = 0,1: khoảng 0,6 | N2.1 |
+| Lệch nhãn, đo dao động do cách chia | `label_alpha_0_1_p123`, `label_alpha_0_1_p2026` | | N2.1 |
+| Lệch số lượng | `quantity_alpha_0_5` | client lớn nhất gấp 7,7 lần client nhỏ nhất (18.554 so với 2.413 ảnh), mọi client đủ 38 lớp, TVD nhãn ≤ 0,02 | N2.2 |
+| Lệch đặc trưng (nguồn ảnh) | `source_skew` | tỉ lệ ảnh ngoài đồng theo client 0%, 8%, 25%, 50%, 83%; cỡ client gần bằng nhau | N2.2 |
+
+**Giới hạn của `source_skew`:** ảnh ngoài đồng và ảnh PlantVillage không có cùng phân phối lớp, nên chia lệch nguồn kéo theo lệch nhãn nhẹ (TVD 0,04–0,26, so với khoảng 0,6 ở α = 0,1). Khi phân tích phải nói rõ đây không phải lệch đặc trưng thuần túy.
