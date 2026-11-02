@@ -36,6 +36,7 @@ class ClientPlan:
     algorithm_options: dict[str, float]
     state_dir: str
     device: str
+    compression: str | None = None
 
 
 def state_to_record(state: dict[str, Any]) -> Any:
@@ -95,7 +96,7 @@ def client_step(plan: ClientPlan, client: int, step: int, lr: float, parent: dic
     import torch
 
     from src.model.mobilenetv3 import set_parameters
-    from src.training.client_round import train_one_client
+    from src.training.client_round import compress_upload, train_one_client
 
     env = _client_env(plan, client)
     algo = env["algo"]
@@ -108,6 +109,7 @@ def client_step(plan: ClientPlan, client: int, step: int, lr: float, parent: dic
     set_parameters(local, parent)
     state, stats = train_one_client(local, client, parent, algo, env["data"], lr, env["recipe"], env["device"])
     extra_up = algo.upload(client)
+    state = compress_upload(state, parent, plan.compression, stats, 0)      # số byte thật lấy từ tin nhắn ở `train` bên dưới
     private = algo.client_state(client)
     if private:
         target = state_path(plan, client, step)
@@ -174,6 +176,8 @@ def locate_clients(grid: Any, num_clients: int, timeout: float) -> dict[int, int
 def make_round_fn(grid: Any, algo: Any, plan: ClientPlan, located: dict[int, int], timeout: float) -> Callable[[int, float, dict[str, Any]], tuple[list[dict[str, Any]], list[dict[str, Any]]]]:
     from flwr.app import ConfigRecord, Message, MessageType, RecordDict
 
+    from src.federated.compression import decode_update
+
     plan_json = json.dumps(dataclasses.asdict(plan))
 
     def run_round(step: int, lr: float, parent: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -186,6 +190,8 @@ def make_round_fn(grid: Any, algo: Any, plan: ClientPlan, located: dict[int, int
         for reply in replies:
             stats = json.loads(str(reply.content["report"]["stats"]))
             weights = record_to_state(reply.content["arrays"])
+            if plan.compression:
+                weights = decode_update(weights, parent, plan.compression)
             num_examples = int(stats.pop("num_examples"))
             algo.absorb_upload(stats["client"], record_to_state(reply.content["extra"]), weights)
             updates.append({"weights": weights, "num_examples": num_examples, "client_id": stats["client"]})

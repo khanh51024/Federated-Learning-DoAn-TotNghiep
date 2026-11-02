@@ -26,7 +26,7 @@ import torch.nn.functional as F
 
 from src.federated.strategy import aggregate_fedavg
 
-ALGORITHMS = ("fedavg", "fedprox", "fedbn", "scaffold", "fedavgm", "moon")
+ALGORITHMS = ("fedavg", "fedprox", "fedbn", "scaffold", "fedavgm", "moon", "fedbnprox")
 _BN_SUFFIXES = ("weight", "bias", "running_mean", "running_var", "num_batches_tracked")
 
 
@@ -92,7 +92,7 @@ class ProxHooks(LocalHooks):
     def extra_loss(self, model, images, logits):
         if not self.mu:
             return None
-        total = sum(((p.float() - self.anchor[name]) ** 2).sum() for name, p in model.named_parameters())
+        total = sum(((p.float() - self.anchor[name]) ** 2).sum() for name, p in model.named_parameters() if name in self.anchor)
         return 0.5 * self.mu * total
 
 
@@ -259,6 +259,17 @@ class FedBN(FedAlgorithm):
         self.client_bn[client] = state["client_bn"]
 
 
+class FedBNProx(FedBN):
+    """Cải tiến đề xuất N3.3: BatchNorm riêng của FedBN giữ đặc trưng cục bộ (lệch miền), số hạng gần của FedProx kiềm chế độ trôi của phần còn lại (lệch nhãn).
+
+    Điểm khác với ghép thô hai thuật toán: số hạng gần KHÔNG áp lên tham số BatchNorm, vì chúng được phép khác mô hình chung; kéo chúng về mô hình chung sẽ triệt tiêu ý của FedBN."""
+    name = "fedbnprox"
+
+    def make_hooks(self, client, local, parent, lr, device):
+        anchor = {name: parent[name].to(device=device, dtype=torch.float32) for name, _ in local.named_parameters() if name not in self.bn_keys}
+        return ProxHooks(anchor, float(self.options["mu"]))
+
+
 class Scaffold(FedAlgorithm):
     """SCAFFOLD, phiên bản II (c_i⁺ = c_i − c + (x − y_i)/(K·η)). Với động lượng m, độ dời mỗi bước xấp xỉ η/(1−m)·g nên dùng η_hiệu_dụng = η/(1−m).
     Đây là xấp xỉ: bản gốc phân tích cho SGD thuần. Trung bình biến điều khiển theo n_k, cùng trọng số với phép gộp mô hình."""
@@ -407,4 +418,6 @@ def make_algorithm(name: str, model: torch.nn.Module, num_clients: int, *, mu: f
         return FedAvgM(model, num_clients, beta=server_momentum, server_lr=server_lr)
     if name == "moon":
         return Moon(model, num_clients, mu=moon_mu, tau=moon_tau)
+    if name == "fedbnprox":
+        return FedBNProx(model, num_clients, mu=mu)
     raise ValueError(f"thuật toán không có: {name} (có: {', '.join(ALGORITHMS)})")

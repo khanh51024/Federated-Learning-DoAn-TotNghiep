@@ -40,25 +40,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src import registry as reg  # noqa: E402
+from src.federated.compression import fake_quant_int8, is_quantizable  # noqa: E402,F401  (một cài đặt lượng tử hóa dùng chung với nén mỗi vòng)
 
 SCHEMES = ("fp32", "fp16", "int8_per_tensor", "int8_per_channel", "delta_int8_per_tensor", "delta_int8_per_channel")
 CALIBRATION_IMAGES = 256
 LATENCY_IMAGES = 100
-
-
-def is_quantizable(tensor: Any) -> bool:
-    """Trọng số conv/depthwise/tuyến tính: số thực từ 2 chiều trở lên."""
-    return tensor.is_floating_point() and tensor.ndim >= 2
-
-
-def fake_quant_int8(tensor: Any, per_channel: bool) -> tuple[Any, int]:
-    """Lượng tử hóa đối xứng int8 rồi giải lượng tử. Trả (tensor sau khi dựng lại, số hệ số tỉ lệ phải gửi kèm)."""
-    import torch
-
-    flat = tensor.reshape(tensor.shape[0], -1) if per_channel else tensor.reshape(1, -1)
-    scale = (flat.abs().amax(dim=1) / 127.0).clamp_min(1e-12)
-    quantized = torch.round(flat / scale[:, None]).clamp(-127, 127)
-    return (quantized * scale[:, None]).reshape(tensor.shape), int(scale.numel())
 
 
 def transform_state(state: dict[str, Any], scheme: str, w0: dict[str, Any] | None) -> tuple[dict[str, Any], int]:

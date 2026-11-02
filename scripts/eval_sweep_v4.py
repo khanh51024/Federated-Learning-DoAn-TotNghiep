@@ -80,6 +80,8 @@ def variant_of(cfg: dict[str, Any]) -> str:
     parts = [f"{algorithm['name']}({params})" if params else algorithm["name"]]
     if cfg.get("logit_adjust_tau"):
         parts.append(f"la={cfg['logit_adjust_tau']}")
+    if cfg.get("personalization"):
+        parts.append(f"tinh_chinh={cfg['personalization']['kind']}")
     if cfg.get("update_compression"):
         parts.append(f"nen={cfg['update_compression']}")
     if cfg.get("server_dp"):
@@ -339,6 +341,7 @@ def build_report(run_dirs: list[Path], release_dir: Path, dataset_root: Path, v3
             cell["fairness"] = fairness_of_cell(group, method, shards_of(scheme), rows_by_id)
             if any(r["personal"] for r in group):
                 cell["fairness_personalized"] = fairness_of_cell(group, "personalized", shards_of(scheme), rows_by_id)
+                cell["parts_personalized"] = personalized_parts(group, rows_by_id, v3_test_ids)
         report_cells.append(cell)
 
     return {"evidence": "gộp từ logits và nhật ký đã lưu của từng run; không chạy lại mô hình", "release_manifest_sha256": release["sha256"],
@@ -349,6 +352,25 @@ def build_report(run_dirs: list[Path], release_dir: Path, dataset_root: Path, v3
                             "fairness_std": "độ lệch chuẩn tổng thể giữa 5 client trong một hạt giống, rồi lấy trung bình qua hạt giống",
                             "better_significant": "cận dưới khoảng tin cậy 95% bootstrap theo cụm ảnh > 0 và chênh lệch dương ở mọi hạt giống"},
             "centralized_recipe": base_recipe, "raw_images": raw, "cells": report_cells, "excluded": excluded}
+
+
+def personalized_parts(group: list[dict[str, Any]], rows_by_id: dict[str, dict[str, dict[str, Any]]], v3_test_ids: set[str]) -> dict[str, Any]:
+    """Mô hình cá nhân hóa trên tập thử CHUNG (đủ 38 lớp): trung bình 5 client trong một hạt giống. Cho thấy cái giá của việc cá nhân hóa: giỏi hơn trên phân phối riêng, có thể kém đi trên lớp client không có."""
+    split = "legacy_diagnostic_test"
+    per_seed: dict[str, dict[str, dict[int, float]]] = defaultdict(lambda: {"top1": {}, "macro_f1": {}})
+    for run in group:
+        if not run["personal"]:
+            continue
+        rows = [rows_by_id[split][s] for s in run["ids"][split]]
+        targets = np.array([int(r["class_id"]) for r in rows])
+        masks = {**part_masks(rows, v3_test_ids), "all_test": np.ones(len(rows), dtype=bool)}
+        for part in TEST_PARTS:
+            if not masks[part].any():
+                continue
+            scores = [part_score(run["personal"][split][k][masks[part]], targets[masks[part]]) for k in range(NUM_CLIENTS)]
+            for metric in ("top1", "macro_f1"):
+                per_seed[part][metric][run["seed"]] = float(np.mean([s[metric] for s in scores]))
+    return {part: {metric: spread(values) for metric, values in block.items()} for part, block in per_seed.items()}
 
 
 def fairness_of_cell(group: list[dict[str, Any]], kind: str, shards: list[list[dict[str, Any]]], rows_by_id: dict[str, dict[str, dict[str, Any]]]) -> dict[str, Any]:
@@ -441,10 +463,10 @@ def write_tables(report: dict[str, Any], out_dir: Path) -> None:
 
 # --------------------------------------------------------------------------- biểu đồ (màu theo thực thể, không đổi giữa các hình; đã qua validate_palette.js)
 INK, INK_SOFT, GRID, SURFACE = "#0b0b0b", "#52514e", "#e4e3df", "#fcfcfb"
-SERIES_COLORS = {"centralized": "#2a78d6", "fedavg": "#eb6834", "local": "#1baf7a", "fedprox": "#eda100", "fedbn": "#e87ba4", "scaffold": "#008300", "moon": "#6250d6", "fedavgm": "#e34948"}
-SERIES_ORDER = ("centralized", "fedavg", "local", "fedprox", "fedbn", "scaffold", "moon", "fedavgm")
-SERIES_MARKERS = {"fedavg": "o", "local": "s", "fedprox": "^", "fedbn": "D", "scaffold": "v", "moon": "p", "fedavgm": "h"}   # mã hóa phụ: in đen trắng vẫn phân biệt được
-SERIES_LABELS = {"centralized": "Tập trung", "fedavg": "FedAvg", "local": "Cục bộ", "fedprox": "FedProx", "fedbn": "FedBN", "scaffold": "SCAFFOLD", "moon": "MOON", "fedavgm": "FedAvgM"}
+SERIES_COLORS = {"centralized": "#2a78d6", "fedavg": "#eb6834", "local": "#1baf7a", "fedprox": "#eda100", "fedbn": "#e87ba4", "scaffold": "#008300", "moon": "#6250d6", "fedbnprox": "#e34948"}
+SERIES_ORDER = ("centralized", "fedavg", "local", "fedprox", "fedbn", "scaffold", "moon", "fedbnprox")
+SERIES_MARKERS = {"fedavg": "o", "local": "s", "fedprox": "^", "fedbn": "D", "scaffold": "v", "moon": "p", "fedbnprox": "h"}   # mã hóa phụ: in đen trắng vẫn phân biệt được
+SERIES_LABELS = {"centralized": "Tập trung", "fedavg": "FedAvg", "local": "Cục bộ", "fedprox": "FedProx", "fedbn": "FedBN", "scaffold": "SCAFFOLD", "moon": "MOON", "fedbnprox": "FedBN+FedProx"}
 
 
 def alpha_positions(cells: list[dict[str, Any]]) -> list[Any]:
@@ -460,6 +482,7 @@ def plot_series(report: dict[str, Any]) -> dict[str, dict[str, list[dict[str, An
         if cell["alpha"] is None or cell["partition_seed"] is not None or "+" in cell["variant"]:
             continue
         family = "local" if cell["method"] == "local" else cell["variant"].split("(")[0]
+        family = family.split("+")[0]
         if family in SERIES_COLORS:
             series[family][str(cell["alpha"])].append(cell)
     return series

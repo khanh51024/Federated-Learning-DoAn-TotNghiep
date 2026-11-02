@@ -37,6 +37,18 @@ class Recipe:
     amp: str = "fp16"
 
 
+def compress_upload(state: dict[str, Any], parent: dict[str, Any], mode: str | None, stats: dict[str, Any], extra_up_bytes: int) -> dict[str, Any]:
+    """Nén trọng số gửi lên nếu có `mode`; ghi lại số byte chiều lên theo tensor đã nén. Trả đúng phần sẽ nằm trong tin nhắn."""
+    if not mode:
+        return state
+    from src.federated.algorithms import state_bytes
+    from src.federated.compression import encode_update
+
+    payload = encode_update(state, parent, mode)
+    stats["bytes_up"] = state_bytes(payload) + extra_up_bytes
+    return payload
+
+
 def train_transform(recipe: Recipe) -> Any:
     from src.data.robust_transforms import get_cpu_train_transform, get_robust_train_transform
 
