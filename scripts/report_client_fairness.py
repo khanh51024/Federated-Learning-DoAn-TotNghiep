@@ -30,18 +30,30 @@ def group_accuracy(correct: np.ndarray, mask: np.ndarray) -> dict[str, Any]:
     return {"n": n, "correct": int(correct[mask].sum()) if n else 0}
 
 
-def class_recall(targets: np.ndarray, preds: np.ndarray, num_classes: int) -> np.ndarray:
-    """Recall từng lớp trên tập đo; lớp không có ảnh trong tập là NaN."""
-    recall = np.full(num_classes, np.nan)
-    for c in np.unique(targets):
-        recall[int(c)] = float(np.mean(preds[targets == c] == c))
+def group_recall(groups: np.ndarray, correct: np.ndarray, num_groups: int) -> np.ndarray:
+    """Tỉ lệ đúng của từng nhóm trên tập đo; nhóm không có ảnh trong tập là NaN."""
+    recall = np.full(num_groups, np.nan)
+    for g in np.unique(groups):
+        recall[int(g)] = float(np.mean(correct[groups == g]))
     return recall
 
 
-def client_accuracy(recall: np.ndarray, shard_counts: np.ndarray) -> dict[str, Any]:
-    """Độ chính xác nếu tập đo có đúng phân phối nhãn của shard client: tổng theo lớp của (tỉ lệ lớp trong shard × recall lớp).
+def class_recall(targets: np.ndarray, preds: np.ndarray, num_classes: int) -> np.ndarray:
+    """Recall từng lớp trên tập đo; lớp không có ảnh trong tập là NaN."""
+    return group_recall(targets, preds == targets, num_classes)
 
-    Lớp client có ảnh nhưng tập đo không có thì bị bỏ và chuẩn hóa lại; `coverage` là phần shard còn được tính (1 = đo đủ)."""
+
+def domain_class_ids(rows: list[dict[str, Any]], num_classes: int = 38) -> np.ndarray:
+    """Mã nhóm (miền, lớp): lớp c ở ảnh phòng thí nghiệm là c, ở ảnh ngoài đồng là c + num_classes.
+
+    Phân phối của client gồm cả tỉ lệ miền: chỉ đánh trọng số theo lớp thì ở kịch bản lệch nguồn ảnh, client toàn ảnh ngoài đồng và client toàn ảnh phòng thí nghiệm bị đo trên cùng một trộn miền."""
+    return np.array([int(r["class_id"]) + (0 if r["source_domain"] == "plantvillage" else num_classes) for r in rows], dtype=np.int64)
+
+
+def client_accuracy(recall: np.ndarray, shard_counts: np.ndarray) -> dict[str, Any]:
+    """Độ chính xác nếu tập đo có đúng phân phối của shard client: tổng theo nhóm của (tỉ lệ nhóm trong shard × tỉ lệ đúng của nhóm). Nhóm là lớp, hoặc cặp (miền, lớp) theo `domain_class_ids`.
+
+    Nhóm client có ảnh nhưng tập đo không có thì bị bỏ và chuẩn hóa lại; `coverage` là phần shard còn được tính (1 = đo đủ)."""
     covered = ~np.isnan(recall)
     mass = float(shard_counts[covered].sum())
     total = float(shard_counts.sum())

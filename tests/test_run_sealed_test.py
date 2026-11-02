@@ -146,3 +146,34 @@ def test_no_other_path_reports_accuracy_on_the_sealed_split():
     train = (ROOT / "scripts" / "train_v4.py").read_text(encoding="utf-8")
     assert re.search(r"summarize\(logits\[name\], eval_rows\[name\]\) for name in eval_rows if name != SEALED_SPLIT", train)
     assert 'SEALED_SPLIT = "calibration"' in train
+
+
+def test_rerun_of_a_cell_is_not_counted_as_two_models_of_one_seed(tmp_path: Path, release: dict):
+    """Khối 1 chạy lại FedAvg α = 0,1: nếu gộp cả hai, độ lệch chuẩn co lại giả tạo và kết quả là trung bình hai mô hình."""
+    old, new = tmp_path / "old", tmp_path / "new"
+    _full_matrix(old, release)
+    for seed in SEEDS:
+        _run(new, release, f"fedavg_lai_s{seed}", "fedavg", seed, scheme="a")               # lần chạy lại đúng hết
+    report = sealed.run_sealed([old, new], release["dir"], ["a|fedprox(mu=0.01)"], tmp_path / "s.json", dry_run=False)
+    fedavg = next(c for c in report["cells"] if c["variant"] == "fedavg")
+    assert fedavg["runs"] == [f"fedavg_lai_s{s}" for s in sorted(SEEDS, key=str)] or sorted(fedavg["runs"]) == sorted(f"fedavg_lai_s{s}" for s in SEEDS)
+    assert fedavg["parts"]["sealed_all"]["top1"]["mean"] == pytest.approx(1.0)              # chỉ lần chạy sau, không trung bình với lần trước
+
+
+def test_personalized_cells_are_refused_instead_of_reporting_the_global_model(tmp_path: Path, release: dict):
+    runs = tmp_path / "runs"
+    _full_matrix(runs, release)
+    with pytest.raises(SystemExit, match="cá nhân hóa"):
+        sealed.run_sealed([runs], release["dir"], ["a|fedavg+tinh_chinh=head_finetune"], tmp_path / "s.json", dry_run=True)
+
+
+def test_flower_algorithm_is_compared_with_fedavg_on_flower(tmp_path: Path, release: dict):
+    runs = tmp_path / "runs"
+    _full_matrix(runs, release)
+    for seed in SEEDS:
+        _run(runs, release, f"fedavg_f_s{seed}", "fedavg", seed, scheme="a", runtime="flower", wrong=("c0", "c1", "c2", "c3"))
+        _run(runs, release, f"prox_f_s{seed}", "fedavg", seed, scheme="a", runtime="flower", wrong=("c0", "c1"), algorithm={"name": "fedprox", "mu": 0.01})
+    report = sealed.run_sealed([runs], release["dir"], ["a|fedprox(mu=0.01)+flower"], tmp_path / "s.json", dry_run=False)
+    cells = {c["variant"]: c for c in report["cells"]}
+    assert cells["fedprox(mu=0.01)+flower"]["parts"]["sealed_all"]["vs_fedavg"]["diff_points"] == pytest.approx(100 * 2 / 8)     # so với FedAvg trên Flower
+    assert cells["fedavg+flower"]["parts"]["sealed_all"]["vs_fedavg"]["diff_points"] == pytest.approx(-100 / 8)                   # kiểm chứng N1.2: sai 4/8 so với 3/8 ảnh của FedAvg một tiến trình

@@ -5,7 +5,8 @@ client chưa có ảnh. Mô hình chung thấy mọi lớp nhưng đầu phân l
 đặc trưng học chung: không tốn thêm truyền thông, dữ liệu vẫn không rời client.
 
 Cách làm: đặc trưng của mô hình tốt nhất (trước đầu phân loại, biến đổi `canonical_v1`) lưu sẵn cho shard, val và tập thử; mỗi client học lại đầu phân loại từ đầu phân loại chung bằng SGD,
-cùng label smoothing và cân bằng hai miền như công thức chung. Số epoch chọn theo độ chính xác trên val đánh trọng số theo shard của client (không dùng tập thử, không đụng tập niêm phong).
+cùng label smoothing và cân bằng hai miền như công thức chung. Số epoch chọn theo độ chính xác trên val đánh trọng số theo cặp (miền, lớp) của shard client, cùng cách đo với scripts/eval_sweep_v4.py
+(không dùng tập thử, không đụng tập niêm phong). Mô hình cá nhân hóa không có logit trên tập niêm phong nên scripts/run_sealed_test.py từ chối ô này.
 
 Đầu ra: thư mục run mới ở `--out`, cùng định dạng scripts/train_v4.py, có `logits_personalized.npz` (như FedBN) để scripts/eval_sweep_v4.py đọc; `logits_best.npz` và nhật ký là của mô hình chung.
 Việc tốn thời gian nhất là trích đặc trưng; chạy được trên CPU.
@@ -28,7 +29,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from scripts.report_client_fairness import class_recall, client_accuracy  # noqa: E402
+from scripts.report_client_fairness import client_accuracy, domain_class_ids, group_recall  # noqa: E402
 from src.training.data import NUM_CLIENTS, ManifestDataset, domain_balanced_weights, load_release, load_shard  # noqa: E402
 
 EPOCH_GRID = (1, 2, 5, 10)
@@ -57,6 +58,7 @@ def train_head(head: Any, features: Any, targets: Any, weights: Any, epochs: int
 
     head = copy.deepcopy(head)
     head.train()
+    torch.manual_seed(seed)                     # dropout của đầu phân loại lấy từ bộ sinh chung
     generator = torch.Generator().manual_seed(seed)
     optimizer = torch.optim.SGD(head.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
     for _ in range(epochs):
@@ -71,7 +73,7 @@ def train_head(head: Any, features: Any, targets: Any, weights: Any, epochs: int
     return head.eval()
 
 
-def choose_epochs(head: Any, shard_features: Any, shard_targets: Any, shard_weights: Any, val_features: Any, val_targets: np.ndarray, shard_counts: np.ndarray, recipe: dict[str, Any], seed: int,
+def choose_epochs(head: Any, shard_features: Any, shard_targets: Any, shard_weights: Any, val_features: Any, val_targets: np.ndarray, val_groups: np.ndarray, shard_group_counts: np.ndarray, recipe: dict[str, Any], seed: int,
                   grid: tuple[int, ...] = EPOCH_GRID) -> dict[str, Any]:
     """Thử các số epoch trên val đánh trọng số theo shard; 0 epoch (đầu phân loại chung) cũng là một ứng viên, nên tinh chỉnh chỉ được chọn khi thật sự tốt hơn trên val."""
     import torch
@@ -83,7 +85,7 @@ def choose_epochs(head: Any, shard_features: Any, shard_targets: Any, shard_weig
                                                                  recipe["label_smoothing"], recipe["batch_size"], seed)
         with torch.inference_mode():
             preds = candidate(val_features).argmax(1).numpy()
-        accuracy = client_accuracy(class_recall(val_targets, preds, NUM_CLASSES), shard_counts)["accuracy"]
+        accuracy = client_accuracy(group_recall(val_groups, preds == val_targets, len(shard_group_counts)), shard_group_counts)["accuracy"]
         tried[epochs] = accuracy
         if accuracy is not None and accuracy > best["val_accuracy"]:
             best = {"epochs": epochs, "val_accuracy": accuracy, "head": candidate}
@@ -141,8 +143,8 @@ def main() -> int:
         shard_features = extract_features(model, rows, args.dataset_root, args.batch_size, args.workers, device)
         shard_targets = torch.tensor([int(r["class_id"]) for r in rows])
         shard_weights = torch.tensor(domain_balanced_weights(rows), dtype=torch.float32)
-        counts = np.bincount(shard_targets.numpy(), minlength=NUM_CLASSES).astype(np.float64)
-        result = choose_epochs(head, shard_features, shard_targets, shard_weights, features["val"], targets["val"], counts, recipe, seed * 10 + k)
+        counts = np.bincount(domain_class_ids(rows, NUM_CLASSES), minlength=2 * NUM_CLASSES).astype(np.float64)
+        result = choose_epochs(head, shard_features, shard_targets, shard_weights, features["val"], targets["val"], domain_class_ids(eval_rows["val"], NUM_CLASSES), counts, recipe, seed * 10 + k)
         chosen[k] = {"epochs": result["epochs"], "val_accuracy": result["val_accuracy"], "tried": result["tried"]}
         with torch.inference_mode():
             for name in SPLITS:
@@ -157,7 +159,8 @@ def main() -> int:
     np.savez_compressed(target / "logits_personalized.npz", **saved)
     new_config = {**config, "personalization": {"kind": "head_finetune", "source_run": run.name, "lr": args.lr, "epoch_grid": list(EPOCH_GRID), "chosen": chosen}, "tag": f"{config.get('tag', '')}_ft"}
     (target / "config.json").write_text(json.dumps(new_config, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-    (target / "final.json").write_text(json.dumps({**final, "config": new_config}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    # final.json của run v4b có tóm tắt tập niêm phong từ trước khi có quy định: không chép sang
+    (target / "final.json").write_text(json.dumps({**{k: v for k, v in final.items() if k != "calibration"}, "config": new_config}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     (target / "DONE").write_text(time.strftime("%Y-%m-%dT%H:%M:%S") + "\n", encoding="utf-8")
     print(f"[finetune] {target.name}: xong sau {time.time() - started:.0f}s")
     return 0

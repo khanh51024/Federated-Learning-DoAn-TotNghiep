@@ -217,7 +217,8 @@ def main() -> int:
         config["update_compression"] = args.update_compression
     if args.dp_noise:
         config["server_dp"] = {"noise_multiplier": args.dp_noise, "clip": args.dp_clip, "delta": args.dp_delta, "rounds": args.budget, "level": "client",
-                               "epsilon": rdp_epsilon(args.dp_noise, args.budget, args.dp_delta), "accounting": "RDP, cơ chế Gaussian, tham gia đầy đủ"}
+                               "epsilon": rdp_epsilon(args.dp_noise, args.budget, args.dp_delta), "epsilon_replace_one": rdp_epsilon(args.dp_noise / 2, args.budget, args.dp_delta),
+                               "accounting": "RDP, cơ chế Gaussian, tham gia đầy đủ; epsilon: kề nhau kiểu đưa một client về 0; epsilon_replace_one: kiểu thay thế một client (độ nhạy gấp đôi)"}
     if args.algo != "fedavg":      # chỉ ghi khi khác FedAvg: cấu hình của run FedAvg thường giữ nguyên như đợt v4b
         config["algorithm"] = {"name": args.algo, **{"fedprox": {"mu": args.prox_mu}, "fedbnprox": {"mu": args.prox_mu}, "moon": {"mu": args.moon_mu, "tau": args.moon_tau},
                                                        "fedavgm": {"beta": args.server_momentum, "server_lr": args.server_lr},

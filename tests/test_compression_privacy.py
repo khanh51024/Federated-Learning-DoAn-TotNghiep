@@ -180,7 +180,7 @@ def test_epoch_choice_uses_shard_weighted_validation_and_can_keep_the_shared_hea
     head = _head().eval()
     features, targets = _skewed()
     counts = np.bincount(targets.numpy(), minlength=38).astype(float)
-    good = ft.choose_epochs(head, features, targets, torch.ones(len(targets)), features, targets.numpy(), counts, RECIPE, seed=3, grid=(1, 5))
+    good = ft.choose_epochs(head, features, targets, torch.ones(len(targets)), features, targets.numpy(), targets.numpy(), counts, RECIPE, seed=3, grid=(1, 5))
     assert good["epochs"] in (1, 5) and good["val_accuracy"] > 0.95 and set(good["tried"]) == {0, 1, 5}
 
     # val trên lớp mà shard không có: tinh chỉnh không giúp gì, phải giữ đầu chung (0 epoch), không chọn bừa
@@ -188,5 +188,5 @@ def test_epoch_choice_uses_shard_weighted_validation_and_can_keep_the_shared_hea
     val_targets = np.array([5] * len(val_features))
     other_counts = np.zeros(38)
     other_counts[5] = 100
-    kept = ft.choose_epochs(head, features, targets, torch.ones(len(targets)), val_features, val_targets, other_counts, RECIPE, seed=3, grid=(1,))
+    kept = ft.choose_epochs(head, features, targets, torch.ones(len(targets)), val_features, val_targets, val_targets, other_counts, RECIPE, seed=3, grid=(1,))
     assert kept["epochs"] == 0 and kept["head"] is head

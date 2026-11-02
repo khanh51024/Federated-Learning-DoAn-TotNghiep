@@ -323,3 +323,14 @@ def test_real_ray_run_end_to_end(tmp_path: Path):
     # bộ nhớ đệm của client sống qua các vòng: vòng hai không dựng lại dữ liệu
     assert max(c["client_env_builds"] for c in rows[1]["train"]["clients"]) <= max(c["client_env_builds"] for c in rows[0]["train"]["clients"])
     assert sorted(p.name for p in (run / "client_state").glob("client_00.*")) == ["client_00.step0000.pt", "client_00.step0001.pt"]
+
+
+def test_missing_client_state_is_an_error_not_a_silent_restart(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Thiếu tệp trạng thái mà đi tiếp thì c_i về 0 và thuật toán sai mà không ai biết."""
+    template = _model()
+    monkeypatch.setattr(fa, "_CLIENT_CACHE", {0: {"recipe": RECIPE, "device": DEVICE, "data": _data(0), "template": template, "algo": make_algorithm("scaffold", _model(), 1, **OPTIONS)}})
+    with pytest.raises(RuntimeError, match="thiếu trạng thái riêng"):
+        fa.client_step(_plan(tmp_path, "scaffold"), 0, 3, 0.01, get_parameters(template), make_algorithm("scaffold", template, 1, **OPTIONS).download())
+    # thuật toán không có trạng thái riêng thì không cần tệp
+    monkeypatch.setattr(fa, "_CLIENT_CACHE", {0: {"recipe": RECIPE, "device": DEVICE, "data": _data(0), "template": template, "algo": make_algorithm("fedavg", _model(), 1, **OPTIONS)}})
+    fa.client_step(_plan(tmp_path, "fedavg"), 0, 3, 0.01, get_parameters(template), {})

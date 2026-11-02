@@ -123,7 +123,9 @@ def test_scaffold_with_momentum_uses_effective_learning_rate():
     local = Tiny()
     local.load_state_dict(tiny_state(model, -1.0))
     algo.after_local(0, local, parent, 0.1, 2, 5)
-    assert torch.allclose(algo._pending[0]["fc.weight"], torch.full((2, 3), 1.0 / (2 * 0.1 / 0.1)))     # η_hiệu_dụng = 0,1/(1−0,9) = 1
+    # hai bước động lượng 0,9 từ vận tốc 0: độ dời 0,1·(1 + 1,9) = 0,29 (trước đây tính dư thành 2·0,1/0,1 = 2)
+    assert alg.momentum_displacement_steps(2, 0.9) == pytest.approx(2.9)
+    assert torch.allclose(algo._pending[0]["fc.weight"], torch.full((2, 3), 1.0 / 0.29))     # η_hiệu_dụng = 0,1/(1−0,9) = 1
 
 
 def test_scaffold_extra_bytes_cover_one_copy_of_trainable_parameters_each_way():
@@ -278,3 +280,22 @@ def test_train_epoch_runs_with_scaffold_and_moon_hooks():
                         torch.device("cpu"), torch.ones(8), 0.0, hooks=moon_hooks)
     moon_hooks.close()
     assert math.isfinite(stats["loss"])
+
+
+@pytest.mark.parametrize("steps", [1, 2, 19, 52, 103])
+def test_displacement_formula_matches_a_real_momentum_optimizer(steps: int):
+    """Đo bằng đúng bộ tối ưu dùng khi học: gradient không đổi, vận tốc bắt đầu từ 0 như mỗi vòng của client."""
+    weight = torch.nn.Parameter(torch.zeros(1))
+    optimizer = torch.optim.SGD([weight], lr=0.1, momentum=0.9)
+    for _ in range(steps):
+        optimizer.zero_grad()
+        weight.grad = torch.ones(1)
+        optimizer.step()
+    assert -float(weight) == pytest.approx(0.1 * alg.momentum_displacement_steps(steps, 0.9), rel=1e-4)
+    assert alg.momentum_displacement_steps(steps, 0.0) == steps
+
+
+def test_only_stateful_algorithms_declare_client_state():
+    model = Tiny()
+    flags = {name: alg.make_algorithm(name, model, 1).keeps_client_state for name in alg.ALGORITHMS}
+    assert flags == {"fedavg": False, "fedprox": False, "fedavgm": False, "fedbn": True, "scaffold": True, "moon": True, "fedbnprox": True}

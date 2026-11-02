@@ -1,10 +1,13 @@
 """Chạy tập kiểm thử niêm phong ĐÚNG MỘT LẦN cho cấu hình đã chốt (N1.4, N5.3 của yêu cầu đề tài; lý do chọn tập ở docs/EXPERIMENT_PROTOCOL.md mục 9).
 
-Tập niêm phong là split `calibration` của release v4: 7.005 ảnh chưa từng dùng để học, để chọn checkpoint hay chọn cấu hình, và chưa báo cáo độ chính xác nào.
-Việc duy nhất đã dùng nó là fit nhiệt độ T cho xác suất hiển thị trên web; T không đổi dự đoán top-1 nên không ảnh hưởng số đo ở đây.
+Tập niêm phong là split `calibration` của release v4: 7.005 ảnh chưa từng dùng để học các mô hình trong phép so sánh này, để chọn checkpoint hay chọn cấu hình.
+Những lần đã đụng tới split này (fit nhiệt độ T, hiệu chuẩn int8, thí nghiệm học cộng đồng, một lần đọc nhầm) và vì sao chúng không ảnh hưởng số đo ở đây: docs/EXPERIMENT_PROTOCOL.md mục 9.
 
-Khóa: chỉ script này đọc logit `calibration` để tính độ chính xác; `train_v4.py` không còn tóm tắt split này và `eval_sweep_v4.py` không đọc nó.
-Kết quả đã có thì script từ chối chạy lại, không có cờ ghi đè: chạy lại rồi chọn số đẹp hơn chính là việc niêm phong muốn ngăn.
+Khóa: đây là đường duy nhất được dùng để tính độ chính xác trên split này; `train_v4.py` không còn tóm tắt nó, `eval_sweep_v4.py` không đọc nó. Khóa dựa trên kỷ luật và tệp kết quả, không phải mã hóa:
+kết quả đã có thì script từ chối chạy lại và không có cờ ghi đè; xóa tệp thì chạy lại được, nhưng tệp nằm trong git nên việc đó để lại dấu vết.
+
+Chỉ đo mô hình toàn cục. Mô hình cá nhân hóa (tinh chỉnh riêng, BatchNorm riêng của FedBN) không có logit trên split này nên bị từ chối thay vì âm thầm báo số của mô hình chung.
+Run trùng ô dùng cùng luật với eval_sweep_v4.py: thư mục đứng sau trong --runs thắng.
 
     python scripts/run_sealed_test.py --runs runs/v4b runs/sweep --cells "label_alpha_0_1|fedavg" "label_alpha_0_1|fedprox(mu=0.01)" --dry-run   # chỉ kiểm đủ run và đủ hạt giống, không mở logit, không tính số nào
     python scripts/run_sealed_test.py --runs runs/v4b runs/sweep --cells "label_alpha_0_1|fedavg" "label_alpha_0_1|fedprox(mu=0.01)" --confirm-final
@@ -26,7 +29,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from scripts.eval_sweep_v4 import BOOTSTRAP_SEED, MIN_SEEDS, compare_to_fedavg, part_score, spread, variant_of  # noqa: E402
+from scripts.eval_sweep_v4 import BOOTSTRAP_SEED, MIN_SEEDS, RUNTIME_SUFFIX, compare_to_fedavg, part_score, spread, variant_of  # noqa: E402
 from scripts.report_statistics import _cluster_of, cluster_bootstrap_ci  # noqa: E402
 from src import registry as reg  # noqa: E402
 from src.training.data import NUM_CLIENTS, load_release, read_jsonl  # noqa: E402
@@ -63,9 +66,16 @@ def plan_cells(runs: list[dict[str, Any]], requested: list[str]) -> dict[tuple[s
         if "|" not in text:
             raise SystemExit(f"ô phải có dạng 'cách chia|biến thể': {text}")
         scheme, variant = text.split("|", 1)
+        if "tinh_chinh=" in variant:
+            raise SystemExit(f"{text}: mô hình cá nhân hóa không có logit trên tập niêm phong; hãy chọn ô FedAvg nguồn của nó")
         wanted |= {(scheme, variant), (scheme, "fedavg"), (scheme, "local")}
+        if variant.endswith(RUNTIME_SUFFIX):
+            wanted.add((scheme, f"fedavg{RUNTIME_SUFFIX}"))
+    latest: dict[tuple[Any, ...], dict[str, Any]] = {}
+    for run in runs:                                  # chạy lại cùng ô: không được tính thành nhiều mô hình của một hạt giống, độ lệch chuẩn sẽ co lại giả tạo
+        latest[(run["scheme"], run["variant"], run["seed"], run["client"])] = run
     cells: dict[tuple[str | None, str], list[dict[str, Any]]] = defaultdict(list)
-    for run in runs:
+    for run in latest.values():
         if (run["scheme"], run["variant"]) in wanted:
             cells[(run["scheme"], run["variant"])].append(run)
     problems = []
@@ -137,8 +147,11 @@ def evaluate(cells: dict[tuple[str | None, str], list[dict[str, Any]]], sealed_r
             pooled = np.mean([correct[key][name][s] for s in sorted(computed[key])], axis=0)
             interval = cluster_bootstrap_ci(clusters[name], pooled, rng)
             entry["top1_ci95"] = None if interval["low"] is None else [interval["low"], interval["high"]]
-            if key[1] not in ("fedavg", "local", "centralized") and (key[0], "fedavg") in correct:
-                entry["vs_fedavg"] = compare_to_fedavg(correct[key][name], correct[(key[0], "fedavg")][name], clusters[name], rng)
+            # thuật toán trên Flower so với FedAvg trên Flower; FedAvg trên Flower so với FedAvg một tiến trình
+            flower_base = (key[0], f"fedavg{RUNTIME_SUFFIX}")
+            base = flower_base if key[1].endswith(RUNTIME_SUFFIX) and key[1] != flower_base[1] and flower_base in correct else (key[0], "fedavg")
+            if key[1] not in ("fedavg", "local", "centralized") and base in correct:
+                entry["vs_fedavg"] = compare_to_fedavg(correct[key][name], correct[base][name], clusters[name], rng)
             block["parts"][name] = entry
         out.append(block)
     return out

@@ -264,10 +264,10 @@ def test_report_from_runs_on_disk(tmp_path: Path, tiny_release: dict):
     assert comm["raw_images_mb"] == pytest.approx(10 * 1000 / 1e6)
     assert comm["mb_total_vs_raw"] == pytest.approx(2.0)
 
-    # công bằng: FedAvg sai 2 ảnh PlantVillage (te0 lớp 0, te1 lớp 1) trong tập thử; mọi client có đủ hai lớp 0 và 1 với tỉ lệ 1:1
-    # recall lớp 0 = 2/3 (te0 sai, te2 và pd0 đúng), lớp 1 = 2/3 → mọi client 2/3, không chênh lệch
+    # công bằng: FedAvg sai 2 ảnh PlantVillage (te0 lớp 0, te1 lớp 1) trong tập thử; mọi client chỉ có ảnh PlantVillage, hai lớp 0 và 1 tỉ lệ 1:1
+    # nên ảnh PlantDoc không tính: tỉ lệ đúng của (PlantVillage, lớp 0) = 1/2, (PlantVillage, lớp 1) = 1/2 → mọi client 1/2, không chênh lệch
     fair = fedavg["fairness"]["legacy_diagnostic_test"]["all"]
-    assert fair["mean"]["mean"] == pytest.approx(2 / 3)
+    assert fair["mean"]["mean"] == pytest.approx(0.5)
     assert fair["gap_best_worst"]["mean"] == pytest.approx(0.0)
     assert fair["coverage_min"] == pytest.approx(1.0)
     assert fedavg["fairness"]["val"]["all"]["mean"]["mean"] == pytest.approx(1.0)
@@ -345,3 +345,43 @@ def test_flower_runs_compare_within_flower_and_fedavg_on_flower_checks_equivalen
     assert "fedprox" in series and sweep.plot_candidate(series, "fedprox", 0.1, "all_test") is not None
     nen = {"alpha": 0.1, "partition_seed": None, "method": "fedavg", "variant": "fedavg+nen=fp16"}
     assert not sweep.plot_series({"cells": [nen]})
+
+
+def test_fairness_weights_by_domain_and_class_of_each_client():
+    """Lệch nguồn ảnh: client toàn ảnh ngoài đồng phải được đo trên ảnh ngoài đồng, dù tỉ lệ lớp giống client toàn ảnh phòng thí nghiệm."""
+    from scripts.report_client_fairness import client_accuracy, domain_class_ids, group_recall
+
+    rows = [{"class_id": c, "source_domain": d} for d in ("plantvillage", "plantdoc") for c in (0, 1) for _ in range(5)]
+    groups = domain_class_ids(rows, 2)
+    assert groups.tolist() == [0] * 5 + [1] * 5 + [2] * 5 + [3] * 5
+    correct = np.array([True] * 10 + [False] * 10)                                       # mô hình đúng hết ảnh phòng thí nghiệm, sai hết ảnh ngoài đồng
+    recall = group_recall(groups, correct, 4)
+    assert client_accuracy(recall, np.array([5.0, 5.0, 0.0, 0.0]))["accuracy"] == pytest.approx(1.0)
+    assert client_accuracy(recall, np.array([0.0, 0.0, 5.0, 5.0]))["accuracy"] == pytest.approx(0.0)
+    assert client_accuracy(recall, np.array([3.0, 3.0, 1.0, 1.0]))["accuracy"] == pytest.approx(0.75)
+
+
+def test_repeated_step_in_history_after_a_crash_is_counted_once(tmp_path: Path, tiny_release: dict):
+    runs = tmp_path / "runs"
+    _run(runs, tiny_release, "centralized_s42", "centralized", 42)
+    _run(runs, tiny_release, "fedavg_s42", "fedavg", 42, scheme="label_alpha_0_1")
+    path = runs / "fedavg_s42" / "history.jsonl"
+    clients = [{"client": k, "bytes_up": 1000, "bytes_down": 1000} for k in range(5)]
+    rows = [{"step": step, "val": {"selection_score": 0.9}, "train": {"clients": clients}, "seconds": 1.0} for step in (0, 1, 1, 2)]   # bước 1 ghi hai lần
+    path.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+    report = sweep.build_report([runs], tiny_release["release_dir"], tiny_release["root"], tiny_release["v3_ids"])
+    fedavg = next(c for c in report["cells"] if c["variant"] == "fedavg")
+    assert fedavg["communication"]["mb_total"]["mean"] == pytest.approx(3 * 5 * 2000 / 1e6)
+
+
+def test_variant_keeps_what_distinguishes_runs_so_they_are_not_merged_as_reruns():
+    assert sweep.variant_of({"method": "fedavg", "server_dp": {"noise_multiplier": 1.0, "clip": 5.0}}) == "fedavg+dp=1.0/5.0"
+    assert sweep.variant_of({"method": "fedavg", "server_dp": {"noise_multiplier": 1.0, "clip": 2.0}}) != "fedavg+dp=1.0/5.0"
+    assert sweep.variant_of({"method": "centralized", "logit_adjust_tau": 1.0}) == "centralized+la=1.0"
+    assert sweep.variant_of({"method": "local", "logit_adjust_tau": 0.0}) == "local"
+
+
+def test_plot_keeps_one_runtime_for_fedavg_even_if_flower_has_a_higher_validation_score():
+    make = lambda variant, val: {"variant": variant, "below_min_seeds": False, "parts": {"p": {}}, "val_selection_score": {"mean": val}}   # noqa: E731
+    series = {"fedavg": {"0.1": [make("fedavg+flower", 0.9), make("fedavg", 0.8)]}}
+    assert sweep.plot_candidate(series, "fedavg", 0.1, "p")["variant"] == "fedavg"

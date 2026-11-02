@@ -38,11 +38,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from scripts.eval_trained_v4 import V3_DIR, jsonl, part_masks, plantwild_logits  # noqa: E402
-from scripts.report_client_fairness import class_recall, client_accuracy, fairness_summary  # noqa: E402
+from scripts.report_client_fairness import client_accuracy, domain_class_ids, fairness_summary, group_recall  # noqa: E402
 from scripts.report_statistics import _cluster_of, cluster_bootstrap_ci, mcnemar_exact  # noqa: E402
 from src import registry as reg  # noqa: E402
 from src.training.data import NUM_CLIENTS, load_release, load_shard  # noqa: E402
-from src.training.metrics import LAB_DOMAIN, NUM_CLASSES, macro_f1  # noqa: E402
+from src.training.metrics import NUM_CLASSES, macro_f1  # noqa: E402
 
 BOOTSTRAP_SEED = 20261102
 CONVERGENCE_TOLERANCE = 0.01          # 1 điểm macro-F1 của điểm chọn checkpoint (val)
@@ -76,10 +76,11 @@ def variant_of(cfg: dict[str, Any]) -> str:
     method = cfg["method"]
     if method != "fedavg":
         optimizer = cfg.get("optimizer", "sgd")
-        return method if optimizer == "sgd" else f"{method}+{optimizer}"
-    algorithm = cfg.get("algorithm") or {"name": "fedavg"}
-    params = ",".join(f"{k}={algorithm[k]}" for k in sorted(algorithm) if k != "name" and not (algorithm["name"] == "scaffold" and k == "momentum"))
-    parts = [f"{algorithm['name']}({params})" if params else algorithm["name"]]
+        parts = [method] if optimizer == "sgd" else [method, optimizer]
+    else:
+        algorithm = cfg.get("algorithm") or {"name": "fedavg"}
+        params = ",".join(f"{k}={algorithm[k]}" for k in sorted(algorithm) if k != "name" and not (algorithm["name"] == "scaffold" and k == "momentum"))
+        parts = [f"{algorithm['name']}({params})" if params else algorithm["name"]]
     if cfg.get("logit_adjust_tau"):
         parts.append(f"la={cfg['logit_adjust_tau']}")
     if cfg.get("personalization"):
@@ -87,7 +88,7 @@ def variant_of(cfg: dict[str, Any]) -> str:
     if cfg.get("update_compression"):
         parts.append(f"nen={cfg['update_compression']}")
     if cfg.get("server_dp"):
-        parts.append(f"dp={cfg['server_dp']['noise_multiplier']}")
+        parts.append(f"dp={cfg['server_dp']['noise_multiplier']}/{cfg['server_dp']['clip']}")
     if cfg.get("runtime"):
         parts.append(str(cfg["runtime"]))
     return "+".join(parts)
@@ -195,7 +196,13 @@ def load_runs(run_dirs: list[Path], release: dict[str, Any], include_limited: bo
             wild_preds = None
             if wild is not None:
                 wild_preds = plantwild_logits(run_dir, wild["items"], threads)[wild["strict"]].argmax(axis=1).astype(np.int16)
-            history = [json.loads(line) for line in (run_dir / "history.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
+            # chết máy giữa lúc ghi nhật ký và lưu checkpoint làm một bước xuất hiện hai lần khi chạy tiếp: giữ dòng sau cùng của mỗi bước, nếu không số vòng và tổng MB bị đếm dư
+            by_step: dict[Any, dict[str, Any]] = {}
+            for line in (run_dir / "history.jsonl").read_text(encoding="utf-8").splitlines():
+                if line.strip():
+                    row = json.loads(line)
+                    by_step[row.get("step", len(by_step))] = row
+            history = [by_step[step] for step in sorted(by_step)]
             runs.append({"name": run_dir.name, "dir": run_dir, "cfg": cfg, "method": cfg["method"], "seed": int(cfg["seed"]), "client": cfg.get("client"),
                          "scheme": cfg.get("scheme"), "variant": variant_of(cfg), "preds": preds, "ids": ids, "personal": personal, "wild": wild_preds,
                          "history": history, "best_step": final.get("best_step"), "selection_score": final.get("selection_score")})
@@ -340,6 +347,7 @@ def build_report(run_dirs: list[Path], release_dir: Path, dataset_root: Path, v3
                 if common:
                     block["gap_closure_top1"] = gap_closure(float(np.mean([values["top1"][s] for s in common])), float(np.mean([fedavg_values[part]["top1"][s] for s in common])),
                                                              float(np.mean([central_values[part]["top1"][s] for s in common])))
+                    block["fedavg_gap_points"] = 100 * float(np.mean([central_values[part]["top1"][s] - fedavg_values[part]["top1"][s] for s in common]))
                     block["vs_fedavg"] = compare_to_fedavg({r["seed"]: r["correct"][part] for r in group}, {r["seed"]: r["correct"][part] for r in fedavg_group},
                                                            example["part_clusters"][part], rng)
             if method == "fedavg":
@@ -375,8 +383,9 @@ def build_report(run_dirs: list[Path], release_dir: Path, dataset_root: Path, v3
     return {"evidence": "gộp từ logits và nhật ký đã lưu của từng run; không chạy lại mô hình", "release_manifest_sha256": release["sha256"],
             "definitions": {"gap_points": "Centralized − ô này, cùng hạt giống, điểm phần trăm", "gap_closure_top1": "(thuật toán − FedAvg) / (Centralized − FedAvg) trên trung bình",
                             "rounds_to_convergence": f"số vòng ít nhất mà từ đó điểm val không tụt dưới (tốt nhất − {CONVERGENCE_TOLERANCE})",
-                            "mb": "1 MB = 10^6 byte; byte tính từ kích thước tensor gửi thô, chưa đo trên đường truyền",
-                            "fairness": "độ chính xác = tổng theo lớp của (tỉ lệ lớp trong shard client × recall lớp đó trên tập đo); lớp không có ảnh trong tập đo bị bỏ và chuẩn hóa lại, phần bị bỏ ghi ở coverage_min",
+                            "mb": "1 MB = 10^6 byte; đường một tiến trình tính từ kích thước tensor gửi thô; đường Flower là phần mảng trong tin nhắn, lớn hơn khoảng 0,5% do đầu mục của từng mảng; đều chưa tính khung truyền trên mạng",
+                            "fairness": "độ chính xác = tổng theo cặp (miền, lớp) của (tỉ lệ cặp trong shard client × tỉ lệ đúng của cặp đó trên tập đo); cặp không có ảnh trong tập đo bị bỏ và chuẩn hóa lại, phần bị bỏ ghi ở coverage_min",
+                            "gap_closure_note": "không đọc được khi fedavg_gap_points cùng cỡ với độ lệch chuẩn của khoảng cách: mẫu số quá nhỏ",
                             "fairness_std": "độ lệch chuẩn tổng thể giữa 5 client trong một hạt giống, rồi lấy trung bình qua hạt giống",
                             "better_significant": "cận dưới khoảng tin cậy 95% bootstrap theo cụm ảnh > 0 và chênh lệch dương ở mọi hạt giống"},
             "centralized_recipe": base_recipe, "raw_images": raw, "cells": report_cells, "excluded": excluded, "reruns": reruns}
@@ -404,10 +413,9 @@ def personalized_parts(group: list[dict[str, Any]], rows_by_id: dict[str, dict[s
 def fairness_of_cell(group: list[dict[str, Any]], kind: str, shards: list[list[dict[str, Any]]], rows_by_id: dict[str, dict[str, dict[str, Any]]]) -> dict[str, Any]:
     """Độ chính xác của mô hình trên phân phối nhãn từng client. Toàn cục: một mô hình đo cho cả 5 client. Local-only: mô hình của chính client đó.
     `personalized`: FedBN, trọng số toàn cục + BatchNorm riêng của client đó."""
-    counts = np.zeros((NUM_CLIENTS, NUM_CLASSES), dtype=np.float64)
-    for k, rows in enumerate(shards):
-        for row in rows:
-            counts[k, int(row["class_id"])] += 1
+    num_groups = 2 * NUM_CLASSES
+    counts = np.stack([np.bincount(domain_class_ids(rows, NUM_CLASSES), minlength=num_groups).astype(np.float64) for rows in shards])
+    domain_groups = {"all": np.ones(num_groups, dtype=bool), "plantvillage": np.arange(num_groups) < NUM_CLASSES, "field": np.arange(num_groups) >= NUM_CLASSES}
     n_k = [len(rows) for rows in shards]
     seeds = sorted({r["seed"] for r in group})
     out: dict[str, Any] = {"n_k": n_k}
@@ -435,9 +443,8 @@ def fairness_of_cell(group: list[dict[str, Any]], kind: str, shards: list[list[d
                         preds = run["preds"][split]
                     rows = [rows_by_id[split][s] for s in run["ids"][split]]
                     targets = np.array([int(r["class_id"]) for r in rows])
-                    lab = np.array([r["source_domain"] == LAB_DOMAIN for r in rows])
-                    mask = np.ones(len(rows), dtype=bool) if domain == "all" else (lab if domain == "plantvillage" else ~lab)
-                    result = client_accuracy(class_recall(targets[mask], preds[mask], NUM_CLASSES), counts[k])
+                    groups = domain_class_ids(rows, NUM_CLASSES)
+                    result = client_accuracy(group_recall(groups, preds == targets, num_groups), counts[k] * domain_groups[domain])
                     accuracies.append(result["accuracy"])
                     coverages.append(result["coverage"])
                 if len(accuracies) == NUM_CLIENTS and any(a is not None for a in accuracies):    # miền không có ảnh trong tập đo thì không có khối số
@@ -521,7 +528,8 @@ def plot_candidate(series: dict[str, dict[str, list[dict[str, Any]]]], family: s
     candidates = [c for c in series.get(family, {}).get(str(position), []) if not c["below_min_seeds"] and part in c["parts"]]
     if not candidates:
         return None
-    return max(candidates, key=lambda c: (c.get("val_selection_score") or {}).get("mean") or 0.0)
+    plain = [c for c in candidates if c.get("variant") == family]      # cùng một thuật toán có cả hai đường chạy: giữ một đường cho cả đồ thị, không chọn đường nào có val cao hơn
+    return max(plain or candidates, key=lambda c: (c.get("val_selection_score") or {}).get("mean") or 0.0)
 
 
 def _style_axis(ax: Any) -> None:

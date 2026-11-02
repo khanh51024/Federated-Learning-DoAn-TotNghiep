@@ -322,7 +322,7 @@ Vì vậy theo quy tắc đã đặt trước, mô hình mới **không đủ đ
 - `scripts/remote/run_sweep.sh` (chạy qua `RUN_SCRIPT=run_sweep.sh scripts/remote/run_parallel.sh`) chạy ma trận cách chia × thuật toán × hạt giống, `LOCAL=1` thêm 5 Local-only mỗi cách chia.
 
 **Giới hạn của cách cài, cần nói thẳng khi báo cáo:**
-- SCAFFOLD bản gốc phân tích cho SGD thuần; ở đây client dùng động lượng 0,9 nên tốc độ học hiệu dụng của biến điều khiển là lr/(1 − 0,9). Đây là xấp xỉ.
+- SCAFFOLD bản gốc phân tích cho SGD thuần; ở đây client dùng động lượng 0,9 nên mẫu số của biến điều khiển là tổng độ dời thật của SGD động lượng xuất phát từ vận tốc 0 (`momentum_displacement_steps`), đã kiểm với bộ tối ưu thật. Vẫn là xấp xỉ vì giả định gradient không đổi trong vòng.
 - FedBN không có một mô hình toàn cục duy nhất. Mô hình dùng để chọn checkpoint và so với các cách khác gộp BatchNorm theo FedAvg; mô hình cá nhân hóa (trọng số toàn cục + BatchNorm riêng của client) được chấm riêng ở `final.json` mục `personalized`, trên val và tập giữ riêng của toàn bộ 38 lớp, không phải trên dữ liệu riêng của client.
 - MOON dùng đặc trưng 1024 chiều của MobileNetV3-Small, không có đầu chiếu; chậm hơn FedAvg do thêm hai lượt chạy xuôi.
 - FedAvgM chỉ áp động lượng lên tham số học được; thống kê BatchNorm vẫn lấy trung bình thường.
@@ -344,6 +344,42 @@ RUN_SCRIPT=run_sweep.sh SEEDS=42 SCHEMES=label_alpha_0_1 ALGOS="fedprox:0.001 fe
 ```
 
 **Việc còn lại trước khi báo cáo số:** viết `scripts/eval_sweep_v4.py` (gộp theo cách chia × thuật toán, trung bình ± độ lệch chuẩn qua hạt giống, đo PlantWild như `scripts/eval_trained_v4.py` nhưng ghi sang tệp riêng, không đè `artifacts/train_v4_results.json`), vẽ đường theo α, và bảng so thuật toán kèm số byte và `delta_l2`.
+
+### 5.11 Đợt theo yêu cầu thực hiện giai đoạn tiếp (chuẩn bị 2026-11-02, chưa chạy)
+
+Thay cho kế hoạch chạy ở 5.10. Mã, cách chia và bộ gộp đã sẵn sàng; đã chạy thật Flower + Ray 5 client trên ảnh thật nhưng ở quy mô `--limit 60`. Giờ máy ước tính từ đợt v4b trên RTX 3090, ba hạt giống song song (FedAvg 29 phút, Local-only 7–10 phút mỗi client); MOON, SCAFFOLD và Ray có thể làm dài thêm. Khối 2 đo chi phí thật của Ray: nếu Ray chậm hơn nhiều thì phải tính lại trước khi chạy tiếp.
+
+**Chuẩn bị.** Dựng lại gói bằng `python scripts/pack_train_bundle.py` sau khi commit; cần Python ≥ 3.11 trên máy GPU (`FLOWER=1 bash code/scripts/remote/setup_env.sh`). Mọi khối dùng tiền tố `RUN_SCRIPT=run_sweep.sh RELEASE_SHA=<sha> OUT_DIR=~/cropfed/runs/sweep` trước `bash code/scripts/remote/run_parallel.sh`, trong đó `ALGOS` đặt như dưới.
+
+**Khối 0, bắt buộc, trước mọi khối khác (khoảng 15 phút).** Chạy thử trên GPU thật với `--limit 3000 --budget 3` đủ cờ công thức (`--aug gpu_v2 --channels-last --batch-size 128 --lr 0.02 --amp bf16`, `--workers` nhiều) cho `scaffold` và `moon`, cả `--runtime flower`. Mục đích là kiểm những điều test CPU chưa chạm: DataLoader nhiều worker bên trong actor Ray và luồng ServerApp (`make_loader` không có timeout nên có thể treo không báo), MOON với bf16, bộ nhớ qua nhiều vòng (theo dõi RSS). Chưa qua khối này thì chưa chạy tiếp.
+
+| Khối | Nhiệm vụ | Biến môi trường | Số run | Giờ |
+|---|---|---|---:|---:|
+| 1. AdamW đối chứng và FedAvg α = 0,1 có `delta_l2` | N1.1, N1.3 | `ADAMW=1`, rồi `SCHEMES=label_alpha_0_1` | 3 + 3 | ~1 |
+| 2. FedAvg trên Flower, kiểm chứng tương đương | N1.2 | `SCHEMES=label_alpha_0_1 EXTRA="--runtime flower" TAG_SUFFIX=flower` | 3 | 1–3 |
+| 3. Quét α (FedAvg + Local-only) | N2.1 | `LOCAL=1` (mặc định 5 cách chia) | 15 + 75 | 6,5–7,5 |
+| 4. Lệch số lượng, lệch đặc trưng | N2.2 | `LOCAL=1 SCHEMES="quantity_alpha_0_5 source_skew"` | 6 + 30 | ~3 |
+| 5. Dò tham số, chỉ hạt giống 42, α = 0,1 | N3.2 | `SEEDS=42 SCHEMES=label_alpha_0_1 EXTRA="--runtime flower" TAG_SUFFIX=flower ALGOS="fedprox:0.001 fedprox:0.01 fedprox:0.1 moon:0.1 moon:1 moon:10 fedbnprox:0.001 fedbnprox:0.01 fedbnprox:0.1"` | 9 | ~2 |
+| 6. Thuật toán chính thức, tham số chọn theo `val` ở khối 5 | N3.1 | `SCHEMES="label_alpha_0_1 label_alpha_0_5" EXTRA="--runtime flower" TAG_SUFFIX=flower ALGOS="fedprox:<μ> fedbn scaffold moon:<μ>"` | 24 | 6–8 |
+| 7. Cải tiến đề xuất, và thuật toán tốt nhất ở các α còn lại | N3.3 | `ALGOS="fedbnprox:<μ>"` trên 2 mức α; `EXTRA="--logit-adjust <τ>"` với τ ∈ {0,5; 1}; thuật toán tốt nhất trên α = 100, 10, 1 | 12 + 6 + 9 | 4–5 |
+| 8. Dao động do cách chia | N2.1 | `SCHEMES="label_alpha_0_1_p123 label_alpha_0_1_p2026"` | 6 | ~1 |
+| 9. Nén mỗi vòng; DP 3 mức | N4.2, N4.3 | `SCHEMES=label_alpha_0_1 EXTRA="--update-compression delta_int8" TAG_SUFFIX=int8` (và `fp16`); `EXTRA="--dp-noise <z> --dp-clip <S>" TAG_SUFFIX=dp<z>`, z chọn theo `artifacts/dp_noise_sensitivity.json` | 6 + 9 | 2–3 |
+| **Tổng** | | | | **~27–34** |
+
+**Thứ tự có lý do.** Khối 1 và 2 chạy trước và phải xem kết quả trước khi đi tiếp: khối 2 trả lời Flower có tương đương không và tốn bao nhiêu giờ. `S` của DP lấy từ trung vị `delta_l2_without_bn` của khối 1, không chọn theo độ chính xác.
+
+**DP phải thử trước, không chạy thẳng 9 run.** Với 5 client và 1,56 triệu tham số, z = 1 và S = 5 cho chuẩn nhiễu khoảng 1.559 mỗi vòng, trong khi chuẩn L2 của cả mô hình chỉ khoảng 193. Chạy z ∈ {0,5; 1; 2} chỉ tốn tiền để ra mô hình đoán bừa. Làm theo thứ tự: đọc `artifacts/dp_noise_sensitivity.json` để biết mức nhiễu mô hình còn chịu được; thử 1 hạt giống, 3 vòng; chỉ chạy đủ khi mô hình còn học được, và báo thẳng ε tương ứng. Nếu mọi ε có ý nghĩa đều phá hủy mô hình thì kết luận chính là điều đó, kèm số đo; Word cho phép nêu lý do và giới hạn.
+
+**Sau khi tải về máy này** (không cần GPU; PlantWild không được đưa lên máy thuê):
+
+```bash
+python scripts/finetune_personal.py --run <mỗi run FedAvg cần tinh chỉnh> --out runs/personal       # ứng viên N3.3 thứ ba
+python scripts/eval_sweep_v4.py --runs runs/v4b runs/sweep runs/personal --plantwild              # bảng, biểu đồ; run chạy lại được đo chênh lệch ở `reruns` (N1.3)
+python scripts/run_sealed_test.py --runs ... --cells "<cách chia|biến thể đã chốt>" --dry-run      # kiểm đủ run trước khi dùng lần chạy duy nhất
+python scripts/run_sealed_test.py --runs ... --cells "<cách chia|biến thể đã chốt>" --confirm-final
+```
+
+**Quy tắc chốt đặt trước khi có số.** Chọn tham số theo `selection_score` trên `val`, không dùng tập thử. "Vượt FedAvg có ý nghĩa" là cận dưới khoảng tin cậy 95% bootstrap theo cụm ảnh > 0 và chênh lệch dương ở cả 3 hạt giống (`scripts/eval_sweep_v4.py::compare_to_fedavg`), xét riêng trên `all_test` và trên phần ngoài đồng. Không thay quy tắc sau khi đã thấy kết quả.
 
 ### 5.5 Việc đã làm sẵn
 - Tập thử ngoài đồng và công cụ đo: `scripts/build_external_eval_set.py`, `scripts/eval_external_set.py`, `scripts/eval_inference_variants.py`.

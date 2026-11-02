@@ -102,10 +102,11 @@ def client_step(plan: ClientPlan, client: int, step: int, lr: float, parent: dic
     env = _client_env(plan, client)
     algo = env["algo"]
     algo.load_download(server_extra)
-    if step > 0:
+    if step > 0 and algo.keeps_client_state:
         previous = state_path(plan, client, step - 1)
-        if previous.is_file():
-            algo.load_client_state(client, torch.load(previous, map_location="cpu", weights_only=False))
+        if not previous.is_file():
+            raise RuntimeError(f"thiếu trạng thái riêng {previous} của client {client}: học tiếp sẽ âm thầm về trạng thái ban đầu, làm sai thuật toán")
+        algo.load_client_state(client, torch.load(previous, map_location="cpu", weights_only=False))
     local = copy.deepcopy(env["template"])
     set_parameters(local, parent)
     state, stats = train_one_client(local, client, parent, algo, env["data"], lr, env["recipe"], env["device"])

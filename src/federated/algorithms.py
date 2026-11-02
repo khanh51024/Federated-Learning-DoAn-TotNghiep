@@ -148,6 +148,7 @@ class MoonHooks(LocalHooks):
 # ---------------------------------------------------------------------------
 class FedAlgorithm:
     name = "fedavg"
+    keeps_client_state = False       # client có trạng thái riêng phải giữ qua các vòng: thiếu tệp trạng thái là lỗi, không phải bắt đầu lại
 
     def __init__(self, model: torch.nn.Module, num_clients: int, **options: Any):
         self.num_clients = num_clients
@@ -221,6 +222,7 @@ class FedBN(FedAlgorithm):
     Mô hình toàn cục dùng để chọn checkpoint và đánh giá vẫn gộp BN theo FedAvg (cần một mô hình duy nhất để so cùng các cách khác); đây KHÔNG phải
     mô hình cá nhân hóa của FedBN. Mô hình cá nhân hóa của client k = trọng số toàn cục + BN riêng `client_bn[k]` (xem `personalized_state`)."""
     name = "fedbn"
+    keeps_client_state = True
 
     def __init__(self, model, num_clients, **options):
         super().__init__(model, num_clients, **options)
@@ -270,10 +272,20 @@ class FedBNProx(FedBN):
         return ProxHooks(anchor, float(self.options["mu"]))
 
 
+def momentum_displacement_steps(steps: int, momentum: float) -> float:
+    """Tổng độ dời của `steps` bước SGD động lượng m, xuất phát từ vận tốc 0, gradient không đổi g, tính theo đơn vị η·g: Σ_{t=1..K} (1 − m^t)/(1 − m) = (K − m(1 − m^K)/(1 − m))/(1 − m).
+
+    Bộ tối ưu của client làm mới mỗi vòng nên vận tốc luôn bắt đầu từ 0; dùng K/(1 − m) sẽ tính dư (đo được ở α = 0,1: dư 10–20% với K = 52–103 bước, dư gần gấp đôi với K = 19)."""
+    if not momentum:
+        return float(steps)
+    return (steps - momentum * (1 - momentum ** steps) / (1 - momentum)) / (1 - momentum)
+
+
 class Scaffold(FedAlgorithm):
-    """SCAFFOLD, phiên bản II (c_i⁺ = c_i − c + (x − y_i)/(K·η)). Với động lượng m, độ dời mỗi bước xấp xỉ η/(1−m)·g nên dùng η_hiệu_dụng = η/(1−m).
-    Đây là xấp xỉ: bản gốc phân tích cho SGD thuần. Trung bình biến điều khiển theo n_k, cùng trọng số với phép gộp mô hình."""
+    """SCAFFOLD, phiên bản II (c_i⁺ = c_i − c + (x − y_i)/(K·η)). Với động lượng, K·η thay bằng tổng độ dời thật (`momentum_displacement_steps`) của SGD động lượng xuất phát từ vận tốc 0.
+    Vẫn là xấp xỉ: công thức giả định gradient không đổi trong vòng, và bản gốc phân tích cho SGD thuần. Trung bình biến điều khiển theo n_k, cùng trọng số với phép gộp mô hình."""
     name = "scaffold"
+    keeps_client_state = True
 
     def __init__(self, model, num_clients, **options):
         super().__init__(model, num_clients, **options)
@@ -288,12 +300,12 @@ class Scaffold(FedAlgorithm):
         return ScaffoldHooks(correction)
 
     def after_local(self, client, local, parent, lr, steps, num_examples):
-        effective_lr = lr / (1.0 - self.momentum) if self.momentum else lr
+        displacement = lr * momentum_displacement_steps(max(1, steps), self.momentum)
         y = _trainable(local)
         updated = {}
         for name in self.c:
             x = parent[name].float()
-            updated[name] = self.ci[client][name] - self.c[name] + (x - y[name]) / (max(1, steps) * effective_lr)
+            updated[name] = self.ci[client][name] - self.c[name] + (x - y[name]) / displacement
         self._pending[client] = updated
 
     def aggregate(self, updates, parent):
@@ -370,6 +382,7 @@ class FedAvgM(FedAlgorithm):
 
 class Moon(FedAlgorithm):
     name = "moon"
+    keeps_client_state = True
 
     def __init__(self, model, num_clients, **options):
         super().__init__(model, num_clients, **options)

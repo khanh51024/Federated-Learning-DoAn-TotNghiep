@@ -1,13 +1,14 @@
 """Differential privacy phía máy chủ theo cấp client (DP-FedAvg, McMahan và cộng sự, ICLR 2018) cho N4.3 của yêu cầu đề tài.
 
 Mỗi vòng: cắt chuẩn L2 của độ lệch tham số học được từng client về `clip`, gộp như FedAvg, rồi cộng nhiễu Gaussian độ lệch chuẩn z · clip · max(n_k / n).
-Một client thay đổi làm kết quả gộp đổi tối đa clip · n_k / n, nên đây đúng là cơ chế Gaussian với hệ số nhiễu z. Không dùng DP-SGD của Opacus vì nó không hợp với BatchNorm của MobileNetV3.
+Hệ số nhiễu đúng bằng z khi n_k công khai, mẫu số n cố định và hai tập dữ liệu kề nhau khác ở việc đưa cập nhật của một client về 0: khi đó kết quả gộp đổi tối đa clip · n_k / n. Nếu xét kề nhau kiểu THAY THẾ một client thì
+độ nhạy gấp đôi, z thật chỉ bằng z/2; vì vậy mỗi run ghi cả hai ε. Không dùng DP-SGD của Opacus vì nó không hợp với BatchNorm của MobileNetV3.
 
 Giới hạn phải nói khi báo cáo:
   * Bảo vệ ở cấp CLIENT (có hay không cả một cơ sở), không phải cấp từng ảnh.
   * Máy chủ được tin cậy để cắt và thêm nhiễu; máy chủ vẫn thấy từng bản cập nhật.
   * Thống kê BatchNorm (running_mean, running_var) vẫn gộp không nhiễu: thêm nhiễu làm phương sai âm và hỏng mô hình. Vì vậy ε chỉ tính cho tham số học được, chưa phải bảo đảm trọn vẹn cho mọi thứ gửi đi.
-  * Chỉ 5 client và tham gia đầy đủ (không có khuếch đại do lấy mẫu), nên ε nhỏ đòi hỏi nhiễu lớn so với tín hiệu.
+  * Chỉ 5 client và tham gia đầy đủ (không có khuếch đại do lấy mẫu), lại có khoảng 1,56 triệu tham số. Chuẩn nhiễu bằng z · clip · max(n_k / n) · căn(số tham số), gấp hàng trăm lần `clip` ngay cả khi z = 1, nên ε nhỏ gần như chắc chắn phá hủy mô hình. Số đo: artifacts/dp_noise_sensitivity.json.
 """
 from __future__ import annotations
 
