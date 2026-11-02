@@ -29,7 +29,7 @@ sys.path.insert(0, str(ROOT))
 from src import registry as reg  # noqa: E402
 
 RELEASE_REL = "mixed/pv_pd_v4"
-CODE_PATHS = ("src", "scripts/train_v4.py", "scripts/summarize_ablation.py", "scripts/remote", "scripts/verify_release_contract.py", "requirements-train.txt", "requirements-flower.txt")
+CODE_PATHS = ("src", "scripts/train_v4.py", "scripts/summarize_ablation.py", "scripts/remote", "scripts/verify_release_contract.py", "scripts/verify_fedsgd_equivalence.py", "requirements-train.txt", "requirements-flower.txt")
 CONTRACT_BRANCH = "origin/train-centralized"
 CONTRACT_FILES = ("plant_data_contract/plant_data_contract/integrity.py", "plant_data_contract/plant_data_contract/partitions.py",
                   "plant_data_contract/plant_data_contract/full_gate.py", "training-workflows/shared/data_selection.py")

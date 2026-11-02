@@ -107,5 +107,5 @@ def train_one_client(local: Any, client: int, parent: dict[str, Any], algo: Any,
     algo.after_local(client, local, parent, lr, steps, data["num_examples"])
     if hooks is not None:
         hooks.close()
-    return state, {"client": client, "loss": stats[-1]["loss"], "steps": steps, "delta_l2": round(l2, 4), "delta_l2_without_bn": round(l2_without_bn, 4),
+    return state, {"client": client, "loss": stats[-1]["loss"], "steps": steps, "train_seconds": round(sum(s["seconds"] for s in stats), 2), "delta_l2": round(l2, 4), "delta_l2_without_bn": round(l2_without_bn, 4),
                    "bytes_up": state_bytes(state) + extra_up, "bytes_down": state_bytes(parent) + extra_down}

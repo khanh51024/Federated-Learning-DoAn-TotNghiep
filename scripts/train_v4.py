@@ -155,10 +155,10 @@ def main() -> int:
     import torch
 
     from src.data.robust_transforms import get_eval_transform
-    from src.federated.algorithms import FedBN, make_algorithm
+    from src.federated.algorithms import FedBN, aggregation_error, make_algorithm, update_norms
     from src.federated.compression import decode_update
     from src.federated.privacy import add_noise, clip_update, noise_std, rdp_epsilon
-    from src.model.mobilenetv3 import get_parameters, set_parameters
+    from src.model.mobilenetv3 import compute_model_hash, get_parameters, set_parameters
 
     if args.method == "local" and args.client is None:
         parser.error("--method local cần --client")
@@ -242,7 +242,9 @@ def main() -> int:
                     for name, rows in eval_rows.items()}
     aug_generators = [c["generator"] for c in clients if c["generator"] is not None]
 
-    model = build_model(args.seed).to(device)
+    model = build_model(args.seed)
+    w0_sha256 = compute_model_hash(get_parameters(model))         # ba mốc cùng hạt giống phải có đúng cùng W0; ghi vào final.json để đối chiếu, không chỉ tin vào mã
+    model = model.to(device)
     if args.channels_last:
         model = model.to(memory_format=torch.channels_last)
     steps_total = args.budget * (args.local_epochs if args.method == "local" else 1)
@@ -292,7 +294,9 @@ def main() -> int:
             started = time.time()
             if args.method == "fedavg":
                 parent = get_parameters(model)
+                round_started = time.time()
                 updates, client_stats = run_round(step, lr, parent)
+                round_wall_seconds = round(time.time() - round_started, 2)
                 if args.dp_noise:
                     trainable = {name for name, _ in model.named_parameters()}
                     for update, stats in zip(updates, client_stats):
@@ -300,8 +304,15 @@ def main() -> int:
                     std = noise_std(args.dp_noise, args.dp_clip, [u["num_examples"] for u in updates])
                     set_parameters(model, add_noise(algo.aggregate(updates, parent), trainable, std, args.seed * 100000 + step))
                 else:
-                    set_parameters(model, algo.aggregate(updates, parent))
-                train_info = {"clients": client_stats, "steps": sum(c["steps"] for c in client_stats)}
+                    merged = algo.aggregate(updates, parent)
+                    set_parameters(model, merged)
+                merged_state = get_parameters(model)
+                for update, stats in zip(updates, client_stats):
+                    # khoảng cách từ client đến mô hình chung SAU khi gộp: "huấn luyện tổng lệch huấn luyện client bao nhiêu" (N1.3)
+                    stats["l2_to_merged"], stats["l2_to_merged_without_bn"] = (round(v, 4) for v in update_norms(update["weights"], merged_state, algo.bn_keys))
+                train_info = {"clients": client_stats, "steps": sum(c["steps"] for c in client_stats), "round_wall_seconds": round_wall_seconds}
+                if args.algo == "fedavg" and not args.dp_noise:
+                    train_info["aggregation_check"] = aggregation_error(updates, merged_state)
             else:
                 for group in optimizer.param_groups:
                     group["lr"] = lr
@@ -340,7 +351,7 @@ def main() -> int:
     model.load_state_dict(state["model_state"])
     logits = {name: predict(model, loader, device, args.channels_last, args.amp) for name, loader in eval_loaders.items()}
     np.savez_compressed(run_dir / "logits_best.npz", **logits, **{f"{n}_sample_ids": np.array([r["sample_id"] for r in eval_rows[n]]) for n in eval_rows})
-    final = {"run": run_dir.name, "best_step": state["step"], "selection_score": state["selection_score"], "config": config,
+    final = {"run": run_dir.name, "best_step": state["step"], "selection_score": state["selection_score"], "w0_sha256": w0_sha256, "config": config,
              **{name: summarize(logits[name], eval_rows[name]) for name in eval_rows if name != SEALED_SPLIT}}
     if isinstance(algo, FedBN):
         # Mô hình cá nhân hóa của FedBN: trọng số toàn cục + BatchNorm riêng của từng client; chấm trên val và tập giữ riêng (mô hình toàn cục ở trên dùng BN đã gộp)

@@ -18,7 +18,7 @@ pytest.importorskip("flwr")
 
 from src.federated import flower_app as fa  # noqa: E402
 from src.federated.algorithms import make_algorithm  # noqa: E402
-from src.model.mobilenetv3 import create_model, get_parameters, set_parameters  # noqa: E402
+from src.model.mobilenetv3 import compute_model_hash, create_model, get_parameters, set_parameters  # noqa: E402
 from src.training.client_round import Recipe, train_one_client  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -185,7 +185,9 @@ def _reply(message, client: int, value: float, n: int):
     weights = {"w": torch.full((2,), value), "num_batches_tracked": torch.tensor(3)}
     extra = {"d": torch.ones(2) * client}
     arrays, extra_record = fa.state_to_record(weights), fa.state_to_record(extra)
-    stats = {"client": client, "loss": 1.0, "steps": 2, "delta_l2": 0.1, "delta_l2_without_bn": 0.1, "num_examples": n, "bytes_up": fa.record_bytes(arrays) + fa.record_bytes(extra_record)}
+    parent = fa.record_to_state(message.content["arrays"])
+    stats = {"client": client, "loss": 1.0, "steps": 2, "delta_l2": 0.1, "delta_l2_without_bn": 0.1, "num_examples": n, "bytes_up": fa.record_bytes(arrays) + fa.record_bytes(extra_record),
+             "sha256_down_received": compute_model_hash(parent), "sha256_up_sent": compute_model_hash(weights)}
     content = RecordDict({"arrays": arrays, "extra": extra_record, "report": ConfigRecord({"stats": json.dumps(stats)})})
     return SimpleNamespace(content=content, has_error=lambda: False, metadata=SimpleNamespace(src_node_id=message.metadata.dst_node_id))
 
@@ -217,6 +219,7 @@ def test_round_sends_real_payload_and_orders_replies_by_client(tmp_path: Path):
     assert [u["num_examples"] for u in updates] == [10, 30]
     assert torch.equal(updates[1]["weights"]["w"], torch.full((2,), 3.0))
     assert "num_examples" not in stats[0]
+    assert stats[0]["transport_down_exact"] is True and stats[0]["transport_up_exact"] is True and "sha256_up_sent" not in stats[0]
     assert algo.absorbed[0][1] == ["d"] and algo.absorbed[0][2] == ["num_batches_tracked", "w"]
 
     sent = grid.sent[0]
@@ -334,3 +337,16 @@ def test_missing_client_state_is_an_error_not_a_silent_restart(tmp_path: Path, m
     # thuật toán không có trạng thái riêng thì không cần tệp
     monkeypatch.setattr(fa, "_CLIENT_CACHE", {0: {"recipe": RECIPE, "device": DEVICE, "data": _data(0), "template": template, "algo": make_algorithm("fedavg", _model(), 1, **OPTIONS)}})
     fa.client_step(_plan(tmp_path, "fedavg"), 0, 3, 0.01, get_parameters(template), {})
+
+
+def test_changed_weights_in_either_direction_stop_the_run():
+    """Trọng số bị đổi một bit trên đường đi phải dừng run, không được gộp."""
+    good = {"w": torch.tensor([1.0, 2.0])}
+    flipped = {"w": torch.tensor([1.0, 2.0000002])}
+    assert compute_model_hash(good) != compute_model_hash(flipped)
+    ok = {"client": 3, "sha256_down_received": compute_model_hash(good), "sha256_up_sent": compute_model_hash(good)}
+    assert fa.check_transport(dict(ok), compute_model_hash(good), compute_model_hash(good))["transport_up_exact"] is True
+    with pytest.raises(RuntimeError, match="client 3: trọng số nhận được khác"):
+        fa.check_transport(dict(ok), compute_model_hash(flipped), compute_model_hash(good))
+    with pytest.raises(RuntimeError, match="client 3: trọng số máy chủ nhận khác"):
+        fa.check_transport(dict(ok), compute_model_hash(good), compute_model_hash(flipped))

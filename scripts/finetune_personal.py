@@ -11,7 +11,7 @@ cùng label smoothing và cân bằng hai miền như công thức chung. Số e
 Đầu ra: thư mục run mới ở `--out`, cùng định dạng scripts/train_v4.py, có `logits_personalized.npz` (như FedBN) để scripts/eval_sweep_v4.py đọc; `logits_best.npz` và nhật ký là của mô hình chung.
 Việc tốn thời gian nhất là trích đặc trưng; chạy được trên CPU.
 
-    python scripts/finetune_personal.py --run runs/v4b/fedavg_s42 --out runs/personal
+    python scripts/finetune_personal.py --run runs/v4b/fedavg_s42 --out runs/v4_personal
 """
 from __future__ import annotations
 
@@ -97,7 +97,7 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--run", type=Path, required=True, help="thư mục run FedAvg đã xong")
-    parser.add_argument("--out", type=Path, default=ROOT / "runs" / "personal")
+    parser.add_argument("--out", type=Path, default=ROOT / "runs" / "v4_personal")
     parser.add_argument("--dataset-root", type=Path, default=ROOT / "data" / "dataset_sources")
     parser.add_argument("--lr", type=float, default=0.005, help="nhỏ hơn lr học liên kết vì chỉ tinh chỉnh")
     parser.add_argument("--batch-size", type=int, default=128)

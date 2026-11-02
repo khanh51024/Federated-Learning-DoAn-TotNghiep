@@ -373,8 +373,8 @@ Thay cho kế hoạch chạy ở 5.10. Mã, cách chia và bộ gộp đã sẵn
 **Sau khi tải về máy này** (không cần GPU; PlantWild không được đưa lên máy thuê):
 
 ```bash
-python scripts/finetune_personal.py --run <mỗi run FedAvg cần tinh chỉnh> --out runs/personal       # ứng viên N3.3 thứ ba
-python scripts/eval_sweep_v4.py --runs runs/v4b runs/sweep runs/personal --plantwild              # bảng, biểu đồ; run chạy lại được đo chênh lệch ở `reruns` (N1.3)
+python scripts/finetune_personal.py --run <mỗi run FedAvg cần tinh chỉnh> --out runs/v4_personal       # ứng viên N3.3 thứ ba
+python scripts/eval_sweep_v4.py --runs runs/v4b runs/v4_sweep runs/v4_personal --plantwild              # bảng, biểu đồ; run chạy lại được đo chênh lệch ở `reruns` (N1.3)
 python scripts/run_sealed_test.py --runs ... --cells "<cách chia|biến thể đã chốt>" --dry-run      # kiểm đủ run trước khi dùng lần chạy duy nhất
 python scripts/run_sealed_test.py --runs ... --cells "<cách chia|biến thể đã chốt>" --confirm-final
 ```

@@ -96,7 +96,7 @@ def client_step(plan: ClientPlan, client: int, step: int, lr: float, parent: dic
 
     import torch
 
-    from src.model.mobilenetv3 import set_parameters
+    from src.model.mobilenetv3 import compute_model_hash, set_parameters
     from src.training.client_round import compress_upload, train_one_client
 
     env = _client_env(plan, client)
@@ -112,6 +112,8 @@ def client_step(plan: ClientPlan, client: int, step: int, lr: float, parent: dic
     state, stats = train_one_client(local, client, parent, algo, env["data"], lr, env["recipe"], env["device"])
     extra_up = algo.upload(client)
     state = compress_upload(state, parent, plan.compression, stats, 0)      # số byte thật lấy từ tin nhắn ở `train` bên dưới
+    stats["sha256_down_received"] = compute_model_hash(parent)              # mã băm của đúng cái client nhận và đúng cái client gửi; máy chủ đối chiếu ở `check_transport`
+    stats["sha256_up_sent"] = compute_model_hash(state)
     stats["num_examples"] = env["data"]["num_examples"]
     stats["client_env_builds"] = LOADER_BUILDS["count"]                     # số lần dựng dữ liệu trong tiến trình này; phải không tăng sau vòng đầu, nếu không mỗi vòng tốn thêm thời gian dựng lại
     private = algo.client_state(client)
@@ -163,6 +165,17 @@ def _replies_or_raise(replies: Any, expected: int, what: str) -> list[Any]:
     return got
 
 
+def check_transport(stats: dict[str, Any], sent_down: str, received_up: str) -> dict[str, Any]:
+    """Đối chiếu mã băm SHA-256 từng tensor hai chiều của một client trong một vòng: sai là dừng run, không gộp trọng số đã đổi. Trả số liệu vòng đã thay hai mã băm bằng kết quả so."""
+    down = stats.pop("sha256_down_received")
+    up = stats.pop("sha256_up_sent")
+    if down != sent_down:
+        raise RuntimeError(f"client {stats['client']}: trọng số nhận được khác trọng số máy chủ gửi ({down[:12]} so với {sent_down[:12]})")
+    if up != received_up:
+        raise RuntimeError(f"client {stats['client']}: trọng số máy chủ nhận khác trọng số client gửi ({received_up[:12]} so với {up[:12]})")
+    return {**stats, "transport_down_exact": True, "transport_up_exact": True}
+
+
 def locate_clients(grid: Any, num_clients: int, timeout: float) -> dict[int, int]:
     """{số thứ tự shard: mã nút Flower}. Các nút đăng ký bất đồng bộ nên chờ đủ, tối đa `timeout` giây. Mỗi shard phải có đúng một nút."""
     from flwr.app import ConfigRecord, Message, MessageType, RecordDict
@@ -186,12 +199,14 @@ def make_round_fn(grid: Any, algo: Any, plan: ClientPlan, located: dict[int, int
     from flwr.app import ConfigRecord, Message, MessageType, RecordDict
 
     from src.federated.compression import decode_update
+    from src.model.mobilenetv3 import compute_model_hash
 
     plan_json = json.dumps(dataclasses.asdict(plan))
 
     def run_round(step: int, lr: float, parent: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
         arrays, extra = state_to_record(parent), state_to_record(algo.download())
         bytes_down = record_bytes(arrays) + record_bytes(extra)
+        sent_down = compute_model_hash(parent)
         config = ConfigRecord({"plan": plan_json, "step": step, "lr": lr})
         messages = [Message(RecordDict({"arrays": arrays, "extra": extra, "config": config}), dst_node_id=located[k], message_type=MessageType.TRAIN) for k in sorted(located)]
         replies = _replies_or_raise(grid.send_and_receive(messages, timeout=timeout), len(messages), f"học ở vòng {step}")
@@ -199,6 +214,7 @@ def make_round_fn(grid: Any, algo: Any, plan: ClientPlan, located: dict[int, int
         for reply in replies:
             stats = json.loads(str(reply.content["report"]["stats"]))
             weights = record_to_state(reply.content["arrays"])
+            stats = check_transport(stats, sent_down, compute_model_hash(weights))
             if plan.compression:
                 weights = decode_update(weights, parent, plan.compression)
             num_examples = int(stats.pop("num_examples"))

@@ -299,3 +299,15 @@ def test_only_stateful_algorithms_declare_client_state():
     model = Tiny()
     flags = {name: alg.make_algorithm(name, model, 1).keeps_client_state for name in alg.ALGORITHMS}
     assert flags == {"fedavg": False, "fedprox": False, "fedavgm": False, "fedbn": True, "scaffold": True, "moon": True, "fedbnprox": True}
+
+
+def test_aggregation_check_is_zero_for_fedavg_and_catches_a_wrong_merge():
+    model = Tiny()
+    parent = tiny_state(model, 0.0)
+    ups = updates_of([tiny_state(model, 1.0, 1.0, 3), tiny_state(model, 4.0, 2.0, 5)], [10, 30])
+    merged = alg.make_algorithm("fedavg", model, 2).aggregate(ups, parent)
+    assert alg.aggregation_error(ups, merged)["max_abs_diff"] == 0.0
+    wrong = {**merged, "fc.weight": merged["fc.weight"] + 0.5}
+    assert alg.aggregation_error(ups, wrong)["max_abs_diff"] == pytest.approx(0.5)
+    equal_weighted = {**merged, "fc.weight": torch.full_like(merged["fc.weight"], 2.5)}       # quên trọng số n_k: (1+4)/2 thay vì 3,25
+    assert alg.aggregation_error(ups, equal_weighted)["max_abs_diff"] == pytest.approx(0.75)

@@ -63,6 +63,21 @@ def update_norms(local: dict[str, torch.Tensor], parent: dict[str, torch.Tensor]
     return math.sqrt(total), math.sqrt(without_bn)
 
 
+def aggregation_error(updates: list[dict[str, Any]], merged: dict[str, torch.Tensor]) -> dict[str, Any]:
+    """Tính lại trung bình theo n_k bằng numpy float64, độc lập với `aggregate_fedavg`, rồi so với kết quả đã gộp. Bằng 0 nghĩa là phép gộp không thêm sai số nào ngoài việc làm tròn về float32."""
+    import numpy as np
+
+    total = sum(int(u["num_examples"]) for u in updates)
+    worst, compared = 0.0, 0
+    for key, value in merged.items():
+        if not value.is_floating_point():
+            continue
+        mean = sum(u["weights"][key].detach().cpu().numpy().astype(np.float64) * (int(u["num_examples"]) / total) for u in updates)
+        worst = max(worst, float(np.abs(mean.astype(value.detach().cpu().numpy().dtype) - value.detach().cpu().numpy()).max()))
+        compared += 1
+    return {"max_abs_diff": worst, "tensors_compared": compared}
+
+
 def _trainable(model: torch.nn.Module) -> dict[str, torch.Tensor]:
     return {name: p.detach().cpu().clone() for name, p in model.named_parameters()}
 
