@@ -1,5 +1,7 @@
 # Hướng dẫn demo thủ công 9 mục
 
+**Cách nhanh nhất:** nhấp đúp `DEMO_FLOWER.bat` ở thư mục gốc dự án. File tự mở máy chủ và 2 client, chờ học xong (khoảng 1 phút) rồi in bảng kết quả. Chạy lại lần nữa thì đóng các cửa sổ cũ trước. Phần dưới là cách gõ từng lệnh và các mục còn lại.
+
 Mở PowerShell tại `D:\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old`. Mọi lệnh dưới đây đã chạy thử trên laptop này, trừ Cách A của mục 8 (lệnh đó cần máy thuê còn bật, xem chú thích ở mục 8). Số trong "Sẽ thấy" là số của lần chạy thử; số của bạn có thể khác chút ở thời gian, các kết quả KHỚP thì phải giống. Mỗi cửa sổ PowerShell mới phải vào đúng thư mục và chạy dòng này một lần (mỗi cửa sổ giữ riêng, cửa sổ mới phải chạy lại):
 
 ```powershell
