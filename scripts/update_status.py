@@ -59,6 +59,7 @@ ALLOWED_DOCS = {
     "DATASET_V4.md", "HUONG_DAN_CHUP_ANH.md", "CONG_TU_CHOI_ANH_KHONG_PHAI_LA.md",
     "THAY_MO_HINH_WEB.md", "REPORT_WORD_WEB_2026-10-20.md", "REVIEW_HOAN_THIEN_2026-10-25.md",
     "GD4_NEN_LUONG_TU_HOA_2026-10-26.md",
+    "KIEM_CHUNG_PHAN_TAN_TAP_TRUNG.md",
 }
 # Số liệu từng xuất hiện trong tài liệu cũ và mâu thuẫn với artifact: không được quay lại docs hiện hành.
 FORBIDDEN_NUMBERS = ("97,12", "97.12", "90,44", "90.44")

@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "rounds": 3,
+  "clients": 2,
+  "local_epochs": 2,
+  "seed": 42,
+  "history_sha256": "c9404ec9c4abaa9c9472a306825477c02c3730c4f7218a84bdb156d3d527b7ce",
+  "history_path": "tmp/speedtest/out/wan_history.json",
+  "connection": "SSH tunnel via port 3000; GPU client co-located with server",
+  "omp_threads": 2,
+  "mkl_threads": 2
+}

@@ -35,7 +35,7 @@ def test_complete_preflight_counts_both_transport_directions(completed_preflight
     assert result["passed"] and result["transport_comparisons"] == 30
 
 
-@pytest.mark.parametrize("fault", ["transport", "missing_client", "aggregation_nan", "missing_round", "wrong_device"])
+@pytest.mark.parametrize("fault", ["transport", "missing_client", "aggregation_nan", "aggregation_wrong", "missing_round", "wrong_device"])
 def test_gate_rejects_bad_evidence_even_with_done(completed_preflight, fault):
     path, rows = completed_preflight
     if fault == "transport":
@@ -44,6 +44,8 @@ def test_gate_rejects_bad_evidence_even_with_done(completed_preflight, fault):
         rows[1]["train"]["clients"].pop()
     elif fault == "aggregation_nan":
         rows[1]["train"]["aggregation_check"]["max_abs_diff"] = float("nan")
+    elif fault == "aggregation_wrong":
+        rows[1]["train"]["aggregation_check"]["max_abs_diff"] = 1e-4
     elif fault == "missing_round":
         rows.pop()
     else:
@@ -52,6 +54,13 @@ def test_gate_rejects_bad_evidence_even_with_done(completed_preflight, fault):
         (path / "config.json").write_text(json.dumps(config))
     (path / "history.jsonl").write_text("\n".join(json.dumps(row) for row in rows))
     assert not audit_run(path, preflight=True)["passed"]
+
+
+def test_float32_rounding_at_unity_is_not_rejected(completed_preflight):
+    path, rows = completed_preflight
+    rows[1]["train"]["aggregation_check"]["max_abs_diff"] = 2 ** -23
+    (path / "history.jsonl").write_text("\n".join(json.dumps(row) for row in rows))
+    assert audit_run(path, preflight=True)["passed"]
 
 
 def test_equivalence_requires_both_schemes_and_fixed_finite_tolerances(tmp_path):

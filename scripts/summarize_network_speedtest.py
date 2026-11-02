@@ -46,7 +46,13 @@ def _spread(values: list[float | None]) -> dict[str, float | None]:
     return {"min": round(clean[0], 3), "median": round(statistics.median(clean), 3), "max": round(clean[-1], 3), "n": len(clean)}
 
 
-def summarize_run(history: dict[str, Any], machines: dict[int, str]) -> dict[str, Any]:
+def summarize_run(history: dict[str, Any], machines: dict[int, str], local_epochs: int | None = None) -> dict[str, Any]:
+    recorded_epochs = history.get("local_epochs")
+    if local_epochs is not None and recorded_epochs is not None and local_epochs != recorded_epochs:
+        raise ValueError("local_epochs override differs from recorded history")
+    epochs = local_epochs if local_epochs is not None else recorded_epochs
+    if epochs is not None and (not isinstance(epochs, int) or epochs <= 0):
+        raise ValueError("local_epochs must be a positive integer")
     rounds = history["audit_rounds"]
     per_client: dict[int, dict[str, list[float | None]]] = {}
     out_rounds = []
@@ -76,16 +82,20 @@ def summarize_run(history: dict[str, Any], machines: dict[int, str]) -> dict[str
                 "payload_bytes_up": client.get("payload_bytes_up"), "payload_bytes_down": client.get("payload_bytes_down"),
                 "predicted_transfer_ms": round(pred_ms, 1) if pred_ms is not None else None,
                 "train_images_per_s": round(client["num_examples"] / client["local_train_time_s"], 2) if client["local_train_time_s"] else None,
+                "processed_train_images_per_s": round(client["num_examples"] * epochs / client["local_train_time_s"], 2)
+                if client["local_train_time_s"] and epochs is not None else None,
             }
             entry["clients"].append(row)
             bucket = per_client.setdefault(cid, {})
             for key in ("local_train_time_s", "client_wall_ms", "probe_connect_ms", "probe_rtt_persistent_ms", "probe_up_mb_per_s",
-                        "probe_down_mb_per_s", "train_images_per_s", "predicted_transfer_ms"):
+                        "probe_down_mb_per_s", "train_images_per_s", "processed_train_images_per_s", "predicted_transfer_ms"):
                 bucket.setdefault(key, []).append(row.get(key))
         entry["predicted_transfer_ms_slowest_client"] = round(predicted_worst, 1) if predicted_worst else None
         out_rounds.append(entry)
     return {
         "rounds": len(rounds), "clients": len(per_client),
+        "local_epochs": epochs,
+        "throughput_definition": "train_images_per_s counts unique shard examples; processed_train_images_per_s includes local epochs and is null when epochs are unknown",
         "all_upload_hashes_ok": all(c.get("upload_hash_ok") is True for a in rounds for c in a["clients"]),
         "all_clients_accepted": all(a["accepted_clients"] == len(a["clients"]) for a in rounds),
         "final_model_hash": history.get("final_model_hash"),
@@ -101,11 +111,14 @@ def summarize_run(history: dict[str, Any], machines: dict[int, str]) -> dict[str
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--run", action="append", required=True, help="tên=đường dẫn history.json (có thể lặp)")
     parser.add_argument("--machines", default="0=client_0,1=client_1", help="client_id=tên máy, cách nhau bằng dấu phẩy")
     parser.add_argument("--label", default="speedtest")
     parser.add_argument("--notes", default="", help="ghi chú về cách dựng kết nối (ví dụ: ssh -L qua Internet)")
+    parser.add_argument("--local-epochs", type=int, default=None, help="số epoch cục bộ của phép đo nếu history cũ chưa ghi; dùng để tính số ảnh thực xử lý mỗi giây")
     args = parser.parse_args()
 
     machines = {int(k): v for k, v in (pair.split("=", 1) for pair in args.machines.split(","))}
@@ -122,7 +135,7 @@ def main() -> int:
         path = Path(path_text)
         raw = json.loads(path.read_text(encoding="utf-8"))
         shutil.copy2(path, out_dir / f"{name}_history.json")
-        summary = summarize_run(raw, machines)
+        summary = summarize_run(raw, machines, local_epochs=args.local_epochs)
         summary["history_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
         summary["server_address"] = raw.get("server_address")
         report["runs"][name] = summary

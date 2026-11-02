@@ -1,0 +1,23 @@
+{
+  "evidence": "same weighted average computed by production operation order and independent ratio-first operation order on five real Local-only v4b checkpoints; no training or evaluation",
+  "seed": 2026,
+  "client_sizes": [
+    13107,
+    11691,
+    6647,
+    8863,
+    12156
+  ],
+  "max_abs_diff": 7.450580596923828e-09,
+  "max_ulp_diff": 1.0,
+  "different_float32_elements": 1,
+  "worst_case": {
+    "tensor": "features.10.block.2.fc1.weight",
+    "production": -0.09592476487159729,
+    "independent": -0.0959247574210167,
+    "spacing": 7.450580596923828e-09,
+    "ulp": 1.0
+  },
+  "float32_epsilon": 1.1920928955078125e-07,
+  "original_audit_atol": 1e-07
+}

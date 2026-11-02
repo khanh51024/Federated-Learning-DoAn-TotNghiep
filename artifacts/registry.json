@@ -3766,6 +3766,12 @@
       "description": "Checkpoint đợt train v4 (scripts/train_v4.py, máy GPU thuê) chưa đánh giá/promote — số liệu chỉ dùng sau scripts/eval_trained_v4.py",
       "paths": [
         "runs/v4_personal/fedavg_s42_ft/checkpoint_best.pt",
+        "runs/v4_sweep/fedavg_s123_label_alpha_0_1_flower/checkpoint_best.pt",
+        "runs/v4_sweep/fedavg_s123_label_alpha_0_1_flower/checkpoint_last.pt",
+        "runs/v4_sweep/fedavg_s2026_label_alpha_0_1_flower/checkpoint_best.pt",
+        "runs/v4_sweep/fedavg_s2026_label_alpha_0_1_flower/checkpoint_last.pt",
+        "runs/v4_sweep/fedavg_s42_label_alpha_0_1_flower/checkpoint_best.pt",
+        "runs/v4_sweep/fedavg_s42_label_alpha_0_1_flower/checkpoint_last.pt",
         "runs/v4b/centralized_s123/checkpoint_best.pt",
         "runs/v4b/centralized_s2026/checkpoint_best.pt",
         "runs/v4b/centralized_s42/checkpoint_best.pt",
@@ -3788,7 +3794,7 @@
         "runs/v4b/local_c4_s2026/checkpoint_best.pt",
         "runs/v4b/local_c4_s42/checkpoint_best.pt"
       ],
-      "count": 22
+      "count": 28
     },
     {
       "group_id": "web_runs",
@@ -3904,7 +3910,7 @@
   },
   "gates": {
     "provenance": {
-      "generated_at": "2026-11-02T21:35:17",
+      "generated_at": "2026-11-02T22:21:46",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -3916,7 +3922,7 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-11-02T21:35:21",
+      "generated_at": "2026-11-02T22:21:52",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
@@ -3936,16 +3942,16 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-11-02T21:35:27",
+      "generated_at": "2026-11-02T22:22:05",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
     },
     "checkpoint_catalog": {
       "status": "complete",
-      "total_pt_files": 101,
+      "total_pt_files": 107,
       "in_models": 15,
-      "in_groups": 86,
+      "in_groups": 92,
       "unclassified": [],
       "source": "quét đĩa (scripts/build_registry.py)"
     }

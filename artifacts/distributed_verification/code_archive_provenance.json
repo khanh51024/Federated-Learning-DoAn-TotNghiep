@@ -1,0 +1,10 @@
+{
+  "reference_commit": "ed88947ebe533f753d11e6b1aac0f6276b30f848",
+  "exact_match_files": 13,
+  "crlf_only_files": 149,
+  "modified_files": [],
+  "untracked_files": [],
+  "code_version_in_archive": false,
+  "code_version_sidecar_required": true,
+  "comparison": "Git blob SHA-1; report CRLF/LF-only differences separately"
+}

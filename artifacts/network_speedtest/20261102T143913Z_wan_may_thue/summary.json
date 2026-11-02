@@ -1,0 +1,320 @@
+{
+ "label": "wan_may_thue",
+ "created_utc": "20261102T143913Z",
+ "notes": "Laptop i5-12500H CPU và máy thuê RTX 3090, OMP/MKL 2 luồng; SSH tunnel qua cổng 3000 cho 18089 và 18090; client 1 cùng máy chủ; 380 ảnh/client, 2 epoch/vòng, 3 vòng, seed 42. Chỉ đo tốc độ, không dùng làm kết quả độ chính xác.",
+ "evidence": "đo tốc độ trên dữ liệu PlantVillage thật (shard nhỏ); KHÔNG dùng làm kết quả độ chính xác",
+ "machines": {
+  "0": "laptop_i5_12500h_cpu",
+  "1": "may_thue_rtx3090"
+ },
+ "runs": {
+  "wan": {
+   "rounds": 3,
+   "clients": 2,
+   "local_epochs": 2,
+   "throughput_definition": "train_images_per_s counts unique shard examples; processed_train_images_per_s includes local epochs and is null when epochs are unknown",
+   "all_upload_hashes_ok": true,
+   "all_clients_accepted": true,
+   "final_model_hash": "d823dc33ebb02b43feadac7a01f06e892736ae2a7177d286fb840f04a567ccad",
+   "hash_chain_ok": true,
+   "by_machine": {
+    "laptop_i5_12500h_cpu": {
+     "local_train_time_s": {
+      "min": 15.151,
+      "median": 18.005,
+      "max": 20.114,
+      "n": 3
+     },
+     "client_wall_ms": {
+      "min": 48434.294,
+      "median": 48720.803,
+      "max": 51880.484,
+      "n": 3
+     },
+     "probe_connect_ms": {
+      "min": 10.552,
+      "median": 18.831,
+      "max": 24.93,
+      "n": 3
+     },
+     "probe_rtt_persistent_ms": {
+      "min": 951.079,
+      "median": 1425.365,
+      "max": 1427.483,
+      "n": 3
+     },
+     "probe_up_mb_per_s": {
+      "min": 1.129,
+      "median": 2.511,
+      "max": 2.548,
+      "n": 3
+     },
+     "probe_down_mb_per_s": {
+      "min": 0.308,
+      "median": 0.446,
+      "max": 0.52,
+      "n": 3
+     },
+     "train_images_per_s": {
+      "min": 18.89,
+      "median": 21.11,
+      "max": 25.08,
+      "n": 3
+     },
+     "processed_train_images_per_s": {
+      "min": 37.78,
+      "median": 42.21,
+      "max": 50.16,
+      "n": 3
+     },
+     "predicted_transfer_ms": {
+      "min": 15856.1,
+      "median": 16906.6,
+      "max": 21939.8,
+      "n": 3
+     }
+    },
+    "may_thue_rtx3090": {
+     "local_train_time_s": {
+      "min": 0.899,
+      "median": 0.899,
+      "max": 1.187,
+      "n": 3
+     },
+     "client_wall_ms": {
+      "min": 927.374,
+      "median": 948.483,
+      "max": 1242.046,
+      "n": 3
+     },
+     "probe_connect_ms": {
+      "min": 0.054,
+      "median": 0.055,
+      "max": 0.058,
+      "n": 3
+     },
+     "probe_rtt_persistent_ms": {
+      "min": 0.081,
+      "median": 0.095,
+      "max": 0.103,
+      "n": 3
+     },
+     "probe_up_mb_per_s": {
+      "min": 4311.77,
+      "median": 4706.261,
+      "max": 5330.437,
+      "n": 3
+     },
+     "probe_down_mb_per_s": {
+      "min": 4135.129,
+      "median": 7064.758,
+      "max": 8616.532,
+      "n": 3
+     },
+     "train_images_per_s": {
+      "min": 320.13,
+      "median": 422.69,
+      "max": 422.69,
+      "n": 3
+     },
+     "processed_train_images_per_s": {
+      "min": 640.27,
+      "median": 845.38,
+      "max": 845.38,
+      "n": 3
+     },
+     "predicted_transfer_ms": {
+      "min": 1.8,
+      "median": 2.1,
+      "max": 2.8,
+      "n": 3
+     }
+    }
+   },
+   "round_fit_elapsed_ms": {
+    "min": 61583.784,
+    "median": 62430.567,
+    "max": 64065.198,
+    "n": 3
+   },
+   "transfer_estimate_ms": {
+    "min": 12126.15,
+    "median": 13097.211,
+    "max": 13659.612,
+    "n": 3
+   },
+   "predicted_transfer_ms_slowest_client": {
+    "min": 15856.1,
+    "median": 16906.6,
+    "max": 21939.8,
+    "n": 3
+   },
+   "per_round": [
+    {
+     "round": 1,
+     "round_fit_elapsed_ms": 61583.8,
+     "server_validate_ms": 32.67961798701435,
+     "server_aggregate_ms": 19.59986999281682,
+     "server_eval_ms": 0.0,
+     "slowest_client_wall_ms": 48434.29379999725,
+     "transfer_estimate_ms": 13097.210519023065,
+     "clients": [
+      {
+       "client_id": 1,
+       "machine": "may_thue_rtx3090",
+       "num_examples": 380,
+       "status": "ok",
+       "upload_hash_ok": true,
+       "local_train_time_s": 1.187,
+       "client_wall_ms": 1242.045524995774,
+       "client_decode_ms": 0.6465660117100924,
+       "client_encode_ms": 0.2102950238622725,
+       "probe_connect_ms": 0.054298987379297614,
+       "probe_rtt_persistent_ms": 0.10342500172555447,
+       "probe_rtt_legacy_one_shot_ms": 0.4763779870700091,
+       "probe_up_mb_per_s": 4311.769905907659,
+       "probe_down_mb_per_s": 4135.129157041246,
+       "payload_bytes_up": 6307176,
+       "payload_bytes_down": 6307176,
+       "predicted_transfer_ms": 2.8,
+       "train_images_per_s": 320.13,
+       "processed_train_images_per_s": 640.27
+      },
+      {
+       "client_id": 0,
+       "machine": "laptop_i5_12500h_cpu",
+       "num_examples": 380,
+       "status": "ok",
+       "upload_hash_ok": true,
+       "local_train_time_s": 20.114,
+       "client_wall_ms": 48434.29379999725,
+       "client_decode_ms": 1.0880999980145134,
+       "client_encode_ms": 0.5918000024394132,
+       "probe_connect_ms": 10.551899998972658,
+       "probe_rtt_persistent_ms": 951.0789000050863,
+       "probe_rtt_legacy_one_shot_ms": 1927.2620999981882,
+       "probe_up_mb_per_s": 1.1286290850762244,
+       "probe_down_mb_per_s": 0.5195598236256506,
+       "payload_bytes_up": 6307176,
+       "payload_bytes_down": 6307176,
+       "predicted_transfer_ms": 16906.6,
+       "train_images_per_s": 18.89,
+       "processed_train_images_per_s": 37.78
+      }
+     ],
+     "predicted_transfer_ms_slowest_client": 16906.6
+    },
+    {
+     "round": 2,
+     "round_fit_elapsed_ms": 62430.6,
+     "server_validate_ms": 31.442248000530526,
+     "server_aggregate_ms": 18.71001799008809,
+     "server_eval_ms": 0.0,
+     "slowest_client_wall_ms": 48720.802599993476,
+     "transfer_estimate_ms": 13659.61198500736,
+     "clients": [
+      {
+       "client_id": 0,
+       "machine": "laptop_i5_12500h_cpu",
+       "num_examples": 380,
+       "status": "ok",
+       "upload_hash_ok": true,
+       "local_train_time_s": 18.005,
+       "client_wall_ms": 48720.802599993476,
+       "client_decode_ms": 1.0043999936897308,
+       "client_encode_ms": 0.7815999997546896,
+       "probe_connect_ms": 18.8309000004665,
+       "probe_rtt_persistent_ms": 1427.4826000037137,
+       "probe_rtt_legacy_one_shot_ms": 1090.231500005757,
+       "probe_up_mb_per_s": 2.5480173380205775,
+       "probe_down_mb_per_s": 0.4457039482932653,
+       "payload_bytes_up": 6307176,
+       "payload_bytes_down": 6307176,
+       "predicted_transfer_ms": 15856.1,
+       "train_images_per_s": 21.11,
+       "processed_train_images_per_s": 42.21
+      },
+      {
+       "client_id": 1,
+       "machine": "may_thue_rtx3090",
+       "num_examples": 380,
+       "status": "ok",
+       "upload_hash_ok": true,
+       "local_train_time_s": 0.899,
+       "client_wall_ms": 927.3740409989841,
+       "client_decode_ms": 0.6570289842784405,
+       "client_encode_ms": 0.21561598987318575,
+       "probe_connect_ms": 0.05533199873752892,
+       "probe_rtt_persistent_ms": 0.08130501373670995,
+       "probe_rtt_legacy_one_shot_ms": 0.42211698018945754,
+       "probe_up_mb_per_s": 4706.261245548478,
+       "probe_down_mb_per_s": 7064.758283977678,
+       "payload_bytes_up": 6307176,
+       "payload_bytes_down": 6307176,
+       "predicted_transfer_ms": 2.1,
+       "train_images_per_s": 422.69,
+       "processed_train_images_per_s": 845.38
+      }
+     ],
+     "predicted_transfer_ms_slowest_client": 15856.1
+    },
+    {
+     "round": 3,
+     "round_fit_elapsed_ms": 64065.2,
+     "server_validate_ms": 40.35056501743384,
+     "server_aggregate_ms": 18.214291019830853,
+     "server_eval_ms": 0.0,
+     "slowest_client_wall_ms": 51880.483599998115,
+     "transfer_estimate_ms": 12126.149510957475,
+     "clients": [
+      {
+       "client_id": 1,
+       "machine": "may_thue_rtx3090",
+       "num_examples": 380,
+       "status": "ok",
+       "upload_hash_ok": true,
+       "local_train_time_s": 0.899,
+       "client_wall_ms": 948.4833799942862,
+       "client_decode_ms": 0.7845209911465645,
+       "client_encode_ms": 0.21996398572809994,
+       "probe_connect_ms": 0.05784098175354302,
+       "probe_rtt_persistent_ms": 0.09454198880121112,
+       "probe_rtt_legacy_one_shot_ms": 0.478911999380216,
+       "probe_up_mb_per_s": 5330.436927895318,
+       "probe_down_mb_per_s": 8616.531696434988,
+       "payload_bytes_up": 6307176,
+       "payload_bytes_down": 6307176,
+       "predicted_transfer_ms": 1.8,
+       "train_images_per_s": 422.69,
+       "processed_train_images_per_s": 845.38
+      },
+      {
+       "client_id": 0,
+       "machine": "laptop_i5_12500h_cpu",
+       "num_examples": 380,
+       "status": "ok",
+       "upload_hash_ok": true,
+       "local_train_time_s": 15.151,
+       "client_wall_ms": 51880.483599998115,
+       "client_decode_ms": 0.8315999948536046,
+       "client_encode_ms": 0.6322999979602173,
+       "probe_connect_ms": 24.92999999958556,
+       "probe_rtt_persistent_ms": 1425.3647000005003,
+       "probe_rtt_legacy_one_shot_ms": 1057.2313999946346,
+       "probe_up_mb_per_s": 2.511283119843777,
+       "probe_down_mb_per_s": 0.30775632675696696,
+       "payload_bytes_up": 6307176,
+       "payload_bytes_down": 6307176,
+       "predicted_transfer_ms": 21939.8,
+       "train_images_per_s": 25.08,
+       "processed_train_images_per_s": 50.16
+      }
+     ],
+     "predicted_transfer_ms_slowest_client": 21939.8
+    }
+   ],
+   "history_sha256": "c9404ec9c4abaa9c9472a306825477c02c3730c4f7218a84bdb156d3d527b7ce",
+   "server_address": "127.0.0.1:18089"
+  }
+ }
+}

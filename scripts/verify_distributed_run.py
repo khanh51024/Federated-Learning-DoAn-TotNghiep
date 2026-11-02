@@ -13,7 +13,11 @@ from pathlib import Path
 from typing import Any
 
 RELEASE_SHA = "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b"
-AGGREGATION_ATOL = 1e-7
+# The ratio-first float64 reference and production sum-then-divide can round to
+# neighboring float32 values. 1e-7 is below float32 epsilon at magnitude 1.
+# Retain measured differences under an engineering tolerance; the predeclared
+# FedSGD A thresholds below remain unchanged.
+AGGREGATION_ATOL = 1e-6
 FEDSGD_MAX_ABS = 1e-10
 FEDSGD_RELATIVE_L2 = 1e-9
 
