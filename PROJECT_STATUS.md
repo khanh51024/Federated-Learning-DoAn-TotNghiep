@@ -1,6 +1,6 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-11-02 19:06 · sinh tự bởi `scripts/update_status.py`
+> **Cập nhật lúc:** 2026-11-02 19:28 · sinh tự bởi `scripts/update_status.py`
 > **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (0 mục BLOCKED cần dữ liệu/máy train, 3 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
@@ -28,7 +28,7 @@
 | 2 | Smoke cách ly khỏi slot canonical | ✅ XONG | slot canonical không chứa smoke; 3 checkpoint smoke nằm ở artifacts/checkpoints/smoke/ |
 | 3 | Một engine train (pipeline cũ gom vào legacy/) | ✅ XONG | engine duy nhất là src/; pipeline Kaggle/stage* nằm trong legacy/ (chạy riêng: pytest legacy/tests) |
 | 4 | Web tách router/service, inference đi một cửa | ✅ XONG | app.py chỉ mount router; inference chỉ đi qua web/services/model_service.py (cổng web_visible) |
-| 5 | Không hardcode đường dẫn artifact | ⬜ CHƯA | 1 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/recompute_metrics.py:287'] |
+| 5 | Không hardcode đường dẫn artifact | ⬜ CHƯA | 3 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/package_quantized_model.py:29', 'scripts/package_quantized_model.py:179', 'scripts/recompute_metrics.py:287'] |
 | 6 | Dọn tài liệu mâu thuẫn | ✅ XONG | gốc repo chỉ còn README.md + PROJECT_STATUS.md; docs/ chỉ gồm tài liệu hiện hành |
 | 7 | Số liệu trong docs không mâu thuẫn artifact | ✅ XONG | không còn số liệu mâu thuẫn đã biết (97,12, 97.12...) và không ghi tĩnh kết quả test trong README/docs |
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
@@ -49,7 +49,7 @@
 
 ### Việc làm được ngay (chưa BLOCKED)
 
-1. Không hardcode đường dẫn artifact — 1 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/recompute_metrics.py:287']
+1. Không hardcode đường dẫn artifact — 3 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/package_quantized_model.py:29', 'scripts/package_quantized_model.py:179', 'scripts/recompute_metrics.py:287']
 2. Full tests pass trên mã nguồn hiện tại — kết quả cũ (2026-10-27T02:41:36) không còn khớp mã nguồn hiện tại — chạy lại --full-gates
 3. Release sạch (mọi gate kỹ thuật XONG) — còn mục kỹ thuật chưa XONG: ['no_hardcode', 'full_tests']
 

@@ -247,6 +247,11 @@ def test_report_from_runs_on_disk(tmp_path: Path, tiny_release: dict):
     assert prox["vs_fedavg"]["diff_points"] == pytest.approx(100 / 6)
     assert prox["vs_fedavg"]["diff_points_by_seed"] == {s: pytest.approx(100 / 6) for s in seeds}
 
+    # Tập trung so với FedAvg và FedAvg so với Local-only trên cùng ảnh; Local-only là tỉ lệ qua 5 client nên không có McNemar
+    assert part["centralized_vs_this"]["diff_points"] == pytest.approx(100 * 2 / 6) and set(part["centralized_vs_this"]["mcnemar_p_by_seed"]) == set(seeds)
+    assert part["this_vs_local"]["diff_points"] == pytest.approx(100 / 6) and part["this_vs_local"]["mcnemar_p_by_seed"] == {}
+    assert "this_vs_local" not in prox and "centralized_vs_this" in prox
+
     # Local-only lấy trung bình 5 client trong hạt giống
     local = cells[("label_alpha_0_1", "local")]
     assert local["parts"]["all_test"]["top1"]["mean"] == pytest.approx(3 / 6)
@@ -316,3 +321,27 @@ def test_rerun_of_the_same_cell_is_measured_and_the_later_directory_wins(tmp_pat
     assert len(report["reruns"]) == 1
     assert report["reruns"][0]["top1_diff_points"]["all_test"] == pytest.approx(100 / 6)
     assert report["reruns"][0]["replaced"].endswith("fedavg_s42") and report["reruns"][0]["kept"].endswith("fedavg_s42_lai")
+
+
+def test_flower_runs_compare_within_flower_and_fedavg_on_flower_checks_equivalence(tmp_path: Path, tiny_release: dict):
+    runs = tmp_path / "runs"
+    for seed in (42, 123, 2026):
+        _run(runs, tiny_release, f"centralized_s{seed}", "centralized", seed)
+        _run(runs, tiny_release, f"fedavg_s{seed}", "fedavg", seed, scheme="label_alpha_0_1", wrong={"legacy_diagnostic_test": [0, 1]})
+        _run(runs, tiny_release, f"fedavg_flower_s{seed}", "fedavg", seed, scheme="label_alpha_0_1", runtime="flower", wrong={"legacy_diagnostic_test": [0, 1, 2]})
+        _run(runs, tiny_release, f"prox_flower_s{seed}", "fedavg", seed, scheme="label_alpha_0_1", runtime="flower", wrong={"legacy_diagnostic_test": [0]}, algorithm={"name": "fedprox", "mu": 0.01})
+        _run(runs, tiny_release, f"fedavg_a1_s{seed}", "fedavg", seed, scheme="label_alpha_1_0")
+    report = sweep.build_report([runs], tiny_release["release_dir"], tiny_release["root"], tiny_release["v3_ids"])
+    cells = {(c["scheme"], c["variant"]): c for c in report["cells"]}
+    # N1.2: FedAvg trên Flower so với bản một tiến trình
+    equivalence = cells[("label_alpha_0_1", "fedavg+flower")]["parts"]["all_test"]["vs_fedavg"]
+    assert equivalence["diff_points"] == pytest.approx(-100 / 6)
+    # thuật toán trên Flower so với FedAvg trên Flower, không phải bản một tiến trình
+    prox = cells[("label_alpha_0_1", "fedprox(mu=0.01)+flower")]["parts"]["all_test"]
+    assert prox["vs_fedavg"]["diff_points"] == pytest.approx(100 * 2 / 6)
+    assert prox["gap_closure_top1"] == pytest.approx(2 / 3)                             # (5/6 − 3/6) / (1 − 3/6)
+    # đường theo α có cả run Flower, trong khi cờ khác (nén, DP) vẫn ở ngoài đường chính
+    series = sweep.plot_series(report)
+    assert "fedprox" in series and sweep.plot_candidate(series, "fedprox", 0.1, "all_test") is not None
+    nen = {"alpha": 0.1, "partition_seed": None, "method": "fedavg", "variant": "fedavg+nen=fp16"}
+    assert not sweep.plot_series({"cells": [nen]})

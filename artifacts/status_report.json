@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-11-02T19:21:49",
+      "generated_at": "2026-11-02T19:28:21",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,7 +145,7 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-11-02T19:21:51",
+      "generated_at": "2026-11-02T19:28:25",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
@@ -165,7 +165,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-11-02T19:21:54",
+      "generated_at": "2026-11-02T19:28:34",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
@@ -212,7 +212,7 @@
       "id": "no_hardcode",
       "title": "Không hardcode đường dẫn artifact",
       "status": "CHƯA",
-      "detail": "1 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/recompute_metrics.py:287']",
+      "detail": "3 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/package_quantized_model.py:29', 'scripts/package_quantized_model.py:179', 'scripts/recompute_metrics.py:287']",
       "unlock": []
     },
     {

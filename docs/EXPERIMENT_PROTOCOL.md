@@ -200,6 +200,7 @@ chưa thử FedProx, SCAFFOLD, FedBN; năm client là phân vùng giả lập.
 - Tập này cùng nguồn với tập học, nên nó đo khả năng tổng quát trên ảnh chưa thấy của các nguồn đã biết. Khả năng với nguồn lạ vẫn đo bằng PlantWild (2.304 ảnh bệnh, không niêm phong).
 - Một phiên chụp ngô Common rust 465 ảnh nằm trọn trong split này (`docs/DATASET_V4.md` mục 4), nên phần "ngoài đồng khác" nghiêng về lớp đó; macro-F1 và bootstrap theo cụm giảm bớt ảnh hưởng nhưng không xóa hết.
 - `final.json` của 21 run v4b có sẵn tóm tắt split này từ trước khi có quy định; không báo cáo nào đọc mục đó và từ nay không được đọc.
+- Bản int8 đo ngày 26/10 đã dùng 256 ảnh của split này để hiệu chuẩn dải giá trị (không dùng để đo độ chính xác). Mô hình float32 không bị ảnh hưởng. `scripts/eval_gd4_compression.py` nay hiệu chuẩn bằng `val`; nếu báo số niêm phong cho bản int8 thì phải dựng lại bản int8 trước.
 
 **Khóa.** `scripts/run_sealed_test.py` là đường duy nhất tính độ chính xác trên split này: cần `--confirm-final`, bắt buộc đủ 3 hạt giống và đủ ba mốc, kết quả ghi `artifacts/sealed_test_result.json` và đã có thì từ chối chạy lại, không có cờ ghi đè. `--dry-run` kiểm đủ run mà không mở logit và không tính số nào. `scripts/train_v4.py` không còn tóm tắt split này; `tests/test_run_sealed_test.py` khóa các điều trên.
 

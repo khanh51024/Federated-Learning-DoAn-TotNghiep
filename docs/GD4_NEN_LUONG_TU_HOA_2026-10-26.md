@@ -27,7 +27,7 @@ Mọi số liệu đo trên CPU, không cần huấn luyện lại. Nguồn số
 ### 1.2. Phần B: lượng tử hóa mô hình suy luận
 
 - **Định dạng:** xuất ONNX (opset 17), rồi lượng tử hóa tĩnh int8 theo định dạng QDQ: trọng số int8 theo kênh, đầu ra từng lớp uint8 theo cả tensor, hiệu chuẩn MinMax.
-- **Ảnh hiệu chuẩn:** 256 ảnh rút ngẫu nhiên (hạt giống 0) từ split `calibration`, tách rời với tập đánh giá.
+- **Ảnh hiệu chuẩn:** 256 ảnh rút ngẫu nhiên (hạt giống 0) từ split `calibration`, tách rời với tập đánh giá. Sau khi split này được chọn làm tập niêm phong (`docs/EXPERIMENT_PROTOCOL.md` mục 9), script đã đổi sang hiệu chuẩn bằng `val`; số trong tài liệu này là của lần đo cũ, bản int8 của cấu hình cuối sẽ dựng lại bằng `val`.
 - **Độ trễ:** đo trên một ảnh, một luồng CPU, lấy trung vị của 100 lần chạy.
 - **Ba biến thể:**
   - lượng tử hóa mọi lớp (mặc định của ONNX Runtime);

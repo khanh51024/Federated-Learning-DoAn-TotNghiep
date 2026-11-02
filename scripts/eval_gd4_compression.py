@@ -14,7 +14,7 @@ A. Nén trọng số khi truyền. Chỉ tensor số thực từ 2 chiều trở
                         phải gửi lại), phía nhận dựng w0 + dequant(độ lệch)
    Đây là phép dựng lại MỘT LẦN từ mô hình đã huấn luyện xong, KHÔNG phải huấn luyện liên kết có nén ở mỗi vòng: nó cho biết sai số do nén, chưa
    cho biết nén ở mỗi vòng ảnh hưởng thế nào lên quá trình hội tụ (cần chạy huấn luyện trên GPU).
-B. Lượng tử hóa suy luận: xuất ONNX fp32, lượng tử hóa tĩnh int8 (QDQ, trọng số theo kênh, hiệu chuẩn bằng ảnh split calibration, không dùng ảnh đánh giá),
+B. Lượng tử hóa suy luận: xuất ONNX fp32, lượng tử hóa tĩnh int8 (QDQ, trọng số theo kênh, hiệu chuẩn bằng ảnh split val, không dùng ảnh đánh giá),
    đo dung lượng tệp, độ trễ một ảnh một luồng CPU và độ chính xác.
 
 Chạy:
@@ -94,7 +94,7 @@ def export_onnx(model: Any, path: Path) -> None:
 
 
 class CalibrationReader:
-    """Nguồn ảnh hiệu chuẩn cho quantize_static: các lô nhỏ lấy từ split calibration."""
+    """Nguồn ảnh hiệu chuẩn cho quantize_static: các lô nhỏ lấy từ split val (split calibration là tập niêm phong, xem docs/EXPERIMENT_PROTOCOL.md mục 9)."""
 
     def __init__(self, batches: list[np.ndarray]):
         self.batches, self.index = batches, 0
@@ -205,7 +205,7 @@ def main() -> int:
     manifest = json.loads((STORE / "import_manifest.json").read_text(encoding="utf-8"))
     seed = int(manifest["seed"])
     rows = release[args.split][: args.limit] if args.limit else release[args.split]
-    calibration = release["calibration"]
+    calibration = release["val"]            # không dùng split calibration: đó là tập niêm phong
     rng = np.random.default_rng(0)
     calibration_rows = [calibration[i] for i in sorted(rng.choice(len(calibration), size=min(CALIBRATION_IMAGES, len(calibration)), replace=False))]
     w0 = get_parameters(build_model(seed))
@@ -304,7 +304,7 @@ def main() -> int:
         results[model_id] = entry
         print(f"[gd4] {model_id}: " + ", ".join(f"{s} {entry['weights_transport'][s]['top1']}" for s in SCHEMES))
     report = {
-        "evidence": "dựng lại một lần từ mô hình đã huấn luyện; không phải huấn luyện liên kết có nén ở mỗi vòng. Hiệu chuẩn ONNX int8 dùng ảnh split calibration, "
+        "evidence": "dựng lại một lần từ mô hình đã huấn luyện; không phải huấn luyện liên kết có nén ở mỗi vòng. Hiệu chuẩn ONNX int8 dùng ảnh split val, "
                     "đánh giá trên split riêng.",
         "protocol_id": manifest.get("protocol_id"), "release_manifest_sha256": release["sha256"], "bundle_id": manifest.get("bundle_id"),
         "split": args.split, "count": len(rows), "seed_w0": seed, "schemes": list(SCHEMES),

@@ -56,6 +56,7 @@ RECIPE_KEYS = ("budget", "local_epochs", "batch_size", "lr", "momentum", "weight
                "eval_transform", "loss_weighting", "channels_last", "amp", "selection")
 FAIRNESS_SPLITS = ("val", "legacy_diagnostic_test")
 DOMAINS = ("all", "plantvillage", "field")
+RUNTIME_SUFFIX = "+flower"
 _ALPHA_RE = re.compile(r"^label_alpha_(\d+)_(\d+)(?:_p(\d+))?$")
 
 
@@ -142,7 +143,7 @@ def communication_of(history: list[dict[str, Any]], model_bytes: int) -> dict[st
 
 
 def compare_to_fedavg(correct_algo: dict[int, np.ndarray], correct_fedavg: dict[int, np.ndarray], clusters: list[str], rng: np.random.Generator) -> dict[str, Any] | None:
-    """So thuật toán với FedAvg trên cùng ảnh, ghép theo hạt giống.
+    """So một mô hình với mô hình đối chứng trên cùng ảnh, ghép theo hạt giống (mặc định là thuật toán so với FedAvg). Giá trị đúng/sai có thể là tỉ lệ khi một phía là trung bình nhiều client.
 
     Chênh lệch từng ảnh = (tỉ lệ đúng của thuật toán qua các hạt giống) − (của FedAvg); khoảng tin cậy 95% bằng bootstrap theo cụm ảnh.
     Tiêu chí "vượt có ý nghĩa" đặt trước khi có số: cận dưới khoảng tin cậy > 0 VÀ chênh lệch dương ở MỌI hạt giống. Với 3 hạt giống không dùng
@@ -157,7 +158,8 @@ def compare_to_fedavg(correct_algo: dict[int, np.ndarray], correct_fedavg: dict[
     low = interval["low"]
     return {"seeds": [int(s) for s in seeds], "diff_points": 100 * interval["estimate"], "ci95_points": None if low is None else [100 * low, 100 * interval["high"]],
             "diff_points_by_seed": {s: 100 * d for s, d in by_seed.items()}, "clusters": interval["clusters"],
-            "mcnemar_p_by_seed": {int(s): mcnemar_exact(correct_algo[s].astype(bool), correct_fedavg[s].astype(bool))["p_value"] for s in seeds},
+            # McNemar chỉ có nghĩa khi mỗi ảnh là đúng/sai của một mô hình; Local-only là trung bình 5 client nên bỏ qua
+            "mcnemar_p_by_seed": {int(s): mcnemar_exact(correct_algo[s], correct_fedavg[s])["p_value"] for s in seeds if correct_algo[s].dtype == bool and correct_fedavg[s].dtype == bool},
             "better_significant": bool(low is not None and low > 0 and all(d > 0 for d in by_seed.values()))}
 
 
@@ -318,7 +320,9 @@ def build_report(run_dirs: list[Path], release_dir: Path, dataset_root: Path, v3
         if group[0].get("recipe_differences"):
             cell["recipe_differences"] = group[0]["recipe_differences"]
         cell["parts"] = {}
-        fedavg_group = cells.get((scheme, "fedavg"))
+        # thuật toán chạy trên Flower so với FedAvg cũng trên Flower; bản thân FedAvg trên Flower so với FedAvg một tiến trình, đó là phép kiểm chứng tương đương N1.2
+        on_flower = variant.endswith(RUNTIME_SUFFIX) and variant != f"fedavg{RUNTIME_SUFFIX}" and (scheme, f"fedavg{RUNTIME_SUFFIX}") in cells
+        fedavg_group = cells.get((scheme, f"fedavg{RUNTIME_SUFFIX}" if on_flower else "fedavg"))
         fedavg_values = {part: {m: seed_part_values(fedavg_group, part, m) for m in ("top1", "macro_f1")} for part in parts_used} if fedavg_group else None
         for part in parts_used:
             values = {m: seed_part_values(group, part, m) for m in ("top1", "macro_f1")}
@@ -338,6 +342,17 @@ def build_report(run_dirs: list[Path], release_dir: Path, dataset_root: Path, v3
                                                              float(np.mean([central_values[part]["top1"][s] for s in common])))
                     block["vs_fedavg"] = compare_to_fedavg({r["seed"]: r["correct"][part] for r in group}, {r["seed"]: r["correct"][part] for r in fedavg_group},
                                                            example["part_clusters"][part], rng)
+            if method == "fedavg":
+                # Tập trung hơn ô này có ý nghĩa không; FedAvg có hơn Local-only trung bình 5 client không (cần cho tập nhỏ như PlantDoc 172 ảnh)
+                block["centralized_vs_this"] = compare_to_fedavg({r["seed"]: r["correct"][part] for r in central if part in r["correct"]}, {r["seed"]: r["correct"][part] for r in group},
+                                                                 example["part_clusters"][part], rng)
+                local_group = cells.get((scheme, "local"))
+                if local_group and variant == "fedavg":
+                    by_seed: dict[int, list[np.ndarray]] = defaultdict(list)
+                    for run in local_group:
+                        by_seed[run["seed"]].append(run["correct"][part])
+                    local_mean = {s: np.mean(v, axis=0) for s, v in by_seed.items() if len(v) == NUM_CLIENTS}
+                    block["this_vs_local"] = compare_to_fedavg({r["seed"]: r["correct"][part] for r in group}, local_mean, example["part_clusters"][part], rng)
             cell["parts"][part] = block
         if method == "fedavg":
             per_seed = {r["seed"]: communication_of(r["history"], size) for r in group}
@@ -492,10 +507,10 @@ def plot_series(report: dict[str, Any]) -> dict[str, dict[str, list[dict[str, An
     """Các ô ứng viên của mỗi họ thuật toán theo từng α; biến thể có thêm cờ (dấu +) không vào đường chính. `plot_candidate` chọn một ô để vẽ."""
     series: dict[str, dict[str, list[dict[str, Any]]]] = defaultdict(lambda: defaultdict(list))
     for cell in report["cells"]:
-        if cell["alpha"] is None or cell["partition_seed"] is not None or "+" in cell["variant"]:
+        variant = cell["variant"].removesuffix(RUNTIME_SUFFIX)      # cùng thuật toán, khác đường chạy: vẫn thuộc đường chính
+        if cell["alpha"] is None or cell["partition_seed"] is not None or "+" in variant:
             continue
-        family = "local" if cell["method"] == "local" else cell["variant"].split("(")[0]
-        family = family.split("+")[0]
+        family = "local" if cell["method"] == "local" else variant.split("(")[0]
         if family in SERIES_COLORS:
             series[family][str(cell["alpha"])].append(cell)
     return series
