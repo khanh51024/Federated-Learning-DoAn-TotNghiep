@@ -302,3 +302,17 @@ def test_personalized_block_uses_each_client_own_model(tmp_path: Path, tiny_rele
     personal = cell["fairness_personalized"]["val"]["all"]
     assert personal["gap_best_worst"]["mean"] == pytest.approx(1.0)
     assert personal["by_client_mean"] == pytest.approx([0.0, 1.0, 1.0, 1.0, 1.0])
+
+
+def test_rerun_of_the_same_cell_is_measured_and_the_later_directory_wins(tmp_path: Path, tiny_release: dict):
+    first, second = tmp_path / "first", tmp_path / "second"
+    _run(first, tiny_release, "centralized_s42", "centralized", 42)
+    _run(first, tiny_release, "fedavg_s42", "fedavg", 42, scheme="label_alpha_0_1", wrong={"legacy_diagnostic_test": [0, 1]})
+    _run(second, tiny_release, "fedavg_s42_lai", "fedavg", 42, scheme="label_alpha_0_1", wrong={"legacy_diagnostic_test": [0]})
+    report = sweep.build_report([first, second], tiny_release["release_dir"], tiny_release["root"], tiny_release["v3_ids"])
+    fedavg = next(c for c in report["cells"] if c["variant"] == "fedavg")
+    assert fedavg["runs"] == ["fedavg_s42_lai"]                                         # không gộp hai lần chạy thành hai hạt giống
+    assert fedavg["parts"]["all_test"]["top1"]["mean"] == pytest.approx(5 / 6)
+    assert len(report["reruns"]) == 1
+    assert report["reruns"][0]["top1_diff_points"]["all_test"] == pytest.approx(100 / 6)
+    assert report["reruns"][0]["replaced"].endswith("fedavg_s42") and report["reruns"][0]["kept"].endswith("fedavg_s42_lai")

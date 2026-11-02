@@ -11,6 +11,7 @@ Mỗi ô (cách chia, biến thể) có:
   vs_fedavg      so với FedAvg cùng cách chia, ghép cặp theo hạt giống và theo ảnh; xem `compare_to_fedavg` về tiêu chí "có ý nghĩa"
   communication  số vòng đến hội tụ, tổng MB đến hội tụ và cả ngân sách, so với gửi toàn bộ ảnh về trung tâm (1 MB = 10^6 byte)
   fairness       độ chính xác theo phân phối nhãn của từng client (N2.3), độ lệch chuẩn giữa client, chênh lệch mạnh–yếu, client nhỏ nhất
+Run trùng ô (chạy lại) không bị lấy bừa: thư mục đứng sau trong --runs thắng, chênh lệch ghi ở `reruns` làm bằng chứng tái lập (N1.3).
 
 Run khác công thức với Centralized gốc bị loại khỏi bảng và ghi lý do ở `excluded` (nguyên tắc "khác biệt duy nhất là cách dùng dữ liệu").
 Ghi vào artifacts/sweep_v4/ (results.json, table_main.csv, table_fairness.csv, curves_by_alpha.png, gap_by_alpha.png); không đụng artifacts/train_v4_results.json.
@@ -265,6 +266,18 @@ def build_report(run_dirs: list[Path], release_dir: Path, dataset_root: Path, v3
     for run in runs:
         run["scores"] = seed_scores(run)
 
+    # Cùng ô, cùng hạt giống, cùng client xuất hiện hơn một lần (chạy lại): thư mục đứng sau trong --runs thắng, chênh lệch được ghi lại làm bằng chứng tái lập (N1.3)
+    latest: dict[tuple[Any, ...], dict[str, Any]] = {}
+    reruns: list[dict[str, Any]] = []
+    for run in runs:
+        key = (run["scheme"] if run["method"] != "centralized" else None, run["variant"], run["seed"], run["client"])
+        if key in latest:
+            old = latest[key]
+            reruns.append({"variant": run["variant"], "scheme": key[0], "seed": run["seed"], "client": run["client"], "kept": str(run["dir"]), "replaced": str(old["dir"]),
+                           "top1_diff_points": {part: 100 * (run["scores"][part]["top1"] - old["scores"][part]["top1"]) for part in run["scores"] if part in old["scores"]}})
+        latest[key] = run
+    runs = list(latest.values())
+
     # gom theo ô; Centralized không phụ thuộc cách chia
     cells: dict[tuple[str | None, str], list[dict[str, Any]]] = defaultdict(list)
     for run in runs:
@@ -351,7 +364,7 @@ def build_report(run_dirs: list[Path], release_dir: Path, dataset_root: Path, v3
                             "fairness": "độ chính xác = tổng theo lớp của (tỉ lệ lớp trong shard client × recall lớp đó trên tập đo); lớp không có ảnh trong tập đo bị bỏ và chuẩn hóa lại, phần bị bỏ ghi ở coverage_min",
                             "fairness_std": "độ lệch chuẩn tổng thể giữa 5 client trong một hạt giống, rồi lấy trung bình qua hạt giống",
                             "better_significant": "cận dưới khoảng tin cậy 95% bootstrap theo cụm ảnh > 0 và chênh lệch dương ở mọi hạt giống"},
-            "centralized_recipe": base_recipe, "raw_images": raw, "cells": report_cells, "excluded": excluded}
+            "centralized_recipe": base_recipe, "raw_images": raw, "cells": report_cells, "excluded": excluded, "reruns": reruns}
 
 
 def personalized_parts(group: list[dict[str, Any]], rows_by_id: dict[str, dict[str, dict[str, Any]]], v3_test_ids: set[str]) -> dict[str, Any]:

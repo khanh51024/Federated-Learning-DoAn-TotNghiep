@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import dataclasses
 import json
+import time
 from pathlib import Path
 from typing import Any, Callable
 
@@ -110,6 +111,8 @@ def client_step(plan: ClientPlan, client: int, step: int, lr: float, parent: dic
     state, stats = train_one_client(local, client, parent, algo, env["data"], lr, env["recipe"], env["device"])
     extra_up = algo.upload(client)
     state = compress_upload(state, parent, plan.compression, stats, 0)      # số byte thật lấy từ tin nhắn ở `train` bên dưới
+    stats["num_examples"] = env["data"]["num_examples"]
+    stats["client_env_builds"] = LOADER_BUILDS["count"]                     # số lần dựng dữ liệu trong tiến trình này; phải không tăng sau vòng đầu, nếu không mỗi vòng tốn thêm thời gian dựng lại
     private = algo.client_state(client)
     if private:
         target = state_path(plan, client, step)
@@ -140,8 +143,9 @@ def make_client_app() -> Any:
         plan = ClientPlan(**json.loads(str(config["plan"])))
         client = int(context.node_config["partition-id"])
         state, extra_up, stats = client_step(plan, client, int(config["step"]), float(config["lr"]), record_to_state(message.content["arrays"]), record_to_state(message.content["extra"]))
+        # Hàm lồng này đi sang actor Ray theo giá trị, kèm bản chép của biến toàn cục nó nhắc tới: không được đọc _CLIENT_CACHE ở đây, chỉ các hàm cấp mô-đun mới thấy cache thật
         arrays, extra = state_to_record(state), state_to_record(extra_up)
-        reply_stats = {**stats, "num_examples": _CLIENT_CACHE[client]["data"]["num_examples"], "bytes_up": record_bytes(arrays) + record_bytes(extra)}
+        reply_stats = {**stats, "bytes_up": record_bytes(arrays) + record_bytes(extra)}
         return Message(RecordDict({"arrays": arrays, "extra": extra, "report": ConfigRecord({"stats": json.dumps(reply_stats)})}), reply_to=message)
 
     return app
@@ -159,12 +163,16 @@ def _replies_or_raise(replies: Any, expected: int, what: str) -> list[Any]:
 
 
 def locate_clients(grid: Any, num_clients: int, timeout: float) -> dict[int, int]:
-    """{số thứ tự shard: mã nút Flower}. Mỗi shard phải có đúng một nút."""
+    """{số thứ tự shard: mã nút Flower}. Các nút đăng ký bất đồng bộ nên chờ đủ, tối đa `timeout` giây. Mỗi shard phải có đúng một nút."""
     from flwr.app import ConfigRecord, Message, MessageType, RecordDict
 
+    deadline = time.monotonic() + timeout
     nodes = list(grid.get_node_ids())
+    while len(nodes) < num_clients and time.monotonic() < deadline:
+        time.sleep(0.5)
+        nodes = list(grid.get_node_ids())
     if len(nodes) != num_clients:
-        raise RuntimeError(f"có {len(nodes)} nút Flower, cần {num_clients}")
+        raise RuntimeError(f"có {len(nodes)} nút Flower sau {timeout:.0f} giây, cần {num_clients}")
     asks = [Message(RecordDict({"ask": ConfigRecord({"what": "partition_id"})}), dst_node_id=node, message_type=MessageType.QUERY) for node in nodes]
     replies = _replies_or_raise(grid.send_and_receive(asks, timeout=timeout), num_clients, "hỏi shard")
     located = {int(reply.content["identity"]["partition_id"]): int(reply.metadata.src_node_id) for reply in replies}

@@ -20,7 +20,7 @@ for seed in "${seed_list[@]}"; do
   if tmux has-session -t "$session" 2>/dev/null; then echo "phiên $session đang chạy, bỏ qua"; continue; fi
   tmux new-session -d -s "$session" \
     "env RELEASE_SHA='$RELEASE_SHA' RECIPE='${RECIPE:-}' SEEDS='$seed' WORKERS='$WORKERS' CODE_DIR='$CODE' OUT_DIR='${OUT_DIR:-}' BUDGET='${BUDGET:-}' \
-     SCHEMES='${SCHEMES:-}' ALGOS='${ALGOS:-}' LOCAL='${LOCAL:-}' \
+     SCHEMES='${SCHEMES:-}' ALGOS='${ALGOS:-}' LOCAL='${LOCAL:-}' EXTRA='${EXTRA:-}' TAG_SUFFIX='${TAG_SUFFIX:-}' ADAMW='${ADAMW:-}' \
      bash '$CODE/scripts/remote/${RUN_SCRIPT:-run_all.sh}' '$WORK' >> '$WORK/run_all_s$seed.log' 2>&1"
   echo "$(date '+%F %T') mở $session (worker $WORKERS)"
 done

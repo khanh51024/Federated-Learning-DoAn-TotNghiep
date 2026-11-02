@@ -253,7 +253,19 @@ def test_locate_clients_requires_every_shard_exactly_once():
     with pytest.raises(RuntimeError, match="giữ shard"):
         fa.locate_clients(FakeGrid(answer({101: 0, 102: 0})), 2, 5.0)
     with pytest.raises(RuntimeError, match="có 2 nút"):
-        fa.locate_clients(FakeGrid(answer({})), 5, 5.0)
+        fa.locate_clients(FakeGrid(answer({})), 5, 0.01)
+
+    # các nút đăng ký bất đồng bộ: lúc đầu chưa có nút nào, máy chủ phải chờ chứ không báo lỗi
+    late = FakeGrid(answer({101: 0, 102: 1}))
+    calls = {"n": 0}
+
+    def appearing():
+        calls["n"] += 1
+        return [] if calls["n"] == 1 else [101, 102]
+
+    late.get_node_ids = appearing
+    assert fa.locate_clients(late, 2, 5.0) == {0: 101, 1: 102}
+    assert calls["n"] == 2
 
 
 def test_run_on_flower_raises_when_the_loop_failed_or_never_finished(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
@@ -308,4 +320,6 @@ def test_real_ray_run_end_to_end(tmp_path: Path):
     assert [r["step"] for r in rows] == [0, 1]
     assert [c["client"] for c in rows[0]["train"]["clients"]] == [0, 1, 2, 3, 4]
     assert all(c["bytes_up"] > 6_000_000 and c["bytes_down"] > 6_000_000 for c in rows[0]["train"]["clients"])
+    # bộ nhớ đệm của client sống qua các vòng: vòng hai không dựng lại dữ liệu
+    assert max(c["client_env_builds"] for c in rows[1]["train"]["clients"]) <= max(c["client_env_builds"] for c in rows[0]["train"]["clients"])
     assert sorted(p.name for p in (run / "client_state").glob("client_00.*")) == ["client_00.step0000.pt", "client_00.step0001.pt"]
