@@ -777,6 +777,7 @@ def start_flower_server(
     progress_file: Optional[str | Path] = None,
     expected_smoke: Optional[bool] = None,
     probe_payload_bytes: int = -1,
+    pretrained_init: bool = False,
 ) -> Any:
     """Khởi chạy Flower Server lắng nghe kết nối từ các client process qua IP:Port."""
     import flwr as fl
@@ -791,7 +792,8 @@ def start_flower_server(
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
-    init_model = create_model(num_classes=38, pretrained=False)
+    # pretrained_init chỉ để trình diễn nhanh (ít vòng, ít ảnh); mặc định học từ đầu như protocol khoa học và được ghi vào tệp kết quả.
+    init_model = create_model(num_classes=38, pretrained=pretrained_init)
     init_weights = [v.cpu().numpy() for v in get_parameters(init_model).values()]
     initial_params = ndarrays_to_parameters(init_weights)
 
@@ -923,6 +925,7 @@ def start_flower_server(
             "require_real_clients": bool(require_real_clients),
             "rounds": int(rounds),
             "seed": int(seed),
+            "pretrained_init": bool(pretrained_init),
             "evaluation_dataset_root": str(evaluation_dataset_root) if evaluation_dataset_root is not None else None,
             "evaluation_partition_dir": str(evaluation_partition_dir) if evaluation_dataset_root is not None else None,
             "require_real_evaluation": bool(require_real_evaluation),
@@ -997,6 +1000,8 @@ if __name__ == "__main__":
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--probe-payload-bytes", type=int, default=-1,
                         help="Mỗi vòng client đo tuyến bằng khối byte này (RTT giữ kết nối + MB/s hai chiều); -1 = không đo")
+    parser.add_argument("--pretrained-init", action="store_true",
+                        help="Chỉ cho trình diễn: mô hình chung khởi tạo từ trọng số ImageNet thay vì học từ đầu (ghi vào tệp kết quả; protocol khoa học không dùng).")
     parser.add_argument("--partition-dir", type=str, default="data/partitions_stage2_scratch_v3/label100")
     parser.add_argument("--dataset-root", type=str, default=None)
     args = parser.parse_args()
@@ -1025,6 +1030,7 @@ if __name__ == "__main__":
             progress_file=args.progress_file,
             expected_smoke=args.smoke,
             probe_payload_bytes=args.probe_payload_bytes,
+            pretrained_init=args.pretrained_init,
         )
     else:
         run_federated_simulation(

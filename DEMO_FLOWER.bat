@@ -6,7 +6,7 @@ set PYTHONUTF8=1
 set OMP_NUM_THREADS=2
 set PY=.\.venv\Scripts\python.exe
 set PORT=18089
-set ROUNDS=2
+set ROUNDS=3
 rem Mo cua so giu lai de xem log; khi kiem thu tu dong dat DEMO_NOPAUSE=1 de cua so tu dong
 set KEEP=/k
 if defined DEMO_NOPAUSE set KEEP=/c
@@ -38,7 +38,7 @@ echo  Moi client chi hoc tren anh cua minh va chi gui trong so.
 echo ============================================================
 echo.
 echo [1/3] Mo may chu Flower...
-start "May chu Flower" cmd %KEEP% "%PY% -m src.federated.server_app --mode deployment --host 127.0.0.1 --port %PORT% --rounds %ROUNDS% --num-clients 2 --local-epochs 1 --seed 42 --require-real-clients --reject-suspicious-updates --max-update-norm 500 --evaluation-partition-dir tmp/speedtest/partition --probe-payload-bytes 6275944 --metrics-file tmp/demo/history.json --checkpoint-file tmp/demo/global.pt"
+start "May chu Flower" cmd %KEEP% "%PY% -m src.federated.server_app --mode deployment --host 127.0.0.1 --port %PORT% --rounds %ROUNDS% --num-clients 2 --local-epochs 1 --seed 42 --pretrained-init --require-real-clients --reject-suspicious-updates --max-update-norm 500 --evaluation-partition-dir tmp/speedtest/partition --probe-payload-bytes 6275944 --metrics-file tmp/demo/history.json --checkpoint-file tmp/demo/global.pt"
 
 set /a WAITED=0
 :wait_server
@@ -57,7 +57,7 @@ echo [2/3] Mo 2 client...
 start "Client 0" cmd %KEEP% "%PY% -m src.federated.client_app --client-id 0 --server 127.0.0.1:%PORT% --partition-dir tmp/speedtest/partition --dataset-root tmp/speedtest/images_client_00 --require-real-data --local-epochs 1 --seed 42"
 start "Client 1" cmd %KEEP% "%PY% -m src.federated.client_app --client-id 1 --server 127.0.0.1:%PORT% --partition-dir tmp/speedtest/partition --dataset-root tmp/speedtest/images_client_01 --require-real-data --local-epochs 1 --seed 42"
 
-echo [3/3] Dang hoc, thuong mat khoang 1 phut. Theo doi o 3 cua so vua mo...
+echo [3/3] Dang hoc, thuong mat khoang 1,5 phut. Theo doi o 3 cua so vua mo...
 set /a WAITED=0
 :wait_done
 if exist tmp\demo\history.json goto :done

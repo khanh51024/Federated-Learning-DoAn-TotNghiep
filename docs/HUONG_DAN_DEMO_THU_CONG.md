@@ -1,6 +1,6 @@
 # Hướng dẫn demo thủ công 9 mục
 
-**Cách nhanh nhất:** nhấp đúp `DEMO_FLOWER.bat` ở thư mục gốc dự án. File tự mở máy chủ và 2 client, chờ học xong (khoảng 1 phút) rồi in bảng kết quả. Chạy lại lần nữa thì đóng các cửa sổ cũ trước. Phần dưới là cách gõ từng lệnh và các mục còn lại.
+**Cách nhanh nhất:** nhấp đúp `DEMO_FLOWER.bat` ở thư mục gốc dự án. File tự mở máy chủ và 2 client, chờ học xong (khoảng 1,5 phút) rồi in bảng kết quả. Chạy lại lần nữa thì đóng các cửa sổ cũ trước. Phần dưới là cách gõ từng lệnh và các mục còn lại.
 
 Mở PowerShell tại `D:\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old`. Mọi lệnh dưới đây đã chạy thử trên laptop này, trừ Cách A của mục 8 (lệnh đó cần máy thuê còn bật, xem chú thích ở mục 8). Số trong "Sẽ thấy" là số của lần chạy thử; số của bạn có thể khác chút ở thời gian, các kết quả KHỚP thì phải giống. Mỗi cửa sổ PowerShell mới phải vào đúng thư mục và chạy dòng này một lần (mỗi cửa sổ giữ riêng, cửa sổ mới phải chạy lại):
 
@@ -19,7 +19,7 @@ Cần 3 cửa sổ PowerShell, chạy theo đúng thứ tự, mỗi vòng khoả
 **Cửa sổ 1, máy chủ.** Chờ dòng `Starting Flower Server` rồi mới mở client:
 
 ```powershell
-.\.venv\Scripts\python.exe -m src.federated.server_app --mode deployment --host 127.0.0.1 --port 18089 --rounds 2 --num-clients 2 --local-epochs 1 --seed 42 --require-real-clients --reject-suspicious-updates --max-update-norm 500 --evaluation-partition-dir tmp/speedtest/partition --probe-payload-bytes 6275944 --metrics-file tmp/demo/history.json --checkpoint-file tmp/demo/global.pt
+.\.venv\Scripts\python.exe -m src.federated.server_app --mode deployment --host 127.0.0.1 --port 18089 --rounds 3 --num-clients 2 --local-epochs 1 --seed 42 --pretrained-init --require-real-clients --reject-suspicious-updates --max-update-norm 500 --evaluation-partition-dir tmp/speedtest/partition --probe-payload-bytes 6275944 --metrics-file tmp/demo/history.json --checkpoint-file tmp/demo/global.pt
 ```
 
 **Cửa sổ 2, client 0:**
@@ -34,7 +34,7 @@ Cần 3 cửa sổ PowerShell, chạy theo đúng thứ tự, mỗi vòng khoả
 .\.venv\Scripts\python.exe -m src.federated.client_app --client-id 1 --server 127.0.0.1:18089 --partition-dir tmp/speedtest/partition --dataset-root tmp/speedtest/images_client_01 --require-real-data --local-epochs 1 --seed 42
 ```
 
-Thông số Flower hiện ngay ở cửa sổ 1 khi kết thúc: `round_fit_elapsed_ms`, `mean_probe_rtt_ms`, `rejected_clients`... Xem cho dễ đọc:
+`--pretrained-init` cho mô hình bắt đầu từ trọng số ImageNet để loss giảm thấy rõ sau vài vòng (đã thử: 3,27, 2,82, 2,33); chỉ dùng cho trình diễn, được ghi vào nhật ký. Thông số Flower hiện ngay ở cửa sổ 1 khi kết thúc: loss từng vòng, `round_fit_elapsed_ms`, `mean_probe_rtt_ms`, `rejected_clients`... Xem cho dễ đọc:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts/demo_show.py flower --history tmp/demo/history.json
