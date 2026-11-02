@@ -208,7 +208,17 @@ Bảng đầy đủ ở mục 9 của `docs/KIEM_CHUNG_PHAN_TAN_TAP_TRUNG.md`, n
 | Ảnh ngoài đồng | 92,23% | 90,09% khi đồng nhất; 84,08% khi lệch mạnh |
 | Truyền | 1.524 MB ảnh, một lần | khoảng 2.523 MB trọng số, hai chiều, 40 vòng |
 
-**Ý chính:** gửi và gộp trọng số không gây sai lệch (mục 1, 2). Khoảng cách với tập trung tăng khi dữ liệu các client lệch nhau: từ 0,89 điểm khi đồng nhất lên 3,66 điểm ở α = 0,1. Phân tán không tiết kiệm băng thông trong cấu hình này; lợi ích là dữ liệu không rời client.
+**Khoảng cách FedAvg đến Tập trung theo mức lệch** (điểm %, 3 seed; biểu đồ `artifacts/sweep_v4/gap_by_alpha.png` và `curves_by_alpha.png`):
+
+| α | Toàn tập thử | PlantVillage | Ngoài đồng | PlantDoc |
+|---:|---:|---:|---:|---:|
+| 100 (gần đồng nhất) | 0,73 | 0,46 | 2,00 | 2,13 |
+| 10 | 0,74 | 0,47 | 2,04 | 1,94 |
+| 1 | 1,03 | 0,64 | 2,95 | 2,72 |
+| 0,5 | 1,36 | 0,93 | 3,32 | 4,65 |
+| 0,1 (lệch mạnh) | 3,77 | 2,53 | 9,11 | 17,05 |
+
+**Ý chính:** gửi và gộp trọng số không gây sai lệch (mục 1, 2). Khoảng cách với tập trung rất nhỏ khi dữ liệu gần đồng nhất và tăng nhanh khi lệch mạnh; PlantDoc chỉ 172 ảnh nên dao động lớn. Trên biểu đồ, điểm IID là run Flower, các điểm α là run một tiến trình; chưa có Local-only ở các α khác 0,1. Phân tán không tiết kiệm băng thông trong cấu hình này; lợi ích là dữ liệu không rời client.
 
 ## Nếu lỗi khi demo
 

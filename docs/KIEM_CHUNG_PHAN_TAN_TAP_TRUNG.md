@@ -1,7 +1,5 @@
 # Kiểm chứng huấn luyện phân tán và tập trung
 
-> **Bản tạm cho demo: mới xong 9/18 run chất lượng.** Phần còn lại của quét α đang chạy; số về các mức α chưa xong chưa có trong bảng.
-
 Báo cáo này trả lời chín yêu cầu bằng checkpoint, nhật ký và phép đo thật. Các run chất lượng dùng năm client mô phỏng Flower/Ray trên một GPU; phép đo mạng dùng hai client thật trên hai máy. Không đánh giá PlantWild cho run mới và không mở độ chính xác tập niêm phong.
 
 ## 1. Trọng số có sai lệch khi truyền không
@@ -59,13 +57,22 @@ Khoảng cách giữa checkpoint đã train được tách tham số học đư�
 | fedavg_s42 | 29.1652 | 112.1387 | 94.72% |
 | fedavg_s123_iid_flower | 29.2541 | 118.5476 | 97.76% |
 | fedavg_s123_label_alpha_0_1_flower | 29.3378 | 113.8331 | 94.89% |
+| fedavg_s123_label_alpha_0_5 | 28.8611 | 113.6187 | 97.37% |
 | fedavg_s123_label_alpha_100_0 | 28.4756 | 113.7547 | 97.93% |
+| fedavg_s123_label_alpha_10_0 | 28.7791 | 115.7798 | 97.76% |
+| fedavg_s123_label_alpha_1_0 | 28.6846 | 114.5338 | 97.57% |
 | fedavg_s2026_iid_flower | 28.5613 | 113.3676 | 98.23% |
 | fedavg_s2026_label_alpha_0_1_flower | 29.3331 | 113.1213 | 94.99% |
+| fedavg_s2026_label_alpha_0_5 | 28.9206 | 113.4786 | 97.47% |
 | fedavg_s2026_label_alpha_100_0 | 29.4553 | 119.6906 | 97.95% |
+| fedavg_s2026_label_alpha_10_0 | 28.6284 | 113.0638 | 97.98% |
+| fedavg_s2026_label_alpha_1_0 | 28.6854 | 113.4388 | 97.83% |
 | fedavg_s42_iid_flower | 28.7866 | 115.7004 | 97.30% |
 | fedavg_s42_label_alpha_0_1_flower | 29.2790 | 112.5639 | 94.63% |
+| fedavg_s42_label_alpha_0_5 | 29.4507 | 117.3568 | 96.65% |
 | fedavg_s42_label_alpha_100_0 | 28.4094 | 112.9251 | 97.99% |
+| fedavg_s42_label_alpha_10_0 | 28.3256 | 112.6239 | 97.99% |
+| fedavg_s42_label_alpha_1_0 | 28.5717 | 112.6029 | 97.58% |
 
 ## 3. Phương pháp kiểm tra
 
@@ -92,7 +99,7 @@ Môi trường đo: PyTorch 2.11.0+cu128, Flower 1.36.0, Ray 2.55.1, NVIDIA GeFo
 
 ## 6. Mô hình gộp khác mô hình client thế nào
 
-Sai lệch phép gộp lớn nhất qua 360 vòng là 2.384e-07. Mọi run đều chạy mã ed88947eb nên dùng cổng tuyệt đối 1e-6; đơn vị làm tròn theo thang tensor mới có trong mã sau đó, nhật ký các run này không có trường đó. Đây là chênh lệch giữa hai cách tính số học của phép gộp, không phải phép so bit. Cổng ban đầu 1e-7 đã được sửa thành 1e-6 trong quá trình chạy sau khi gặp đúng epsilon float32 tại thang 1. Phép tính lại trên năm checkpoint Local-only thật cho thấy thứ tự nhân/chia có thể làm hai kết quả float32 lệch một ULP; xem [kiểm tra làm tròn](../artifacts/distributed_verification/aggregation_roundoff_analysis.json). Đây là điều chỉnh ngưỡng kỹ thuật được công khai sau quan sát, không phải ngưỡng đặt trước; ngưỡng FedSGD A không đổi. Nhật ký chưa ghi ULP từng tensor nên không khẳng định mọi vòng trùng một ULP. l2_to_merged là khoảng cách thật giữa mô hình client sau học và mô hình chung sau gộp, không phải lỗi truyền. Tính công bằng được tổng hợp trong [table_fairness.csv](../artifacts/sweep_v4/table_fairness.csv): dùng độ chính xác mô phỏng phân phối miền–lớp của shard trên tập đo, có báo độ phủ; không phải tập thử cục bộ mới thu thập ở từng cơ sở.
+Sai lệch phép gộp lớn nhất qua 720 vòng là 2.384e-07. Mọi run đều chạy mã ed88947eb nên dùng cổng tuyệt đối 1e-6; đơn vị làm tròn theo thang tensor mới có trong mã sau đó, nhật ký các run này không có trường đó. Đây là chênh lệch giữa hai cách tính số học của phép gộp, không phải phép so bit. Cổng ban đầu 1e-7 đã được sửa thành 1e-6 trong quá trình chạy sau khi gặp đúng epsilon float32 tại thang 1. Phép tính lại trên năm checkpoint Local-only thật cho thấy thứ tự nhân/chia có thể làm hai kết quả float32 lệch một ULP; xem [kiểm tra làm tròn](../artifacts/distributed_verification/aggregation_roundoff_analysis.json). Đây là điều chỉnh ngưỡng kỹ thuật được công khai sau quan sát, không phải ngưỡng đặt trước; ngưỡng FedSGD A không đổi. Nhật ký chưa ghi ULP từng tensor nên không khẳng định mọi vòng trùng một ULP. l2_to_merged là khoảng cách thật giữa mô hình client sau học và mô hình chung sau gộp, không phải lỗi truyền. Tính công bằng được tổng hợp trong [table_fairness.csv](../artifacts/sweep_v4/table_fairness.csv): dùng độ chính xác mô phỏng phân phối miền–lớp của shard trên tập đo, có báo độ phủ; không phải tập thử cục bộ mới thu thập ở từng cơ sở.
 
 | Cách chia | Biến thể | Accuracy client (%) | SD giữa client (điểm %) | Mạnh − yếu (điểm %) | Client nhỏ nhất (%) | Độ phủ tối thiểu (%) |
 |---|---|---|---|---|---|---|
@@ -100,7 +107,10 @@ Sai lệch phép gộp lớn nhất qua 360 vòng là 2.384e-07. Mọi run đề
 | label_alpha_0_1 | fedavg | 88.58 ± 0.24 | 4.67 ± 0.30 | 13.54 ± 0.89 | 79.90 ± 0.83 | 98.08 |
 | label_alpha_0_1 | fedavg+flower | 88.81 ± 0.21 | 4.55 ± 0.49 | 12.81 ± 1.25 | 80.51 ± 1.29 | 98.08 |
 | label_alpha_0_1 | local | 96.57 ± 0.21 | 1.11 ± 0.18 | 3.14 ± 0.60 | 96.99 ± 0.26 | 98.08 |
+| label_alpha_0_5 | fedavg | 92.62 ± 0.18 | 1.50 ± 0.13 | 4.52 ± 0.46 | 91.88 ± 0.04 | 98.46 |
 | label_alpha_100_0 | fedavg | 93.37 ± 0.24 | 0.59 ± 0.03 | 1.63 ± 0.07 | 93.55 ± 0.25 | 98.56 |
+| label_alpha_10_0 | fedavg | 93.39 ± 0.22 | 0.82 ± 0.04 | 2.11 ± 0.14 | 92.26 ± 0.26 | 98.71 |
+| label_alpha_1_0 | fedavg | 92.91 ± 0.08 | 1.84 ± 0.02 | 4.96 ± 0.07 | 91.47 ± 0.17 | 98.61 |
 ## 7. Code backend tập trung và phân tán
 
 | Vai trò | Mã nguồn |
@@ -200,7 +210,10 @@ Ba vòng đều đủ hai client thật, hash đúng và không bị từ chối
 | label_alpha_0_1 | fedavg | 93.93 ± 0.12 | 96.85 ± 0.04 | 83.13 ± 0.37 | 40.50 ± 2.35 |
 | label_alpha_0_1 | fedavg+flower | 94.03 ± 0.10 | 96.81 ± 0.10 | 84.08 ± 0.42 | 39.73 ± 2.20 |
 | label_alpha_0_1 | local | 46.55 ± 0.13 | 48.09 ± 0.07 | 40.46 ± 0.65 | 23.68 ± 0.76 |
+| label_alpha_0_5 | fedavg | 96.34 ± 0.22 | 98.45 ± 0.18 | 88.91 ± 0.36 | 52.91 ± 1.01 |
 | label_alpha_100_0 | fedavg | 96.97 ± 0.14 | 98.92 ± 0.08 | 90.24 ± 0.37 | 55.43 ± 1.87 |
+| label_alpha_10_0 | fedavg | 96.95 ± 0.09 | 98.91 ± 0.05 | 90.19 ± 0.67 | 55.62 ± 0.34 |
+| label_alpha_1_0 | fedavg | 96.66 ± 0.05 | 98.74 ± 0.09 | 89.28 ± 0.25 | 54.84 ± 1.21 |
 
 ![Chất lượng theo mức alpha](../artifacts/sweep_v4/curves_by_alpha.png)
 
@@ -231,12 +244,15 @@ Tổng ảnh train để gửi một lần về trung tâm: 1524.05 MB cho 52464
 | iid | fedavg+flower | 1261.44 | 2522.87 | 1.655× | 22/30/30 |
 | label_alpha_0_1 | fedavg | 1255.19 | 2510.38 | 1.647× | chưa đạt/39/29 |
 | label_alpha_0_1 | fedavg+flower | 1261.44 | 2522.87 | 1.655× | 40/39/36 |
+| label_alpha_0_5 | fedavg | 1255.19 | 2510.38 | 1.647× | 38/chưa đạt/34 |
 | label_alpha_100_0 | fedavg | 1255.19 | 2510.38 | 1.647× | 32/chưa đạt/20 |
+| label_alpha_10_0 | fedavg | 1255.19 | 2510.38 | 1.647× | 33/chưa đạt/31 |
+| label_alpha_1_0 | fedavg | 1255.19 | 2510.38 | 1.647× | 37/39/32 |
 
 Byte của mô phỏng v4b được suy từ tensor; byte Flower được ghi từ payload mảng, đều chưa gồm mọi khung giao thức. So sánh MB hai chiều với ảnh gửi một lần không khẳng định FL luôn tiết kiệm băng thông. Hội tụ ở đây là chỉ số val giữ trong một điểm macro-F1 so với mức tốt nhất đến hết run. Seed chưa đạt được ghi rõ, không lấy trung bình hai seed rồi trình bày như đủ ba seed. Chi phí đến hội tụ trong CSV dùng hết ngân sách khi seed chưa đạt; cần đọc cùng cờ này.
 
 
-IID chỉ chạy Flower trong đợt này; không có đối chứng IID một tiến trình để suy ra tương đương runtime ở IID. Đường theo α dự kiến có năm mức FedAvg và mốc Centralized, hiện mới có các mức đã xong; Local-only chỉ được đo ở α=0,1, không nội suy thành số đo ở các α còn lại.
+IID chỉ chạy Flower trong đợt này; không có đối chứng IID một tiến trình để suy ra tương đương runtime ở IID. Đường theo α có năm mức FedAvg và mốc Centralized; Local-only chỉ được đo ở α=0,1, không nội suy thành số đo ở các α còn lại.
 
 Khoảng cách production còn chịu tác động của nhiều bước minibatch cục bộ, SGD momentum được làm mới mỗi vòng client, BatchNorm, dropout/tăng cường ngẫu nhiên và cách chuẩn hóa mất mát theo shard/batch. B/C chứng minh một số cơ chế tạo lệch, không phân rã định lượng toàn bộ khoảng cách đã train. Test PlantDoc nhỏ; độ chính xác mô hình toàn cục và độ chính xác theo phân phối client là hai phép đo khác nhau.
 
@@ -253,10 +269,19 @@ Trong mô phỏng Ray, các shard nằm cùng máy và dùng chung hệ thống 
 | fedavg_s123_iid_flower | 123 | flower | 40 | 627.40 |
 | fedavg_s2026_iid_flower | 2026 | flower | 40 | 627.00 |
 | fedavg_s42_label_alpha_100_0 | 42 | simulation | 40 | 1650.60 |
+| fedavg_s42_label_alpha_10_0 | 42 | simulation | 40 | 1568.70 |
+| fedavg_s42_label_alpha_1_0 | 42 | simulation | 40 | 1539.70 |
+| fedavg_s42_label_alpha_0_5 | 42 | simulation | 40 | 1554.20 |
 | fedavg_s123_label_alpha_100_0 | 123 | simulation | 40 | 1664.10 |
+| fedavg_s123_label_alpha_10_0 | 123 | simulation | 40 | 1557.30 |
+| fedavg_s123_label_alpha_1_0 | 123 | simulation | 40 | 1541.60 |
+| fedavg_s123_label_alpha_0_5 | 123 | simulation | 40 | 1556.70 |
 | fedavg_s2026_label_alpha_100_0 | 2026 | simulation | 40 | 1628.00 |
+| fedavg_s2026_label_alpha_10_0 | 2026 | simulation | 40 | 1590.00 |
+| fedavg_s2026_label_alpha_1_0 | 2026 | simulation | 40 | 1546.60 |
+| fedavg_s2026_label_alpha_0_5 | 2026 | simulation | 40 | 1549.70 |
 
-Đến lúc sinh bản này đã xong 9/18 run mới (kế hoạch: 6 run Flower và 12 run quét α); dùng lại 21 run v4b. Preflight và phép đo mạng không tính vào 18 run chất lượng. Không train thêm FedProx/FedBN/SCAFFOLD/MOON, DP, Local-only theo α hoặc cá nhân hóa; không mở tập niêm phong.
+Đã bổ sung 6 run Flower và 12 run quét α; dùng lại 21 run v4b. Preflight và phép đo mạng không tính vào 18 run chất lượng. Không train thêm FedProx/FedBN/SCAFFOLD/MOON, DP, Local-only theo α hoặc cá nhân hóa; không mở tập niêm phong.
 
 Theo file Word, đợt này bổ sung bằng chứng cho N1.2, N1.3, N2.3 và demo hai client thật của N4.4. N2.1/N2.4 còn thiếu Local-only ở các α khác; N2.2 có phân hoạch nhưng chưa train lệch số lượng/nguồn. Chưa hoàn thành thí nghiệm thuật toán và dò siêu tham số Đợt 3, kiểm thử niêm phong N5.3 hay quyển báo cáo/bản thảo N5.5. Không suy ra mức 60%, 85% hoặc 100% chỉ từ 18 run này.
 
@@ -268,7 +293,7 @@ Theo file Word, đợt này bổ sung bằng chứng cho N1.2, N1.3, N2.3 và de
 | N1.2 | Đã chạy Flower ba seed và đo chênh lệch với mô phỏng ở α=0,1; kết luận theo bảng chênh lệch, không mặc định đạt tương đương. |
 | N1.3 | Run FedAvg mới có nhật ký đủ vòng, hash, delta và thời gian; chưa chạy lại Local-only để bổ sung trường nhật ký cũ còn thiếu. |
 | N1.4 | Giữ thiết kế tập niêm phong hiện có; không mở độ chính xác trong đợt này. |
-| N2.1 | FedAvg năm α đang chạy, chưa đủ; Local-only còn thiếu ở các α khác. |
+| N2.1 | FedAvg đủ năm α và ba seed; Local-only còn thiếu ở các α khác. |
 | N2.2 | Đã có phân hoạch lệch số lượng/nguồn; chưa train hai dạng này trong đợt hiện tại. |
 | N2.3 | Có accuracy mô phỏng phân phối client và độ phủ trong bảng fairness. |
 | N2.4 | Có đường Centralized/FedAvg theo α; Local-only chỉ có điểm α=0,1. |
