@@ -1,6 +1,6 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-11-02 22:22 · sinh tự bởi `scripts/update_status.py`
+> **Cập nhật lúc:** 2026-11-02 23:28 · sinh tự bởi `scripts/update_status.py`
 > **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (0 mục BLOCKED cần dữ liệu/máy train, 3 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
@@ -24,11 +24,11 @@
 
 | # | Hạng mục | Trạng thái | Bằng chứng (máy kiểm) |
 |---|---|---|---|
-| 1 | Registry v2 + danh mục mọi checkpoint trên đĩa | ✅ XONG | schema v2; 18 model; 107 file .pt đều có tên (15 trong model, 92 trong nhóm) |
+| 1 | Registry v2 + danh mục mọi checkpoint trên đĩa | ✅ XONG | schema v2; 18 model; 117 file .pt đều có tên (15 trong model, 102 trong nhóm) |
 | 2 | Smoke cách ly khỏi slot canonical | ✅ XONG | slot canonical không chứa smoke; 3 checkpoint smoke nằm ở artifacts/checkpoints/smoke/ |
 | 3 | Một engine train (pipeline cũ gom vào legacy/) | ✅ XONG | engine duy nhất là src/; pipeline Kaggle/stage* nằm trong legacy/ (chạy riêng: pytest legacy/tests) |
 | 4 | Web tách router/service, inference đi một cửa | ✅ XONG | app.py chỉ mount router; inference chỉ đi qua web/services/model_service.py (cổng web_visible) |
-| 5 | Không hardcode đường dẫn artifact | ⬜ CHƯA | 4 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/eval_dp_noise_sensitivity.py:81', 'scripts/package_quantized_model.py:29', 'scripts/package_quantized_model.py:179', 'scripts/verify_fedsgd_equivalence.py:143'] |
+| 5 | Không hardcode đường dẫn artifact | ⬜ CHƯA | 4 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/eval_dp_noise_sensitivity.py:81', 'scripts/package_quantized_model.py:29', 'scripts/package_quantized_model.py:179', 'scripts/verify_fedsgd_equivalence.py:155'] |
 | 6 | Dọn tài liệu mâu thuẫn | ✅ XONG | gốc repo chỉ còn README.md + PROJECT_STATUS.md; docs/ chỉ gồm tài liệu hiện hành |
 | 7 | Số liệu trong docs không mâu thuẫn artifact | ✅ XONG | không còn số liệu mâu thuẫn đã biết (97,12, 97.12...) và không ghi tĩnh kết quả test trong README/docs |
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
@@ -49,7 +49,7 @@
 
 ### Việc làm được ngay (chưa BLOCKED)
 
-1. Không hardcode đường dẫn artifact — 4 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/eval_dp_noise_sensitivity.py:81', 'scripts/package_quantized_model.py:29', 'scripts/package_quantized_model.py:179', 'scripts/verify_fedsgd_equivalence.py:143']
+1. Không hardcode đường dẫn artifact — 4 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/eval_dp_noise_sensitivity.py:81', 'scripts/package_quantized_model.py:29', 'scripts/package_quantized_model.py:179', 'scripts/verify_fedsgd_equivalence.py:155']
 2. Full tests pass trên mã nguồn hiện tại — kết quả cũ (2026-10-27T02:41:36) không còn khớp mã nguồn hiện tại — chạy lại --full-gates
 3. Release sạch (mọi gate kỹ thuật XONG) — còn mục kỹ thuật chưa XONG: ['no_hardcode', 'full_tests']
 
@@ -115,7 +115,7 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
 | `branch_demo_inactive` | 7 | historical | Gói mô hình cũ (Centralized v6, FedAvg v7, Local 00-04 từ ba nhánh train) không phải gói web đang dùng; giữ để lùi (swap_web_models.py --rollback) |
 | `kaggle_run_lfs_pointer` | 6 | historical | Checkpoint run Kaggle canonical: chỉ còn con trỏ Git-LFS, bytes thật KHÔNG có trên máy (repo không có remote) — cần tải lại từ Kaggle |
 | `report_experiments_smoke` | 36 | quarantined | Run report_experiments mode=smoke (ảnh nhiễu ngẫu nhiên, accuracy 0.0263) — cấm dùng trong luận văn |
-| `train_v4_runs` | 28 | technical_demo | Checkpoint đợt train v4 (scripts/train_v4.py, máy GPU thuê) chưa đánh giá/promote — số liệu chỉ dùng sau scripts/eval_trained_v4.py |
+| `train_v4_runs` | 38 | technical_demo | Checkpoint đợt train v4 (scripts/train_v4.py, máy GPU thuê) chưa đánh giá/promote — số liệu chỉ dùng sau scripts/eval_trained_v4.py |
 | `web_runs` | 15 | technical_demo | Checkpoint từ run do web khởi động (smoke Flower hoặc demo huấn luyện); chưa có bằng chứng khoa học |
 
 ## 5. Chất lượng nhận diện (số công bố, tái đánh giá cục bộ, test giữ riêng)
@@ -209,7 +209,7 @@ _Checkpoint synthetic smoke (accuracy 1.0 / 0.0263 do dữ liệu dummy). CẤM 
 | Pre-demo check | **technical_demo_ready** | artifacts/pre_demo_check.json |
 | Final acceptance | technical **pass** / scientific **blocked** | 1 blocker khoa học — **CŨ**: mã nguồn đã đổi kể từ lần chạy |
 | Network artifact | **CHƯA CÓ run mạng khoa học (artifact hiện tại là smoke kỹ thuật)** | artifacts/network_artifact_validation.json |
-| Danh mục checkpoint | **complete** | 107 file .pt, vô danh: 0 |
+| Danh mục checkpoint | **complete** | 117 file .pt, vô danh: 0 |
 
 ## 7. Nhật ký (khối dưới đây TỰ TAY SỬA)
 

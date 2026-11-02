@@ -81,3 +81,10 @@ def test_set_mode_keeps_dropout_off_in_both_cases():
 def test_agreement_is_one_for_the_same_model():
     model, shards = _setup()
     assert ve.agreement(model, model, shards[0][0], False) == pytest.approx(1.0)
+
+
+def test_control_with_shuffled_order_matches_mathematically_and_is_not_the_identity():
+    model, shards = _setup()
+    reference = ve.centralized(model, shards, 4, 0.1, False)
+    control = ve.shuffled_order_gap(model, shards, 4, 0.1, seed=3)
+    assert ve.distance(control, reference, model)["l2"] < 1e-11

@@ -68,14 +68,21 @@ def aggregation_error(updates: list[dict[str, Any]], merged: dict[str, torch.Ten
     import numpy as np
 
     total = sum(int(u["num_examples"]) for u in updates)
-    worst, compared = 0.0, 0
+    worst, worst_units, compared = 0.0, 0.0, 0
     for key, value in merged.items():
         if not value.is_floating_point():
             continue
         mean = sum(u["weights"][key].detach().cpu().numpy().astype(np.float64) * (int(u["num_examples"]) / total) for u in updates)
-        worst = max(worst, float(np.abs(mean.astype(value.detach().cpu().numpy().dtype) - value.detach().cpu().numpy()).max()))
+        actual = value.detach().cpu().numpy()
+        difference = float(np.abs(mean.astype(actual.dtype) - actual).max())
+        scale = max(1.0, float(np.abs(mean).max()), float(np.abs(actual).max()))
+        unit = float(np.finfo(actual.dtype).eps) * scale
+        worst = max(worst, difference)
+        worst_units = max(worst_units, difference / unit)
         compared += 1
-    return {"max_abs_diff": worst, "tensors_compared": compared}
+    return {"max_abs_diff": worst, "tensors_compared": compared,
+            "max_scaled_roundoff_units": worst_units,
+            "roundoff_unit_definition": "dtype epsilon * max(1, max_abs_reference, max_abs_merged), per tensor; not elementwise ULP"}
 
 
 def _trainable(model: torch.nn.Module) -> dict[str, torch.Tensor]:

@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-11-02T22:21:46",
+      "generated_at": "2026-11-02T23:29:42",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,7 +145,7 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-11-02T22:21:52",
+      "generated_at": "2026-11-02T23:29:44",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
@@ -165,16 +165,16 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-11-02T22:22:05",
+      "generated_at": "2026-11-02T23:29:49",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
     },
     "checkpoint_catalog": {
       "status": "complete",
-      "total_pt_files": 107,
+      "total_pt_files": 117,
       "in_models": 15,
-      "in_groups": 92,
+      "in_groups": 102,
       "unclassified": [],
       "source": "quét đĩa (scripts/build_registry.py)"
     }
@@ -184,7 +184,7 @@
       "id": "registry",
       "title": "Registry v2 + danh mục mọi checkpoint trên đĩa",
       "status": "XONG",
-      "detail": "schema v2; 18 model; 107 file .pt đều có tên (15 trong model, 92 trong nhóm)",
+      "detail": "schema v2; 18 model; 117 file .pt đều có tên (15 trong model, 102 trong nhóm)",
       "unlock": []
     },
     {
@@ -212,7 +212,7 @@
       "id": "no_hardcode",
       "title": "Không hardcode đường dẫn artifact",
       "status": "CHƯA",
-      "detail": "4 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/eval_dp_noise_sensitivity.py:81', 'scripts/package_quantized_model.py:29', 'scripts/package_quantized_model.py:179', 'scripts/verify_fedsgd_equivalence.py:143']",
+      "detail": "4 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/eval_dp_noise_sensitivity.py:81', 'scripts/package_quantized_model.py:29', 'scripts/package_quantized_model.py:179', 'scripts/verify_fedsgd_equivalence.py:155']",
       "unlock": []
     },
     {

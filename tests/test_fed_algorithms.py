@@ -11,6 +11,18 @@ from src.federated.strategy import aggregate_fedavg
 from src.model.mobilenetv3 import create_model, get_parameters
 
 
+def test_aggregation_roundoff_units_follow_tensor_scale():
+    value = torch.tensor([64.0], dtype=torch.float32)
+    updates = [{"weights": {"w": value}, "num_examples": n, "client_id": k}
+               for k, n in enumerate((13107, 11691, 6647, 8863, 12156))]
+    next_value = torch.nextafter(value, torch.tensor([float("inf")]))
+    measured = alg.aggregation_error(updates, {"w": next_value})
+    assert measured["max_abs_diff"] > 1e-6
+    assert 0 < measured["max_scaled_roundoff_units"] <= 1.0
+    wrong = alg.aggregation_error(updates, {"w": value + 0.1})
+    assert wrong["max_scaled_roundoff_units"] > 8.0
+
+
 class Tiny(torch.nn.Module):
     """Một lớp tuyến tính + BatchNorm1d: đủ tham số học được, bộ đệm thống kê và bộ đếm num_batches_tracked."""
 

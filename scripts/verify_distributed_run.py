@@ -18,6 +18,7 @@ RELEASE_SHA = "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b"
 # Retain measured differences under an engineering tolerance; the predeclared
 # FedSGD A thresholds below remain unchanged.
 AGGREGATION_ATOL = 1e-6
+AGGREGATION_SCALED_UNIT_LIMIT = 8.0
 FEDSGD_MAX_ABS = 1e-10
 FEDSGD_RELATIVE_L2 = 1e-9
 
@@ -68,6 +69,7 @@ def audit_run(run_dir: Path, *, preflight: bool = False) -> dict[str, Any]:
         errors.append("history does not cover every expected round")
     flower = cfg.get("runtime", "simulation") == "flower"
     comparisons, bytes_up, bytes_down, worst, seconds = 0, 0, 0, 0.0, 0.0
+    scaled_rounds, worst_units = 0, 0.0
     for step, row in sorted(by_step.items()):
         train = row.get("train", {})
         clients = train.get("clients", [])
@@ -75,7 +77,16 @@ def audit_run(run_dir: Path, *, preflight: bool = False) -> dict[str, Any]:
             errors.append(f"round {step}: expected each client 0..4 exactly once")
         check = train.get("aggregation_check", {})
         diff = check.get("max_abs_diff")
-        if not _finite(diff) or diff < 0 or diff > AGGREGATION_ATOL or check.get("tensors_compared", 0) <= 0:
+        units = check.get("max_scaled_roundoff_units")
+        numerically_valid = _finite(diff) and diff >= 0 and check.get("tensors_compared", 0) > 0
+        if units is not None:
+            numerically_valid = numerically_valid and _finite(units) and 0 <= units <= AGGREGATION_SCALED_UNIT_LIMIT
+            scaled_rounds += 1
+            if _finite(units):
+                worst_units = max(worst_units, units)
+        else:
+            numerically_valid = numerically_valid and diff <= AGGREGATION_ATOL
+        if not numerically_valid:
             errors.append(f"round {step}: invalid aggregation check")
         else:
             worst = max(worst, diff)
@@ -105,7 +116,12 @@ def audit_run(run_dir: Path, *, preflight: bool = False) -> dict[str, Any]:
             "runtime": cfg.get("runtime", "simulation"), "seed": cfg.get("seed"), "scheme": cfg.get("scheme"),
             "rounds": len(by_step), "replayed_history_rows": duplicates, "w0_sha256": w0,
             "transport_comparisons": comparisons, "aggregation_max_abs_diff": worst,
-            "aggregation_atol": AGGREGATION_ATOL, "bytes_up": bytes_up, "bytes_down": bytes_down,
+            "aggregation_atol": AGGREGATION_ATOL if scaled_rounds < len(by_step) else None,
+            "aggregation_scaled_rounds": scaled_rounds,
+            "aggregation_max_scaled_roundoff_units": worst_units if scaled_rounds else None,
+            "aggregation_scaled_unit_limit": AGGREGATION_SCALED_UNIT_LIMIT,
+            "git_commit": cfg.get("git_commit"), "code_fingerprint": cfg.get("code_fingerprint"),
+            "bytes_up": bytes_up, "bytes_down": bytes_down,
             "round_seconds_sum": seconds, "checkpoint_bytes": (run_dir / "checkpoint_best.pt").stat().st_size}
 
 

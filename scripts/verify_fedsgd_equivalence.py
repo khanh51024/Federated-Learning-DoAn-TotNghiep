@@ -6,6 +6,8 @@ Vậy nếu truyền hoặc gộp trọng số có lỗi, A sẽ lệch. Nếu A
   A. FedSGD so với tập trung: BatchNorm đóng băng, không dropout, GD thuần. Kỳ vọng: float64 lệch ở mức làm tròn; float32 lớn hơn một chút.
   B. Nhiều bước cục bộ: K bước cục bộ mỗi vòng, CÙNG tổng số bước, trên shard đồng nhất và shard lệch nhãn.
   C. BatchNorm thật: như A nhưng BatchNorm tính theo batch của từng client, nên thống kê phụ thuộc cách chia dữ liệu.
+  D. Đối chứng không có học phân tán: chạy TẬP TRUNG hai lần trên cùng ảnh, chỉ đổi thứ tự ảnh trong batch. Về toán học phải trùng, nên mọi chênh lệch ở đây là sai số làm tròn bị khuếch đại qua các bước học.
+     Đo theo số bước để thấy tốc độ khuếch đại, và là thước đo để đọc A ở float32: A float32 chỉ có nghĩa khi so với D float32.
 
 Đây là phép kiểm công thức trên một tập ảnh nhỏ và ít bước, KHÔNG phải kết quả huấn luyện đầy đủ; dùng checkpoint nào cũng không liên quan vì xuất phát từ W0.
 
@@ -89,6 +91,16 @@ def federated(model: Any, shards: list[tuple[Any, Any]], rounds: int, local_step
         with torch.no_grad():
             model.load_state_dict(merged)
     return model
+
+
+def shuffled_order_gap(model: Any, shards: list[tuple[Any, Any]], steps: int, lr: float, seed: int) -> Any:
+    """Tập trung trên đúng các ảnh đó nhưng đảo thứ tự: gradient trung bình về toán học không đổi."""
+    import torch
+
+    images = torch.cat([s[0] for s in shards])
+    targets = torch.cat([s[1] for s in shards])
+    order = torch.randperm(len(targets), generator=torch.Generator().manual_seed(seed)).to(targets.device)
+    return centralized(model, [(images[order], targets[order])], steps, lr, False)
 
 
 def distance(a: Any, b: Any, w0: Any) -> dict[str, float]:
@@ -176,6 +188,19 @@ def main() -> int:
             run("B_local_steps", scheme, torch.float64, TOTAL_STEPS // local_steps, local_steps, False)
     for scheme in ("iid", "label_alpha_0_1"):
         run("C_batchnorm_live", scheme, torch.float64, TOTAL_STEPS, 1, True)
+    report["amplification"] = []
+    for dtype in (torch.float64, torch.float32):
+        shards = load_shards(release, release_dir, "label_alpha_0_1", args.dataset_root, args.seed, device, dtype)
+        w0 = copy.deepcopy(base).to(device=device, dtype=dtype)
+        all_images = torch.cat([s[0] for s in shards])
+        for steps in (1, 2, 5, 10, TOTAL_STEPS):
+            reference = centralized(w0, shards, steps, LR, False)
+            control = shuffled_order_gap(w0, shards, steps, LR, args.seed)
+            fed = federated(w0, shards, steps, 1, LR, False)
+            entry = {"dtype": str(dtype).replace("torch.", ""), "steps": steps, "control_l2": distance(control, reference, w0)["l2"], "fedsgd_l2": distance(fed, reference, w0)["l2"],
+                     "control_agreement": agreement(control, reference, all_images, False), "fedsgd_agreement": agreement(fed, reference, all_images, False)}
+            report["amplification"].append(entry)
+            print(f"[fedsgd] D {entry['dtype']} {steps} bước: đối chứng đổi thứ tự {entry['control_l2']:.3e}, FedSGD {entry['fedsgd_l2']:.3e}, dự đoán trùng {entry['control_agreement']:.3f} / {entry['fedsgd_agreement']:.3f}", flush=True)
     report["seconds"] = round(time.time() - started, 1)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")

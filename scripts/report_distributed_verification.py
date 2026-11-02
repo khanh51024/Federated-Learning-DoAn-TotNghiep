@@ -120,6 +120,8 @@ def main() -> int:
             writer.writeheader()
             writer.writerows(rows)
     flower = [a for a in audits if a["runtime"] == "flower"]
+    scaled_audits = [a for a in audits if a['aggregation_scaled_rounds']]
+    maximum_scaled_units = max((a['aggregation_max_scaled_roundoff_units'] for a in scaled_audits), default=None)
     sections = ["# Kiểm chứng huấn luyện phân tán và tập trung\n",
                 "Báo cáo này trả lời chín yêu cầu bằng checkpoint, nhật ký và phép đo thật. "
                 "Các run chất lượng dùng năm client mô phỏng Flower/Ray trên một GPU; phép đo mạng dùng hai client thật trên hai máy. "
@@ -165,7 +167,10 @@ def main() -> int:
                 "Val tham gia chọn checkpoint; số chất lượng chính bên dưới lấy trên tập thử.\n",
                 "## 6. Mô hình gộp khác mô hình client thế nào\n",
                 f"Sai lệch phép gộp lớn nhất qua {sum(a['rounds'] for a in audits)} vòng là "
-                f"{max(a['aggregation_max_abs_diff'] for a in audits):.3e}; cổng nghiệm thu dùng atol={audits[0]['aggregation_atol']:.0e}. "
+                f"{max(a['aggregation_max_abs_diff'] for a in audits):.3e}. Sáu run A/B dùng cổng tuyệt đối 1e-6. "
+                f"Các run khối C bổ sung đơn vị làm tròn theo tensor; giá trị lớn nhất {number(maximum_scaled_units,6)}, giới hạn 8. "
+                "Một đơn vị bằng epsilon của dtype nhân max(1, trị tuyệt đối lớn nhất của tensor tham chiếu và tensor đã gộp). "
+                "Đây là chuẩn theo thang tensor, không phải số ULP từng phần tử. "
                 "Đây là chênh lệch giữa hai cách tính số học của phép gộp, không phải phép so bit. "
                 "Cổng ban đầu 1e-7 đã được sửa thành 1e-6 trong quá trình chạy sau khi gặp đúng epsilon float32 tại thang 1. "
                 "Phép tính lại trên năm checkpoint Local-only thật cho thấy thứ tự nhân/chia có thể làm hai kết quả float32 "
@@ -176,6 +181,11 @@ def main() -> int:
                 "và mô hình chung sau gộp, không phải lỗi truyền. Tính công bằng được tổng hợp trong "
                 "[table_fairness.csv](../artifacts/sweep_v4/table_fairness.csv): dùng độ chính xác mô phỏng phân phối "
                 "miền–lớp của shard trên tập đo, có báo độ phủ; không phải tập thử cục bộ mới thu thập ở từng cơ sở.\n",
+                table(["Cách chia", "Biến thể", "Accuracy client (%)", "SD giữa client (điểm %)", "Mạnh − yếu (điểm %)", "Client nhỏ nhất (%)", "Độ phủ tối thiểu (%)"],
+                      [[c['scheme'], c['variant'], spread(f['mean']), spread(f['std_between_clients']), spread(f['gap_best_worst']),
+                        spread(f['smallest_client_accuracy']), number(100*f['coverage_min'])]
+                       for c in sweep['cells'] if c.get('fairness')
+                       for f in [c['fairness']['legacy_diagnostic_test']['all']]]),
                 "## 7. Code backend tập trung và phân tán\n",
                 table(["Vai trò", "Mã nguồn"], [
                     ["Chuẩn bị ba mốc và vòng lặp train/val/checkpoint", source_link('scripts/train_v4.py','main')],
@@ -202,6 +212,7 @@ def main() -> int:
                 f"\nBa vòng đều đủ hai client thật, hash đúng và không bị từ chối. Trung vị thời gian fit một vòng: "
                 f"{net['round_fit_elapsed_ms']['median']/1000:.3f} s. Đồng hồ đo ở chính máy thực hiện tác vụ. "
                 "Thời gian fit có cả probe RTT/băng thông chủ động, không đại diện vòng train không gắn probe. "
+                "Không dùng thời gian các đợt v4b/Flower hoặc khối C chạy song song để suy riêng chênh lệch tốc độ runtime. "
                 "Ảnh thực xử lý/s tính cả hai epoch; chỉ số cũ train_images_per_s chỉ lấy số ảnh duy nhất trong shard. "
                 "Băng thông dùng MiB=2^20 byte; bảng truyền thông sweep dùng MB=10^6 byte. "
                 f"[History và summary]({('../' + args.network_summary.parent.relative_to(ROOT).as_posix())}/summary.json).\n",
@@ -222,6 +233,18 @@ def main() -> int:
                 f"mã {baseline_config['git_commit'][:9]}; Flower: {flower_config['gpu']}, torch {flower_config['torch']}, "
                 f"Python {flower_config['python']}, mã {flower_config['git_commit'][:9]}. Dropout của Flower lấy RNG trong tiến trình client. "
                 "Không quy riêng mọi chênh lệch quan sát được cho đường truyền hoặc runtime.\n",
+                f"Tổng ảnh train để gửi một lần về trung tâm: {number(sweep['raw_images']['mb'])} MB "
+                f"cho {sweep['raw_images']['images']} ảnh đã mã hóa.\n",
+                table(["Cách chia", "Biến thể", "MB gửi lên", "MB hai chiều", "Hai chiều / gửi ảnh", "Vòng hội tụ seed 42/123/2026"],
+                      [[c['scheme'], c['variant'], number(comm['mb_up_total']['mean']), number(comm['mb_total']['mean']),
+                        number(comm['mb_total_vs_raw'],3) + '×',
+                        '/'.join(str(int(comm['rounds_to_convergence']['per_seed'][str(s)])) if str(s) in comm['rounds_to_convergence']['per_seed'] else 'chưa đạt' for s in SEEDS)]
+                       for c in sweep['cells'] if c.get('communication') for comm in [c['communication']]]),
+                "\nByte của mô phỏng v4b được suy từ tensor; byte Flower được ghi từ payload mảng, đều chưa gồm mọi khung giao thức. "
+                "So sánh MB hai chiều với ảnh gửi một lần không khẳng định FL luôn tiết kiệm băng thông. "
+                "Hội tụ ở đây là chỉ số val giữ trong một điểm macro-F1 so với mức tốt nhất đến hết run. "
+                "Seed chưa đạt được ghi rõ, không lấy trung bình hai seed rồi trình bày như đủ ba seed. "
+                "Chi phí đến hội tụ trong CSV dùng hết ngân sách khi seed chưa đạt; cần đọc cùng cờ này.\n",
                 "\nIID chỉ chạy Flower trong đợt này; không có đối chứng IID một tiến trình để suy ra tương đương runtime ở IID. "
                 "Đường theo α có năm mức FedAvg và mốc Centralized; Local-only chỉ được đo ở α=0,1, không nội suy thành số đo ở các α còn lại.\n",
                 "Khoảng cách production còn chịu tác động của nhiều bước minibatch cục bộ, SGD momentum được làm mới mỗi vòng client, "
@@ -273,7 +296,8 @@ def main() -> int:
         ['N5.4', 'Có script, cấu hình, mã băm, bảng/biểu đồ và hướng dẫn tái lập bên dưới.'],
         ['N5.5', 'Có báo cáo kiểm chứng Markdown; chưa tạo quyển tốt nghiệp Word hoặc bản thảo bài báo.']]),
         "\n## Tái lập\n",
-        "Mã train gốc được ghim ở ed88947eb; script kiểm chứng và kết quả nằm trên nhánh codex/continue-flower-verification. "
+        "Mã train gốc được ghim ở ed88947eb; khối C có thêm trường log làm tròn theo thang tensor, không đổi phép gộp hay optimizer. "
+        "Commit và code_fingerprint của từng run nằm trong batch_audit.json; script kiểm chứng và kết quả nằm trên nhánh codex/continue-flower-verification. "
         "Gói đầu vào có manifest SHA riêng, không dùng bundle.json cũ. Trên máy thuê, chạy preflight trong tmux, "
         "sau khi kiểm dữ liệu; chỉ chạy train khi cả preflight_passed.json và network_speedtest_passed.json đạt.\n",
         "```bash\nbash scripts/remote/run_verification_batch.sh preflight /root/cropfed\n"

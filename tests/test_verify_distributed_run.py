@@ -63,6 +63,17 @@ def test_float32_rounding_at_unity_is_not_rejected(completed_preflight):
     assert audit_run(path, preflight=True)["passed"]
 
 
+def test_scaled_roundoff_accepts_large_tensor_ulp_but_rejects_real_error(completed_preflight):
+    path, rows = completed_preflight
+    check = rows[0]["train"]["aggregation_check"]
+    check.update(max_abs_diff=2**-17, max_scaled_roundoff_units=1.0)
+    (path / "history.jsonl").write_text("\n".join(json.dumps(row) for row in rows))
+    assert audit_run(path, preflight=True)["passed"]
+    check["max_scaled_roundoff_units"] = 100.0
+    (path / "history.jsonl").write_text("\n".join(json.dumps(row) for row in rows))
+    assert not audit_run(path, preflight=True)["passed"]
+
+
 def test_equivalence_requires_both_schemes_and_fixed_finite_tolerances(tmp_path):
     checks = [{"check": "A_fedsgd", "dtype": "float64", "scheme": scheme,
                "max_abs": 1e-14, "l2_relative_to_centralized_travel": 1e-12}
