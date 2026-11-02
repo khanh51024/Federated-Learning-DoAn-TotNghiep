@@ -1,0 +1,1208 @@
+{
+  "evidence": "matched trained v4 checkpoints and saved predictions; no additional training or sealed evaluation",
+  "w0_caveat": "reconstructed W0 verifies the seed recipe; it cannot prove the actual initialization of an old run without a recorded hash",
+  "initialization_reconstruction_torch": "2.14.0+cpu",
+  "comparisons": [
+    {
+      "run": "runs\\v4b\\fedavg_s123",
+      "centralized": "runs\\v4b\\centralized_s123",
+      "seed": 123,
+      "scheme": "label_alpha_0_1",
+      "runtime": "simulation",
+      "w0": {
+        "reconstructed_from_seed": "426fb2ee96efb6e58a4dbac00a609e20ab011168a2d836c697a360b55a997771",
+        "fedavg_recorded": null,
+        "centralized_recorded": null
+      },
+      "checkpoint_sha256": {
+        "centralized": "ea7d6d974370098f8d60d50d3b3972db401cc82bd36ca1864bee80ab24f81ae5",
+        "fedavg": "a489459f8cf53197a0a8c730cc9aa2a9dc0fa81881a4091c430eb4cd26e4e608"
+      },
+      "weight_distance": {
+        "bn_stats:all": {
+          "l2": 114.26502278055797,
+          "relative": 0.4306890830936964,
+          "cosine": 0.9893846015886386,
+          "norm_a": 154.9270188812906,
+          "norm_b": 265.30745093369273
+        },
+        "bn_stats:features_high_9_12": {
+          "l2": 57.62751273005808,
+          "relative": 0.46408676252764713,
+          "cosine": 0.9875128432581622,
+          "norm_a": 68.41779020928087,
+          "norm_b": 124.17400663658236
+        },
+        "bn_stats:features_low_0_3": {
+          "l2": 70.73710058804281,
+          "relative": 0.415410234005357,
+          "cosine": 0.9912550066989575,
+          "norm_a": 101.72020813967856,
+          "norm_b": 170.28251785229395
+        },
+        "bn_stats:features_mid_4_8": {
+          "l2": 68.78828249044697,
+          "relative": 0.4268307683585704,
+          "cosine": 0.9895449580075854,
+          "norm_a": 94.73323819200452,
+          "norm_b": 161.1605525885134
+        },
+        "learnable:all": {
+          "l2": 29.341399008834685,
+          "relative": 0.15217384261615424,
+          "cosine": 0.9954399210408583,
+          "norm_a": 169.0747527300772,
+          "norm_b": 192.81499700869028
+        },
+        "learnable:classifier_hidden_576_to_1024": {
+          "l2": 13.211124824054918,
+          "relative": 0.14211359393531967,
+          "cosine": 0.9978487681723014,
+          "norm_a": 81.04029108353653,
+          "norm_b": 92.96172490062924
+        },
+        "learnable:classifier_output_1024_to_38": {
+          "l2": 6.364211567578791,
+          "relative": 0.7673101486587779,
+          "cosine": 0.6438904653826966,
+          "norm_a": 8.294184012427223,
+          "norm_b": 5.821307964448689
+        },
+        "learnable:features_high_9_12": {
+          "l2": 20.719128902914537,
+          "relative": 0.1557432833260555,
+          "cosine": 0.9947404157111283,
+          "norm_a": 116.72634413021699,
+          "norm_b": 133.03385199307837
+        },
+        "learnable:features_low_0_3": {
+          "l2": 6.732908648951992,
+          "relative": 0.1349420993604143,
+          "cosine": 0.9981837453521079,
+          "norm_a": 43.77946179803843,
+          "norm_b": 49.8947969600591
+        },
+        "learnable:features_mid_4_8": {
+          "l2": 13.086876114306229,
+          "relative": 0.14352305408882818,
+          "cosine": 0.9967560426262935,
+          "norm_a": 80.0516649050355,
+          "norm_b": 91.18309387568216
+        }
+      },
+      "prediction_agreement": {
+        "val": {
+          "n": 6746,
+          "same": 6222,
+          "agreement": 0.9223243403498369
+        },
+        "legacy_diagnostic_test": {
+          "n": 13101,
+          "same": 12426,
+          "agreement": 0.9484772154797344
+        }
+      }
+    },
+    {
+      "run": "runs\\v4b\\fedavg_s2026",
+      "centralized": "runs\\v4b\\centralized_s2026",
+      "seed": 2026,
+      "scheme": "label_alpha_0_1",
+      "runtime": "simulation",
+      "w0": {
+        "reconstructed_from_seed": "a331b44f24902c0f89acddeace713d4d9ee118440341ec9f725e9696e646b99e",
+        "fedavg_recorded": null,
+        "centralized_recorded": null
+      },
+      "checkpoint_sha256": {
+        "centralized": "4096d1e26f1e9ac4cb4204fe24e514699b865647e0067594495231d397b53c1b",
+        "fedavg": "e84a0a0363a380f61fa24c975b37446222de0a8ab3cbacb0b1619b592a6f4812"
+      },
+      "weight_distance": {
+        "bn_stats:all": {
+          "l2": 113.03273410896277,
+          "relative": 0.4269893192240453,
+          "cosine": 0.9902540213027087,
+          "norm_a": 155.2893993653351,
+          "norm_b": 264.72028460658856
+        },
+        "bn_stats:features_high_9_12": {
+          "l2": 55.998417380731766,
+          "relative": 0.4551646207023872,
+          "cosine": 0.987925590094086,
+          "norm_a": 68.8888005845696,
+          "norm_b": 123.0289324647373
+        },
+        "bn_stats:features_low_0_3": {
+          "l2": 70.72115338594828,
+          "relative": 0.41506923049361366,
+          "cosine": 0.9913490104126613,
+          "norm_a": 101.81778755245521,
+          "norm_b": 170.3839942600525
+        },
+        "bn_stats:features_mid_4_8": {
+          "l2": 68.1108999702838,
+          "relative": 0.4231388168539534,
+          "cosine": 0.9911018794654823,
+          "norm_a": 94.88028692615252,
+          "norm_b": 160.9658515299775
+        },
+        "learnable:all": {
+          "l2": 29.325929908229437,
+          "relative": 0.15214325710057822,
+          "cosine": 0.9954346862991966,
+          "norm_a": 169.03461989384914,
+          "norm_b": 192.75208423362974
+        },
+        "learnable:classifier_hidden_576_to_1024": {
+          "l2": 13.218511063774452,
+          "relative": 0.1422327301508886,
+          "cosine": 0.9978214550772042,
+          "norm_a": 81.02274927220193,
+          "norm_b": 92.93578946105795
+        },
+        "learnable:classifier_output_1024_to_38": {
+          "l2": 6.366300036554135,
+          "relative": 0.7615885888271383,
+          "cosine": 0.6505195349107213,
+          "norm_a": 8.359237690730588,
+          "norm_b": 5.910188278726997
+        },
+        "learnable:features_high_9_12": {
+          "l2": 20.721077720759407,
+          "relative": 0.15581454308242312,
+          "cosine": 0.9947176337194602,
+          "norm_a": 116.6940154621648,
+          "norm_b": 132.98551798081084
+        },
+        "learnable:features_low_0_3": {
+          "l2": 6.701004509079601,
+          "relative": 0.13435372902206325,
+          "cosine": 0.99826934761403,
+          "norm_a": 43.76452216286458,
+          "norm_b": 49.875835660498694
+        },
+        "learnable:features_mid_4_8": {
+          "l2": 13.056983983420889,
+          "relative": 0.14324458761142217,
+          "cosine": 0.9967879806186857,
+          "norm_a": 80.03320138188535,
+          "norm_b": 91.15167421780995
+        }
+      },
+      "prediction_agreement": {
+        "val": {
+          "n": 6746,
+          "same": 6211,
+          "agreement": 0.9206937444411503
+        },
+        "legacy_diagnostic_test": {
+          "n": 13101,
+          "same": 12436,
+          "agreement": 0.9492405159911457
+        }
+      }
+    },
+    {
+      "run": "runs\\v4b\\fedavg_s42",
+      "centralized": "runs\\v4b\\centralized_s42",
+      "seed": 42,
+      "scheme": "label_alpha_0_1",
+      "runtime": "simulation",
+      "w0": {
+        "reconstructed_from_seed": "a3937527052a339e840b2f092abd30460ecda00b13e5a163c6a822528a612bb6",
+        "fedavg_recorded": null,
+        "centralized_recorded": null
+      },
+      "checkpoint_sha256": {
+        "centralized": "a4ea0dcc8ef34eec529207ad1c015001f5554119e2a9eaa1f4760f200885dcbb",
+        "fedavg": "cd1c8f603bd9cd1bb485346454e83d18658a2ac08d51f35c7e29a255335fbb45"
+      },
+      "weight_distance": {
+        "bn_stats:all": {
+          "l2": 112.1387396605322,
+          "relative": 0.42375113713281914,
+          "cosine": 0.9899065673892903,
+          "norm_a": 156.281169047013,
+          "norm_b": 264.6334837453989
+        },
+        "bn_stats:features_high_9_12": {
+          "l2": 55.47859735976092,
+          "relative": 0.4503781275618096,
+          "cosine": 0.9877349538597399,
+          "norm_a": 69.6335477278898,
+          "norm_b": 123.18226389035082
+        },
+        "bn_stats:features_low_0_3": {
+          "l2": 71.43579454909288,
+          "relative": 0.4180108018652515,
+          "cosine": 0.9902188135815025,
+          "norm_a": 101.88400666438112,
+          "norm_b": 170.89461380024497
+        },
+        "bn_stats:features_mid_4_8": {
+          "l2": 66.28838076756693,
+          "relative": 0.41388190864198426,
+          "cosine": 0.9914372917577986,
+          "norm_a": 95.8885916860869,
+          "norm_b": 160.16254729536305
+        },
+        "learnable:all": {
+          "l2": 29.165157126235183,
+          "relative": 0.1512598383333757,
+          "cosine": 0.9954121084996217,
+          "norm_a": 169.34149731502868,
+          "norm_b": 192.814943130875
+        },
+        "learnable:classifier_hidden_576_to_1024": {
+          "l2": 13.074474871706741,
+          "relative": 0.14064242942093316,
+          "cosine": 0.9978980586624245,
+          "norm_a": 81.16324138826481,
+          "norm_b": 92.96252152027132
+        },
+        "learnable:classifier_output_1024_to_38": {
+          "l2": 6.419339196600216,
+          "relative": 0.7726197919724872,
+          "cosine": 0.6380657658818493,
+          "norm_a": 8.308535793798054,
+          "norm_b": 5.831400293809279
+        },
+        "learnable:features_high_9_12": {
+          "l2": 20.599884085951295,
+          "relative": 0.15484727900661005,
+          "cosine": 0.9947147275959217,
+          "norm_a": 116.91055135466097,
+          "norm_b": 133.03355550130098
+        },
+        "learnable:features_low_0_3": {
+          "l2": 6.67303651689863,
+          "relative": 0.13373977213012855,
+          "cosine": 0.9981863550075475,
+          "norm_a": 43.84639399472476,
+          "norm_b": 49.89567733378353
+        },
+        "learnable:features_mid_4_8": {
+          "l2": 13.021979135121445,
+          "relative": 0.14281386999142995,
+          "cosine": 0.9966746577360363,
+          "norm_a": 80.18388808742891,
+          "norm_b": 91.18147373152814
+        }
+      },
+      "prediction_agreement": {
+        "val": {
+          "n": 6746,
+          "same": 6239,
+          "agreement": 0.9248443522087163
+        },
+        "legacy_diagnostic_test": {
+          "n": 13101,
+          "same": 12409,
+          "agreement": 0.9471796046103351
+        }
+      }
+    },
+    {
+      "run": "runs\\v4_sweep\\fedavg_s123_iid_flower",
+      "centralized": "runs\\v4b\\centralized_s123",
+      "seed": 123,
+      "scheme": "iid",
+      "runtime": "flower",
+      "w0": {
+        "reconstructed_from_seed": "426fb2ee96efb6e58a4dbac00a609e20ab011168a2d836c697a360b55a997771",
+        "fedavg_recorded": "426fb2ee96efb6e58a4dbac00a609e20ab011168a2d836c697a360b55a997771",
+        "centralized_recorded": null
+      },
+      "checkpoint_sha256": {
+        "centralized": "ea7d6d974370098f8d60d50d3b3972db401cc82bd36ca1864bee80ab24f81ae5",
+        "fedavg": "6df8cb7a2a2a9c03633490710661ae3ee9f0514ba485e7c7ac911fde8534c999"
+      },
+      "weight_distance": {
+        "bn_stats:all": {
+          "l2": 118.54761150489145,
+          "relative": 0.4386987574837527,
+          "cosine": 0.9909258164464747,
+          "norm_a": 154.9270188812906,
+          "norm_b": 270.2255465341314
+        },
+        "bn_stats:features_high_9_12": {
+          "l2": 56.970300674271215,
+          "relative": 0.45936237534961477,
+          "cosine": 0.9909273734019796,
+          "norm_a": 68.41779020928087,
+          "norm_b": 124.02038941676896
+        },
+        "bn_stats:features_low_0_3": {
+          "l2": 74.1075955395045,
+          "relative": 0.4265376468401945,
+          "cosine": 0.9913776772498909,
+          "norm_a": 101.72020813967856,
+          "norm_b": 173.74221499203202
+        },
+        "bn_stats:features_mid_4_8": {
+          "l2": 72.91080384929943,
+          "relative": 0.44003341498824394,
+          "cosine": 0.9910622814982991,
+          "norm_a": 94.73323819200452,
+          "norm_b": 165.69378907564857
+        },
+        "learnable:all": {
+          "l2": 29.254099262776098,
+          "relative": 0.15089118082599182,
+          "cosine": 0.9963280874956623,
+          "norm_a": 169.0747527300772,
+          "norm_b": 193.8754743825089
+        },
+        "learnable:classifier_hidden_576_to_1024": {
+          "l2": 13.504358847784687,
+          "relative": 0.1444644177846259,
+          "cosine": 0.998174952290348,
+          "norm_a": 81.04029108353653,
+          "norm_b": 93.47878913628126
+        },
+        "learnable:classifier_output_1024_to_38": {
+          "l2": 5.1646851464008385,
+          "relative": 0.6226875529482541,
+          "cosine": 0.782962733077457,
+          "norm_a": 8.294184012427223,
+          "norm_b": 6.263818464545534
+        },
+        "learnable:features_high_9_12": {
+          "l2": 20.613401312142685,
+          "relative": 0.15410894000027456,
+          "cosine": 0.9956826982931852,
+          "norm_a": 116.72634413021699,
+          "norm_b": 133.75863406825042
+        },
+        "learnable:features_low_0_3": {
+          "l2": 6.886253935626321,
+          "relative": 0.13726779762902586,
+          "cosine": 0.9984916662571561,
+          "norm_a": 43.77946179803843,
+          "norm_b": 50.16656531662888
+        },
+        "learnable:features_mid_4_8": {
+          "l2": 13.207113091199068,
+          "relative": 0.14408320554722057,
+          "cosine": 0.9973014711772232,
+          "norm_a": 80.0516649050355,
+          "norm_b": 91.66309870077595
+        }
+      },
+      "prediction_agreement": {
+        "val": {
+          "n": 6746,
+          "same": 6524,
+          "agreement": 0.9670916098428699
+        },
+        "legacy_diagnostic_test": {
+          "n": 13101,
+          "same": 12807,
+          "agreement": 0.9775589649645066
+        }
+      }
+    },
+    {
+      "run": "runs\\v4_sweep\\fedavg_s123_label_alpha_0_1_flower",
+      "centralized": "runs\\v4b\\centralized_s123",
+      "seed": 123,
+      "scheme": "label_alpha_0_1",
+      "runtime": "flower",
+      "w0": {
+        "reconstructed_from_seed": "426fb2ee96efb6e58a4dbac00a609e20ab011168a2d836c697a360b55a997771",
+        "fedavg_recorded": "426fb2ee96efb6e58a4dbac00a609e20ab011168a2d836c697a360b55a997771",
+        "centralized_recorded": null
+      },
+      "checkpoint_sha256": {
+        "centralized": "ea7d6d974370098f8d60d50d3b3972db401cc82bd36ca1864bee80ab24f81ae5",
+        "fedavg": "21f7c95c89e987c7da7baffe7b3e7ff958d691b18b799eb289b5fde9228dc3e6"
+      },
+      "weight_distance": {
+        "bn_stats:all": {
+          "l2": 113.83308080567393,
+          "relative": 0.42958197522424546,
+          "cosine": 0.9897078454573659,
+          "norm_a": 154.9270188812906,
+          "norm_b": 264.9857009159942
+        },
+        "bn_stats:features_high_9_12": {
+          "l2": 57.06974895674654,
+          "relative": 0.4613082846068131,
+          "cosine": 0.9882199807406257,
+          "norm_a": 68.41779020928087,
+          "norm_b": 123.71282038732254
+        },
+        "bn_stats:features_low_0_3": {
+          "l2": 70.62961868827189,
+          "relative": 0.41498007699648504,
+          "cosine": 0.9913630870014284,
+          "norm_a": 101.72020813967856,
+          "norm_b": 170.2000230938078
+        },
+        "bn_stats:features_mid_4_8": {
+          "l2": 68.64743989162548,
+          "relative": 0.4261883688475945,
+          "cosine": 0.9897926651713154,
+          "norm_a": 94.73323819200452,
+          "norm_b": 161.07300177441937
+        },
+        "learnable:all": {
+          "l2": 29.33781488153747,
+          "relative": 0.15215876246552,
+          "cosine": 0.995439804407335,
+          "norm_a": 169.0747527300772,
+          "norm_b": 192.81055133571803
+        },
+        "learnable:classifier_hidden_576_to_1024": {
+          "l2": 13.20912202245052,
+          "relative": 0.1420902604215784,
+          "cosine": 0.9978541594523737,
+          "norm_a": 81.04029108353653,
+          "norm_b": 92.96289543885254
+        },
+        "learnable:classifier_output_1024_to_38": {
+          "l2": 6.3613101602844555,
+          "relative": 0.766960336393944,
+          "cosine": 0.6443750475130008,
+          "norm_a": 8.294184012427223,
+          "norm_b": 5.831551749815142
+        },
+        "learnable:features_high_9_12": {
+          "l2": 20.717007414847423,
+          "relative": 0.15573282985007836,
+          "cosine": 0.9947381330831219,
+          "norm_a": 116.72634413021699,
+          "norm_b": 133.02915920035213
+        },
+        "learnable:features_low_0_3": {
+          "l2": 6.723762685751868,
+          "relative": 0.13476123232096993,
+          "cosine": 0.9982093577552944,
+          "norm_a": 43.77946179803843,
+          "norm_b": 49.89389433407249
+        },
+        "learnable:features_mid_4_8": {
+          "l2": 13.090333440475096,
+          "relative": 0.14356712389452203,
+          "cosine": 0.9967437446944764,
+          "norm_a": 80.0516649050355,
+          "norm_b": 91.17918563370046
+        }
+      },
+      "prediction_agreement": {
+        "val": {
+          "n": 6746,
+          "same": 6212,
+          "agreement": 0.9208419804328491
+        },
+        "legacy_diagnostic_test": {
+          "n": 13101,
+          "same": 12431,
+          "agreement": 0.9488588657354401
+        }
+      }
+    },
+    {
+      "run": "runs\\v4_sweep\\fedavg_s123_label_alpha_100_0",
+      "centralized": "runs\\v4b\\centralized_s123",
+      "seed": 123,
+      "scheme": "label_alpha_100_0",
+      "runtime": "simulation",
+      "w0": {
+        "reconstructed_from_seed": "426fb2ee96efb6e58a4dbac00a609e20ab011168a2d836c697a360b55a997771",
+        "fedavg_recorded": "426fb2ee96efb6e58a4dbac00a609e20ab011168a2d836c697a360b55a997771",
+        "centralized_recorded": null
+      },
+      "checkpoint_sha256": {
+        "centralized": "ea7d6d974370098f8d60d50d3b3972db401cc82bd36ca1864bee80ab24f81ae5",
+        "fedavg": "968ce9a3e0be8152ad4d07cb316f91612d98da65ee358eb83495f5d809d3d7ed"
+      },
+      "weight_distance": {
+        "bn_stats:all": {
+          "l2": 113.75469942413109,
+          "relative": 0.42839764428450117,
+          "cosine": 0.9914199966811373,
+          "norm_a": 154.9270188812906,
+          "norm_b": 265.53530567172305
+        },
+        "bn_stats:features_high_9_12": {
+          "l2": 54.40661471567082,
+          "relative": 0.44783394563693185,
+          "cosine": 0.9913622350491663,
+          "norm_a": 68.41779020928087,
+          "norm_b": 121.48836693987323
+        },
+        "bn_stats:features_low_0_3": {
+          "l2": 71.52630954763967,
+          "relative": 0.4178437829318218,
+          "cosine": 0.9916320306503132,
+          "norm_a": 101.72020813967856,
+          "norm_b": 171.17954716418598
+        },
+        "bn_stats:features_mid_4_8": {
+          "l2": 69.74266240078731,
+          "relative": 0.4288537209837874,
+          "cosine": 0.9917355790532189,
+          "norm_a": 94.73323819200452,
+          "norm_b": 162.6257602261166
+        },
+        "learnable:all": {
+          "l2": 28.475638035296708,
+          "relative": 0.14742848522727703,
+          "cosine": 0.9964585826737183,
+          "norm_a": 169.0747527300772,
+          "norm_b": 193.14882053762148
+        },
+        "learnable:classifier_hidden_576_to_1024": {
+          "l2": 13.148982987585878,
+          "relative": 0.14119468891446252,
+          "cosine": 0.9982233618092389,
+          "norm_a": 81.04029108353653,
+          "norm_b": 93.12661183418659
+        },
+        "learnable:classifier_output_1024_to_38": {
+          "l2": 5.067936809560899,
+          "relative": 0.6110229531883522,
+          "cosine": 0.7922677969520528,
+          "norm_a": 8.294184012427223,
+          "norm_b": 6.304081463020014
+        },
+        "learnable:features_high_9_12": {
+          "l2": 20.073653658919326,
+          "relative": 0.15063985736250446,
+          "cosine": 0.9958299948057155,
+          "norm_a": 116.72634413021699,
+          "norm_b": 133.25592582455425
+        },
+        "learnable:features_low_0_3": {
+          "l2": 6.683145218279071,
+          "relative": 0.13372608421637103,
+          "cosine": 0.9985688196620949,
+          "norm_a": 43.77946179803843,
+          "norm_b": 49.97637714019675
+        },
+        "learnable:features_mid_4_8": {
+          "l2": 12.832233756318502,
+          "relative": 0.14051911044272436,
+          "cosine": 0.9974223981955048,
+          "norm_a": 80.0516649050355,
+          "norm_b": 91.32020346477303
+        }
+      },
+      "prediction_agreement": {
+        "val": {
+          "n": 6746,
+          "same": 6564,
+          "agreement": 0.9730210495108212
+        },
+        "legacy_diagnostic_test": {
+          "n": 13101,
+          "same": 12830,
+          "agreement": 0.9793145561407526
+        }
+      }
+    },
+    {
+      "run": "runs\\v4_sweep\\fedavg_s2026_iid_flower",
+      "centralized": "runs\\v4b\\centralized_s2026",
+      "seed": 2026,
+      "scheme": "iid",
+      "runtime": "flower",
+      "w0": {
+        "reconstructed_from_seed": "a331b44f24902c0f89acddeace713d4d9ee118440341ec9f725e9696e646b99e",
+        "fedavg_recorded": "a331b44f24902c0f89acddeace713d4d9ee118440341ec9f725e9696e646b99e",
+        "centralized_recorded": null
+      },
+      "checkpoint_sha256": {
+        "centralized": "4096d1e26f1e9ac4cb4204fe24e514699b865647e0067594495231d397b53c1b",
+        "fedavg": "4979bdd9e8a991bc787944f07889d72d5cd4af3b0efee305e20f48b6b22e177d"
+      },
+      "weight_distance": {
+        "bn_stats:all": {
+          "l2": 113.36759546484183,
+          "relative": 0.42667683080390423,
+          "cosine": 0.9919785004084184,
+          "norm_a": 155.2893993653351,
+          "norm_b": 265.69897233755415
+        },
+        "bn_stats:features_high_9_12": {
+          "l2": 54.30007187868992,
+          "relative": 0.4456117285446019,
+          "cosine": 0.9914785085767654,
+          "norm_a": 68.8888005845696,
+          "norm_b": 121.855122745619
+        },
+        "bn_stats:features_low_0_3": {
+          "l2": 71.75256977653123,
+          "relative": 0.4181627995472939,
+          "cosine": 0.9919791096194904,
+          "norm_a": 101.81778755245521,
+          "norm_b": 171.5900358764842
+        },
+        "bn_stats:features_mid_4_8": {
+          "l2": 68.95855730736506,
+          "relative": 0.4251832769737769,
+          "cosine": 0.9926797013820827,
+          "norm_a": 94.88028692615252,
+          "norm_b": 162.18548809862543
+        },
+        "learnable:all": {
+          "l2": 28.5612863417325,
+          "relative": 0.14786872808268092,
+          "cosine": 0.99641570003042,
+          "norm_a": 169.03461989384914,
+          "norm_b": 193.15298584135
+        },
+        "learnable:classifier_hidden_576_to_1024": {
+          "l2": 13.18398264054584,
+          "relative": 0.14156864195060165,
+          "cosine": 0.9981920261786544,
+          "norm_a": 81.02274927220193,
+          "norm_b": 93.12784567889125
+        },
+        "learnable:classifier_output_1024_to_38": {
+          "l2": 5.142877029004062,
+          "relative": 0.6152327783078723,
+          "cosine": 0.7889617688136955,
+          "norm_a": 8.359237690730588,
+          "norm_b": 6.334497796056015
+        },
+        "learnable:features_high_9_12": {
+          "l2": 20.14997066450665,
+          "relative": 0.15121085577282195,
+          "cosine": 0.9957661879358211,
+          "norm_a": 116.6940154621648,
+          "norm_b": 133.25743420683906
+        },
+        "learnable:features_low_0_3": {
+          "l2": 6.685286547278655,
+          "relative": 0.1337616037557752,
+          "cosine": 0.9986120190880683,
+          "norm_a": 43.76452216286458,
+          "norm_b": 49.979114780088864
+        },
+        "learnable:features_mid_4_8": {
+          "l2": 12.83612562625498,
+          "relative": 0.1405590383601587,
+          "cosine": 0.9974462078651202,
+          "norm_a": 80.03320138188535,
+          "norm_b": 91.32195108908317
+        }
+      },
+      "prediction_agreement": {
+        "val": {
+          "n": 6746,
+          "same": 6535,
+          "agreement": 0.9687222057515564
+        },
+        "legacy_diagnostic_test": {
+          "n": 13101,
+          "same": 12869,
+          "agreement": 0.9822914281352568
+        }
+      }
+    },
+    {
+      "run": "runs\\v4_sweep\\fedavg_s2026_label_alpha_0_1_flower",
+      "centralized": "runs\\v4b\\centralized_s2026",
+      "seed": 2026,
+      "scheme": "label_alpha_0_1",
+      "runtime": "flower",
+      "w0": {
+        "reconstructed_from_seed": "a331b44f24902c0f89acddeace713d4d9ee118440341ec9f725e9696e646b99e",
+        "fedavg_recorded": "a331b44f24902c0f89acddeace713d4d9ee118440341ec9f725e9696e646b99e",
+        "centralized_recorded": null
+      },
+      "checkpoint_sha256": {
+        "centralized": "4096d1e26f1e9ac4cb4204fe24e514699b865647e0067594495231d397b53c1b",
+        "fedavg": "30de11b253da326584eb8dc6fe79571d2b2c50bf12d223854f32029a9709f0d8"
+      },
+      "weight_distance": {
+        "bn_stats:all": {
+          "l2": 113.12126384630402,
+          "relative": 0.4271490734680779,
+          "cosine": 0.9903027769200023,
+          "norm_a": 155.2893993653351,
+          "norm_b": 264.8285361545046
+        },
+        "bn_stats:features_high_9_12": {
+          "l2": 56.18673630562889,
+          "relative": 0.45587197237177446,
+          "cosine": 0.9881229946626012,
+          "norm_a": 68.8888005845696,
+          "norm_b": 123.25113126236958
+        },
+        "bn_stats:features_low_0_3": {
+          "l2": 70.87389139648606,
+          "relative": 0.4154784847750729,
+          "cosine": 0.9915264107389733,
+          "norm_a": 101.81778755245521,
+          "norm_b": 170.58378229826985
+        },
+        "bn_stats:features_mid_4_8": {
+          "l2": 67.94381881985996,
+          "relative": 0.42263553372052565,
+          "cosine": 0.9909547994240212,
+          "norm_a": 94.88028692615252,
+          "norm_b": 160.76220146881656
+        },
+        "learnable:all": {
+          "l2": 29.333140231862263,
+          "relative": 0.15217426725401073,
+          "cosine": 0.9954342870269492,
+          "norm_a": 169.03461989384914,
+          "norm_b": 192.76018712742746
+        },
+        "learnable:classifier_hidden_576_to_1024": {
+          "l2": 13.217669407747131,
+          "relative": 0.14222021977567434,
+          "cosine": 0.9978265566039836,
+          "norm_a": 81.02274927220193,
+          "norm_b": 92.93804656324902
+        },
+        "learnable:classifier_output_1024_to_38": {
+          "l2": 6.3748519408443265,
+          "relative": 0.7626116371727638,
+          "cosine": 0.6493094831255057,
+          "norm_a": 8.359237690730588,
+          "norm_b": 5.899071316686589
+        },
+        "learnable:features_high_9_12": {
+          "l2": 20.723846087636097,
+          "relative": 0.15582659519429728,
+          "cosine": 0.9947220884323694,
+          "norm_a": 116.6940154621648,
+          "norm_b": 132.99299815795834
+        },
+        "learnable:features_low_0_3": {
+          "l2": 6.710460712928856,
+          "relative": 0.13453651463100294,
+          "cosine": 0.9982474551012034,
+          "norm_a": 43.76452216286458,
+          "norm_b": 49.87836002243572
+        },
+        "learnable:features_mid_4_8": {
+          "l2": 13.060609265193651,
+          "relative": 0.143279236899718,
+          "cosine": 0.9967865736968764,
+          "norm_a": 80.03320138188535,
+          "norm_b": 91.15493317663919
+        }
+      },
+      "prediction_agreement": {
+        "val": {
+          "n": 6746,
+          "same": 6206,
+          "agreement": 0.9199525644826564
+        },
+        "legacy_diagnostic_test": {
+          "n": 13101,
+          "same": 12445,
+          "agreement": 0.9499274864514159
+        }
+      }
+    },
+    {
+      "run": "runs\\v4_sweep\\fedavg_s2026_label_alpha_100_0",
+      "centralized": "runs\\v4b\\centralized_s2026",
+      "seed": 2026,
+      "scheme": "label_alpha_100_0",
+      "runtime": "simulation",
+      "w0": {
+        "reconstructed_from_seed": "a331b44f24902c0f89acddeace713d4d9ee118440341ec9f725e9696e646b99e",
+        "fedavg_recorded": "a331b44f24902c0f89acddeace713d4d9ee118440341ec9f725e9696e646b99e",
+        "centralized_recorded": null
+      },
+      "checkpoint_sha256": {
+        "centralized": "4096d1e26f1e9ac4cb4204fe24e514699b865647e0067594495231d397b53c1b",
+        "fedavg": "52f2bd4d30eef3ae324914156a6108803443f5560ec297f0ed8380b22c7c8c1a"
+      },
+      "weight_distance": {
+        "bn_stats:all": {
+          "l2": 119.69060376263751,
+          "relative": 0.44024992807803565,
+          "cosine": 0.9912966954487287,
+          "norm_a": 155.2893993653351,
+          "norm_b": 271.86967249526043
+        },
+        "bn_stats:features_high_9_12": {
+          "l2": 57.733943428575415,
+          "relative": 0.4607340153226315,
+          "cosine": 0.9913110524961493,
+          "norm_a": 68.8888005845696,
+          "norm_b": 125.30861952562132
+        },
+        "bn_stats:features_low_0_3": {
+          "l2": 74.77317268479695,
+          "relative": 0.4285280748203365,
+          "cosine": 0.9912751629284003,
+          "norm_a": 101.81778755245521,
+          "norm_b": 174.48838729211883
+        },
+        "bn_stats:features_mid_4_8": {
+          "l2": 73.49561246700571,
+          "relative": 0.4410777438829925,
+          "cosine": 0.9919680381247266,
+          "norm_a": 94.88028692615252,
+          "norm_b": 166.62734288062916
+        },
+        "learnable:all": {
+          "l2": 29.455311910650046,
+          "relative": 0.15183482179406424,
+          "cosine": 0.9962710905206839,
+          "norm_a": 169.03461989384914,
+          "norm_b": 193.99576172717948
+        },
+        "learnable:classifier_hidden_576_to_1024": {
+          "l2": 13.599842316172484,
+          "relative": 0.1453925995926786,
+          "cosine": 0.9981325862597669,
+          "norm_a": 81.02274927220193,
+          "norm_b": 93.53875200163432
+        },
+        "learnable:classifier_output_1024_to_38": {
+          "l2": 5.241136341603784,
+          "relative": 0.6269873564446659,
+          "cosine": 0.779650419907,
+          "norm_a": 8.359237690730588,
+          "norm_b": 6.257215159274248
+        },
+        "learnable:features_high_9_12": {
+          "l2": 20.76270728553155,
+          "relative": 0.1551312955857869,
+          "cosine": 0.9956102821677876,
+          "norm_a": 116.6940154621648,
+          "norm_b": 133.83957896522477
+        },
+        "learnable:features_low_0_3": {
+          "l2": 6.915371290403577,
+          "relative": 0.13777175968799124,
+          "cosine": 0.9985253138482858,
+          "norm_a": 43.76452216286458,
+          "norm_b": 50.19440345441381
+        },
+        "learnable:features_mid_4_8": {
+          "l2": 13.276965190463326,
+          "relative": 0.14474993372625583,
+          "cosine": 0.997301729545984,
+          "norm_a": 80.03320138188535,
+          "norm_b": 91.72346300048805
+        }
+      },
+      "prediction_agreement": {
+        "val": {
+          "n": 6746,
+          "same": 6508,
+          "agreement": 0.9647198339756893
+        },
+        "legacy_diagnostic_test": {
+          "n": 13101,
+          "same": 12832,
+          "agreement": 0.9794672162430349
+        }
+      }
+    },
+    {
+      "run": "runs\\v4_sweep\\fedavg_s42_iid_flower",
+      "centralized": "runs\\v4b\\centralized_s42",
+      "seed": 42,
+      "scheme": "iid",
+      "runtime": "flower",
+      "w0": {
+        "reconstructed_from_seed": "a3937527052a339e840b2f092abd30460ecda00b13e5a163c6a822528a612bb6",
+        "fedavg_recorded": "a3937527052a339e840b2f092abd30460ecda00b13e5a163c6a822528a612bb6",
+        "centralized_recorded": null
+      },
+      "checkpoint_sha256": {
+        "centralized": "a4ea0dcc8ef34eec529207ad1c015001f5554119e2a9eaa1f4760f200885dcbb",
+        "fedavg": "5243400e42f11d3a963c2b406bbbd1da1ab3cabcd8aea51dbf2bc5147d99b7d8"
+      },
+      "weight_distance": {
+        "bn_stats:all": {
+          "l2": 115.70041284620345,
+          "relative": 0.4304916342878534,
+          "cosine": 0.9912586012128609,
+          "norm_a": 156.281169047013,
+          "norm_b": 268.7634407521122
+        },
+        "bn_stats:features_high_9_12": {
+          "l2": 55.51240103360739,
+          "relative": 0.44913521244170146,
+          "cosine": 0.9901575717722157,
+          "norm_a": 69.6335477278898,
+          "norm_b": 123.59841645863604
+        },
+        "bn_stats:features_low_0_3": {
+          "l2": 73.37928983420524,
+          "relative": 0.42420091659378145,
+          "cosine": 0.9906509028790393,
+          "norm_a": 101.88400666438112,
+          "norm_b": 172.98239339844213
+        },
+        "bn_stats:features_mid_4_8": {
+          "l2": 70.14583870546825,
+          "relative": 0.4266230013036106,
+          "cosine": 0.9929047501227731,
+          "norm_a": 95.8885916860869,
+          "norm_b": 164.42113643926163
+        },
+        "learnable:all": {
+          "l2": 28.78664606715295,
+          "relative": 0.1487079895587073,
+          "cosine": 0.9963203154159387,
+          "norm_a": 169.34149731502868,
+          "norm_b": 193.57834204186113
+        },
+        "learnable:classifier_hidden_576_to_1024": {
+          "l2": 13.231190566021326,
+          "relative": 0.14176388017416075,
+          "cosine": 0.998219758870516,
+          "norm_a": 81.16324138826481,
+          "norm_b": 93.33259325130246
+        },
+        "learnable:classifier_output_1024_to_38": {
+          "l2": 5.225769209511547,
+          "relative": 0.6289639160503283,
+          "cosine": 0.7776944523974518,
+          "norm_a": 8.308535793798054,
+          "norm_b": 6.2944471068690095
+        },
+        "learnable:features_high_9_12": {
+          "l2": 20.305317260036837,
+          "relative": 0.1520400090447695,
+          "cosine": 0.9956655741517119,
+          "norm_a": 116.91055135466097,
+          "norm_b": 133.5524602215576
+        },
+        "learnable:features_low_0_3": {
+          "l2": 6.7411449639826895,
+          "relative": 0.13459094961719256,
+          "cosine": 0.9985182237962703,
+          "norm_a": 43.84639399472476,
+          "norm_b": 50.08616837280699
+        },
+        "learnable:features_mid_4_8": {
+          "l2": 12.982641476750455,
+          "relative": 0.1418457332406311,
+          "cosine": 0.9972820048079986,
+          "norm_a": 80.18388808742891,
+          "norm_b": 91.52648571195537
+        }
+      },
+      "prediction_agreement": {
+        "val": {
+          "n": 6746,
+          "same": 6490,
+          "agreement": 0.9620515861251112
+        },
+        "legacy_diagnostic_test": {
+          "n": 13101,
+          "same": 12747,
+          "agreement": 0.9729791618960385
+        }
+      }
+    },
+    {
+      "run": "runs\\v4_sweep\\fedavg_s42_label_alpha_0_1_flower",
+      "centralized": "runs\\v4b\\centralized_s42",
+      "seed": 42,
+      "scheme": "label_alpha_0_1",
+      "runtime": "flower",
+      "w0": {
+        "reconstructed_from_seed": "a3937527052a339e840b2f092abd30460ecda00b13e5a163c6a822528a612bb6",
+        "fedavg_recorded": "a3937527052a339e840b2f092abd30460ecda00b13e5a163c6a822528a612bb6",
+        "centralized_recorded": null
+      },
+      "checkpoint_sha256": {
+        "centralized": "a4ea0dcc8ef34eec529207ad1c015001f5554119e2a9eaa1f4760f200885dcbb",
+        "fedavg": "98014a034d9d7f38511290000a65d6bbfb3d61966a2fc9a66eecafc0d5cc2735"
+      },
+      "weight_distance": {
+        "bn_stats:all": {
+          "l2": 112.56389496824781,
+          "relative": 0.4246228917922306,
+          "cosine": 0.989971290537407,
+          "norm_a": 156.281169047013,
+          "norm_b": 265.09144265195596
+        },
+        "bn_stats:features_high_9_12": {
+          "l2": 55.53685872476795,
+          "relative": 0.4508887002556254,
+          "cosine": 0.9872927427418571,
+          "norm_a": 69.6335477278898,
+          "norm_b": 123.17199054507701
+        },
+        "bn_stats:features_low_0_3": {
+          "l2": 71.29844632910616,
+          "relative": 0.41752547642397764,
+          "cosine": 0.990258348964041,
+          "norm_a": 101.88400666438112,
+          "norm_b": 170.76430147391991
+        },
+        "bn_stats:features_mid_4_8": {
+          "l2": 67.10305003845545,
+          "relative": 0.4166229144386875,
+          "cosine": 0.9917459378718316,
+          "norm_a": 95.8885916860869,
+          "norm_b": 161.064232697961
+        },
+        "learnable:all": {
+          "l2": 29.278975527023157,
+          "relative": 0.15176222216490046,
+          "cosine": 0.9953934037675637,
+          "norm_a": 169.34149731502868,
+          "norm_b": 192.92663951117865
+        },
+        "learnable:classifier_hidden_576_to_1024": {
+          "l2": 13.119464424636485,
+          "relative": 0.14104753178175425,
+          "cosine": 0.997902588353212,
+          "norm_a": 81.16324138826481,
+          "norm_b": 93.01449134846615
+        },
+        "learnable:classifier_output_1024_to_38": {
+          "l2": 6.41167658912525,
+          "relative": 0.7716975347101804,
+          "cosine": 0.6386486179376706,
+          "norm_a": 8.308535793798054,
+          "norm_b": 5.789927448500313
+        },
+        "learnable:features_high_9_12": {
+          "l2": 20.688315505369896,
+          "relative": 0.15542084158784714,
+          "cosine": 0.9946815601732434,
+          "norm_a": 116.91055135466097,
+          "norm_b": 133.11159104537742
+        },
+        "learnable:features_low_0_3": {
+          "l2": 6.704508422995576,
+          "relative": 0.13428850254959984,
+          "cosine": 0.9981757295043495,
+          "norm_a": 43.84639399472476,
+          "norm_b": 49.92615373396726
+        },
+        "learnable:features_mid_4_8": {
+          "l2": 13.079435492228747,
+          "relative": 0.14335702392078525,
+          "cosine": 0.9966575496935578,
+          "norm_a": 80.18388808742891,
+          "norm_b": 91.23679562053441
+        }
+      },
+      "prediction_agreement": {
+        "val": {
+          "n": 6746,
+          "same": 6212,
+          "agreement": 0.9208419804328491
+        },
+        "legacy_diagnostic_test": {
+          "n": 13101,
+          "same": 12397,
+          "agreement": 0.9462636439966414
+        }
+      }
+    },
+    {
+      "run": "runs\\v4_sweep\\fedavg_s42_label_alpha_100_0",
+      "centralized": "runs\\v4b\\centralized_s42",
+      "seed": 42,
+      "scheme": "label_alpha_100_0",
+      "runtime": "simulation",
+      "w0": {
+        "reconstructed_from_seed": "a3937527052a339e840b2f092abd30460ecda00b13e5a163c6a822528a612bb6",
+        "fedavg_recorded": "a3937527052a339e840b2f092abd30460ecda00b13e5a163c6a822528a612bb6",
+        "centralized_recorded": null
+      },
+      "checkpoint_sha256": {
+        "centralized": "a4ea0dcc8ef34eec529207ad1c015001f5554119e2a9eaa1f4760f200885dcbb",
+        "fedavg": "aba02bb84d87a82db8f6d17874b3783f01c2abadc11ce9d1eea54dc43f37ce4d"
+      },
+      "weight_distance": {
+        "bn_stats:all": {
+          "l2": 112.92511750486086,
+          "relative": 0.4245365529687276,
+          "cosine": 0.9914038158132658,
+          "norm_a": 156.281169047013,
+          "norm_b": 265.9962180292617
+        },
+        "bn_stats:features_high_9_12": {
+          "l2": 54.090810499893564,
+          "relative": 0.44268615459450156,
+          "cosine": 0.9903697651517067,
+          "norm_a": 69.6335477278898,
+          "norm_b": 122.18771682489255
+        },
+        "bn_stats:features_low_0_3": {
+          "l2": 71.57020253091817,
+          "relative": 0.41804587922055403,
+          "cosine": 0.9909034019922686,
+          "norm_a": 101.88400666438112,
+          "norm_b": 171.20178929729127
+        },
+        "bn_stats:features_mid_4_8": {
+          "l2": 68.58551226486969,
+          "relative": 0.42120543327203647,
+          "cosine": 0.9928710095487289,
+          "norm_a": 95.8885916860869,
+          "norm_b": 162.8314994231653
+        },
+        "learnable:all": {
+          "l2": 28.409371104445093,
+          "relative": 0.14701969423349429,
+          "cosine": 0.9963910979947427,
+          "norm_a": 169.34149731502868,
+          "norm_b": 193.23513936388542
+        },
+        "learnable:classifier_hidden_576_to_1024": {
+          "l2": 13.062169739680668,
+          "relative": 0.14020361891127608,
+          "cosine": 0.9982436977750152,
+          "norm_a": 81.16324138826481,
+          "norm_b": 93.16571027989437
+        },
+        "learnable:classifier_output_1024_to_38": {
+          "l2": 5.15682554299415,
+          "relative": 0.6206659838720905,
+          "cosine": 0.7845015047096741,
+          "norm_a": 8.308535793798054,
+          "norm_b": 6.303178438306022
+        },
+        "learnable:features_high_9_12": {
+          "l2": 20.046022735999742,
+          "relative": 0.1503618851687377,
+          "cosine": 0.9957455739671572,
+          "norm_a": 116.91055135466097,
+          "norm_b": 133.31851162616033
+        },
+        "learnable:features_low_0_3": {
+          "l2": 6.650149589525239,
+          "relative": 0.13300521904834492,
+          "cosine": 0.9985476494965542,
+          "norm_a": 43.84639399472476,
+          "norm_b": 49.999162717878264
+        },
+        "learnable:features_mid_4_8": {
+          "l2": 12.79889532208284,
+          "relative": 0.140094262618077,
+          "cosine": 0.997343208270684,
+          "norm_a": 80.18388808742891,
+          "norm_b": 91.35916834064082
+        }
+      },
+      "prediction_agreement": {
+        "val": {
+          "n": 6746,
+          "same": 6524,
+          "agreement": 0.9670916098428699
+        },
+        "legacy_diagnostic_test": {
+          "n": 13101,
+          "same": 12838,
+          "agreement": 0.9799251965498816
+        }
+      }
+    }
+  ],
+  "excluded": []
+}

@@ -21,9 +21,9 @@
    "rounds": 20,
    "local_steps": 1,
    "batchnorm_live": false,
-   "l2": 6.352902582051893e-11,
-   "max_abs": 1.0742969014376769e-11,
-   "l2_relative_to_centralized_travel": 9.968496155422412e-11,
+   "l2": 4.8631583664515823e-11,
+   "max_abs": 8.223997871592559e-12,
+   "l2_relative_to_centralized_travel": 7.63090175762747e-11,
    "prediction_agreement": 1.0
   },
   {
@@ -33,9 +33,9 @@
    "rounds": 20,
    "local_steps": 1,
    "batchnorm_live": false,
-   "l2": 2.1524282539458584e-11,
-   "max_abs": 4.6496140271301556e-12,
-   "l2_relative_to_centralized_travel": 3.298712015757289e-11,
+   "l2": 1.2243184059703202e-11,
+   "max_abs": 2.6418867093980225e-12,
+   "l2_relative_to_centralized_travel": 1.8763337776675836e-11,
    "prediction_agreement": 1.0
   },
   {
@@ -45,10 +45,10 @@
    "rounds": 20,
    "local_steps": 1,
    "batchnorm_live": false,
-   "l2": 0.17337132292665355,
-   "max_abs": 0.03064940869808197,
-   "l2_relative_to_centralized_travel": 0.2755847142492021,
-   "prediction_agreement": 0.5588235259056091
+   "l2": 0.12384520384226969,
+   "max_abs": 0.01406475156545639,
+   "l2_relative_to_centralized_travel": 0.19585553055565014,
+   "prediction_agreement": 0.7647058963775635
   },
   {
    "check": "B_local_steps",
@@ -57,9 +57,9 @@
    "rounds": 10,
    "local_steps": 2,
    "batchnorm_live": false,
-   "l2": 0.281769122193593,
-   "max_abs": 0.02143155074495416,
-   "l2_relative_to_centralized_travel": 0.4318263279371288,
+   "l2": 0.28176912219338973,
+   "max_abs": 0.02143155074522611,
+   "l2_relative_to_centralized_travel": 0.4318263279367325,
    "prediction_agreement": 0.8088235259056091
   },
   {
@@ -69,9 +69,9 @@
    "rounds": 4,
    "local_steps": 5,
    "batchnorm_live": false,
-   "l2": 0.2907943428059973,
-   "max_abs": 0.02090383313133789,
-   "l2_relative_to_centralized_travel": 0.4456579637296901,
+   "l2": 0.29079434280533406,
+   "max_abs": 0.020903833131282953,
+   "l2_relative_to_centralized_travel": 0.4456579637289611,
    "prediction_agreement": 0.6911764740943909
   },
   {
@@ -81,9 +81,9 @@
    "rounds": 2,
    "local_steps": 10,
    "batchnorm_live": false,
-   "l2": 0.30749695956988254,
-   "max_abs": 0.023096941343624486,
-   "l2_relative_to_centralized_travel": 0.47125562186901804,
+   "l2": 0.30749695956990547,
+   "max_abs": 0.023096941344200553,
+   "l2_relative_to_centralized_travel": 0.4712556218689018,
    "prediction_agreement": 0.6764705777168274
   },
   {
@@ -93,9 +93,9 @@
    "rounds": 10,
    "local_steps": 2,
    "batchnorm_live": false,
-   "l2": 0.2864279621725927,
-   "max_abs": 0.02078727974244593,
-   "l2_relative_to_centralized_travel": 0.4494411810780013,
+   "l2": 0.2864279621778022,
+   "max_abs": 0.02078727974726574,
+   "l2_relative_to_centralized_travel": 0.4494411810828762,
    "prediction_agreement": 0.75
   },
   {
@@ -105,9 +105,9 @@
    "rounds": 4,
    "local_steps": 5,
    "batchnorm_live": false,
-   "l2": 0.35127086965635085,
-   "max_abs": 0.03744938705343115,
-   "l2_relative_to_centralized_travel": 0.5511877867556718,
+   "l2": 0.3512708696578845,
+   "max_abs": 0.037449387055187744,
+   "l2_relative_to_centralized_travel": 0.5511877867563062,
    "prediction_agreement": 0.7205882668495178
   },
   {
@@ -117,9 +117,9 @@
    "rounds": 2,
    "local_steps": 10,
    "batchnorm_live": false,
-   "l2": 0.37708974249881655,
-   "max_abs": 0.03396823588506326,
-   "l2_relative_to_centralized_travel": 0.5917008170375947,
+   "l2": 0.3770897425032788,
+   "max_abs": 0.03396823588862086,
+   "l2_relative_to_centralized_travel": 0.5917008170411865,
    "prediction_agreement": 0.6176470518112183
   },
   {
@@ -129,9 +129,9 @@
    "rounds": 20,
    "local_steps": 1,
    "batchnorm_live": true,
-   "l2": 0.26538198699390336,
-   "max_abs": 0.00983512757527909,
-   "l2_relative_to_centralized_travel": 0.5145460605823925,
+   "l2": 0.2653819869939032,
+   "max_abs": 0.009835127575279105,
+   "l2_relative_to_centralized_travel": 0.5145460605823924,
    "prediction_agreement": 0.75
   },
   {
@@ -141,11 +141,93 @@
    "rounds": 20,
    "local_steps": 1,
    "batchnorm_live": true,
-   "l2": 0.3080439398338488,
+   "l2": 0.30804393983384865,
    "max_abs": 0.014384787666578809,
-   "l2_relative_to_centralized_travel": 0.6043964548797477,
+   "l2_relative_to_centralized_travel": 0.6043964548797475,
    "prediction_agreement": 0.779411792755127
   }
  ],
- "seconds": 66.2
+ "amplification": [
+  {
+   "dtype": "float64",
+   "steps": 1,
+   "control_l2": 2.930691039636875e-16,
+   "fedsgd_l2": 2.0563186153879737e-14,
+   "control_agreement": 1.0,
+   "fedsgd_agreement": 1.0
+  },
+  {
+   "dtype": "float64",
+   "steps": 2,
+   "control_l2": 9.41673017419692e-16,
+   "fedsgd_l2": 3.1396686580723175e-14,
+   "control_agreement": 1.0,
+   "fedsgd_agreement": 1.0
+  },
+  {
+   "dtype": "float64",
+   "steps": 5,
+   "control_l2": 2.7871233442508898e-15,
+   "fedsgd_l2": 5.921410408649624e-14,
+   "control_agreement": 1.0,
+   "fedsgd_agreement": 1.0
+  },
+  {
+   "dtype": "float64",
+   "steps": 10,
+   "control_l2": 4.209455307163424e-15,
+   "fedsgd_l2": 1.0419373389448914e-13,
+   "control_agreement": 1.0,
+   "fedsgd_agreement": 1.0
+  },
+  {
+   "dtype": "float64",
+   "steps": 20,
+   "control_l2": 1.690986067433243e-10,
+   "fedsgd_l2": 1.5095047858782283e-10,
+   "control_agreement": 1.0,
+   "fedsgd_agreement": 1.0
+  },
+  {
+   "dtype": "float32",
+   "steps": 1,
+   "control_l2": 3.050818684766172e-07,
+   "fedsgd_l2": 0.00047319429950599376,
+   "control_agreement": 1.0,
+   "fedsgd_agreement": 1.0
+  },
+  {
+   "dtype": "float32",
+   "steps": 2,
+   "control_l2": 0.00044547330572763087,
+   "fedsgd_l2": 0.0016544553303612663,
+   "control_agreement": 1.0,
+   "fedsgd_agreement": 0.9852941036224365
+  },
+  {
+   "dtype": "float32",
+   "steps": 5,
+   "control_l2": 0.02814124978517566,
+   "fedsgd_l2": 0.030632935754366607,
+   "control_agreement": 0.7352941036224365,
+   "fedsgd_agreement": 0.8676470518112183
+  },
+  {
+   "dtype": "float32",
+   "steps": 10,
+   "control_l2": 0.09348492779764046,
+   "fedsgd_l2": 0.09520115947295735,
+   "control_agreement": 0.47058823704719543,
+   "fedsgd_agreement": 0.4852941334247589
+  },
+  {
+   "dtype": "float32",
+   "steps": 20,
+   "control_l2": 0.1514161694889107,
+   "fedsgd_l2": 0.12104032827721586,
+   "control_agreement": 0.6029411554336548,
+   "fedsgd_agreement": 0.7352941036224365
+  }
+ ],
+ "seconds": 264.5
 }

@@ -53,19 +53,23 @@ def main() -> int:
     parser.add_argument("--runs", type=Path, default=ROOT / "runs/v4_sweep")
     parser.add_argument("--network-summary", type=Path, required=True)
     parser.add_argument("--out", type=Path, default=ROOT / "docs/KIEM_CHUNG_PHAN_TAN_TAP_TRUNG.md")
+    parser.add_argument("--partial", action="store_true", help="bản tạm cho demo: chỉ dùng các run đã xong và đạt kiểm toán, ghi rõ số run ở đầu báo cáo; không ghi batch_audit.json")
     args = parser.parse_args()
     args.network_summary = args.network_summary.resolve()
     evidence_dir = ROOT / reg.DISTRIBUTED_VERIFICATION_DIR
     expected = [(f"fedavg_s{seed}_{scheme}_flower", "flower", scheme, seed)
                 for scheme in ("label_alpha_0_1", "iid") for seed in SEEDS]
     expected += [(f"fedavg_s{seed}_{scheme}", "simulation", scheme, seed) for seed in SEEDS for scheme in SCHEMES]
+    if args.partial:
+        expected = [item for item in expected if (args.runs / item[0] / "DONE").is_file()]
     audits = [audit_run(args.runs / name) for name, _, _, _ in expected]
     if not all(a["passed"] for a in audits):
         raise SystemExit("Not all 18 runs passed: " + "; ".join(a["run"] for a in audits if not a["passed"]))
     for (_, runtime, scheme, seed), audit in zip(expected, audits):
         if (audit['runtime'], audit['scheme'], audit['seed']) != (runtime, scheme, seed):
             raise SystemExit(f"Run identity does not match the planned matrix: {audit['run']}")
-    (evidence_dir / "batch_audit.json").write_text(json.dumps({"passed": True, "runs": audits}, indent=2) + "\n", encoding="utf-8")
+    if not args.partial:
+        (evidence_dir / "batch_audit.json").write_text(json.dumps({"passed": True, "runs": audits}, indent=2) + "\n", encoding="utf-8")
     sweep = read(ROOT / reg.SWEEP_V4_DIR / "results.json")
     comparisons = read(evidence_dir / "weight_comparison.json")
     planned_names = {name for name, _, _, _ in expected}
@@ -122,7 +126,9 @@ def main() -> int:
     flower = [a for a in audits if a["runtime"] == "flower"]
     scaled_audits = [a for a in audits if a['aggregation_scaled_rounds']]
     maximum_scaled_units = max((a['aggregation_max_scaled_roundoff_units'] for a in scaled_audits), default=None)
+    amplification = equivalence.get("amplification") or []
     sections = ["# Kiểm chứng huấn luyện phân tán và tập trung\n",
+                *([f"> **Bản tạm cho demo: mới xong {len(expected)}/18 run chất lượng.** Phần còn lại của quét α đang chạy; số về các mức α chưa xong chưa có trong bảng.\n"] if args.partial else []),
                 "Báo cáo này trả lời chín yêu cầu bằng checkpoint, nhật ký và phép đo thật. "
                 "Các run chất lượng dùng năm client mô phỏng Flower/Ray trên một GPU; phép đo mạng dùng hai client thật trên hai máy. "
                 "Không đánh giá PlantWild cho run mới và không mở độ chính xác tập niêm phong.\n",
@@ -140,6 +146,12 @@ def main() -> int:
                 "max_abs ≤ 1e-10 và L2 tương đối ≤ 1e-9 cho float64.\n",
                 table(["Phép", "Cách chia", "Kiểu số", "Bước cục bộ", "L2", "Max abs", "Dự đoán trùng"],
                       [[c['check'], c['scheme'], c['dtype'], c['local_steps'], f"{c['l2']:.3e}", f"{c['max_abs']:.3e}", f"{100*c['prediction_agreement']:.2f}%"] for c in equivalence['checks']]),
+                "\nĐọc bảng trên: phép A float64 đạt ngưỡng, nên công thức gộp không tạo sai lệch. Phép A float32 lệch lớn hơn nhiều, nhưng không thể quy cho học phân tán: "
+                "đối chứng D chạy tập trung hai lần trên cùng ảnh, chỉ đổi thứ tự ảnh trong batch, về toán học phải trùng, mà ở float32 vẫn lệch cùng cỡ. "
+                "Float64 cũng khuếch đại khi đủ nhiều bước (bảng dưới, 20 bước) nhưng từ mức nền nhỏ hơn rất nhiều, nên vẫn đạt ngưỡng. Cơ chế cụ thể của sự khuếch đại chưa được chứng minh, nên báo cáo chỉ khẳng định phần đã đo được. "
+                "Phép kiểm dùng ít ảnh và GD toàn batch nên tỉ lệ dự đoán trùng ở đây không đại diện cho độ chính xác của mô hình đã train.\n",
+                table(["Kiểu số", "Số bước", "Đối chứng đổi thứ tự: L2", "FedSGD: L2", "Dự đoán trùng đối chứng", "Dự đoán trùng FedSGD"],
+                      [[r['dtype'], r['steps'], f"{r['control_l2']:.3e}", f"{r['fedsgd_l2']:.3e}", f"{100*r['control_agreement']:.1f}%", f"{100*r['fedsgd_agreement']:.1f}%"] for r in amplification]),
                 "\nKhoảng cách giữa checkpoint đã train được tách tham số học được và thống kê BatchNorm. "
                 "Hash W0 của run mới phải khớp W0 dựng lại theo seed. V4b không ghi hash lúc train: dựng lại công thức "
                 "không chứng minh được trạng thái khởi tạo thực tế của lần chạy cũ.\n",
@@ -167,10 +179,7 @@ def main() -> int:
                 "Val tham gia chọn checkpoint; số chất lượng chính bên dưới lấy trên tập thử.\n",
                 "## 6. Mô hình gộp khác mô hình client thế nào\n",
                 f"Sai lệch phép gộp lớn nhất qua {sum(a['rounds'] for a in audits)} vòng là "
-                f"{max(a['aggregation_max_abs_diff'] for a in audits):.3e}. Sáu run A/B dùng cổng tuyệt đối 1e-6. "
-                f"Các run khối C bổ sung đơn vị làm tròn theo tensor; giá trị lớn nhất {number(maximum_scaled_units,6)}, giới hạn 8. "
-                "Một đơn vị bằng epsilon của dtype nhân max(1, trị tuyệt đối lớn nhất của tensor tham chiếu và tensor đã gộp). "
-                "Đây là chuẩn theo thang tensor, không phải số ULP từng phần tử. "
+                f"{max(a['aggregation_max_abs_diff'] for a in audits):.3e}. Mọi run đều chạy mã ed88947eb nên dùng cổng tuyệt đối 1e-6; đơn vị làm tròn theo thang tensor mới có trong mã sau đó, nhật ký các run này không có trường đó. "
                 "Đây là chênh lệch giữa hai cách tính số học của phép gộp, không phải phép so bit. "
                 "Cổng ban đầu 1e-7 đã được sửa thành 1e-6 trong quá trình chạy sau khi gặp đúng epsilon float32 tại thang 1. "
                 "Phép tính lại trên năm checkpoint Local-only thật cho thấy thứ tự nhân/chia có thể làm hai kết quả float32 "
@@ -296,7 +305,7 @@ def main() -> int:
         ['N5.4', 'Có script, cấu hình, mã băm, bảng/biểu đồ và hướng dẫn tái lập bên dưới.'],
         ['N5.5', 'Có báo cáo kiểm chứng Markdown; chưa tạo quyển tốt nghiệp Word hoặc bản thảo bài báo.']]),
         "\n## Tái lập\n",
-        "Mã train gốc được ghim ở ed88947eb; khối C có thêm trường log làm tròn theo thang tensor, không đổi phép gộp hay optimizer. "
+        "Toàn bộ 18 run dùng cùng mã train ed88947eb (code_fingerprint giống nhau). "
         "Commit và code_fingerprint của từng run nằm trong batch_audit.json; script kiểm chứng và kết quả nằm trên nhánh codex/continue-flower-verification. "
         "Gói đầu vào có manifest SHA riêng, không dùng bundle.json cũ. Trên máy thuê, chạy preflight trong tmux, "
         "sau khi kiểm dữ liệu; chỉ chạy train khi cả preflight_passed.json và network_speedtest_passed.json đạt.\n",
@@ -308,7 +317,12 @@ def main() -> int:
         "--out artifacts/distributed_verification/weight_comparison.json\n"
         f"python scripts/report_distributed_verification.py --network-summary {args.network_summary.relative_to(ROOT).as_posix()}\n```\n"]
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text("\n".join(sections), encoding="utf-8")
+    body = "\n".join(sections)
+    if args.partial:
+        body = body.replace("Đã bổ sung 6 run Flower và 12 run quét α; dùng lại 21 run v4b.", f"Đến lúc sinh bản này đã xong {len(expected)}/18 run mới (kế hoạch: 6 run Flower và 12 run quét α); dùng lại 21 run v4b.")
+        body = body.replace("Đường theo α có năm mức FedAvg và mốc Centralized;", "Đường theo α dự kiến có năm mức FedAvg và mốc Centralized, hiện mới có các mức đã xong;")
+        body = body.replace("FedAvg đủ năm α và ba seed; Local-only còn thiếu ở các α khác.", "FedAvg năm α đang chạy, chưa đủ; Local-only còn thiếu ở các α khác.")
+    args.out.write_text(body, encoding="utf-8")
     print(args.out)
     return 0
 
