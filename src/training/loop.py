@@ -35,9 +35,14 @@ def _seed_worker(worker_id: int) -> None:
     random.seed(seed)
 
 
-def make_optimizer(model: Any, lr: float, momentum: float, weight_decay: float) -> Any:
+def make_optimizer(model: Any, lr: float, momentum: float, weight_decay: float, kind: str = "sgd") -> Any:
+    """SGD động lượng là công thức chung của ba mốc. AdamW chỉ là bản đối chứng cho Centralized (N1.1 của yêu cầu đề tài)."""
     import torch
 
+    if kind == "adamw":
+        return torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+    if kind != "sgd":
+        raise ValueError(f"bộ tối ưu không có: {kind}")
     return torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
 
 

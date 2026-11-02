@@ -181,6 +181,30 @@ class FedAlgorithm:
     def load_state_dict(self, state: dict[str, Any]) -> None:
         return None
 
+    # --- khi client và máy chủ là hai tiến trình (src/federated/flower_app.py): mỗi bên giữ một đối tượng thuật toán -----------------------
+    def download(self) -> dict[str, torch.Tensor]:
+        """Máy chủ: tensor gửi thêm xuống client đầu mỗi vòng, ngoài trọng số mô hình."""
+        return {}
+
+    def load_download(self, payload: dict[str, torch.Tensor]) -> None:
+        """Client: nhận phần `download` của máy chủ."""
+        return None
+
+    def upload(self, client: int) -> dict[str, torch.Tensor]:
+        """Client: tensor gửi thêm lên máy chủ sau `after_local`, ngoài trọng số mô hình."""
+        return {}
+
+    def absorb_upload(self, client: int, payload: dict[str, torch.Tensor], weights: dict[str, torch.Tensor]) -> None:
+        """Máy chủ: nhận phần `upload` và trọng số của client, trước khi gọi `aggregate`."""
+        return None
+
+    def client_state(self, client: int) -> dict[str, Any]:
+        """Client: trạng thái riêng phải giữ qua các vòng; nằm ở phía client, không gửi đi. Rỗng = không có trạng thái."""
+        return {}
+
+    def load_client_state(self, client: int, state: dict[str, Any]) -> None:
+        return None
+
 
 class FedProx(FedAlgorithm):
     name = "fedprox"
@@ -223,6 +247,16 @@ class FedBN(FedAlgorithm):
 
     def load_state_dict(self, state):
         self.client_bn = {int(k): v for k, v in (state.get("client_bn") or {}).items()}
+
+    def absorb_upload(self, client, payload, weights):
+        # trọng số gửi lên đã gồm BN của client; máy chủ giữ lại để chấm mô hình cá nhân hóa ở bước tốt nhất, như đường một tiến trình
+        self.client_bn[client] = {key: weights[key].detach().cpu().clone() for key in self.personal_keys}
+
+    def client_state(self, client):
+        return {"client_bn": self.client_bn[client]} if client in self.client_bn else {}
+
+    def load_client_state(self, client, state):
+        self.client_bn[client] = state["client_bn"]
 
 
 class Scaffold(FedAlgorithm):
@@ -272,6 +306,28 @@ class Scaffold(FedAlgorithm):
     def load_state_dict(self, state):
         self.c = state["c"]
         self.ci = {int(k): v for k, v in state["ci"].items()}
+
+    def download(self):
+        return self.c
+
+    def load_download(self, payload):
+        self.c = {k: v.detach().cpu() for k, v in payload.items()}
+
+    def upload(self, client):
+        """Δc_i = c_i⁺ − c_i, đúng phần bản gốc gửi lên; client cập nhật c_i của mình ngay tại đây."""
+        updated = self._pending.pop(client)
+        delta = {name: updated[name] - self.ci[client][name] for name in updated}
+        self.ci[client] = updated
+        return delta
+
+    def absorb_upload(self, client, payload, weights):
+        self._pending[client] = {name: self.ci[client][name] + payload[name] for name in payload}
+
+    def client_state(self, client):
+        return {"ci": self.ci[client]}
+
+    def load_client_state(self, client, state):
+        self.ci[client] = state["ci"]
 
 
 class FedAvgM(FedAlgorithm):
@@ -328,6 +384,12 @@ class Moon(FedAlgorithm):
 
     def load_state_dict(self, state):
         self.previous = {int(k): v for k, v in (state.get("previous") or {}).items()}
+
+    def client_state(self, client):
+        return {"previous": self.previous[client]} if client in self.previous else {}
+
+    def load_client_state(self, client, state):
+        self.previous[client] = state["previous"]
 
 
 def make_algorithm(name: str, model: torch.nn.Module, num_clients: int, *, mu: float = 0.01, moon_mu: float = 1.0, moon_tau: float = 0.5,

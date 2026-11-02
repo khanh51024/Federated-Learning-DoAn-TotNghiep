@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import random
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -23,6 +24,14 @@ def sha256_file(path: Path) -> str:
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
     with path.open(encoding="utf-8") as stream:
         return [json.loads(line) for line in stream if line.strip()]
+
+
+def subset(rows: list[dict[str, Any]], limit: int, seed: int) -> list[dict[str, Any]]:
+    """Lấy `limit` dòng theo hạt giống cho run thử (`--limit`); 0 = giữ hết."""
+    if not limit or len(rows) <= limit:
+        return rows
+    rng = random.Random(seed)
+    return sorted(rng.sample(rows, limit), key=lambda r: r["sample_id"])
 
 
 def load_release(release_dir: Path, expected_sha: str | None) -> dict[str, Any]:

@@ -20,6 +20,11 @@ python3 -m venv venv
 python -m pip install --upgrade pip
 python -m pip install torch torchvision --index-url "https://download.pytorch.org/whl/${CUDA_TAG}"
 python -m pip install -r code/requirements-train.txt
+# FLOWER=1: thêm Flower và Ray cho `train_v4.py --runtime flower`. flwr 1.36 cần Python >= 3.11; ảnh máy thuê từng gặp là 3.10, khi đó tạo venv bằng python3.11 trước khi chạy script này.
+if [ "${FLOWER:-0}" = "1" ]; then
+  python -c 'import sys; sys.exit(0 if sys.version_info >= (3, 11) else "Flower 1.36 cần Python >= 3.11, venv đang là " + sys.version.split()[0])'
+  python -m pip install -r code/requirements-flower.txt
+fi
 python - <<'PY'
 import torch, torchvision
 print("torch", torch.__version__, "torchvision", torchvision.__version__, "cuda", torch.cuda.is_available(),

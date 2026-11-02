@@ -1,0 +1,2 @@
+# Thêm vào requirements-train.txt khi chạy scripts/train_v4.py --runtime flower (FLOWER=1 trong scripts/remote/setup_env.sh). Cần Python >= 3.11.
+flwr[simulation]==1.36.0
