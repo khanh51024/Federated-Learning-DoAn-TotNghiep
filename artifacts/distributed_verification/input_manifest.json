@@ -1,0 +1,20 @@
+{
+  "verified_at_utc": "2026-11-02T14:20:43.130197+00:00",
+  "training_code_commit": "ed88947ebe533f753d11e6b1aac0f6276b30f848",
+  "release_manifest_sha256": "68e574519a1a9a53f4e71060d6d6ef70122ff946d16e41981b5930d3da92d51b",
+  "plantwild_included": false,
+  "transfer_method": "single-stream scp to a new partial file",
+  "files": {
+    "train_data_v4.tar": {
+      "source": "D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\tmp\\train_bundle\\train_data_v4.tar",
+      "bytes": 2921891840,
+      "sha256": "ce35bed14cfbee8e055e33388a5588cb27d17659778f55aa7cddadc7639e44ff"
+    },
+    "train_code.tar": {
+      "source": "D:\\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old\\tmp\\train_bundle\\train_code.tar",
+      "bytes": 1792000,
+      "sha256": "7e5cf9ac7a7fd5951a31e5b3d2a1e7a2a170f1727590bdbbd16781ef2edb1fb3"
+    }
+  },
+  "data_archive_files": 79381
+}

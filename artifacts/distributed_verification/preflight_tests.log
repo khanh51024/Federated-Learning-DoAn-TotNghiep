@@ -1,0 +1,10 @@
+....................................s................................... [ 88%]
+.........                                                                [100%]
+=============================== warnings summary ===============================
+tests/test_fed_algorithms.py::test_fedprox_penalty_matches_formula_and_vanishes_at_anchor
+  /root/cropfed/code/tests/test_fed_algorithms.py:72: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+  Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+    assert float(hooks.extra_loss(model, None, None)) == 0.0
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+80 passed, 1 skipped, 1 warning in 13.21s
