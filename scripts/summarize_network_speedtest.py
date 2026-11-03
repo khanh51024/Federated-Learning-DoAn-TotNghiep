@@ -143,6 +143,8 @@ def main() -> int:
         summary["history_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
         summary["server_address"] = raw.get("server_address")
         report["runs"][name] = summary
+        if any(client.get("response_ms") is not None for audit in raw["audit_rounds"] for client in audit["clients"]):
+            report["measured_by"] = "server"
     (out_dir / "summary.json").write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     print(f"[speedtest] đã ghi {out_dir.relative_to(ROOT).as_posix()}/summary.json")
     for name, run in report["runs"].items():

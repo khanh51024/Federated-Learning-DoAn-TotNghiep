@@ -28,7 +28,7 @@ function bannerHtml(data) {
   const states = {
     waiting: { tone: "is-unknown", title: `Đang chờ client: ${data.connected_clients ?? 0}/${data.num_clients}`, meta: `Máy chủ chỉ bắt đầu khi đủ ${data.min_clients} client, nên không client nào vào trễ.` },
     running: { tone: "is-correct", title: `Đang học vòng ${data.round_in_progress}/${total}`, meta: `${replies}/${data.round_participants ?? data.num_clients} client đã gửi trọng số về ở vòng này.` },
-    finished: { tone: "is-correct", title: `Đã xong ${done}/${total} vòng`, meta: `Kết thúc lúc ${when(data.finished_at_utc)}.` },
+    finished: { tone: "is-correct", title: `Đã xong ${done}/${total} vòng`, meta: `${data.num_clients} client từ ${data.checks.machines} máy${data.checks.host_check_available && data.checks.clients_on_server_host === 0 ? ", máy chủ tách riêng, không client nào chung máy" : ""}. Kết thúc lúc ${when(data.finished_at_utc)}.` },
     failed: { tone: "is-wrong", title: `Lần đo dừng vì lỗi${data.failed_round ? ` ở vòng ${data.failed_round}` : ""}`, meta: data.error || "Xem nhật ký máy chủ." },
     stale: { tone: "is-wrong", title: "Mất liên lạc với máy chủ đo", meta: `${data.seconds_since_update ?? "?"} giây chưa có cập nhật. Máy chủ có thể đã dừng; số dưới đây là tới lần cập nhật cuối.` },
   };
@@ -231,6 +231,7 @@ function layoutHtml() {
       </div>
       <div id="live-stage" class="mt-3"></div>
     </section>
+    <div id="live-caveats" class="mt-4"></div>
     <div id="live-proofs" class="mt-4"></div>
     <div class="live-charts mt-4">
       <section class="panel"><h3 class="panel-title panel-title-sm">Máy chủ kiểm mô hình chung sau mỗi vòng</h3>
@@ -267,10 +268,11 @@ function render(data) {
   byId("live-proofs").innerHTML = proofsHtml(data);
   byId("live-machines").innerHTML = machineTableHtml();
   byId("live-round-table").innerHTML = roundTableHtml();
-  byId("live-note").textContent = [
-    data.caveat,
-    "Terminal in đúng các số này bằng lệnh: python scripts/demo_show.py flower",
-  ].filter(Boolean).join(" ");
+  const caveats = [data.shared_machine_note, data.note, data.caveat].filter(Boolean);
+  byId("live-caveats").innerHTML = caveats.length
+    ? `<div class="callout callout-warn" role="note"><b>Cần đọc kèm các giới hạn:</b><ul>${caveats.map(text => `<li>${esc(text)}</li>`).join("")}</ul></div>`
+    : "";
+  byId("live-note").textContent = "Terminal in đúng các số này bằng lệnh: python scripts/demo_show.py flower";
   const fill = byId("live-progress-fill");
   setBar(fill, fill?.dataset.percent);
   refreshChart("live-chart-accuracy", accuracyConfig);

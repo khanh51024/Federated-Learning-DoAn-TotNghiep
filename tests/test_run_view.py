@@ -178,3 +178,20 @@ def test_speed_view_flags_client_on_server_host():
     assert by_label["wan_vm_oracle"]["via_ssh_tunnel"] is True and by_label["wan_vm_oracle"]["client_on_server_host"] is True
     vm = next(machine for machine in by_label["wan_vm_oracle"]["machines"] if machine["name"] == "VM Oracle")
     assert vm["on_server_host"] is True
+
+
+def test_clients_on_one_machine_get_a_plain_warning_and_notes_are_shown_everywhere(tmp_path):
+    progress = _progress()
+    for client in progress["rounds"][0]["clients"]:
+        client["machine_id"] = "cung-may"
+    (tmp_path / rv.PROGRESS_FILE).write_text(json.dumps(progress), encoding="utf-8")
+    assert rv.run_view(rv.load_run(tmp_path), now=NOW)["note"] is None
+    (tmp_path / rv.NOTE_FILE).write_text("  Laptop đang mở game lúc đo.\n", encoding="utf-8")
+    view = rv.run_view(rv.load_run(tmp_path), now=NOW)
+    assert view["shared_machine_note"] == rv.SHARED_MACHINE_NOTE and view["note"] == "Laptop đang mở game lúc đo."
+    text = "\n".join(ds.view_lines(view))
+    assert rv.SHARED_MACHINE_NOTE in text and "Laptop đang mở game lúc đo." in text
+
+
+def test_two_machines_do_not_get_the_shared_machine_warning():
+    assert rv.run_view({"progress": _progress(), "history": None}, now=NOW)["shared_machine_note"] is None

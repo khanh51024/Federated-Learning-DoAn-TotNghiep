@@ -13,11 +13,14 @@ from typing import Any, Optional
 
 PROGRESS_FILE = "progress.json"
 HISTORY_FILE = "history.json"
+NOTE_FILE = "note.txt"      # ghi chú của người đo về điều kiện lúc đo (không bắt buộc), hiện nguyên văn trên web và terminal
 # Server ghi nhịp mỗi HEARTBEAT_S giây kể cả khi đang chờ; quá STALE_AFTER_S không có gì mới nghĩa là server đã chết hoặc mất kết nối.
 HEARTBEAT_S = 20
 STALE_AFTER_S = 90
 CAVEAT_PRETRAINED = ("Phép đo này dùng tập ảnh nhỏ và mô hình khởi tạo từ ImageNet để chứng minh hệ thống chạy đúng qua mạng thật. "
                      "Đây không phải độ chính xác của đề tài; kết quả chính xem ở bảng so sánh phân tán và tập trung.")
+SHARED_MACHINE_NOTE = ("Các client này chạy trên cùng một máy nên dùng chung CPU và đường truyền: tốc độ mỗi client chỉ là phần chia của đường truyền đó, không cộng lại thành nhiều đường riêng, "
+                       "và thời gian học có cả phần tranh CPU. Số này cho thấy hệ thống chạy đúng và độ trễ mạng thật, chưa phải hiệu năng của nhiều máy riêng.")
 
 
 def _read_json(path: Path) -> Optional[dict[str, Any]]:
@@ -28,9 +31,16 @@ def _read_json(path: Path) -> Optional[dict[str, Any]]:
     return data if isinstance(data, dict) else None
 
 
+def _read_note(path: Path) -> Optional[str]:
+    try:
+        return path.read_text(encoding="utf-8").strip()[:600] or None
+    except FileNotFoundError:
+        return None
+
+
 def load_run(run_dir: Path) -> dict[str, Any]:
     run_dir = Path(run_dir)
-    return {"run_id": run_dir.name, "progress": _read_json(run_dir / PROGRESS_FILE), "history": _read_json(run_dir / HISTORY_FILE)}
+    return {"run_id": run_dir.name, "progress": _read_json(run_dir / PROGRESS_FILE), "history": _read_json(run_dir / HISTORY_FILE), "note": _read_note(run_dir / NOTE_FILE)}
 
 
 def list_runs(root: Path) -> list[Path]:
@@ -216,6 +226,8 @@ def run_view(record: dict[str, Any], now: Optional[datetime] = None) -> dict[str
     pretrained = bool(meta.get("pretrained_init", (history or {}).get("pretrained_init", False)))
     final_hash = (history or {}).get("final_model_hash") or (progress or {}).get("final_model_hash")
     final_test = (history or {}).get("final_test_metrics") or (progress or {}).get("final_test_metrics") or None
+    checks = _checks(audits, rounds, num_clients, final_hash)
+    many_on_one = checks["machines"] == 1 and len({c["client_id"] for r in rounds for c in r["clients"]}) > 1
     return {
         "available": True,
         "run_id": record.get("run_id"),
@@ -239,7 +251,9 @@ def run_view(record: dict[str, Any], now: Optional[datetime] = None) -> dict[str
         "round_participants": (progress or {}).get("round_participants"),
         "rounds": rounds,
         "machines": _machines(rounds),
-        "checks": _checks(audits, rounds, num_clients, final_hash),
+        "checks": checks,
+        "note": record.get("note"),
+        "shared_machine_note": SHARED_MACHINE_NOTE if many_on_one else None,
         "final_test": {k: _num(final_test.get(k), 4) for k in ("accuracy", "loss", "macro_f1")} if isinstance(final_test, dict) else None,
         "final_model_hash": str(final_hash or "")[:16],
         "client_reported_losses": (history or {}).get("losses_distributed") or [],     # chỉ có ở nhật ký cũ: trước đây client tự đánh giá và gửi loss

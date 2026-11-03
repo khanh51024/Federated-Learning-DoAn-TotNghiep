@@ -42,6 +42,7 @@ SPEEDTEST_FACTS = {
     "wan_vm_oracle": {"title": "Laptop và VM Oracle, qua đường hầm SSH", "server_host_machines": ("vm_oracle",), "via_ssh_tunnel": True},
     "wan_may_thue": {"title": "Laptop và máy thuê GPU, qua đường hầm SSH", "server_host_machines": ("may_thue_rtx3090",), "via_ssh_tunnel": True},
     "lan_2_laptop": {"title": "2 laptop cùng mạng", "server_host_machines": ("laptop_1_may_chu",), "via_ssh_tunnel": False},
+    "wan_5_client_1_laptop": {"title": "5 client trên 1 laptop, máy chủ riêng trên VM, qua Internet thật", "server_host_machines": (), "via_ssh_tunnel": False},
 }
 MACHINE_NAMES = {
     "laptop": "Laptop", "vm_oracle": "VM Oracle", "laptop_i5_12500h_cpu": "Laptop i5-12500H", "may_thue_rtx3090": "Máy thuê RTX 3090",

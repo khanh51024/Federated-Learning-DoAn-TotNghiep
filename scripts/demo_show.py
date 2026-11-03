@@ -64,8 +64,9 @@ def view_lines(view: dict[str, Any], server_address: Any = None) -> list[str]:
         lines.append(f"Client đến từ {checks['machines']} máy; số client chung máy với máy chủ: {checks['clients_on_server_host']}.")
     if view["final_test"]:
         lines.append(f"Máy chủ kiểm lần cuối trên ảnh giữ riêng: độ chính xác {view['final_test']['accuracy'] * 100:.2f}%, macro-F1 {view['final_test']['macro_f1']:.4f}.")
-    if view["caveat"]:
-        lines.append(view["caveat"])
+    for text in (view["shared_machine_note"], view["note"], view["caveat"]):
+        if text:
+            lines.append(text)
     return lines
 
 

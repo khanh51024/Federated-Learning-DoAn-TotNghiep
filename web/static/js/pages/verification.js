@@ -43,12 +43,12 @@ function sweepHtml(sweep) {
 function speedHtml(speed) {
   if (!speed?.available) return missing(speed);
   const rows = speed.runs.flatMap(run => run.machines.map((machine, index) => `<tr${machine.on_server_host ? ' class="is-muted-row"' : ""}>
-      ${index === 0 ? `<td rowspan="${run.machines.length}">${esc(run.title)}<br><span class="field-hint">${esc(run.date.slice(6, 8))}/${esc(run.date.slice(4, 6))}, ${esc(run.clients)} client, ${esc(run.rounds)} vòng${run.via_ssh_tunnel ? ", qua đường hầm SSH" : ""}</span></td>` : ""}
+      ${index === 0 ? `<td rowspan="${run.machines.length}">${esc(run.title)}<br><span class="field-hint">${esc(run.date.slice(6, 8))}/${esc(run.date.slice(4, 6))}, ${esc(run.clients)} client, ${esc(run.rounds)} vòng${run.via_ssh_tunnel ? ", qua đường hầm SSH" : ""}, ${run.measured_by === "server" ? "máy chủ tự đo" : "client tự đo"}</span></td>` : ""}
       <td>${esc(machine.name)}${machine.on_server_host ? " (cùng máy với máy chủ)" : ""}</td>
       <td>${num(machine.rtt_ms, 1)}</td><td>${num(machine.up_mb_s)}</td><td>${num(machine.down_mb_s)}</td><td>${num(machine.train_s, 1)}</td>
     </tr>`)).join("");
   return `
-    <p class="panel-desc">Trung vị qua các vòng. Dòng mờ là client nằm cùng máy với máy chủ: số mạng ở đó rất lớn và không phải đường truyền thật. Các lần đo qua đường hầm SSH có độ trễ cao hơn mạng thường. Lần đo 10 client với máy chủ tách riêng xem ở <a href="#flower">trang Flower</a>.</p>
+    <p class="panel-desc">Trung vị qua các vòng. Dòng mờ là client nằm cùng máy với máy chủ: số mạng ở đó rất lớn và không phải đường truyền thật. Các lần đo qua đường hầm SSH có độ trễ cao hơn mạng thường. Lần đo có máy chủ tách riêng xem từng vòng ở <a href="#flower">trang Flower</a>.</p>
     <div class="table-responsive mt-3" tabindex="0" role="region" aria-label="Bảng các lần đo tốc độ"><table class="data-table wrap-head">
       <thead><tr><th>Lần đo</th><th>Máy</th><th>RTT (ms)</th><th>Lên (MiB/s)</th><th>Xuống (MiB/s)</th><th>Học 1 vòng (s)</th></tr></thead>
       <tbody>${rows}</tbody>
