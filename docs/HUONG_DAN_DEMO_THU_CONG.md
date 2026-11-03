@@ -162,7 +162,7 @@ Laptop chính là máy chủ và client 0, laptop 2 là client 1. Mất khoảng
 
 | Hiện tượng | Xử lý |
 |---|---|
-| Laptop 2 báo `KHONG NOI DUOC` | Kiểm tra IP. Đổi sang điểm phát điện thoại, rồi chạy lại vì IP sẽ đổi |
+| Laptop 2 báo `KHÔNG NỐI ĐƯỢC` | Kiểm tra IP. Đổi sang điểm phát điện thoại, rồi chạy lại vì IP sẽ đổi |
 | Laptop chính báo chưa mở được cổng | Chạy lại và chọn Yes |
 | Laptop chính báo cổng đang bận | Đóng các cửa sổ "Máy chủ Flower", "Client" cũ |
 | Laptop 2 báo thiếu DLL hoặc không chạy được Python | Chụp màn hình gửi lại. Khi đang demo thì dùng A → 8 |
@@ -236,7 +236,8 @@ Sẽ thấy:
 
 ```text
 Vòng 1: 2 client được nhận, 0 bị từ chối; cả vòng 18.59 giây; gộp 51.1 ms; truyền ước tính 0.21 giây
-  client 0: 380 ảnh, học 18.13 giây, RTT 0.1 ms, lên 1515.17 MiB/s, xuống 215.37 MiB/s, độ lệch cập nhật 0.7705; băm client gửi 82350c8c8a6a / máy chủ tính lại 82350c8c8a6a -> KHỚP
+  client 0: 380 ảnh, học 18.13 giây, RTT 0.1 ms, lên 1515.17 MiB/s, xuống 215.37 MiB/s, độ lệch cập nhật 0.7705
+            băm client gửi 82350c8c8a6a / máy chủ tính lại 82350c8c8a6a -> KHỚP
 ```
 
 **Nói khi demo:** đây là Flower thật qua gRPC, mỗi client là một tiến trình riêng, học trên ảnh của mình. Đây là 2 client trên một máy; mục 8 mới là hai máy thật.

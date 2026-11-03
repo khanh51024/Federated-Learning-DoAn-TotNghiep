@@ -1,31 +1,31 @@
 @echo off
-rem Demo Flower mot lan bam: 1 may chu va 2 client tren may nay, roi in bang ket qua. Huong dan: docs\HUONG_DAN_DEMO_THU_CONG.md
-cd /d "%~dp0"
 chcp 65001 >nul
+rem Demo Flower một lần bấm: 1 máy chủ và 2 client trên máy này, rồi in bảng kết quả. Hướng dẫn: docs\HUONG_DAN_DEMO_THU_CONG.md
+cd /d "%~dp0"
 set PYTHONUTF8=1
 set OMP_NUM_THREADS=2
 set PY=.\.venv\Scripts\python.exe
 set PORT=18089
 set ROUNDS=3
-rem Mo cua so giu lai de xem log; khi kiem thu tu dong dat DEMO_NOPAUSE=1 de cua so tu dong
+rem Mở cửa sổ giữ lại để xem log; khi kiểm thử tự động đặt DEMO_NOPAUSE=1 để cửa sổ tự đóng
 set KEEP=/k
 if defined DEMO_NOPAUSE set KEEP=/c
 
 if not exist "%PY%" (
-  echo [LOI] Khong thay %PY%. File nay phai nam o thu muc goc cua du an.
+  echo [LỖI] Không thấy %PY%. File này phải nằm ở thư mục gốc của dự án.
   goto :fail
 )
 netstat -ano | findstr ":%PORT% " | findstr LISTENING >nul
 if not errorlevel 1 (
-  echo [LOI] Cong %PORT% dang ban: con cua so may chu Flower cu dang chay.
-  echo Hay dong cac cua so "May chu" va "Client" cu roi chay lai.
+  echo [LỖI] Cổng %PORT% đang bận: còn cửa sổ máy chủ Flower cũ đang chạy.
+  echo Hãy đóng các cửa sổ "Máy chủ" và "Client" cũ rồi chạy lại.
   goto :fail
 )
 if not exist tmp\speedtest\partition (
-  echo Dang chuan bi anh demo, lan dau mat khoang 1 phut...
+  echo Đang chuẩn bị ảnh demo, lần đầu mất khoảng 1 phút...
   "%PY%" -m scripts.prepare_network_speedtest --out tmp/speedtest --per-class 10
   if errorlevel 1 (
-    echo [LOI] Khong chuan bi duoc anh demo.
+    echo [LỖI] Không chuẩn bị được ảnh demo.
     goto :fail
   )
 )
@@ -33,19 +33,19 @@ if not exist tmp\demo mkdir tmp\demo
 if exist tmp\demo\history.json del tmp\demo\history.json
 
 echo ============================================================
-echo  DEMO HOC LIEN KET TREN FLOWER: 1 may chu, 2 client, %ROUNDS% vong
-echo  Moi client chi hoc tren anh cua minh va chi gui trong so.
+echo  DEMO HỌC LIÊN KẾT TRÊN FLOWER: 1 máy chủ, 2 client, %ROUNDS% vòng
+echo  Mỗi client chỉ học trên ảnh của mình và chỉ gửi trọng số.
 echo ============================================================
 echo.
-echo [1/3] Mo may chu Flower...
-start "May chu Flower" cmd %KEEP% "%PY% -m src.federated.server_app --mode deployment --host 127.0.0.1 --port %PORT% --rounds %ROUNDS% --num-clients 2 --local-epochs 1 --seed 42 --pretrained-init --require-real-clients --reject-suspicious-updates --max-update-norm 500 --evaluation-partition-dir tmp/speedtest/partition --probe-payload-bytes 6275944 --metrics-file tmp/demo/history.json --checkpoint-file tmp/demo/global.pt"
+echo [1/3] Mở máy chủ Flower...
+start "Máy chủ Flower" cmd %KEEP% "%PY% -m src.federated.server_app --mode deployment --host 127.0.0.1 --port %PORT% --rounds %ROUNDS% --num-clients 2 --local-epochs 1 --seed 42 --pretrained-init --require-real-clients --reject-suspicious-updates --max-update-norm 500 --evaluation-partition-dir tmp/speedtest/partition --probe-payload-bytes 6275944 --metrics-file tmp/demo/history.json --checkpoint-file tmp/demo/global.pt"
 
 set /a WAITED=0
 :wait_server
 netstat -ano | findstr ":%PORT% " | findstr LISTENING >nul
 if not errorlevel 1 goto :server_ready
 if %WAITED% GEQ 120 (
-  echo [LOI] Sau 2 phut may chu chua san sang. Xem loi trong cua so "May chu Flower".
+  echo [LỖI] Sau 2 phút máy chủ chưa sẵn sàng. Xem lỗi trong cửa sổ "Máy chủ Flower".
   goto :fail
 )
 ping -n 3 127.0.0.1 >nul
@@ -53,16 +53,16 @@ set /a WAITED+=2
 goto :wait_server
 
 :server_ready
-echo [2/3] Mo 2 client...
+echo [2/3] Mở 2 client...
 start "Client 0" cmd %KEEP% "%PY% -m src.federated.client_app --client-id 0 --server 127.0.0.1:%PORT% --partition-dir tmp/speedtest/partition --dataset-root tmp/speedtest/images_client_00 --require-real-data --local-epochs 1 --seed 42"
 start "Client 1" cmd %KEEP% "%PY% -m src.federated.client_app --client-id 1 --server 127.0.0.1:%PORT% --partition-dir tmp/speedtest/partition --dataset-root tmp/speedtest/images_client_01 --require-real-data --local-epochs 1 --seed 42"
 
-echo [3/3] Dang hoc, thuong mat khoang 1,5 phut. Theo doi o 3 cua so vua mo...
+echo [3/3] Đang học, thường mất khoảng 1,5 phút. Theo dõi ở 3 cửa sổ vừa mở...
 set /a WAITED=0
 :wait_done
 if exist tmp\demo\history.json goto :done
 if %WAITED% GEQ 300 (
-  echo [LOI] Sau 5 phut chua xong. Xem loi trong cac cua so vua mo; thieu RAM thi dong bot Chrome, game roi chay lai.
+  echo [LỖI] Sau 5 phút chưa xong. Xem lỗi trong các cửa sổ vừa mở; thiếu RAM thì đóng bớt Chrome, game rồi chạy lại.
   goto :fail
 )
 ping -n 3 127.0.0.1 >nul
@@ -70,20 +70,20 @@ set /a WAITED+=2
 goto :wait_done
 
 :done
-rem May chu co the con dang ghi tep: cho them mot chut roi moi doc
+rem Máy chủ có thể còn đang ghi tệp: chờ thêm một chút rồi mới đọc
 ping -n 3 127.0.0.1 >nul
 echo.
-echo ================= KET QUA =================
+echo ================= KẾT QUẢ =================
 "%PY%" scripts/demo_show.py flower --history tmp/demo/history.json
 if errorlevel 1 (
-  echo [LOI] Khong doc duoc ket qua.
+  echo [LỖI] Không đọc được kết quả.
   goto :fail
 )
 echo.
-echo Xong. Dong "KHOP" nghia la trong so den may chu van nguyen ven, khong sai bit nao.
-if not defined DEMO_NOPAUSE pause
+echo Xong. Dòng "KHỚP" nghĩa là trọng số đến máy chủ vẫn nguyên vẹn, không sai bit nào.
+if not defined DEMO_NOPAUSE (echo Bấm phím bất kỳ để tiếp tục... & pause >nul)
 exit /b 0
 
 :fail
-if not defined DEMO_NOPAUSE pause
+if not defined DEMO_NOPAUSE (echo Bấm phím bất kỳ để tiếp tục... & pause >nul)
 exit /b 1

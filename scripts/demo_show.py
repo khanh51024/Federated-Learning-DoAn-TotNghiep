@@ -43,8 +43,8 @@ def flower_lines(history: dict[str, Any]) -> list[str]:
             rtt = client.get("probe_rtt_persistent_ms", client.get("probe_rtt_ms"))
             up, down = client.get("probe_up_mb_per_s"), client.get("probe_down_mb_per_s")
             speed = "" if up is None or down is None else f", lên {up:.2f} MiB/s, xuống {down:.2f} MiB/s"
-            lines.append(f"  client {client['client_id']}: {client['num_examples']} ảnh, học {client['local_train_time_s']:.2f} giây, RTT {'chưa đo' if rtt is None else f'{rtt:.1f} ms'}{speed}, "
-                         f"độ lệch cập nhật {client['received_learnable_update_norm']:.4f}; băm client gửi {client['client_reported_hash'][:12]} / máy chủ tính lại {client['server_recomputed_hash'][:12]} -> {'KHỚP' if same else 'SAI'}")
+            lines.append(f"  client {client['client_id']}: {client['num_examples']} ảnh, học {client['local_train_time_s']:.2f} giây, RTT {'chưa đo' if rtt is None else f'{rtt:.1f} ms'}{speed}, độ lệch cập nhật {client['received_learnable_update_norm']:.4f}")
+            lines.append(f"            băm client gửi {client['client_reported_hash'][:12]} / máy chủ tính lại {client['server_recomputed_hash'][:12]} -> {'KHỚP' if same else 'SAI'}")
     losses = history.get("losses_distributed") or []
     if losses:
         lines.append("\nMức sai (loss) qua các vòng: " + " -> ".join(f"{value:.2f}" for _, value in losses))
@@ -227,7 +227,7 @@ def speed_lines(history: dict[str, Any], names: dict[int, str]) -> list[str]:
         up = statistics.median(row["probe_up_mb_per_s"] for row in rows)
         down = statistics.median(row["probe_down_mb_per_s"] for row in rows)
         same = sum(bool(row["upload_hash_ok"] and row["client_reported_hash"] == row["server_recomputed_hash"]) for row in rows)
-        lines.append(f"  {names.get(client_id, f'client {client_id}'):<24} học {train_times[client_id]:6.2f} giây | độ trễ {rtt:8.1f} ms | gửi lên {up:8.2f} MiB/s | nhận về {down:8.2f} MiB/s | trọng số khớp {same}/{len(rows)}")
+        lines.append(f"  {names.get(client_id, f'client {client_id}'):<24} học {train_times[client_id]:6.2f} giây | độ trễ {rtt:7.1f} ms | lên {up:8.2f} MiB/s | về {down:8.2f} MiB/s | khớp {same}/{len(rows)}")
     lines += ["", f"Máy nhanh nhất học nhanh gấp {max(train_times.values()) / min(train_times.values()):.1f} lần máy chậm nhất."]
     return lines
 

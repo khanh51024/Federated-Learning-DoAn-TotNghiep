@@ -6,8 +6,8 @@ param(
     [int]$Minutes = 30
 )
 
-$ruleName = "FL demo 2 laptop"
-Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
+# Ten rieng cho moi lan chay, de lan cu het han khong dong cong cua lan moi
+$ruleName = "FL demo 2 laptop $PID"
 New-NetFirewallRule -DisplayName $ruleName -Direction Inbound -Protocol TCP -LocalPort $Ports -RemoteAddress LocalSubnet -Action Allow -Profile Any | Out-Null
 try {
     $deadline = (Get-Date).AddMinutes($Minutes)
