@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-11-03T01:51:48",
+      "generated_at": "2026-11-03T10:46:12",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,7 +145,7 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-11-03T01:51:53",
+      "generated_at": "2026-11-03T10:46:14",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
@@ -165,7 +165,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-11-03T01:52:01",
+      "generated_at": "2026-11-03T10:46:18",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
@@ -212,7 +212,7 @@
       "id": "no_hardcode",
       "title": "Không hardcode đường dẫn artifact",
       "status": "CHƯA",
-      "detail": "5 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/eval_dp_noise_sensitivity.py:81', 'scripts/package_quantized_model.py:29', 'scripts/package_quantized_model.py:179', 'scripts/recompute_metrics.py:287', 'scripts/verify_fedsgd_equivalence.py:155']",
+      "detail": "6 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/demo_show.py:164', 'scripts/eval_dp_noise_sensitivity.py:81', 'scripts/package_quantized_model.py:29', 'scripts/package_quantized_model.py:179', 'scripts/recompute_metrics.py:287']",
       "unlock": []
     },
     {

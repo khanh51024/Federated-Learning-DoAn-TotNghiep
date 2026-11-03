@@ -25,6 +25,25 @@ def test_flower_table_reports_matching_and_mismatching_hashes():
     assert "SAI" in flagged
 
 
+def test_flower_table_uses_same_rtt_field_as_report_and_shows_speed():
+    history = _history()
+    client = history["audit_rounds"][0]["clients"][0]
+    client.update(probe_rtt_persistent_ms=1425.4, probe_up_mb_per_s=2.51, probe_down_mb_per_s=0.45)
+    history["losses_distributed"] = [[1, 3.271], [2, 2.304]]
+    text = "\n".join(ds.flower_lines(history))
+    assert "3.27 -> 2.30" in text
+    assert "RTT 1425.4 ms" in text and "lên 2.51 MiB/s, xuống 0.45 MiB/s" in text and "RTT 3.0 ms" not in text
+
+
+def test_sweep_reads_only_all_test_rows_and_computes_gap(tmp_path):
+    table = tmp_path / "table.csv"
+    names = [("centralized", ""), ("fedavg+flower", "iid"), ("fedavg", "label_alpha_100_0"), ("fedavg", "label_alpha_10_0"), ("fedavg", "label_alpha_1_0"), ("fedavg", "label_alpha_0_5"), ("fedavg", "label_alpha_0_1"), ("local", "label_alpha_0_1")]
+    rows = ["scheme,variant,seeds,part,n,top1_mean_%,gap_top1_points"] + [f"{scheme},{variant},3,all_test,100,{90 - i}.0,{i}.01" for i, (variant, scheme) in enumerate(names)] + [",centralized,3,plantvillage_test,50,11.0,"]
+    table.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    text = "\n".join(ds.sweep_lines(table))
+    assert " 90.00%" in text and "11.00" not in text and "thấp hơn tập trung  7.01 điểm" in text
+
+
 def test_compare_separates_learnable_from_other_and_counts_identical():
     a = {"w": torch.zeros(4), "bn": torch.zeros(2), "same": torch.ones(1), "n": torch.tensor(1)}
     b = {"w": torch.tensor([3.0, 4.0, 0.0, 0.0]), "bn": torch.ones(2), "same": torch.ones(1), "n": torch.tensor(9)}

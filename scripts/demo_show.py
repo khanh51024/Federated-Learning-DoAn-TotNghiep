@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import sys
 from pathlib import Path
@@ -35,9 +36,15 @@ def flower_lines(history: dict[str, Any]) -> list[str]:
             checks += 1
             same = bool(client["upload_hash_ok"] and client["client_reported_hash"] == client["server_recomputed_hash"])
             passed += same
-            rtt = client.get("probe_rtt_ms")
-            lines.append(f"  client {client['client_id']}: {client['num_examples']} ảnh, học {client['local_train_time_s']:.2f} giây, RTT {'chưa đo' if rtt is None else f'{rtt:.1f} ms'}, "
+            # Cùng trường với báo cáo (summarize_network_speedtest): RTT trên kết nối giữ sẵn; nhật ký cũ chỉ có RTT một lần.
+            rtt = client.get("probe_rtt_persistent_ms", client.get("probe_rtt_ms"))
+            up, down = client.get("probe_up_mb_per_s"), client.get("probe_down_mb_per_s")
+            speed = "" if up is None or down is None else f", lên {up:.2f} MiB/s, xuống {down:.2f} MiB/s"
+            lines.append(f"  client {client['client_id']}: {client['num_examples']} ảnh, học {client['local_train_time_s']:.2f} giây, RTT {'chưa đo' if rtt is None else f'{rtt:.1f} ms'}{speed}, "
                          f"độ lệch cập nhật {client['received_learnable_update_norm']:.4f}; băm client gửi {client['client_reported_hash'][:12]} / máy chủ tính lại {client['server_recomputed_hash'][:12]} -> {'KHỚP' if same else 'SAI'}")
+    losses = history.get("losses_distributed") or []
+    if losses:
+        lines.append("\nMức sai (loss) qua các vòng: " + " -> ".join(f"{value:.2f}" for _, value in losses))
     lines.append(f"\nTổng cộng {passed}/{checks} lượt băm khớp. Mã băm mô hình cuối: {history['final_model_hash'][:16]}")
     return lines
 
@@ -123,6 +130,22 @@ def w0_lines(seed: int, run: Path | None) -> list[str]:
     return lines
 
 
+SWEEP_ROWS = [("centralized", "", "Gom hết ảnh về một máy (tập trung)"), ("fedavg+flower", "iid", "Phân tán, chia đều tuyệt đối"), ("fedavg", "label_alpha_100_0", "Phân tán, gần như đều (α=100)"),
+              ("fedavg", "label_alpha_10_0", "Phân tán, lệch ít (α=10)"), ("fedavg", "label_alpha_1_0", "Phân tán, lệch vừa (α=1)"), ("fedavg", "label_alpha_0_5", "Phân tán, lệch nhiều (α=0,5)"),
+              ("fedavg", "label_alpha_0_1", "Phân tán, rất lệch (α=0,1)"), ("local", "label_alpha_0_1", "Mỗi máy tự học một mình, rất lệch")]
+
+
+def sweep_lines(table: Path) -> list[str]:
+    """Bảng độ chính xác trên toàn tập thử, đọc thẳng từ artifacts/sweep_v4/table_main.csv để số trên màn hình luôn khớp báo cáo."""
+    with table.open(encoding="utf-8", newline="") as handle:
+        rows = {(row["variant"], row["scheme"]): row for row in csv.DictReader(handle) if row["part"] == "all_test"}
+    lines = [f"Độ chính xác trên {rows[('centralized', '')]['n']} ảnh thử, trung bình {rows[('centralized', '')]['seeds']} lần chạy:", ""]
+    for variant, scheme, label in SWEEP_ROWS:
+        row = rows[(variant, scheme)]
+        lines.append(f"  {label:<38} {float(row['top1_mean_%']):6.2f}%" + ("" if variant == "centralized" else f"   thấp hơn tập trung {float(row['gap_top1_points']):5.2f} điểm"))
+    return lines
+
+
 def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -138,6 +161,7 @@ def main() -> int:
     w0_parser = commands.add_parser("w0")
     w0_parser.add_argument("--seed", type=int, required=True)
     w0_parser.add_argument("--run", type=Path, default=None)
+    commands.add_parser("sweep").add_argument("--table", type=Path, default=ROOT / "artifacts" / "sweep_v4" / "table_main.csv")
     args = parser.parse_args()
     if args.command == "flower":
         lines = flower_lines(read_json(args.history))
@@ -145,6 +169,8 @@ def main() -> int:
         lines = run_lines(args.run, args.every)
     elif args.command == "compare":
         lines = compare_lines(args.a, args.b)
+    elif args.command == "sweep":
+        lines = sweep_lines(args.table)
     else:
         lines = w0_lines(args.seed, args.run)
     print("\n".join(lines))

@@ -1,6 +1,31 @@
 # Hướng dẫn demo thủ công 9 mục
 
-**Cách nhanh nhất:** nhấp đúp `DEMO_FLOWER.bat` ở thư mục gốc dự án. File tự mở máy chủ và 2 client, chờ học xong (khoảng 1,5 phút) rồi in bảng kết quả. Chạy lại lần nữa thì đóng các cửa sổ cũ trước. Phần dưới là cách gõ từng lệnh và các mục còn lại.
+## Bản dễ hiểu: bấm số nào, thấy gì, nói gì
+
+Nhấp đúp `DEMO_TUNG_MUC.bat` ở thư mục gốc dự án, bấm số rồi Enter. Đóng bớt Chrome và game trước khi chạy.
+
+Từ cần biết:
+- **Client:** một máy tham gia học, giữ ảnh của riêng mình.
+- **Trọng số:** phần "kiến thức" của mô hình, thứ duy nhất được gửi qua mạng.
+- **Vòng:** máy chủ gửi mô hình xuống, các client học, gửi lại, máy chủ gộp thành mô hình chung.
+- **Dấu vân tay (SHA-256, "băm"):** chuỗi ký tự tính từ trọng số. Chỉ khác một chút là chuỗi khác hẳn.
+- **RTT:** thời gian gửi tín hiệu đi và nhận lại, tức độ trễ.
+- **Loss:** mức sai của mô hình, càng thấp càng tốt.
+
+| Số | Câu của thầy | Trên màn hình | Cách làm, nói bằng lời |
+|---|---|---|---|
+| 1 | Gửi trọng số có sai không | 6 dòng `400/400 lượt khớp` | Client tính dấu vân tay trước khi gửi, máy chủ tính lại sau khi nhận rồi so. Làm ở mỗi client, mỗi vòng, cả chiều gửi xuống lẫn gửi lên. Tổng 2.400 lần, khớp cả. |
+| 2 | So với tập trung có lệch không | `KHỚP`, rồi dòng A rất nhỏ, dòng B lớn hơn nhiều, rồi `94.72%` | Cùng mô hình xuất phát. Cho mỗi client học đúng 1 bước thì kết quả gần như trùng tập trung (dòng A). Cho học nhiều bước thì lệch (dòng B). Vậy lệch do cách học, không do gửi. Mô hình đã học xong của hai cách cho cùng đáp án ở 94,72% ảnh. |
+| 3 | Phương pháp kiểm tra | `PASSED` | Ngoài so dấu vân tay, em còn tính lại phép gộp bằng công cụ khác. Em cũng cố tình đổi trọng số từ 2.0 thành 2.0000002: hệ thống bắt được và dừng. |
+| 4 | Chạy nhiều client | client 0 đến 4 | Thí nghiệm chính có 5 client, mô phỏng trên một máy GPU. Bài đo tốc độ có 2 client trên 2 máy thật. |
+| 5 | Thông số Flower | 3 cửa sổ mở ra, khoảng 1,5 phút sau có bảng kết quả | Flower là phần mềm điều phối học phân tán. Đây là 1 máy chủ và 2 client chạy thật trên laptop. Mức sai giảm qua 3 vòng, dấu vân tay đều khớp. RTT rất nhỏ vì cùng một máy. |
+| 6 | Mô hình tổng so với client | `sai số gộp` rất nhỏ, `cách mô hình chung` | Sai số phép gộp chỉ ở mức làm tròn số. Client vẫn khác mô hình chung vì mỗi máy học ảnh khác nhau. Về cuối khoảng cách này nhỏ dần. |
+| 7 | Show code | VS Code mở 4 chỗ | Tập trung lấy toàn bộ ảnh. Phân tán gửi trọng số, nhận về, kiểm tra, rồi gộp theo số ảnh. Cả hai dùng chung một hàm học. |
+| T | Chạy thử hai cách học | Khoảng 2 phút, có thể hiện dòng đỏ của Ray lúc tắt | Chỉ dùng khi thầy muốn xem chạy thật. 200 ảnh, 2 vòng nên độ chính xác rất thấp, đừng dùng số này. |
+| 8 | Tốc độ 2 máy | Bảng 3 vòng | Mỗi vòng máy chủ gửi một gói bằng đúng cỡ mô hình (khoảng 6 MB) rồi bấm giờ, ra độ trễ và tốc độ. Thời gian học do mỗi máy tự đo. Client 0 là laptop, client 1 là máy GPU. Số đo ngày 02/11 qua đường hầm SSH; máy thuê không còn kết nối nên không đo lại trực tiếp được. |
+| 9 | Khác biệt | Bảng độ chính xác, biểu đồ | Tập trung gom ảnh về một chỗ. Phân tán giữ ảnh ở từng máy, chỉ gửi trọng số, thấp hơn 0,73 đến 3,77 điểm tùy dữ liệu lệch nhiều hay ít, và tốn mạng hơn. |
+
+Phần dưới là lệnh đầy đủ nếu muốn tự gõ. `DEMO_FLOWER.bat` là riêng mục 5, chạy lại thì đóng các cửa sổ cũ trước.
 
 Mở PowerShell tại `D:\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old`. Mọi lệnh dưới đây đã chạy thử trên laptop này, trừ Cách A của mục 8 (lệnh đó cần máy thuê còn bật, xem chú thích ở mục 8). Số trong "Sẽ thấy" là số của lần chạy thử; số của bạn có thể khác chút ở thời gian, các kết quả KHỚP thì phải giống. Mỗi cửa sổ PowerShell mới phải vào đúng thư mục và chạy dòng này một lần (mỗi cửa sổ giữ riêng, cửa sổ mới phải chạy lại):
 
@@ -34,7 +59,7 @@ Cần 3 cửa sổ PowerShell, chạy theo đúng thứ tự, mỗi vòng khoả
 .\.venv\Scripts\python.exe -m src.federated.client_app --client-id 1 --server 127.0.0.1:18089 --partition-dir tmp/speedtest/partition --dataset-root tmp/speedtest/images_client_01 --require-real-data --local-epochs 1 --seed 42
 ```
 
-`--pretrained-init` cho mô hình bắt đầu từ trọng số ImageNet để loss giảm thấy rõ sau vài vòng (đã thử: 3,27, 2,82, 2,33); chỉ dùng cho trình diễn, được ghi vào nhật ký. Thông số Flower hiện ngay ở cửa sổ 1 khi kết thúc: loss từng vòng, `round_fit_elapsed_ms`, `mean_probe_rtt_ms`, `rejected_clients`... Xem cho dễ đọc:
+`--pretrained-init` cho mô hình bắt đầu từ trọng số ImageNet để loss giảm thấy rõ sau vài vòng (đã thử: 3,27, 2,82, 2,30; vòng cuối dao động nhẹ giữa các lần chạy); chỉ dùng cho trình diễn, được ghi vào nhật ký. Thông số Flower hiện ngay ở cửa sổ 1 khi kết thúc: loss từng vòng, `round_fit_elapsed_ms`, `mean_probe_rtt_ms`, `rejected_clients`... Xem cho dễ đọc:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts/demo_show.py flower --history tmp/demo/history.json
@@ -43,8 +68,8 @@ Cần 3 cửa sổ PowerShell, chạy theo đúng thứ tự, mỗi vòng khoả
 Sẽ thấy:
 
 ```text
-Vòng 1: 2 client được nhận, 0 bị từ chối; cả vòng 18.85 giây; gộp 52.2 ms; truyền ước tính 0.22 giây
-  client 0: 380 ảnh, học 18.38 giây, RTT 23.6 ms, độ lệch cập nhật 0.0945; băm client gửi c80a19e146b7 / máy chủ tính lại c80a19e146b7 -> KHỚP
+Vòng 1: 2 client được nhận, 0 bị từ chối; cả vòng 18.59 giây; gộp 51.1 ms; truyền ước tính 0.21 giây
+  client 0: 380 ảnh, học 18.13 giây, RTT 0.1 ms, lên 1515.17 MiB/s, xuống 215.37 MiB/s, độ lệch cập nhật 0.7705; băm client gửi 82350c8c8a6a / máy chủ tính lại 82350c8c8a6a -> KHỚP
 ```
 
 **Nói khi demo:** đây là Flower thật qua gRPC, mỗi client là một tiến trình riêng, học trên ảnh của mình. Đây là 2 client trên một máy; mục 8 mới là hai máy thật.
