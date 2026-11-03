@@ -1,6 +1,6 @@
 # PROJECT STATUS — Federated Learning PlantVillage
 
-> **Cập nhật lúc:** 2026-11-03 10:46 · sinh tự bởi `scripts/update_status.py`
+> **Cập nhật lúc:** 2026-11-03 11:48 · sinh tự bởi `scripts/update_status.py`
 > **Đánh giá hiện tại:** DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (0 mục BLOCKED cần dữ liệu/máy train, 4 mục kỹ thuật chưa XONG)
 >
 > File này là nguồn thống kê DUY NHẤT về tiến độ. Checklist do máy chấm từ sự thật trên đĩa;
@@ -28,7 +28,7 @@
 | 2 | Smoke cách ly khỏi slot canonical | ✅ XONG | slot canonical không chứa smoke; 3 checkpoint smoke nằm ở artifacts/checkpoints/smoke/ |
 | 3 | Một engine train (pipeline cũ gom vào legacy/) | ✅ XONG | engine duy nhất là src/; pipeline Kaggle/stage* nằm trong legacy/ (chạy riêng: pytest legacy/tests) |
 | 4 | Web tách router/service, inference đi một cửa | ✅ XONG | app.py chỉ mount router; inference chỉ đi qua web/services/model_service.py (cổng web_visible) |
-| 5 | Không hardcode đường dẫn artifact | ⬜ CHƯA | 6 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/demo_show.py:164', 'scripts/eval_dp_noise_sensitivity.py:81', 'scripts/package_quantized_model.py:29', 'scripts/package_quantized_model.py:179', 'scripts/recompute_metrics.py:287'] |
+| 5 | Không hardcode đường dẫn artifact | ⬜ CHƯA | 8 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/demo_show.py:253', 'scripts/demo_show.py:250', 'scripts/demo_show.py:251', 'scripts/eval_dp_noise_sensitivity.py:81', 'scripts/package_quantized_model.py:29'] |
 | 6 | Dọn tài liệu mâu thuẫn | ⬜ CHƯA | tài liệu ngoài danh mục: gốc=[] docs=['HUONG_DAN_DEMO_THU_CONG.md'] |
 | 7 | Số liệu trong docs không mâu thuẫn artifact | ✅ XONG | không còn số liệu mâu thuẫn đã biết (97,12, 97.12...) và không ghi tĩnh kết quả test trong README/docs |
 | 8 | Chốt một protocol khoa học cho mỗi thí nghiệm | ✅ XONG | mỗi protocol (scratch GĐ2 cục bộ / bundle mixed pretrained) có mục riêng trong EXPERIMENT_PROTOCOL.md |
@@ -49,7 +49,7 @@
 
 ### Việc làm được ngay (chưa BLOCKED)
 
-1. Không hardcode đường dẫn artifact — 6 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/demo_show.py:164', 'scripts/eval_dp_noise_sensitivity.py:81', 'scripts/package_quantized_model.py:29', 'scripts/package_quantized_model.py:179', 'scripts/recompute_metrics.py:287']
+1. Không hardcode đường dẫn artifact — 8 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/demo_show.py:253', 'scripts/demo_show.py:250', 'scripts/demo_show.py:251', 'scripts/eval_dp_noise_sensitivity.py:81', 'scripts/package_quantized_model.py:29']
 2. Dọn tài liệu mâu thuẫn — tài liệu ngoài danh mục: gốc=[] docs=['HUONG_DAN_DEMO_THU_CONG.md']
 3. Full tests pass trên mã nguồn hiện tại — kết quả cũ (2026-10-27T02:41:36) không còn khớp mã nguồn hiện tại — chạy lại --full-gates
 4. Release sạch (mọi gate kỹ thuật XONG) — còn mục kỹ thuật chưa XONG: ['no_hardcode', 'docs_clean', 'full_tests']

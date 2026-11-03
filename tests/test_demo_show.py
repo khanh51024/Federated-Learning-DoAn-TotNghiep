@@ -35,13 +35,71 @@ def test_flower_table_uses_same_rtt_field_as_report_and_shows_speed():
     assert "RTT 1425.4 ms" in text and "lên 2.51 MiB/s, xuống 0.45 MiB/s" in text and "RTT 3.0 ms" not in text
 
 
-def test_sweep_reads_only_all_test_rows_and_computes_gap(tmp_path):
+def test_sweep_keeps_parts_apart_and_prints_gap_from_the_table(tmp_path):
     table = tmp_path / "table.csv"
-    names = [("centralized", ""), ("fedavg+flower", "iid"), ("fedavg", "label_alpha_100_0"), ("fedavg", "label_alpha_10_0"), ("fedavg", "label_alpha_1_0"), ("fedavg", "label_alpha_0_5"), ("fedavg", "label_alpha_0_1"), ("local", "label_alpha_0_1")]
-    rows = ["scheme,variant,seeds,part,n,top1_mean_%,gap_top1_points"] + [f"{scheme},{variant},3,all_test,100,{90 - i}.0,{i}.01" for i, (variant, scheme) in enumerate(names)] + [",centralized,3,plantvillage_test,50,11.0,"]
+    rows = ["scheme,variant,seeds,part,n,top1_mean_%,top1_std_%,macro_f1_mean_%,gap_top1_points"]
+    parts = {"all_test": 90, "plantvillage_test": 80, "field_same_source_test": 70, "plantdoc_holdout_v3": 60}
+    for i, (variant, scheme, _) in enumerate(ds.SWEEP_ROWS):
+        for part, base in parts.items():
+            rows.append(f"{scheme},{variant},3,{part},100,{base - i}.0,0.5,{base - i - 1}.0,{i}.01")
     table.write_text("\n".join(rows) + "\n", encoding="utf-8")
     text = "\n".join(ds.sweep_lines(table))
-    assert " 90.00%" in text and "11.00" not in text and "thấp hơn tập trung  7.01 điểm" in text
+    assert "90.00 ± 0.50%" in text and "thấp hơn tập trung  2.01 điểm" in text
+    assert "80.00" in text and "70.00" in text and "60.00" in text
+    central = next(line for line in text.splitlines() if "Tập trung, học bằng AdamW" in line)
+    assert "thấp hơn" not in central
+
+
+def test_fairness_uses_only_the_test_split_for_all_domains(tmp_path):
+    table = tmp_path / "fair.csv"
+    table.write_text("scheme,variant,split,domain,mean_%,std_between_clients_%,gap_best_worst_points,smallest_client_%\n"
+                     "label_alpha_0_1,fedavg,legacy_diagnostic_test,all,88.58,4.67,13.54,79.90\n"
+                     "label_alpha_0_1,fedavg,val,all,11.00,1.00,1.00,1.00\n"
+                     "label_alpha_0_1,fedavg,legacy_diagnostic_test,field,22.00,1.00,1.00,1.00\n", encoding="utf-8")
+    text = "\n".join(ds.fairness_lines(table))
+    assert "88.58" in text and "13.54" in text and "79.90" in text and "11.00" not in text and "22.00" not in text
+
+
+def _partition_block(n_k, field=None, disjoint=True):
+    return {"n_k": n_k, "size_ratio_max_over_min": max(n_k) / min(n_k), "audit": {"disjoint": disjoint, "union_equals_train": True}, "heterogeneity": {"field_fraction": field or {}}}
+
+
+def test_partitions_report_sizes_field_share_and_failed_audit(tmp_path):
+    field = {"client_00": 0.0, "client_01": 0.8264}
+    schemes = {key: _partition_block([10, 20]) for key in ("label_alpha_100_0", "label_alpha_10_0", "label_alpha_1_0", "label_alpha_0_5")}
+    schemes["quantity_alpha_0_5"] = _partition_block([2413, 18554])
+    schemes["source_skew"] = _partition_block([50, 50], field)
+    path = tmp_path / "m.json"
+    path.write_text(json.dumps({"schemes": schemes}), encoding="utf-8")
+    text = "\n".join(ds.partition_lines(path))
+    assert "gấp 7.7 lần" in text and "0%, 83%" in text and "CẢNH BÁO" not in text
+    schemes["source_skew"]["audit"]["disjoint"] = False
+    path.write_text(json.dumps({"schemes": schemes}), encoding="utf-8")
+    assert "CẢNH BÁO" in "\n".join(ds.partition_lines(path))
+
+
+def test_compression_prints_measured_numbers_and_says_estimate(tmp_path):
+    row = {"payload_bytes": 1000000, "payload_ratio": 0.5, "top1": 0.93, "predictions_changed": 7}
+    onnx_row = {"top1": 0.9}
+    report = {"count": 100, "models": {"fedavg": {"weights_transport": {"fp32": {**row, "payload_ratio": 1.0}, "fp16": row, "delta_int8_per_tensor": row},
+                                                     "latency": {"onnx_fp32_ms": 6.0, "onnx_int8_se_gemm_pw_late_ms": 5.0, "onnx_int8_all_ms": 8.0},
+                                                     "onnx": {"fp32_bytes": 6000000, "variants": {"int8_se_gemm_pw_late": {"bytes": 2000000}, "int8_all": {"bytes": 1000000}},
+                                                              "onnx_fp32": onnx_row, "onnx_int8_se_gemm_pw_late": onnx_row, "onnx_int8_all": {"top1": 0.1}}}}}
+    path = tmp_path / "gd4.json"
+    path.write_text(json.dumps(report), encoding="utf-8")
+    text = "\n".join(ds.compression_lines(path))
+    assert "200 MB" in text and "ước tính" in text and "CHƯA học với nén" in text and "10.00%" in text
+
+
+def test_speed_table_takes_medians_and_flags_mismatch():
+    history = {"audit_rounds": []}
+    for round_id, (slow, fast, rtt) in enumerate([(20.0, 1.0, 900.0), (18.0, 0.9, 1400.0), (15.0, 0.8, 1500.0)]):
+        common = {"num_examples": 380, "probe_up_mb_per_s": 2.5, "probe_down_mb_per_s": 0.5, "upload_hash_ok": True, "client_reported_hash": "a", "server_recomputed_hash": "a"}
+        bad = {**common, "server_recomputed_hash": "b"} if round_id == 0 else common
+        history["audit_rounds"].append({"clients": [{"client_id": 0, "local_train_time_s": slow, "probe_rtt_persistent_ms": rtt, **common}, {"client_id": 1, "local_train_time_s": fast, "probe_rtt_persistent_ms": 0.1, **bad}]})
+    text = "\n".join(ds.speed_lines(history, {0: "Laptop 1"}))
+    assert "Laptop 1" in text and "client 1" in text and "18.00 giây" in text and "1400.0 ms" in text
+    assert "khớp 3/3" in text and "khớp 2/3" in text and "gấp 20.0 lần" in text
 
 
 def test_compare_separates_learnable_from_other_and_counts_identical():

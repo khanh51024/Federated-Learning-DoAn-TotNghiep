@@ -6,7 +6,8 @@ PlantVillage thật (mỗi lớp N ảnh, hai shard rời nhau) để thời gia
 Tạo ra thư mục <out>/:
     partition/                  hợp đồng 2 client (partition_config.json + clients/client_XX.csv) cho Flower server
     images_client_XX/           ảnh của từng client, giữ nguyên đường dẫn tương đối (để chép sang máy khác)
-    bundle_client_01.tar.gz     mã src/ + partition/ + ảnh của client 01: gói chép sang máy thứ hai
+    bundle_client_01.tar.gz     mã src/ + partition/ + ảnh của client 01 + deploy/lan_client/: gói chép sang máy thứ hai
+    goi_laptop_2.zip            cùng nội dung, dạng .zip để giải nén trên Windows
     speedtest_manifest.json     mã băm từng tệp, số ảnh, byte
 
 Chạy:
@@ -22,6 +23,7 @@ import random
 import shutil
 import sys
 import tarfile
+import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -106,6 +108,14 @@ def main() -> int:
             tar.add(path, arcname=path.relative_to(ROOT).as_posix())
         tar.add(out / "partition", arcname="partition")
         tar.add(out / "images_client_01", arcname="images_client_01")
+        for path in sorted((ROOT / "deploy" / "lan_client").iterdir()):
+            tar.add(path, arcname=path.name)
+    # Bản .zip cùng nội dung: Windows mở được ngay, kể cả bản không tự giải nén .tar.gz
+    bundle_zip = out / "goi_laptop_2.zip"
+    with tarfile.open(bundle, "r:gz") as tar, zipfile.ZipFile(bundle_zip, "w", zipfile.ZIP_DEFLATED) as archive:
+        for member in tar.getmembers():
+            if member.isfile():
+                archive.writestr(member.name, tar.extractfile(member).read())
     manifest: dict[str, Any] = {
         "per_class": args.per_class, "n_k": [len(s) for s in shards], "seed": SEED,
         "bundle": {"file": bundle.name, "bytes": bundle.stat().st_size, "sha256": sha256_file(bundle)},

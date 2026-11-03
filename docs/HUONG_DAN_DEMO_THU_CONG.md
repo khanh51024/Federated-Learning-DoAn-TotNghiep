@@ -1,31 +1,198 @@
-# Hướng dẫn demo thủ công 9 mục
+# Hướng dẫn demo
 
-## Bản dễ hiểu: bấm số nào, thấy gì, nói gì
+Mọi thứ chạy từ một file: nhấp đúp **`DEMO_TUNG_MUC.bat`** ở thư mục dự án. Chọn **A** cho 9 mục của thầy, **B** cho file Word, rồi gõ mã mục và Enter.
 
-Nhấp đúp `DEMO_TUNG_MUC.bat` ở thư mục gốc dự án, bấm số rồi Enter. Đóng bớt Chrome và game trước khi chạy.
+**Từ cần biết**
 
-Từ cần biết:
-- **Client:** một máy tham gia học, giữ ảnh của riêng mình.
-- **Trọng số:** phần "kiến thức" của mô hình, thứ duy nhất được gửi qua mạng.
-- **Vòng:** máy chủ gửi mô hình xuống, các client học, gửi lại, máy chủ gộp thành mô hình chung.
-- **Dấu vân tay (SHA-256, "băm"):** chuỗi ký tự tính từ trọng số. Chỉ khác một chút là chuỗi khác hẳn.
-- **RTT:** thời gian gửi tín hiệu đi và nhận lại, tức độ trễ.
-- **Loss:** mức sai của mô hình, càng thấp càng tốt.
+| Từ | Nghĩa |
+|---|---|
+| Client | Một máy tham gia học, giữ ảnh của riêng mình |
+| Trọng số | Phần "kiến thức" của mô hình, thứ duy nhất được gửi qua mạng |
+| Vòng | Máy chủ gửi mô hình xuống, các client học, gửi lại, máy chủ gộp thành mô hình chung |
+| Dấu vân tay (SHA-256, "băm") | Chuỗi ký tự tính từ trọng số. Khác một chút là chuỗi khác hẳn |
+| Độ trễ (RTT) | Thời gian gửi tín hiệu đi và nhận lại |
+| Loss | Mức sai của mô hình, càng thấp càng tốt |
+| α | Mức lệch dữ liệu. α càng nhỏ, mỗi máy càng chỉ có vài loại bệnh |
+| Flower | Phần mềm điều phối việc học phân tán |
 
-| Số | Câu của thầy | Trên màn hình | Cách làm, nói bằng lời |
+## 1. Chuẩn bị trước giờ demo
+
+1. Chép `tmp\LAPTOP_2_CHAY_NGAY.zip` sang laptop 2 bằng USB, giải nén ra một thư mục. Không phải cài gì.
+2. Chạy thử đo 2 laptop một lần theo mục 5, xem wifi có cho 2 máy nối với nhau không.
+3. Trên laptop chính, đóng bớt Chrome và game, chạy thử mục A → 5.
+4. Mở sẵn file này để nhìn khi nói.
+
+Không dùng web `datn.tranngochung.id.vn` cho phần này, vì web vẫn là bản 22/10 và chưa có phần kiểm chứng.
+
+## 2. Thứ tự trình bày, khoảng 15 phút
+
+| Phút | Làm | Câu chốt |
+|---|---|---|
+| 1 | Nói kết luận | "Gửi trọng số không làm sai dữ liệu. Phân tán đạt 94–97%, tập trung 97,69%, tự học một mình chỉ 46,55%." |
+| 3 | A → 1, A → 3 | "Em kiểm tra 2.400 lần đều khớp, và cố tình làm sai thì hệ thống bắt được." |
+| 2 | A → 2 | "Lệch do cách học, không do gửi." |
+| 3 | A → 5 (mở trước, nói trong lúc chạy), A → 7 | "Đây là Flower chạy thật, và đây là code hai cách học." |
+| 3 | A → L, đo trực tiếp 2 laptop | "Đây là 2 máy thật qua mạng thật." |
+| 2 | A → 9, biểu đồ | "Càng lệch, khoảng cách càng lớn." |
+| 1 | Nói phần chưa xong | Xem cuối mục 4 |
+
+Nếu thầy hỏi theo file Word thì chuyển sang phần B ở mục 4.
+
+## 3. Phần A: 9 mục của thầy
+
+**A → 1. Gửi trọng số có bị sai không**
+- **Thấy:** 6 dòng `400/400 lượt khớp`.
+- **Cách làm:** client tính dấu vân tay ngay trước khi gửi, máy chủ tính lại ngay sau khi nhận rồi so. Làm cả hai chiều, mọi client, mọi vòng. Lệch một lần là dừng cả lần chạy.
+- **Nói:** "6 lần chạy, mỗi lần 40 vòng, 5 client, 2 chiều, tổng 2.400 lần kiểm tra, khớp hết."
+
+**A → 2. So với tập trung có lệch không, kiểm tra trọng số** (khoảng 1,5 phút)
+- **Thấy:** `KHỚP`; dòng A rất nhỏ (khoảng 0,00000000000006); dòng B lớn hơn nhiều (0,13); rồi `94.72%`.
+- **Cách làm, 3 bước:** (1) So dấu vân tay mô hình xuất phát của hai bên. (2) Cho mỗi client học đúng 1 bước rồi gộp, về toán học phải trùng tập trung; sau đó cho học nhiều bước. (3) So hai mô hình đã học xong.
+- **Nói:** "Một bước thì trùng, nên gửi và gộp không gây lệch. Nhiều bước mới lệch. Hai mô hình học xong cho cùng đáp án ở 94,72% ảnh."
+- **Lưu ý:** bước 2 ở đây là bản nhanh trên ít ảnh. Bản đầy đủ trên GPU ra 0,00000000005, cùng kết luận.
+
+**A → 3. Phương pháp kiểm tra**
+- **Thấy:** `PASSED`, `1 passed`.
+- **Nói:** "Em kiểm tra 5 thứ: dấu vân tay khi gửi; tính lại phép gộp bằng công cụ khác; cùng mô hình xuất phát; một bước phải trùng tập trung; so mô hình đã học xong. Test này cố tình đổi 2.0 thành 2.0000002, hệ thống phải dừng lại, để chứng minh phép kiểm tra thật sự bắt được lỗi."
+
+**A → 4. Nhiều client**
+- **Thấy:** client 0 đến 4 ở vòng đầu và vòng cuối.
+- **Nói:** "Thí nghiệm chính có 5 client mô phỏng trên một GPU. Phần đo tốc độ là 2 máy thật."
+
+**A → 5. Thông số Flower** (khoảng 1,5 phút)
+- **Thấy:** 3 cửa sổ mở ra, rồi bảng từng vòng: số ảnh, thời gian học, độ trễ, tốc độ, `KHỚP`, và mức sai giảm dần (3,27 → 2,82 → 2,30).
+- **Nói:** "1 máy chủ và 2 client chạy thật, mỗi client chỉ học ảnh của mình."
+- **Lưu ý:** độ trễ chỉ 0,1 ms vì 3 chương trình cùng trên một máy. Khởi đầu từ mô hình có sẵn để mức sai giảm rõ, chỉ để trình diễn, không phải số báo cáo. Chạy lại phải đóng các cửa sổ cũ.
+
+**A → 6. Mô hình tổng và mô hình client có sai số không**
+- **Thấy:** `sai số gộp` rất nhỏ; `cách mô hình chung` từ khoảng 3 giảm dần về 0,02.
+- **Nói:** "Có 2 chuyện khác nhau. Sai số phép gộp chỉ ở mức làm tròn số, lớn nhất 0,0000002 qua 720 vòng. Còn client khác mô hình tổng là do mỗi máy học ảnh khác nhau, đó không phải lỗi."
+
+**A → 7. Code backend** (mở VS Code)
+- **Tập trung:** `train_v4.py` dòng 189, lấy toàn bộ ảnh.
+- **Phân tán:** `flower_app.py` dòng 206, gửi trọng số, nhận về, kiểm tra.
+- **Gộp:** `strategy.py` dòng 133, trung bình theo số ảnh.
+- **Hàm học chung:** `loop.py` dòng 67.
+- **Nói:** "Hai cách dùng chung một hàm học, chỉ khác cách dùng dữ liệu và cách trao đổi trọng số."
+- **Phím T:** chạy thật cả hai cách với 200 ảnh, khoảng 2 phút. Độ chính xác rất thấp vì quá ít ảnh, có thể hiện dòng chữ đỏ lúc tắt, không phải lỗi. Chỉ dùng khi thầy muốn xem chạy thật.
+
+**A → L hoặc A → 8. Đo tốc độ 2 máy**
+- **L:** đo trực tiếp 2 laptop, xem mục 5.
+- **8:** số đã đo. Ngày 02/11 laptop 18,0 giây, máy GPU 0,9 giây, độ trễ 1.425 ms qua đường hầm SSH. Ngày 20/10 laptop 20,9 giây, máy Oracle 5,2 giây, độ trễ 47 ms qua Internet.
+- **Cách làm:** mỗi vòng máy chủ gửi một gói đúng cỡ mô hình (khoảng 6 MB) rồi bấm giờ, ra độ trễ và tốc độ. Thời gian học do mỗi máy tự đo.
+
+**A → 9. Khác biệt phân tán và tập trung**
+
+| | Tập trung | Phân tán |
+|---|---|---|
+| Ảnh | Gom về một chỗ | Ở nguyên từng máy |
+| Gửi qua mạng | Ảnh, 1.524 MB một lần | Trọng số, khoảng 2.510 MB (40 vòng) |
+| Độ chính xác | 97,69% | 96,97% (gần đều) đến 93,93% (rất lệch) |
+
+- **Nói:** "Phân tán không tiết kiệm mạng trong cấu hình này. Lợi ích là ảnh không rời máy."
+
+## 4. Phần B: file Word
+
+Ký hiệu: ✅ làm trực tiếp được, 📊 xem số đã đo, ⚠️ làm được một phần, ❌ chưa có.
+
+**Đợt 1: Nền tảng so sánh**
+
+| Mã | Mức | Thấy | Nói |
 |---|---|---|---|
-| 1 | Gửi trọng số có sai không | 6 dòng `400/400 lượt khớp` | Client tính dấu vân tay trước khi gửi, máy chủ tính lại sau khi nhận rồi so. Làm ở mỗi client, mỗi vòng, cả chiều gửi xuống lẫn gửi lên. Tổng 2.400 lần, khớp cả. |
-| 2 | So với tập trung có lệch không | `KHỚP`, rồi dòng A rất nhỏ, dòng B lớn hơn nhiều, rồi `94.72%` | Cùng mô hình xuất phát. Cho mỗi client học đúng 1 bước thì kết quả gần như trùng tập trung (dòng A). Cho học nhiều bước thì lệch (dòng B). Vậy lệch do cách học, không do gửi. Mô hình đã học xong của hai cách cho cùng đáp án ở 94,72% ảnh. |
-| 3 | Phương pháp kiểm tra | `PASSED` | Ngoài so dấu vân tay, em còn tính lại phép gộp bằng công cụ khác. Em cũng cố tình đổi trọng số từ 2.0 thành 2.0000002: hệ thống bắt được và dừng. |
-| 4 | Chạy nhiều client | client 0 đến 4 | Thí nghiệm chính có 5 client, mô phỏng trên một máy GPU. Bài đo tốc độ có 2 client trên 2 máy thật. |
-| 5 | Thông số Flower | 3 cửa sổ mở ra, khoảng 1,5 phút sau có bảng kết quả | Flower là phần mềm điều phối học phân tán. Đây là 1 máy chủ và 2 client chạy thật trên laptop. Mức sai giảm qua 3 vòng, dấu vân tay đều khớp. RTT rất nhỏ vì cùng một máy. |
-| 6 | Mô hình tổng so với client | `sai số gộp` rất nhỏ, `cách mô hình chung` | Sai số phép gộp chỉ ở mức làm tròn số. Client vẫn khác mô hình chung vì mỗi máy học ảnh khác nhau. Về cuối khoảng cách này nhỏ dần. |
-| 7 | Show code | VS Code mở 4 chỗ | Tập trung lấy toàn bộ ảnh. Phân tán gửi trọng số, nhận về, kiểm tra, rồi gộp theo số ảnh. Cả hai dùng chung một hàm học. |
-| T | Chạy thử hai cách học | Khoảng 2 phút, có thể hiện dòng đỏ của Ray lúc tắt | Chỉ dùng khi thầy muốn xem chạy thật. 200 ảnh, 2 vòng nên độ chính xác rất thấp, đừng dùng số này. |
-| 8 | Tốc độ 2 máy | Bảng 3 vòng | Mỗi vòng máy chủ gửi một gói bằng đúng cỡ mô hình (khoảng 6 MB) rồi bấm giờ, ra độ trễ và tốc độ. Thời gian học do mỗi máy tự đo. Client 0 là laptop, client 1 là máy GPU. Số đo ngày 02/11 qua đường hầm SSH; máy thuê không còn kết nối nên không đo lại trực tiếp được. |
-| 9 | Khác biệt | Bảng độ chính xác, biểu đồ | Tập trung gom ảnh về một chỗ. Phân tán giữ ảnh ở từng máy, chỉ gửi trọng số, thấp hơn 0,73 đến 3,77 điểm tùy dữ liệu lệch nhiều hay ít, và tốn mạng hơn. |
+| 1.1 | ✅ | Bảng độ chính xác | "SGD 97,69%, AdamW 97,80%, chênh rất ít. Em chọn SGD làm trần vì cùng cách học với client." |
+| 1.2 | ✅ | Bảng, thêm phím T | "Flower 94,03%, tự cài 93,93%, chênh 0,11 điểm. Riêng ảnh ngoài đồng chênh 0,96 điểm, nên em không kết luận tương đương trên mọi nhóm." |
+| 1.3 | ⚠️ | Nhật ký từng vòng | "Phân tán đủ từng vòng. Local-only là đợt cũ, chưa có số byte và độ lớn cập nhật." |
+| 1.4 | ✅ | Tên run, `2 passed` | "Em niêm phong 7.005 ảnh, chưa mở. Test chứng minh chỉ chạy được một lần." |
 
-Phần dưới là lệnh đầy đủ nếu muốn tự gõ. `DEMO_FLOWER.bat` là riêng mục 5, chạy lại thì đóng các cửa sổ cũ trước.
+**Đợt 2: Nhiều mức lệch dữ liệu**
+
+| Mã | Mức | Thấy | Nói |
+|---|---|---|---|
+| 2.1, 2.4 | ⚠️ | Bảng, 2 biểu đồ | "Phân tán đủ 5 mức α, mỗi mức 3 lần chạy. Khoảng cách từ 0,73 điểm lên 3,77 điểm khi dữ liệu càng lệch. Local-only mới có ở α=0,1." |
+| 2.2 | ⚠️ | Số ảnh từng client | "Đã chia xong dữ liệu: lệch số lượng gấp 7,7 lần, lệch nguồn ảnh từ 0% đến 83% ảnh ngoài đồng. Chưa train vì máy thuê mất kết nối." |
+| 2.3 | ✅ | Bảng theo client | "Rất lệch: trung bình 88,58%, mạnh hơn yếu 13,54 điểm, client nhỏ nhất 79,90%." |
+
+- **Nếu hỏi vì sao Local-only ở bảng 2.3 cao tới 96,57%:** bảng này đo trên loại bệnh mà chính client đó có. Trên ảnh chung thì Local-only chỉ 46,55%.
+- **Nếu hỏi nguyên nhân suy giảm:** "Em đo được 2 cơ chế tạo lệch: học nhiều bước trên dữ liệu riêng và BatchNorm. Em chưa tách được mỗi nguyên nhân chiếm bao nhiêu."
+
+**Đợt 3: Thuật toán chịu dữ liệu lệch**
+
+| Mã | Mức | Thấy | Nói |
+|---|---|---|---|
+| 3.1 | ⚠️ | `30 passed`, code | "Đã cài FedProx, FedBN, SCAFFOLD, MOON và có test. Chưa có thí nghiệm đầy đủ." |
+| 3.1T | ✅ | FedProx, FedBN chạy trên Flower, khoảng 2,5 phút | "Chạy với rất ít ảnh để thấy thuật toán chạy được, không dùng số này." |
+| 3.3 | ⚠️ | `2 passed` | "Có 2 hướng: kết hợp FedBN với FedProx (mới có code), và tinh chỉnh riêng cho từng client (mới chạy 1 lần: 97,01% trên dữ liệu của client, 82,36% trên ảnh chung). Chưa đủ 3 lần chạy nên chưa kết luận." |
+| 3.2, 3.4 | ❌ | | "Chưa dò tham số, chưa có so sánh thu hẹp khoảng cách." |
+
+**Đợt 4: Tối ưu và riêng tư**
+
+| Mã | Mức | Thấy | Nói |
+|---|---|---|---|
+| 4.1 | 📊 | Bảng nén | "Mô hình int8 còn 2,12 MB so với 6,24 MB, độ chính xác 93,81% so với 93,88%, 5,14 ms một ảnh trên laptop. Chưa đo trên điện thoại." |
+| 4.2 | 📊 | Bảng nén | "Nén 8-bit còn 26,4% dung lượng, độ chính xác gần như không đổi. Em đo bằng cách nén một lần sau khi học xong, chưa học với nén ở mỗi vòng. Số 661 MB cho 40 vòng chỉ là ước tính." |
+| 4.3 | ⚠️ | `4 passed` | "Phần này là tùy chọn. Đã có code thêm nhiễu và tính ε, nhưng chưa chạy đường ε – độ chính xác vì chưa đủ thời gian GPU." |
+| 4.4 | ✅ | Đo 2 laptop (mục 5) | "2 client thật trên 2 máy và một máy chủ tổng hợp." |
+
+- **Nếu hỏi vì sao không dùng bản int8 nén toàn bộ:** bản đó độ chính xác tụt còn 9,98%, nên em chỉ nén một phần các lớp.
+
+**Đợt 5: Tổng hợp**
+
+| Mã | Mức | Thấy | Nói |
+|---|---|---|---|
+| 5.1 | ⚠️ | Bảng, biểu đồ | "Có ba mốc và phân tán nhiều mức lệch. Còn thiếu thuật toán cải tiến và Local-only nhiều mức." |
+| 5.2 | ⚠️ | 3 bảng | "Có đủ độ chính xác, độ bền khi lệch, truyền thông và công bằng. Riêng tư mới dừng ở phân tích: ảnh không rời máy, chưa có DP." |
+| 5.4 | ✅ | Cấu hình một lần chạy, `KHỚP` | "Mỗi lần chạy lưu cấu hình, seed, phiên bản mã, mã băm dữ liệu." |
+| 5.3 | ❌ | | "Chạy tập niêm phong sau khi chốt cấu hình cuối, nên chưa mở." |
+| 5.5 | ❌ | | "Mới có báo cáo kiểm chứng, chưa có quyển báo cáo và bản thảo bài báo." |
+
+**Câu nói về tiến độ:** "Em chưa đạt đủ mức Tối thiểu. Để đủ, còn phải train 2 dạng lệch cho phân tán (6 lần chạy, khoảng 1 giờ GPU) và Local-only ở các mức còn lại (90 lần chạy). Máy thuê bị mất kết nối giữa chừng nên phần này chưa có."
+
+## 5. Đo trực tiếp giữa 2 laptop
+
+Laptop chính là máy chủ và client 0, laptop 2 là client 1. Mất khoảng 2 phút.
+
+1. Cho 2 laptop vào **cùng một mạng**. Chắc nhất là cùng bắt điểm phát từ điện thoại, vì wifi trường hay chặn 2 máy nói chuyện với nhau.
+2. **Laptop chính:** menu A → L. Windows hỏi quyền thì chọn **Yes**. Nếu Windows hỏi cho Python qua tường lửa thì chọn **Allow**. Màn hình sẽ hiện một địa chỉ IP, ví dụ `192.168.1.20`.
+3. **Laptop 2:** nhấp đúp `CHAY_CLIENT.bat` trong thư mục đã giải nén, nhập IP đó, Enter.
+4. Chờ xong, laptop chính in bảng: thời gian học, độ trễ, tốc độ gửi và nhận, số lần khớp.
+
+**Đọc kết quả:** độ trễ và tốc độ mạng thật là dòng **Laptop 2**. Laptop 1 cùng máy với máy chủ nên số mạng rất lớn.
+
+**Không nối được:**
+
+| Hiện tượng | Xử lý |
+|---|---|
+| Laptop 2 báo `KHONG NOI DUOC` | Kiểm tra IP. Đổi sang điểm phát điện thoại, rồi chạy lại vì IP sẽ đổi |
+| Laptop chính báo chưa mở được cổng | Chạy lại và chọn Yes |
+| Laptop chính báo cổng đang bận | Đóng các cửa sổ "Máy chủ Flower", "Client" cũ |
+| Laptop 2 báo thiếu DLL hoặc không chạy được Python | Chụp màn hình gửi lại. Khi đang demo thì dùng A → 8 |
+| Vẫn không được khi đang demo | Dùng A → 8 và nói: "Mạng ở đây chặn, em cho xem số đã đo." |
+
+Cổng tường lửa chỉ nhận máy cùng mạng và tự đóng sau khi đo xong, lâu nhất 30 phút.
+
+## 6. Câu hỏi khó
+
+| Thầy hỏi | Trả lời |
+|---|---|
+| File Word ghi SGD lr 0,01, sao em dùng 0,02? | "Em dùng batch 128 nên chọn lr 0,02 qua chạy thử, và dùng chung cho cả tập trung lẫn client nên so sánh vẫn công bằng." |
+| Seed sao không phải 42, 43, 44? | "File Word ghi đó là ví dụ. Em dùng 42, 123, 2026, vẫn là 3 seed." |
+| Dòng float32 trong báo cáo trùng dự đoán chỉ 76,47%? | "Em làm đối chứng chỉ đổi thứ tự ảnh, về toán phải trùng mà float32 vẫn lệch cùng cỡ. Nên không quy cho phân tán. Nguyên nhân cụ thể em chưa chứng minh được." |
+| Flower có tương đương bản tự cài không? | "Trên toàn bộ ảnh chênh 0,11 điểm, nhưng ảnh ngoài đồng chênh 0,96 điểm, lớn hơn dao động giữa các lần chạy. Nên em chưa kết luận tương đương trên mọi nhóm." |
+| 5 client có phải 5 máy thật không? | "Không, 5 client là mô phỏng trên một GPU. Máy thật là phần đo 2 laptop." |
+| Phân tán có đảm bảo riêng tư tuyệt đối không? | "Không. Ảnh không rời máy, nhưng em chưa có DP hay mã hóa nên chưa có bảo đảm toán học." |
+
+## 7. Lỗi thường gặp
+
+| Hiện tượng | Xử lý |
+|---|---|
+| Mục A → 5 báo cổng bận | Đóng các cửa sổ cũ, chạy lại |
+| Máy chậm hoặc treo | Đóng Chrome, game. Cần khoảng 3 GB RAM trống |
+| Chữ đỏ của Ray khi kết thúc phím T | Không phải lỗi nếu cuối cùng có dòng `xong` |
+| Bấm mã không có trong menu | Menu tự hiện lại, gõ lại mã |
+
+---
+
+# Phụ lục: lệnh gõ tay
 
 Mở PowerShell tại `D:\Federated-Learning-DoAn-TotNghiep-code-train-fedavg-old`. Mọi lệnh dưới đây đã chạy thử trên laptop này, trừ Cách A của mục 8 (lệnh đó cần máy thuê còn bật, xem chú thích ở mục 8). Số trong "Sẽ thấy" là số của lần chạy thử; số của bạn có thể khác chút ở thời gian, các kết quả KHỚP thì phải giống. Mỗi cửa sổ PowerShell mới phải vào đúng thư mục và chạy dòng này một lần (mỗi cửa sổ giữ riêng, cửa sổ mới phải chạy lại):
 
