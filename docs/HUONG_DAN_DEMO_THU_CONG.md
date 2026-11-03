@@ -170,6 +170,40 @@ Laptop chính là máy chủ và client 0, laptop 2 là client 1. Mất khoảng
 
 Cổng tường lửa chỉ nhận máy cùng mạng và tự đóng sau khi đo xong, lâu nhất 30 phút.
 
+## 5b. Đo 10 client, máy chủ tách riêng (đúng 8 ý thầy dặn ngày 03/11)
+
+Máy chủ chạy trên VM Oracle `149.118.51.118`, **không có client nào trên VM**. Mỗi laptop chạy 5 client, tổng 10, học 20 vòng. Máy chủ chỉ bắt đầu khi đủ 10 client nối vào, nên không có client vào trễ.
+
+| Ý của thầy | Đã làm ở đâu |
+|---|---|
+| 1. Từ 5 client trở lên, có số tối thiểu | `--num-clients 10 --min-clients 10` ở máy chủ. Muốn thử "tổng 10, chỉ cần 5 là chạy" thì đặt `--min-clients 5` (số vòng đầu có thể thiếu client nên **không dùng để lấy số**) |
+| 2. Máy chủ tách riêng | Máy chủ ở VM, client ở 2 laptop. Độ trễ đo qua Internet thật, không qua đường hầm |
+| 3. Nhiều vòng | 20 vòng |
+| 4. File .bat mở client cùng lúc | `deploy\lan_client\CHAY_CLIENT.bat <client đầu> <số client> <IP máy chủ>` |
+| 5. Client chỉ gửi trọng số, số mẫu, độ biến thiên | Client **không** còn gửi độ chính xác, loss, thời gian, độ trễ. Máy chủ tự tính, và tự tính lại độ biến thiên từ trọng số nhận được để đối chiếu với số client khai (lệch thì loại client đó) |
+| 6. Máy chủ tính trung bình, độ chính xác, độ trễ | Trung bình theo số mẫu; độ chính xác tính trên ảnh giữ riêng của máy chủ sau mỗi vòng; độ trễ và tốc độ do máy chủ tự đo. Gửi đúng trọng số: băm SHA-256 khớp từng lượt, byte đúng 6.307.176 mỗi chiều |
+
+**Chuẩn bị một lần (chủ tài khoản Oracle làm):** thêm quy tắc cho 2 laptop nối vào VM, đo xong thì xóa.
+
+1. Mỗi laptop mở trình duyệt vào `https://api.ipify.org` để biết IP công khai (nếu cùng một wifi thì hai máy cùng IP).
+2. Oracle Cloud Console, Networking, Virtual Cloud Networks, chọn mạng của VM, Security Lists, danh sách mặc định, **Add Ingress Rules**: Source CIDR `<IP laptop>/32`, IP Protocol `TCP`, Destination Port Range `18089-18090`. Thêm một dòng cho mỗi IP.
+3. Báo lại IP của 2 laptop. Phần mở cổng trên chính VM do script tự làm và tự đóng.
+
+**Ngày đo:**
+
+1. **VM** (Claude chạy giúp): `bash ~/net10-code/scripts/remote/run_network_server.sh --ip <IP laptop 1> --ip <IP laptop 2> --clients 10 --rounds 20`. Script mở cổng riêng cho 2 IP đó, tự đóng khi xong, khi lỗi, hoặc sau 3 giờ.
+2. **Laptop 1:** mở PowerShell trong thư mục dự án, gõ `deploy\lan_client\CHAY_CLIENT.bat 0 5 149.118.51.118`. Ảnh lấy từ `tmp\net10`.
+3. **Laptop 2:** giải nén `LAPTOP_2_10_CLIENT.zip` (có sẵn Python, không cần cài), nhấp đúp hoặc gõ `CHAY_CLIENT.bat 5 5 149.118.51.118`.
+4. Mỗi laptop mở 5 cửa sổ client. Máy chủ chờ đủ 10 rồi mới học. Cửa sổ chính báo `XONG` khi 5 client của máy đó học hết 20 vòng.
+5. Kết quả nằm ở `~/net10-out/history.json` trên VM (Claude kéo về cần khóa SSH). Xem bằng `.\.venv\Scripts\python.exe scripts/demo_show.py flower --history tmp/demo/net10_history.json`.
+
+**Đọc kết quả:** mỗi vòng có độ chính xác do máy chủ tính, mỗi client có dòng "học (máy chủ ước lượng)", "phản hồi", độ trễ, tốc độ lên xuống, dòng "độ biến thiên ... KHỚP" và dòng băm KHỚP.
+
+**Nói rõ khi trả lời thầy:**
+- Ảnh là PlantVillage thật, mỗi client 380 ảnh, mô hình khởi tạo từ ImageNet và chỉ học trong ít vòng, nên độ chính xác ở phép đo này **chỉ chứng minh hệ thống chạy đúng**. Kết quả độ chính xác chính vẫn là 18 run 40 vòng.
+- "Thời gian học" là **ước lượng của máy chủ** (thời gian phản hồi trừ thời gian đo mạng và thời gian truyền dự đoán), vì client không còn gửi thời gian của nó.
+- Trọng số đi qua mạng không mã hóa; vì vậy cổng chỉ mở cho IP của 2 laptop trong lúc đo. Không có ảnh nào rời khỏi client.
+
 ## 6. Câu hỏi khó
 
 | Thầy hỏi | Trả lời |

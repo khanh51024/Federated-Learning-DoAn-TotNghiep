@@ -56,7 +56,8 @@ cleanup() {
   done
   echo "[server] đã gỡ quy tắc tường lửa cho: ${RULES[*]:-không có}"
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 143' INT TERM    # dừng bằng Ctrl+C hoặc kill thì thoát và để trap EXIT dọn tường lửa đúng một lần
 
 for ip in "${IPS[@]}"; do
   sudo iptables -I INPUT 1 -p tcp -s "$ip" --dport "$PORT:$((PORT + 1))" -j ACCEPT
