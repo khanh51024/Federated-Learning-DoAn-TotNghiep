@@ -1,11 +1,13 @@
 """Tóm tắt các lần chạy đo tốc độ FedAvg giữa hai máy thành MỘT báo cáo.
 
-Đọc `audit_rounds` mà Flower server ghi (xem src/federated/server_app.py) cho từng kịch bản (loopback, WAN, LAN...). Mọi thời gian
-đo trên đồng hồ của CHÍNH máy đó (client đo thời gian tính/đường truyền của nó, server đo thời gian vòng của nó); không so giờ giữa hai
-máy nên không cần đồng bộ giờ.
+Đọc `audit_rounds` mà Flower server ghi (xem src/federated/server_app.py) cho từng kịch bản (loopback, WAN, LAN...). Từ lần đo 2026-11-03 trở đi
+MỌI số thời gian và tốc độ mạng do SERVER đo trên đồng hồ của server (client không gửi số nào); các lần đo cũ hơn do client tự đo, các cột
+`client_wall_ms`, `client_decode_ms`, `client_encode_ms`, `probe_connect_ms` chỉ có ở lần đo cũ. Không so giờ giữa hai máy nên không cần đồng bộ giờ.
 
 Cột quan trọng:
-  local_train_time_s, client_wall_ms : thời gian tính trên máy client (huấn luyện / cả lượt fit gồm giải mã + mã hóa)
+  response_ms                        : server bấm giờ từ lúc gửi yêu cầu học đến lúc nhận đủ trả lời (tải xuống + đo mạng + học + tải lên)
+  local_train_time_s                 : lần đo cũ: client tự đo; lần đo mới: server ước lượng = response_ms - thời gian đo mạng - thời gian truyền dự đoán
+  client_wall_ms                     : chỉ lần đo cũ (cả lượt fit gồm giải mã + mã hóa, client tự đo)
   probe_rtt_persistent_ms            : RTT trên kết nối giữ sẵn, không tính bắt tay TCP
   probe_up/down_mb_per_s             : băng thông đo bằng khối byte cùng cỡ mô hình, đã trừ một RTT
   payload_bytes_up/down              : byte Flower tuần tự hóa thật (gồm phần đầu .npy)
@@ -60,7 +62,7 @@ def summarize_run(history: dict[str, Any], machines: dict[int, str], local_epoch
         entry: dict[str, Any] = {
             "round": audit["round"], "round_fit_elapsed_ms": round(audit["round_fit_elapsed_ms"], 1),
             "server_validate_ms": audit.get("server_validate_ms"), "server_aggregate_ms": audit.get("server_aggregate_ms"),
-            "server_eval_ms": audit.get("server_eval_ms"), "slowest_client_wall_ms": audit.get("slowest_client_wall_ms"),
+            "server_eval_ms": audit.get("server_eval_ms"), "slowest_client_wall_ms": audit.get("slowest_client_wall_ms"), "slowest_response_ms": audit.get("slowest_response_ms"),
             "transfer_estimate_ms": audit.get("transfer_estimate_ms"), "clients": [],
         }
         predicted_worst = 0.0
@@ -74,7 +76,8 @@ def summarize_run(history: dict[str, Any], machines: dict[int, str], local_epoch
             row = {
                 "client_id": cid, "machine": machines.get(cid, f"client_{cid}"), "num_examples": client["num_examples"],
                 "status": client["status"], "upload_hash_ok": client.get("upload_hash_ok"),
-                "local_train_time_s": client["local_train_time_s"], "client_wall_ms": client.get("client_wall_ms"),
+                "local_train_time_s": client["local_train_time_s"], "local_train_time_source": client.get("local_train_time_source", "client_measured"),
+                "response_ms": client.get("response_ms"), "client_wall_ms": client.get("client_wall_ms"),
                 "client_decode_ms": client.get("client_decode_ms"), "client_encode_ms": client.get("client_encode_ms"),
                 "probe_connect_ms": client.get("probe_connect_ms"), "probe_rtt_persistent_ms": client.get("probe_rtt_persistent_ms"),
                 "probe_rtt_legacy_one_shot_ms": client.get("probe_rtt_ms"),
@@ -87,7 +90,7 @@ def summarize_run(history: dict[str, Any], machines: dict[int, str], local_epoch
             }
             entry["clients"].append(row)
             bucket = per_client.setdefault(cid, {})
-            for key in ("local_train_time_s", "client_wall_ms", "probe_connect_ms", "probe_rtt_persistent_ms", "probe_up_mb_per_s",
+            for key in ("local_train_time_s", "response_ms", "client_wall_ms", "probe_connect_ms", "probe_rtt_persistent_ms", "probe_up_mb_per_s",
                         "probe_down_mb_per_s", "train_images_per_s", "processed_train_images_per_s", "predicted_transfer_ms"):
                 bucket.setdefault(key, []).append(row.get(key))
         entry["predicted_transfer_ms_slowest_client"] = round(predicted_worst, 1) if predicted_worst else None

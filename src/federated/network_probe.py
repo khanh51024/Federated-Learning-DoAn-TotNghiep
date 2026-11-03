@@ -64,12 +64,20 @@ class ProbeServer:
     MAX_BYTES_PER_CONNECTION = 256 * 1024 * 1024  # tổng byte nhận + gửi trong một kết nối
     CONNECTION_DEADLINE_S = 120.0  # tuổi thọ tối đa của một kết nối (chống kết nối nhỏ giọt giữ luồng mãi)
 
-    def __init__(self, host: str, port: int, allow_payload: bool = True):
+    MAX_STORED_MEASUREMENTS = 4096
+
+    def __init__(self, host: str, port: int, allow_payload: bool = True, measure_payload_bytes: int = 0):
         self.host = host
         self.port = int(port)
         # allow_payload=False: chỉ trả lời PING/PNG2 (RTT); UPLD/DNLD (khối byte lớn) bị từ chối. Máy chủ Flower chỉ bật khi
         # người vận hành yêu cầu đo băng thông (--probe-payload-bytes >= 0).
         self.allow_payload = bool(allow_payload)
+        # Kích thước khối byte do SERVER chọn cho phép đo SMEA (client không được đề xuất); 0 = chỉ đo RTT.
+        if not 0 <= int(measure_payload_bytes) <= self.MAX_PAYLOAD_BYTES:
+            raise ValueError(f"measure_payload_bytes phải nằm trong [0, {self.MAX_PAYLOAD_BYTES}]")
+        self.measure_payload_bytes = int(measure_payload_bytes)
+        self._measurements: Dict[tuple, Dict[str, Any]] = {}
+        self._measurements_lock = threading.Lock()
         self._slots = threading.BoundedSemaphore(self.MAX_CONNECTIONS)
         self._stop = threading.Event()
         self._thread: Optional[threading.Thread] = None
@@ -124,6 +132,9 @@ class ProbeServer:
             if command == b"PING":  # legacy one-shot exchange
                 conn.sendall(b"PONG")
                 return
+            if command == b"SMEA":  # server-driven measurement: the server times everything on its own clock
+                self._run_measurement(conn)
+                return
             for _ in range(self.MAX_COMMANDS_PER_CONNECTION):
                 if time.monotonic() > deadline or moved > self.MAX_BYTES_PER_CONNECTION:
                     return
@@ -144,6 +155,60 @@ class ProbeServer:
                 command = _recv_exact(conn, 4)
         except (OSError, ConnectionError, struct.error):
             pass
+
+    def _run_measurement(self, conn: socket.socket) -> None:
+        """Phép đo do server điều khiển: server gửi lệnh, client chỉ làm theo và KHÔNG gửi con số nào.
+
+        Mọi thời gian đo bằng đồng hồ của server. Client chỉ khai (số vòng, số thứ tự client) để server biết ghi kết quả vào đâu;
+        server đối chiếu hai số này với metadata của lượt fit rồi mới dùng.
+        """
+        client_id, round_num = struct.unpack("!II", _recv_exact(conn, 8))
+        started = time.perf_counter()
+        rtts: List[float] = []
+        for _ in range(7):
+            t = time.perf_counter()
+            conn.sendall(b"SPNG")
+            if _recv_exact(conn, 4) != b"SPNG":
+                return
+            rtts.append((time.perf_counter() - t) * 1000.0)
+        ordered = sorted(rtts)
+        p50 = _percentile(ordered, 0.5)
+        result: Dict[str, Any] = {
+            "client_id": int(client_id), "round": int(round_num),
+            "rtt_ms_min": ordered[0], "rtt_ms_p50": p50, "rtt_ms_max": ordered[-1],
+            "rtt_samples_ms": [round(v, 3) for v in rtts], "payload_bytes": 0,
+        }
+        size = self.measure_payload_bytes if self.allow_payload else 0
+        if size > 0:
+            # Lên: tính từ lúc server gửi lệnh đến lúc nhận byte cuối (có nửa RTT của lệnh). Xuống: từ lúc gửi đến lúc nhận OKAY (có nửa RTT của OKAY).
+            t = time.perf_counter()
+            conn.sendall(b"SUPL" + struct.pack("!Q", size))
+            _drain(conn, size)
+            up_s = time.perf_counter() - t
+            t = time.perf_counter()
+            conn.sendall(b"SDNL" + struct.pack("!Q", size))
+            _send_filler(conn, size)
+            if _recv_exact(conn, 4) != b"OKAY":
+                return
+            down_s = time.perf_counter() - t
+            half_rtt_s = p50 / 2000.0
+            mb = size / (1024 * 1024)
+            result.update({
+                "payload_bytes": int(size), "up_s": up_s, "down_s": down_s,
+                "up_mb_per_s": mb / max(up_s, 1e-9), "down_mb_per_s": mb / max(down_s, 1e-9),
+                "up_mb_per_s_net": mb / max(up_s - half_rtt_s, 1e-9), "down_mb_per_s_net": mb / max(down_s - half_rtt_s, 1e-9),
+            })
+        conn.sendall(b"DONE")
+        result["probe_total_ms"] = (time.perf_counter() - started) * 1000.0
+        with self._measurements_lock:
+            self._measurements[(int(round_num), int(client_id))] = result
+            while len(self._measurements) > self.MAX_STORED_MEASUREMENTS:
+                self._measurements.pop(next(iter(self._measurements)))
+
+    def take_measurement(self, round_num: int, client_id: int) -> Optional[Dict[str, Any]]:
+        """Kết quả phép đo SMEA của (vòng, client), hoặc None nếu client không đo (hoặc đo hỏng)."""
+        with self._measurements_lock:
+            return self._measurements.pop((int(round_num), int(client_id)), None)
 
     def stop(self) -> None:
         self._stop.set()
@@ -166,6 +231,35 @@ def measure_probe_rtt_ms(host: str, port: int, timeout_s: float = 2.0) -> float:
         if data != b"PONG":
             raise RuntimeError(f"Unexpected probe response: {data!r}")
     return (time.perf_counter() - t0) * 1000.0
+
+
+def obey_server_measurement(host: str, port: int, client_id: int, round_num: int, timeout_s: float = 30.0) -> bool:
+    """Phía client của phép đo SMEA: làm theo lệnh của server (trả lời ping, gửi/nhận khối byte) mà KHÔNG đo và KHÔNG gửi con số nào.
+
+    Trả True nếu server báo DONE. Khối byte tối đa theo ProbeServer.MAX_PAYLOAD_BYTES nên server lạ không bắt được client gửi vô hạn.
+    """
+    with closing(socket.create_connection((host, int(port)), timeout=timeout_s)) as s:
+        s.settimeout(timeout_s)
+        s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        s.sendall(b"SMEA" + struct.pack("!II", int(client_id), int(round_num)))
+        for _ in range(ProbeServer.MAX_COMMANDS_PER_CONNECTION):
+            command = _recv_exact(s, 4)
+            if command == b"DONE":
+                return True
+            if command == b"SPNG":
+                s.sendall(b"SPNG")
+            elif command in (b"SUPL", b"SDNL"):
+                (size,) = struct.unpack("!Q", _recv_exact(s, 8))
+                if size > ProbeServer.MAX_PAYLOAD_BYTES:
+                    raise ValueError(f"server đòi khối {size} byte, vượt trần {ProbeServer.MAX_PAYLOAD_BYTES}")
+                if command == b"SUPL":
+                    _send_filler(s, size)
+                else:
+                    _drain(s, size)
+                    s.sendall(b"OKAY")
+            else:
+                raise RuntimeError(f"lệnh lạ từ server: {command!r}")
+    return False
 
 
 def _percentile(sorted_values: List[float], q: float) -> float:

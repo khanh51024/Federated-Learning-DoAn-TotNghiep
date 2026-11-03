@@ -32,8 +32,14 @@ def flower_lines(history: dict[str, Any]) -> list[str]:
     lines = [f"Flower: {history['num_clients_required']} client, {history['rounds']} vòng, seed {history['seed']}, máy chủ {history['server_address']}"]
     checks = passed = 0
     for round_ in history["audit_rounds"]:
+        transfer = round_.get("transfer_estimate_ms")
+        transfer_text = "chưa ước tính" if transfer is None else f"{transfer / 1000:.2f} giây"
         lines.append(f"\nVòng {round_['round']}: {round_['accepted_clients']} client được nhận, {round_['rejected_clients']} bị từ chối; cả vòng {round_['round_fit_elapsed_ms'] / 1000:.2f} giây; "
-                     f"gộp {round_['server_aggregate_ms']:.1f} ms; truyền ước tính {round_['transfer_estimate_ms'] / 1000:.2f} giây")
+                     f"gộp {round_['server_aggregate_ms']:.1f} ms; truyền ước tính {transfer_text}")
+        # Độ chính xác do MÁY CHỦ tính trên ảnh giữ riêng của máy chủ (client không gửi độ chính xác).
+        server_eval = round_.get("server_validation_metrics")
+        if server_eval:
+            lines.append(f"  máy chủ tự kiểm mô hình chung trên ảnh giữ riêng: độ chính xác {server_eval['accuracy'] * 100:.2f}%, loss {server_eval['loss']:.3f}")
         lines.append(f"  mã băm mô hình chung: trước {round_['parent_model_hash'][:12]}  sau {round_['global_model_hash'][:12]}")
         for client in sorted(round_["clients"], key=lambda c: c["client_id"]):
             checks += 1
@@ -43,7 +49,16 @@ def flower_lines(history: dict[str, Any]) -> list[str]:
             rtt = client.get("probe_rtt_persistent_ms", client.get("probe_rtt_ms"))
             up, down = client.get("probe_up_mb_per_s"), client.get("probe_down_mb_per_s")
             speed = "" if up is None or down is None else f", lên {up:.2f} MiB/s, xuống {down:.2f} MiB/s"
-            lines.append(f"  client {client['client_id']}: {client['num_examples']} ảnh, học {client['local_train_time_s']:.2f} giây, RTT {'chưa đo' if rtt is None else f'{rtt:.1f} ms'}{speed}, độ lệch cập nhật {client['received_learnable_update_norm']:.4f}")
+            train = client.get("local_train_time_s")
+            train_text = "chưa rõ" if train is None else f"{train:.2f}"
+            reply = client.get("response_ms")
+            # Nhật ký mới: máy chủ tự bấm giờ (ước lượng); nhật ký cũ: client tự đo.
+            who = " (máy chủ ước lượng)" if client.get("local_train_time_source", "client_measured") != "client_measured" else ""
+            reply_text = "" if reply is None else f", phản hồi {reply / 1000:.2f} giây"
+            lines.append(f"  client {client['client_id']}: {client['num_examples']} ảnh, học {train_text} giây{who}{reply_text}, RTT {'chưa đo' if rtt is None else f'{rtt:.1f} ms'}{speed}, độ lệch cập nhật {client['received_learnable_update_norm']:.4f}")
+            if client.get("update_norm_reported") is not None:
+                norm_ok = client.get("update_norm_matches") is True
+                lines.append(f"            độ biến thiên: client khai {client['update_norm_reported']:.4f} / máy chủ tự tính {client['received_update_norm']:.4f} -> {'KHỚP' if norm_ok else 'SAI'}")
             lines.append(f"            băm client gửi {client['client_reported_hash'][:12]} / máy chủ tính lại {client['server_recomputed_hash'][:12]} -> {'KHỚP' if same else 'SAI'}")
     losses = history.get("losses_distributed") or []
     if losses:

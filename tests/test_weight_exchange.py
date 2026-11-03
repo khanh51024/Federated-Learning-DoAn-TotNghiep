@@ -67,9 +67,12 @@ def _round(strategy_kwargs: dict, client_hash_for: dict[int, str | None]):
     parent = get_parameters(model)
     arrays = [v.detach().cpu().numpy() for v in parent.values()]
     expected = expected_client_contract(PARTITION, 2)
+    # Số đo mạng do SERVER thực hiện (ProbeServer.take_measurement); thay bằng giả lập có số cố định để kiểm cách server ghi.
+    measured = {"rtt_ms_p50": 2.0, "up_mb_per_s_net": 11.5, "down_mb_per_s_net": 20.0, "payload_bytes": 6_275_944, "probe_total_ms": 100.0}
+    probe_stub = SimpleNamespace(take_measurement=lambda round_num, client_id: dict(measured))
     strategy = AuditedFlowerFedAvg.build(
         num_clients=2, initial_parameters=ndarrays_to_parameters(arrays),
-        expected_clients=expected, expected_smoke=True, **strategy_kwargs,
+        expected_clients=expected, expected_smoke=True, probe_server=probe_stub, **strategy_kwargs,
     )
     strategy._parent_by_round[1] = {key: value.copy() for key, value in zip(parent, arrays)}
     parent_hash = compute_model_hash(parent)
@@ -85,7 +88,9 @@ def _round(strategy_kwargs: dict, client_hash_for: dict[int, str | None]):
             "partition_config_sha256": expected[cid]["partition_config_sha256"],
             "client_manifest_sha256": expected[cid]["client_manifest_sha256"],
             "smoke": True, "data_mode": "synthetic",
-            "client_wall_ms": 1500.0 + cid, "probe_up_mb_per_s": 11.5, "probe_down_mb_per_s": -1.0,
+            # Số do client tự khai: server phải BỎ QUA hết (nó tự đo thời gian, tốc độ mạng và không nhận độ chính xác từ client).
+            "client_wall_ms": 1.0, "probe_up_mb_per_s": 999.0, "probe_down_mb_per_s": 999.0, "probe_rtt_ms": 0.001,
+            "local_train_time_s": 0.001, "accuracy": 1.0, "loss": 0.0,
         }
         sent_hash = client_hash_for.get(cid, "honest")
         if sent_hash == "honest":
@@ -94,6 +99,7 @@ def _round(strategy_kwargs: dict, client_hash_for: dict[int, str | None]):
             metadata["hash"] = sent_hash
         fit = FitRes(Status(Code.OK, ""), ndarrays_to_parameters(client_arrays), expected[cid]["smoke_examples"], metadata)
         results.append((SimpleNamespace(cid=f"transport-{cid}"), fit))
+        strategy._response_ms[(1, f"transport-{cid}")] = 1500.0 + cid       # server bấm giờ phản hồi của từng client
     return strategy, results
 
 
@@ -106,9 +112,12 @@ def test_server_accepts_matching_upload_hash_and_records_real_payload_bytes():
         assert client["client_reported_hash"] == client["server_recomputed_hash"]
         assert client["payload_bytes_up"] > 6_000_000  # ~6,3 MB thật trên dây, không phải số tự suy
         assert client["payload_bytes_down"] == client["payload_bytes_up"]  # cùng kiến trúc, cùng dtype
-        assert client["probe_up_mb_per_s"] == 11.5
-        assert client["probe_down_mb_per_s"] is None  # -1 = không đo, không ghi thành 0
-    assert record["slowest_client_wall_ms"] == 1501.0
+        assert client["probe_up_mb_per_s"] == 11.5 and client["probe_down_mb_per_s"] == 20.0       # số server đo, không phải 999 client khai
+        assert client["probe_rtt_persistent_ms"] == 2.0 and client["probe_rtt_ms"] == 2.0
+        assert client["local_train_time_s"] != 0.001 and client["local_train_time_source"] == "server_estimate"
+        assert client["response_ms"] in (1500.0, 1501.0)
+        assert not {"client_wall_ms", "client_decode_ms", "client_encode_ms", "accuracy", "loss"} & set(client)
+    assert record["slowest_response_ms"] == 1501.0
     assert record["server_aggregate_ms"] > 0 and record["transfer_estimate_ms"] is not None
 
 

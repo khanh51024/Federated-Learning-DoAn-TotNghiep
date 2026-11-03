@@ -407,17 +407,51 @@ class AuditedFlowerFedAvg:
         expected_smoke: Optional[bool] = None,
         progress_file: Optional[str | Path] = None,
         probe_payload_bytes: int = -1,
+        probe_server: Optional[ProbeServer] = None,
+        min_clients: Optional[int] = None,
     ) -> Any:
         from flwr.common import FitIns, ndarrays_to_parameters, parameters_to_ndarrays
+        from flwr.server.client_proxy import ClientProxy
         from flwr.server.strategy import FedAvg
+
+        required_clients = int(num_clients if min_clients is None else min_clients)
+        if not 1 <= required_clients <= num_clients:
+            raise ValueError(f"min_clients={required_clients} phải nằm trong [1, num_clients={num_clients}]")
 
         _key_model = create_model(num_classes=38, pretrained=False)
         model_keys = list(_key_model.state_dict().keys())
         # Khóa THAM SỐ HỌC ĐƯỢC (không gồm bộ đệm BatchNorm): dùng để đo mức học thật, tách khỏi chuẩn update cũ.
         learnable_keys = frozenset(name for name, _ in _key_model.named_parameters())
 
+        class _TimedProxy(ClientProxy):
+            """Bọc một ClientProxy để SERVER bấm giờ từ lúc gửi yêu cầu học đến lúc nhận đủ trả lời (đồng hồ của server, gồm tải xuống + học + tải lên)."""
+
+            def __init__(self, inner: Any, sink: Dict[tuple, float], server_round: int) -> None:
+                super().__init__(inner.cid)
+                self._inner, self._sink, self._round = inner, sink, int(server_round)
+                self.properties = getattr(inner, "properties", {})
+
+            def get_properties(self, *args: Any, **kwargs: Any) -> Any:
+                return self._inner.get_properties(*args, **kwargs)
+
+            def get_parameters(self, *args: Any, **kwargs: Any) -> Any:
+                return self._inner.get_parameters(*args, **kwargs)
+
+            def fit(self, *args: Any, **kwargs: Any) -> Any:
+                started = time.perf_counter()
+                result = self._inner.fit(*args, **kwargs)
+                self._sink[(self._round, str(self.cid))] = (time.perf_counter() - started) * 1000.0
+                return result
+
+            def evaluate(self, *args: Any, **kwargs: Any) -> Any:
+                return self._inner.evaluate(*args, **kwargs)
+
+            def reconnect(self, *args: Any, **kwargs: Any) -> Any:
+                return self._inner.reconnect(*args, **kwargs)
+
         class _AuditedFedAvg(FedAvg):
             def __init__(self) -> None:
+                self._response_ms: Dict[tuple, float] = {}
                 self._parent_by_round: Dict[int, Dict[str, np.ndarray]] = {}
                 self._fit_started_at: Dict[int, float] = {}
                 self._parent_hash_by_round: Dict[int, str] = {}
@@ -425,10 +459,13 @@ class AuditedFlowerFedAvg:
                 self.audit_rounds: List[Dict[str, Any]] = []
                 self.failed_rounds: List[Dict[str, Any]] = []
                 self.final_parameters: Any = initial_parameters
+                # fraction_evaluate=0: client KHÔNG tự đánh giá và gửi độ chính xác; mô hình chung do server đánh giá trên tập giữ riêng của server.
                 super().__init__(
                     fraction_fit=1.0,
-                    min_fit_clients=num_clients,
-                    min_available_clients=num_clients,
+                    fraction_evaluate=0.0,
+                    min_fit_clients=required_clients,
+                    min_evaluate_clients=0,
+                    min_available_clients=required_clients,
                     initial_parameters=initial_parameters,
                 )
 
@@ -451,6 +488,7 @@ class AuditedFlowerFedAvg:
                 self._down_payload_bytes_by_round[int(server_round)] = int(sum(len(t) for t in parameters.tensors))
 
                 pairs = super().configure_fit(server_round, parameters, client_manager)
+                pairs = [(_TimedProxy(client, self._response_ms, server_round), fit_ins) for client, fit_ins in pairs]
                 # Đồng hồ vòng chỉ bắt đầu SAU khi đủ client đã kết nối (sample() chờ client): đặt trước đó thì vòng 1 bị cộng
                 # thêm thời gian khởi động client (15-22 s đo được) và bị đọc nhầm là thời gian truyền.
                 self._fit_started_at[int(server_round)] = time.perf_counter()
@@ -495,7 +533,8 @@ class AuditedFlowerFedAvg:
                 local_train_times: List[float] = []
                 client_records: List[Dict[str, Any]] = []
                 validate_ms = 0.0
-                client_wall_values: List[float] = []
+                response_values: List[float] = []
+                transfer_values: List[float] = []
 
                 for client_proxy, fit_res in results:
                     validate_started = time.perf_counter()
@@ -531,10 +570,40 @@ class AuditedFlowerFedAvg:
                     )
                     if learnable is not None:
                         learnable_norms.append(float(learnable["norm"]))
-                    local_train_time_s = float(fit_res.metrics.get("local_train_time_s", 0.0))
-                    local_train_times.append(local_train_time_s)
-                    probe_rtt_ms = float(fit_res.metrics.get("probe_rtt_ms", -1.0))
                     client_id = int(fit_res.metrics.get("client_id", -1))
+                    # Mọi số thời gian và tốc độ mạng đều do SERVER đo (đồng hồ của server); client không gửi số nào trong số này.
+                    response_ms = self._response_ms.pop((int(server_round), str(client_proxy.cid)), None)
+                    link = probe_server.take_measurement(int(server_round), client_id) if probe_server is not None else None
+                    link = link or {}
+                    payload_up = int(sum(len(t) for t in fit_res.parameters.tensors))
+                    payload_down = int(self._down_payload_bytes_by_round.get(int(server_round), 0))
+                    rtt_ms = link.get("rtt_ms_p50")
+                    up_rate, down_rate = link.get("up_mb_per_s_net"), link.get("down_mb_per_s_net")
+                    mib = 1024 * 1024
+                    predicted_transfer_ms = (
+                        (payload_down / mib / down_rate + payload_up / mib / up_rate) * 1000.0 + rtt_ms
+                        if up_rate and down_rate and rtt_ms is not None else None
+                    )
+                    probe_total_ms = link.get("probe_total_ms")
+                    if response_ms is None:
+                        local_train_time_s, train_source = None, "unavailable"
+                    else:
+                        overhead_ms = (probe_total_ms or 0.0) + (predicted_transfer_ms if predicted_transfer_ms is not None else (rtt_ms or 0.0))
+                        local_train_time_s = max(response_ms - overhead_ms, 0.0) / 1000.0
+                        train_source = "server_estimate" if predicted_transfer_ms is not None else "server_estimate_without_bandwidth"
+                    if local_train_time_s is not None:
+                        local_train_times.append(local_train_time_s)
+                    if response_ms is not None:
+                        response_values.append(float(response_ms))
+                    if predicted_transfer_ms is not None:
+                        transfer_values.append(float(predicted_transfer_ms))
+                    # Độ biến thiên ||Delta_k|| client khai chỉ để ĐỐI CHIẾU với số server tự tính từ trọng số nhận được.
+                    reported_norm = _optional_number(fit_res.metrics.get("update_norm"))
+                    norm_matches = (
+                        None if reported_norm is None
+                        else abs(reported_norm - validation.received_update_norm) <= 1e-3 * max(1.0, validation.received_update_norm)
+                    )
+                    probe_rtt_ms = float(rtt_ms) if rtt_ms is not None else -1.0
                     data_mode = str(fit_res.metrics.get("data_mode", "unknown"))
                     training_seed = int(fit_res.metrics.get("training_seed", -1))
                     partition_id = str(fit_res.metrics.get("partition_id", "unknown"))
@@ -546,7 +615,14 @@ class AuditedFlowerFedAvg:
                         "client_id": client_id,
                         "flower_cid": str(client_proxy.cid),
                         "num_examples": int(fit_res.num_examples),
-                        "local_train_time_s": local_train_time_s,
+                        # Ước lượng của SERVER: thời gian phản hồi trừ thời gian đo mạng và thời gian truyền dự đoán (xem local_train_time_source).
+                        "local_train_time_s": round(local_train_time_s, 3) if local_train_time_s is not None else None,
+                        "local_train_time_source": train_source,
+                        "response_ms": response_ms,
+                        "predicted_transfer_ms": predicted_transfer_ms,
+                        "probe_total_ms": probe_total_ms,
+                        "update_norm_reported": reported_norm,
+                        "update_norm_matches": norm_matches,
                         "probe_rtt_ms": probe_rtt_ms if probe_rtt_ms >= 0 else None,
                         "data_mode": data_mode,
                         "training_seed": training_seed,
@@ -563,20 +639,14 @@ class AuditedFlowerFedAvg:
                         "client_reported_hash": client_reported_hash,
                         "server_recomputed_hash": server_recomputed_hash,
                         # Byte THẬT đã tuần tự hóa nhận được từ client này (gồm phần đầu .npy của từng mảng).
-                        "payload_bytes_up": int(sum(len(t) for t in fit_res.parameters.tensors)),
-                        "payload_bytes_down": int(self._down_payload_bytes_by_round.get(int(server_round), 0)),
-                        # Các số đo đồng hồ của CHÍNH client; None = client không đo/không có probe.
-                        "client_wall_ms": _optional_number(fit_res.metrics.get("client_wall_ms")),
-                        "client_decode_ms": _optional_number(fit_res.metrics.get("client_decode_ms")),
-                        "client_encode_ms": _optional_number(fit_res.metrics.get("client_encode_ms")),
-                        "probe_connect_ms": _optional_number(fit_res.metrics.get("probe_connect_ms")),
-                        "probe_rtt_persistent_ms": _optional_number(fit_res.metrics.get("probe_rtt_persistent_ms")),
-                        "probe_up_mb_per_s": _optional_number(fit_res.metrics.get("probe_up_mb_per_s")),
-                        "probe_down_mb_per_s": _optional_number(fit_res.metrics.get("probe_down_mb_per_s")),
-                        "probe_payload_bytes": _optional_number(fit_res.metrics.get("probe_payload_bytes")),
+                        "payload_bytes_up": payload_up,
+                        "payload_bytes_down": payload_down,
+                        # Số đo mạng do SERVER điều khiển và bấm giờ (network_probe.ProbeServer._run_measurement); None = không đo được.
+                        "probe_rtt_persistent_ms": rtt_ms,
+                        "probe_up_mb_per_s": up_rate,
+                        "probe_down_mb_per_s": down_rate,
+                        "probe_payload_bytes": link.get("payload_bytes"),
                     }
-                    if record["client_wall_ms"] is not None:
-                        client_wall_values.append(float(record["client_wall_ms"]))
 
                     if client_id in seen_ids or client_id < 0 or client_id >= num_clients:
                         raise RuntimeError(f"Round {server_round}: duplicate or invalid client_id {client_id}")
@@ -619,6 +689,17 @@ class AuditedFlowerFedAvg:
                         )
                         continue
 
+                    if norm_matches is False:
+                        rejected_count += 1
+                        record["status"] = "rejected_update_norm_mismatch"
+                        record["validation_reason"] = "update_norm_mismatch"
+                        client_records.append(record)
+                        print(
+                            f"[!] Flower client {client_proxy.cid} rejected: update_norm_mismatch "
+                            f"(client={reported_norm:.4f} server={validation.received_update_norm:.4f})"
+                        )
+                        continue
+
                     if not validation.accepted:
                         rejected_count += 1
                         record["status"] = "rejected"
@@ -642,7 +723,7 @@ class AuditedFlowerFedAvg:
                     client_records.append(record)
                     accepted_results.append((client_proxy, fit_res))
 
-                if failures or len(results) != num_clients or len(accepted_results) != num_clients:
+                if failures or len(results) < required_clients or len(accepted_results) != len(results):
                     # Lưu bằng chứng của vòng thất bại TRƯỚC khi hủy vòng (trước đây chỉ in ra stdout).
                     self.failed_rounds.append({"round": int(server_round), "clients": client_records, "failures": len(failures)})
                     self._write_progress({
@@ -650,7 +731,9 @@ class AuditedFlowerFedAvg:
                         "failed_round": self.failed_rounds[-1], "rounds": self.audit_rounds,
                     })
                     raise RuntimeError(
-                        f"Round {server_round} requires exactly {num_clients} accepted clients; "
+                        f"Round {server_round} requires "
+                        + (f"exactly {num_clients} accepted clients" if required_clients == num_clients else f"at least {required_clients} clients and all of them accepted")
+                        + "; "
                         f"received={len(results)} accepted={len(accepted_results)} failures={len(failures)}"
                     )
                 updates = [
@@ -700,13 +783,9 @@ class AuditedFlowerFedAvg:
                     time.perf_counter() - self._fit_started_at.get(int(server_round), time.perf_counter())
                 ) * 1000.0
                 max_train_ms = max(local_train_times, default=0.0) * 1000.0
-                slowest_wall_ms = max(client_wall_values) if client_wall_values else None
-                # Phần còn lại của vòng khi trừ việc server tự làm và việc client chậm nhất làm trong máy nó:
-                # tải xuống + tải lên + gRPC + xếp hàng của client chậm nhất. Là ƯỚC LƯỢNG (client phải khai client_wall_ms).
-                transfer_estimate_ms = (
-                    max(0.0, elapsed_ms - validate_ms - aggregate_ms - eval_ms - slowest_wall_ms)
-                    if slowest_wall_ms is not None else None
-                )
+                slowest_response_ms = max(response_values) if response_values else None
+                # Thời gian truyền dự đoán của client chậm nhất (byte ÷ tốc độ SERVER đo + RTT). Là ƯỚC LƯỢNG, không phải đo trực tiếp từng gói.
+                transfer_estimate_ms = max(transfer_values) if transfer_values else None
                 valid_rtts = [float(r["probe_rtt_ms"]) for r in client_records if r.get("probe_rtt_ms") is not None]
                 metrics.update(
                     {
@@ -740,7 +819,8 @@ class AuditedFlowerFedAvg:
                         "server_validate_ms": float(validate_ms),
                         "server_aggregate_ms": float(aggregate_ms),
                         "server_eval_ms": float(eval_ms),
-                        "slowest_client_wall_ms": slowest_wall_ms,
+                        "slowest_response_ms": slowest_response_ms,
+                        "min_clients_required": required_clients,
                         "transfer_estimate_ms": transfer_estimate_ms,
                         "mean_probe_rtt_ms": float(np.mean(valid_rtts)) if valid_rtts else None,
                         "max_probe_rtt_ms": float(np.max(valid_rtts)) if valid_rtts else None,
@@ -778,13 +858,15 @@ def start_flower_server(
     expected_smoke: Optional[bool] = None,
     probe_payload_bytes: int = -1,
     pretrained_init: bool = False,
+    min_clients: Optional[int] = None,
 ) -> Any:
     """Khởi chạy Flower Server lắng nghe kết nối từ các client process qua IP:Port."""
     import flwr as fl
     from flwr.common import ndarrays_to_parameters, parameters_to_ndarrays
 
     print(f"[*] Starting Flower Server listening on {server_address}")
-    print(f"[*] Configured for {num_clients} clients, {rounds} round(s), seed={seed}...")
+    required_clients = int(num_clients if min_clients is None else min_clients)
+    print(f"[*] Configured for up to {num_clients} clients (at least {required_clients} to start each round), {rounds} round(s), seed={seed}...")
 
     random.seed(seed)
     np.random.seed(seed)
@@ -838,7 +920,7 @@ def start_flower_server(
     probe_port = flower_port + 1
     if probe_payload_bytes > ProbeServer.MAX_PAYLOAD_BYTES:
         raise ValueError(f"probe_payload_bytes vượt trần {ProbeServer.MAX_PAYLOAD_BYTES} byte của probe server")
-    probe_server = ProbeServer(bind_host, probe_port, allow_payload=probe_payload_bytes >= 0)
+    probe_server = ProbeServer(bind_host, probe_port, allow_payload=probe_payload_bytes >= 0, measure_payload_bytes=max(probe_payload_bytes, 0))
     probe_server.start()
 
     strategy = AuditedFlowerFedAvg.build(
@@ -856,6 +938,8 @@ def start_flower_server(
         expected_smoke=expected_smoke,
         progress_file=progress_file,
         probe_payload_bytes=probe_payload_bytes,
+        probe_server=probe_server,
+        min_clients=required_clients,
     )
 
     try:
@@ -868,7 +952,7 @@ def start_flower_server(
         probe_server.stop()
 
     if len(strategy.audit_rounds) != rounds or any(
-        audit.get("accepted_clients") != num_clients for audit in strategy.audit_rounds
+        int(audit.get("accepted_clients", 0)) < required_clients for audit in strategy.audit_rounds
     ):
         raise RuntimeError(
             f"Flower run incomplete: {len(strategy.audit_rounds)}/{rounds} audited rounds; "
@@ -922,6 +1006,7 @@ def start_flower_server(
             "server_address": server_address,
             "probe_port": int(probe_port),
             "num_clients_required": int(num_clients),
+            "min_clients_required": int(required_clients),
             "require_real_clients": bool(require_real_clients),
             "rounds": int(rounds),
             "seed": int(seed),
@@ -977,7 +1062,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Flower FedAvg Server")
     parser.add_argument("--mode", choices=["simulation", "deployment"], default="simulation")
     parser.add_argument("--rounds", type=int, default=5)
-    parser.add_argument("--num-clients", type=int, default=5)
+    parser.add_argument("--num-clients", type=int, default=5, help="Tổng số client dự kiến (số shard 0..N-1)")
+    parser.add_argument("--min-clients", type=int, default=None, help="Số client tối thiểu để một vòng được bắt đầu; mặc định bằng --num-clients (chờ đủ, không ai vào trễ)")
     parser.add_argument("--host", type=str, default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8089)
     parser.add_argument("--local-epochs", type=int, default=1)
@@ -1015,6 +1101,7 @@ if __name__ == "__main__":
         start_flower_server(
             server_address=f"{args.host}:{args.port}",
             num_clients=args.num_clients,
+            min_clients=args.min_clients,
             rounds=args.rounds,
             local_epochs=args.local_epochs,
             seed=args.seed,

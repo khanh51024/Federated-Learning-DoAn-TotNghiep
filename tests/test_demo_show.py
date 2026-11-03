@@ -128,3 +128,22 @@ def test_run_table_counts_transport_checks_and_skips_centralized_fields(tmp_path
     (central / "history.jsonl").write_text(json.dumps({"step": 0, "lr": 0.1, "val": {"top1": 0.5}, "seconds": 1.0, "train": {"loss": 1.0}}) + "\n", encoding="utf-8")
     text = "\n".join(ds.run_lines(central, 1))
     assert "băm" not in text.lower() and "một tiến trình" in text
+
+
+def test_flower_table_shows_server_measured_numbers_and_norm_check():
+    history = _history()
+    audit = history["audit_rounds"][0]
+    audit["server_validation_metrics"] = {"accuracy": 0.4321, "loss": 2.345, "macro_f1": 0.3}
+    client = audit["clients"][0]
+    client.update(local_train_time_source="server_estimate", response_ms=12500.0, received_update_norm=3.1416, update_norm_reported=3.1416, update_norm_matches=True)
+    good = "\n".join(ds.flower_lines(history))
+    assert "độ chính xác 43.21%" in good and "máy chủ ước lượng" in good and "phản hồi 12.50 giây" in good
+    assert "client khai 3.1416 / máy chủ tự tính 3.1416 -> KHỚP" in good
+    client.update(update_norm_reported=6.2832, update_norm_matches=False)
+    assert "-> SAI" in "\n".join(ds.flower_lines(history))
+
+
+def test_flower_table_survives_a_round_without_transfer_estimate():
+    history = _history()
+    history["audit_rounds"][0]["transfer_estimate_ms"] = None
+    assert "chưa ước tính" in "\n".join(ds.flower_lines(history))
