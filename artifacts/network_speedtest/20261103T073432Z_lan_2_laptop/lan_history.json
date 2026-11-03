@@ -1,0 +1,405 @@
+{
+  "server_address": "0.0.0.0:18089",
+  "probe_port": 18090,
+  "num_clients_required": 2,
+  "require_real_clients": true,
+  "rounds": 3,
+  "seed": 42,
+  "pretrained_init": true,
+  "evaluation_dataset_root": null,
+  "evaluation_partition_dir": null,
+  "require_real_evaluation": false,
+  "final_test_metrics": null,
+  "checkpoint_file": "tmp\\demo_lan\\global.pt",
+  "final_model_hash": "2aaf7cd23e3a80ad83f24735b9e9549db18563b7a48734907f5e1fbabd1e096e",
+  "audit_rounds": [
+    {
+      "round": 1,
+      "clients": [
+        {
+          "client_id": 0,
+          "flower_cid": "c7eef0bb695a440b80df6cd767fc6f5b",
+          "num_examples": 380,
+          "local_train_time_s": 14.398,
+          "probe_rtt_ms": 17.80689999986862,
+          "data_mode": "real",
+          "training_seed": 42,
+          "partition_id": "partition",
+          "partition_config_sha256": "15c0a09af5a964fad41faacd7e9f9c698dc5b64a6b5770ac81c4c0d5eebd9e29",
+          "client_manifest_sha256": "a5f99d204263edcc819f871578e8ccf4b8452429b75a171a90b6aa34ff809edc",
+          "received_update_norm": 8.491687845873763,
+          "received_learnable_update_norm": 0.7745965592892858,
+          "learnable_update_relative": 0.0038923167727035364,
+          "validation_reason": "ok",
+          "status": "ok",
+          "upload_hash_ok": true,
+          "client_reported_hash": "16d5bb71c66e55111b8c15cf0e800b116fbed497c31f99ef7fc21c787bff7b24",
+          "server_recomputed_hash": "16d5bb71c66e55111b8c15cf0e800b116fbed497c31f99ef7fc21c787bff7b24",
+          "payload_bytes_up": 6307176,
+          "payload_bytes_down": 6307176,
+          "client_wall_ms": 14536.501699999917,
+          "client_decode_ms": 5.823999999847729,
+          "client_encode_ms": 1.7026000000441854,
+          "probe_connect_ms": 14.624800000092364,
+          "probe_rtt_persistent_ms": 0.17109999998865533,
+          "probe_up_mb_per_s": 1238.0453839906827,
+          "probe_down_mb_per_s": 2133.687427952086,
+          "probe_payload_bytes": 6275944.0
+        },
+        {
+          "client_id": 1,
+          "flower_cid": "0bee9ca394ee4be3a079c8030df03fa5",
+          "num_examples": 380,
+          "local_train_time_s": 24.2,
+          "probe_rtt_ms": 31.506499999977677,
+          "data_mode": "real",
+          "training_seed": 42,
+          "partition_id": "partition",
+          "partition_config_sha256": "15c0a09af5a964fad41faacd7e9f9c698dc5b64a6b5770ac81c4c0d5eebd9e29",
+          "client_manifest_sha256": "d52db1ca677f7c65dc554e1bba9a98c62b054bed52d0ca7df5216b1595d1cdcb",
+          "received_update_norm": 8.541606842168932,
+          "received_learnable_update_norm": 0.7855277166876341,
+          "learnable_update_relative": 0.003947245402035032,
+          "validation_reason": "ok",
+          "status": "ok",
+          "upload_hash_ok": true,
+          "client_reported_hash": "6e61c83b87d3a1bb17b7f1dab40205aaf9662c8730683e8319f4985e032a2c45",
+          "server_recomputed_hash": "6e61c83b87d3a1bb17b7f1dab40205aaf9662c8730683e8319f4985e032a2c45",
+          "payload_bytes_up": 6307176,
+          "payload_bytes_down": 6307176,
+          "client_wall_ms": 27928.80309999964,
+          "client_decode_ms": 3.1107999998312152,
+          "client_encode_ms": 2.511099999992439,
+          "probe_connect_ms": 22.074200000133715,
+          "probe_rtt_persistent_ms": 10.32409999970696,
+          "probe_up_mb_per_s": 3.205955642569814,
+          "probe_down_mb_per_s": 3.8418386655507186,
+          "probe_payload_bytes": 6275944.0
+        }
+      ],
+      "parent_model_hash": "a3937527052a339e840b2f092abd30460ecda00b13e5a163c6a822528a612bb6",
+      "global_model_hash": "aa0c1f0b6e7d3b8dd960ad16a157ec6310b34a0eaafcd7b50f5d233475e12237",
+      "mean_received_learnable_update_norm": 0.78006213798846,
+      "accepted_clients": 2,
+      "suspicious_clients": 0,
+      "rejected_clients": 0,
+      "round_fit_elapsed_ms": 33258.18840000011,
+      "estimated_comm_overhead_ms": 9058.188400000108,
+      "server_validate_ms": 52.0646999998462,
+      "server_aggregate_ms": 38.09780000028695,
+      "server_eval_ms": 0.0,
+      "slowest_client_wall_ms": 27928.80309999964,
+      "transfer_estimate_ms": 5239.222800000331,
+      "mean_probe_rtt_ms": 24.65669999992315,
+      "max_probe_rtt_ms": 31.506499999977677,
+      "server_validation_metrics": null
+    },
+    {
+      "round": 2,
+      "clients": [
+        {
+          "client_id": 0,
+          "flower_cid": "c7eef0bb695a440b80df6cd767fc6f5b",
+          "num_examples": 380,
+          "local_train_time_s": 10.986,
+          "probe_rtt_ms": 13.953299999684532,
+          "data_mode": "real",
+          "training_seed": 42,
+          "partition_id": "partition",
+          "partition_config_sha256": "15c0a09af5a964fad41faacd7e9f9c698dc5b64a6b5770ac81c4c0d5eebd9e29",
+          "client_manifest_sha256": "a5f99d204263edcc819f871578e8ccf4b8452429b75a171a90b6aa34ff809edc",
+          "received_update_norm": 7.596869768783666,
+          "received_learnable_update_norm": 0.8307429056581753,
+          "learnable_update_relative": 0.004174660736753195,
+          "validation_reason": "ok",
+          "status": "ok",
+          "upload_hash_ok": true,
+          "client_reported_hash": "7d6cf5d756ff29ae627a6dbbf9435ae025c536cd60ead953c39d741311261861",
+          "server_recomputed_hash": "7d6cf5d756ff29ae627a6dbbf9435ae025c536cd60ead953c39d741311261861",
+          "payload_bytes_up": 6307176,
+          "payload_bytes_down": 6307176,
+          "client_wall_ms": 11107.140699999945,
+          "client_decode_ms": 1.8969000002471148,
+          "client_encode_ms": 1.678000000083557,
+          "probe_connect_ms": 15.029900000172347,
+          "probe_rtt_persistent_ms": 0.22249999983614543,
+          "probe_up_mb_per_s": 1249.6777474246471,
+          "probe_down_mb_per_s": 1869.150433673686,
+          "probe_payload_bytes": 6275944.0
+        },
+        {
+          "client_id": 1,
+          "flower_cid": "0bee9ca394ee4be3a079c8030df03fa5",
+          "num_examples": 380,
+          "local_train_time_s": 16.664,
+          "probe_rtt_ms": 260.6307000000925,
+          "data_mode": "real",
+          "training_seed": 42,
+          "partition_id": "partition",
+          "partition_config_sha256": "15c0a09af5a964fad41faacd7e9f9c698dc5b64a6b5770ac81c4c0d5eebd9e29",
+          "client_manifest_sha256": "d52db1ca677f7c65dc554e1bba9a98c62b054bed52d0ca7df5216b1595d1cdcb",
+          "received_update_norm": 7.687906785980277,
+          "received_learnable_update_norm": 0.8219906430798446,
+          "learnable_update_relative": 0.004130678745821158,
+          "validation_reason": "ok",
+          "status": "ok",
+          "upload_hash_ok": true,
+          "client_reported_hash": "757ff26763d1dd77ef94bc025994ecc816fee171ef3e131d318d0cc90b99ee16",
+          "server_recomputed_hash": "757ff26763d1dd77ef94bc025994ecc816fee171ef3e131d318d0cc90b99ee16",
+          "payload_bytes_up": 6307176,
+          "payload_bytes_down": 6307176,
+          "client_wall_ms": 27961.55190000036,
+          "client_decode_ms": 1.2420000002748566,
+          "client_encode_ms": 2.3868999996921048,
+          "probe_connect_ms": 21.19689999972252,
+          "probe_rtt_persistent_ms": 11.761899999783054,
+          "probe_up_mb_per_s": 0.9819625375443642,
+          "probe_down_mb_per_s": 1.3050014835302053,
+          "probe_payload_bytes": 6275944.0
+        }
+      ],
+      "parent_model_hash": "aa0c1f0b6e7d3b8dd960ad16a157ec6310b34a0eaafcd7b50f5d233475e12237",
+      "global_model_hash": "5c9c65bbf5bf424869940cd7a6f012255e90045b01fedb470dfdccb6a4019e94",
+      "mean_received_learnable_update_norm": 0.82636677436901,
+      "accepted_clients": 2,
+      "suspicious_clients": 0,
+      "rejected_clients": 0,
+      "round_fit_elapsed_ms": 34718.77949999998,
+      "estimated_comm_overhead_ms": 18054.779499999982,
+      "server_validate_ms": 46.74470000009023,
+      "server_aggregate_ms": 35.82059999962439,
+      "server_eval_ms": 0.0,
+      "slowest_client_wall_ms": 27961.55190000036,
+      "transfer_estimate_ms": 6674.662299999905,
+      "mean_probe_rtt_ms": 137.2919999998885,
+      "max_probe_rtt_ms": 260.6307000000925,
+      "server_validation_metrics": null
+    },
+    {
+      "round": 3,
+      "clients": [
+        {
+          "client_id": 1,
+          "flower_cid": "0bee9ca394ee4be3a079c8030df03fa5",
+          "num_examples": 380,
+          "local_train_time_s": 16.651,
+          "probe_rtt_ms": 53.044799999952374,
+          "data_mode": "real",
+          "training_seed": 42,
+          "partition_id": "partition",
+          "partition_config_sha256": "15c0a09af5a964fad41faacd7e9f9c698dc5b64a6b5770ac81c4c0d5eebd9e29",
+          "client_manifest_sha256": "d52db1ca677f7c65dc554e1bba9a98c62b054bed52d0ca7df5216b1595d1cdcb",
+          "received_update_norm": 7.065272103185178,
+          "received_learnable_update_norm": 0.8160710252746745,
+          "learnable_update_relative": 0.0041010702437234954,
+          "validation_reason": "ok",
+          "status": "ok",
+          "upload_hash_ok": true,
+          "client_reported_hash": "14d2c397112d0e48e4f133425cc6ed933d6c0c0536b2d097a6a9cdc1a80979c2",
+          "server_recomputed_hash": "14d2c397112d0e48e4f133425cc6ed933d6c0c0536b2d097a6a9cdc1a80979c2",
+          "payload_bytes_up": 6307176,
+          "payload_bytes_down": 6307176,
+          "client_wall_ms": 25550.97670000032,
+          "client_decode_ms": 3.207600000223465,
+          "client_encode_ms": 2.6845000002140296,
+          "probe_connect_ms": 5.907300000217219,
+          "probe_rtt_persistent_ms": 4.247599999871454,
+          "probe_up_mb_per_s": 1.3875513431922883,
+          "probe_down_mb_per_s": 1.4069554429428357,
+          "probe_payload_bytes": 6275944.0
+        },
+        {
+          "client_id": 0,
+          "flower_cid": "c7eef0bb695a440b80df6cd767fc6f5b",
+          "num_examples": 380,
+          "local_train_time_s": 11.005,
+          "probe_rtt_ms": 14.799000000039086,
+          "data_mode": "real",
+          "training_seed": 42,
+          "partition_id": "partition",
+          "partition_config_sha256": "15c0a09af5a964fad41faacd7e9f9c698dc5b64a6b5770ac81c4c0d5eebd9e29",
+          "client_manifest_sha256": "a5f99d204263edcc819f871578e8ccf4b8452429b75a171a90b6aa34ff809edc",
+          "received_update_norm": 6.937356686552716,
+          "received_learnable_update_norm": 0.8224338457940386,
+          "learnable_update_relative": 0.004133045859925939,
+          "validation_reason": "ok",
+          "status": "ok",
+          "upload_hash_ok": true,
+          "client_reported_hash": "0b05bcabf09bd81a66c49f7151c649488ac657b6555045faf7de15a84b785fc0",
+          "server_recomputed_hash": "0b05bcabf09bd81a66c49f7151c649488ac657b6555045faf7de15a84b785fc0",
+          "payload_bytes_up": 6307176,
+          "payload_bytes_down": 6307176,
+          "client_wall_ms": 11148.877900000116,
+          "client_decode_ms": 1.8482000000403787,
+          "client_encode_ms": 1.7347999996673025,
+          "probe_connect_ms": 14.566800000011426,
+          "probe_rtt_persistent_ms": 0.16959999993559904,
+          "probe_up_mb_per_s": 1214.2102538557292,
+          "probe_down_mb_per_s": 2219.291261782475,
+          "probe_payload_bytes": 6275944.0
+        }
+      ],
+      "parent_model_hash": "5c9c65bbf5bf424869940cd7a6f012255e90045b01fedb470dfdccb6a4019e94",
+      "global_model_hash": "2aaf7cd23e3a80ad83f24735b9e9549db18563b7a48734907f5e1fbabd1e096e",
+      "mean_received_learnable_update_norm": 0.8192524355343564,
+      "accepted_clients": 2,
+      "suspicious_clients": 0,
+      "rejected_clients": 0,
+      "round_fit_elapsed_ms": 31939.403299999867,
+      "estimated_comm_overhead_ms": 15288.403299999867,
+      "server_validate_ms": 45.86590000008073,
+      "server_aggregate_ms": 34.98830000035014,
+      "server_eval_ms": 0.0,
+      "slowest_client_wall_ms": 25550.97670000032,
+      "transfer_estimate_ms": 6307.572399999117,
+      "mean_probe_rtt_ms": 33.92189999999573,
+      "max_probe_rtt_ms": 53.044799999952374,
+      "server_validation_metrics": null
+    }
+  ],
+  "metrics_distributed_fit": {
+    "accepted_clients": [
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        2
+      ],
+      [
+        3,
+        2
+      ]
+    ],
+    "suspicious_clients": [
+      [
+        1,
+        0
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        3,
+        0
+      ]
+    ],
+    "rejected_clients": [
+      [
+        1,
+        0
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        3,
+        0
+      ]
+    ],
+    "mean_received_update_norm": [
+      [
+        1,
+        8.516647344021347
+      ],
+      [
+        2,
+        7.642388277381972
+      ],
+      [
+        3,
+        7.001314394868947
+      ]
+    ],
+    "mean_received_learnable_update_norm": [
+      [
+        1,
+        0.78006213798846
+      ],
+      [
+        2,
+        0.82636677436901
+      ],
+      [
+        3,
+        0.8192524355343564
+      ]
+    ],
+    "mean_probe_rtt_ms": [
+      [
+        1,
+        24.65669999992315
+      ],
+      [
+        2,
+        137.2919999998885
+      ],
+      [
+        3,
+        33.92189999999573
+      ]
+    ],
+    "max_probe_rtt_ms": [
+      [
+        1,
+        31.506499999977677
+      ],
+      [
+        2,
+        260.6307000000925
+      ],
+      [
+        3,
+        53.044799999952374
+      ]
+    ],
+    "round_fit_elapsed_ms": [
+      [
+        1,
+        33258.18840000011
+      ],
+      [
+        2,
+        34718.77949999998
+      ],
+      [
+        3,
+        31939.403299999867
+      ]
+    ],
+    "estimated_comm_overhead_ms": [
+      [
+        1,
+        9058.188400000108
+      ],
+      [
+        2,
+        18054.779499999982
+      ],
+      [
+        3,
+        15288.403299999867
+      ]
+    ]
+  },
+  "losses_distributed": [
+    [
+      1,
+      3.295899987220764
+    ],
+    [
+      2,
+      2.832450032234192
+    ],
+    [
+      3,
+      2.2149499654769897
+    ]
+  ],
+  "losses_centralized": [],
+  "metrics_distributed": {},
+  "metrics_centralized": {}
+}

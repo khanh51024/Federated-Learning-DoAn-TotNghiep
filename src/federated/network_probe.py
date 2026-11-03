@@ -16,6 +16,8 @@ Two protocols share the port, chosen by the first 4 bytes of a connection:
 
 from __future__ import annotations
 
+import hashlib
+import secrets
 import socket
 import struct
 import threading
@@ -77,6 +79,8 @@ class ProbeServer:
             raise ValueError(f"measure_payload_bytes phải nằm trong [0, {self.MAX_PAYLOAD_BYTES}]")
         self.measure_payload_bytes = int(measure_payload_bytes)
         self._measurements: Dict[tuple, Dict[str, Any]] = {}
+        # Muối riêng từng lần chạy: mã băm IP chỉ để biết hai client có cùng nguồn không; không dò ngược được ra IP (IPv4 đếm hết được nếu không có muối).
+        self._peer_salt = secrets.token_bytes(16)
         self._measurements_lock = threading.Lock()
         self._slots = threading.BoundedSemaphore(self.MAX_CONNECTIONS)
         self._stop = threading.Event()
@@ -98,7 +102,7 @@ class ProbeServer:
             s.settimeout(0.5)
             while not self._stop.is_set():
                 try:
-                    conn, _ = s.accept()
+                    conn, peer = s.accept()
                 except socket.timeout:
                     continue
                 except OSError:
@@ -110,19 +114,28 @@ class ProbeServer:
                     conn.close()
                     continue
                 try:
-                    threading.Thread(target=self._handle, args=(conn,), daemon=True).start()
+                    threading.Thread(target=self._handle, args=(conn, peer), daemon=True).start()
                 except Exception:  # noqa: BLE001 — không tạo được luồng: nhả chỗ và đóng kết nối
                     self._slots.release()
                     conn.close()
 
-    def _handle(self, conn: socket.socket) -> None:
+    def _handle(self, conn: socket.socket, peer: Any = None) -> None:
         try:
             with conn:
-                self._serve_connection(conn)
+                self._serve_connection(conn, peer)
         finally:
             self._slots.release()
 
-    def _serve_connection(self, conn: socket.socket) -> None:
+    def _peer_facts(self, conn: socket.socket, peer: Any) -> Dict[str, Any]:
+        """Client này có nằm trên chính máy chủ không, và nguồn của nó (mã băm có muối, KHÔNG lưu IP để trang công khai không lộ IP)."""
+        peer_ip = str(peer[0]) if peer else ""
+        if peer_ip.startswith("::ffff:"):
+            peer_ip = peer_ip[len("::ffff:"):]
+        local_ip = str(conn.getsockname()[0])
+        same_host = peer_ip.startswith("127.") or peer_ip == "::1" or peer_ip == local_ip
+        return {"peer_hash": hashlib.sha256(self._peer_salt + peer_ip.encode()).hexdigest()[:8], "same_host_as_server": same_host}
+
+    def _serve_connection(self, conn: socket.socket, peer: Any = None) -> None:
         deadline = time.monotonic() + self.CONNECTION_DEADLINE_S
         moved = 0
         conn.settimeout(10.0)
@@ -133,7 +146,7 @@ class ProbeServer:
                 conn.sendall(b"PONG")
                 return
             if command == b"SMEA":  # server-driven measurement: the server times everything on its own clock
-                self._run_measurement(conn)
+                self._run_measurement(conn, peer)
                 return
             for _ in range(self.MAX_COMMANDS_PER_CONNECTION):
                 if time.monotonic() > deadline or moved > self.MAX_BYTES_PER_CONNECTION:
@@ -156,7 +169,7 @@ class ProbeServer:
         except (OSError, ConnectionError, struct.error):
             pass
 
-    def _run_measurement(self, conn: socket.socket) -> None:
+    def _run_measurement(self, conn: socket.socket, peer: Any = None) -> None:
         """Phép đo do server điều khiển: server gửi lệnh, client chỉ làm theo và KHÔNG gửi con số nào.
 
         Mọi thời gian đo bằng đồng hồ của server. Client chỉ khai (số vòng, số thứ tự client) để server biết ghi kết quả vào đâu;
@@ -177,6 +190,7 @@ class ProbeServer:
             "client_id": int(client_id), "round": int(round_num),
             "rtt_ms_min": ordered[0], "rtt_ms_p50": p50, "rtt_ms_max": ordered[-1],
             "rtt_samples_ms": [round(v, 3) for v in rtts], "payload_bytes": 0,
+            **self._peer_facts(conn, peer),
         }
         size = self.measure_payload_bytes if self.allow_payload else 0
         if size > 0:

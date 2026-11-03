@@ -191,13 +191,24 @@ Máy chủ chạy trên VM Oracle `149.118.51.118`, **không có client nào tr�
 
 **Ngày đo:**
 
-1. **VM** (Claude chạy giúp): `bash ~/net10-code/scripts/remote/run_network_server.sh --ip <IP laptop 1> --ip <IP laptop 2> --clients 10 --rounds 20`. Script mở cổng riêng cho 2 IP đó, tự đóng khi xong, khi lỗi, hoặc sau 3 giờ.
+1. **VM** (Claude chạy giúp): `bash <thư mục bản web>/scripts/remote/run_network_server.sh --ip <IP laptop 1> --ip <IP laptop 2> --clients 10 --rounds 20`. Script mở cổng riêng cho 2 IP đó, tự đóng khi xong, khi lỗi, hoặc sau 3 giờ.
+   Mở sẵn `https://datn.tranngochung.id.vn/#flower` để chiếu: trang tự cập nhật, không cần tải lại.
 2. **Laptop 1:** mở PowerShell trong thư mục dự án, gõ `deploy\lan_client\CHAY_CLIENT.bat 0 5 149.118.51.118`. Ảnh lấy từ `tmp\net10`.
 3. **Laptop 2:** giải nén `LAPTOP_2_10_CLIENT.zip` (có sẵn Python, không cần cài), nhấp đúp hoặc gõ `CHAY_CLIENT.bat 5 5 149.118.51.118`.
 4. Mỗi laptop mở 5 cửa sổ client. Máy chủ chờ đủ 10 rồi mới học. Cửa sổ chính báo `XONG` khi 5 client của máy đó học hết 20 vòng.
-5. Kết quả nằm ở `~/net10-out/history.json` trên VM (Claude kéo về cần khóa SSH). Xem bằng `.\.venv\Scripts\python.exe scripts/demo_show.py flower --history tmp/demo/net10_history.json`.
+5. Kết quả nằm ở `artifacts/network_live/<giờ>_10client/` của bản web trên VM. Trang `#flower` và lệnh `python scripts/demo_show.py flower` (chạy trên VM) cùng đọc thư mục này bằng cùng một hàm tính, nên số trên web và terminal trùng nhau.
 
-**Đọc kết quả:** mỗi vòng có độ chính xác do máy chủ tính, mỗi client có dòng "học (máy chủ ước lượng)", "phản hồi", độ trễ, tốc độ lên xuống, dòng "độ biến thiên ... KHỚP" và dòng băm KHỚP.
+**Trên trang `#flower`:**
+
+- Dải trên cùng: đang chờ mấy client, đang học vòng mấy, hoặc đã xong, kèm thanh tiến độ. Nếu máy chủ chết thì dải báo mất liên lạc sau khoảng 90 giây; nếu một client rớt thì báo lỗi ở vòng đó.
+- Khung client: mỗi ô là một client, xếp theo máy. Viền cam là đang học, nền xanh là đã gửi trọng số về.
+- 6 ô bằng chứng: mã băm khớp, độ biến thiên khớp, vòng đủ client, số client chung máy chủ (phải là 0), số MiB đã truyền, độ chính xác do máy chủ tính.
+- 2 biểu đồ: độ chính xác và loss theo vòng; thời gian mỗi vòng dùng vào đâu.
+- Bảng từng client, có thanh kéo để xem lại bất kỳ vòng nào. Không chạy trực tiếp được thì vẫn dùng thanh kéo này để trình bày lần đo đã lưu.
+
+So sánh phân tán và tập trung, kiểm trọng số, các lần đo tốc độ cũ: chương 4, tab **Phân tán và tập trung**. Số lấy từ cùng tệp với mục 9 trên terminal.
+
+**Đọc kết quả trên terminal:** mỗi vòng có độ chính xác do máy chủ tính, mỗi client có dòng "học (máy chủ ước lượng)", "phản hồi", độ trễ, tốc độ lên xuống, dòng "độ biến thiên ... KHỚP" và dòng băm KHỚP.
 
 **Nói rõ khi trả lời thầy:**
 - Ảnh là PlantVillage thật, mỗi client 380 ảnh, mô hình khởi tạo từ ImageNet và chỉ học trong ít vòng, nên độ chính xác ở phép đo này **chỉ chứng minh hệ thống chạy đúng**. Kết quả độ chính xác chính vẫn là 18 run 40 vòng.

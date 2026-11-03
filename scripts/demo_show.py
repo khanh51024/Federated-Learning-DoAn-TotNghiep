@@ -1,6 +1,7 @@
 """In kết quả kiểm chứng ra màn hình cho dễ xem khi demo (docs/HUONG_DAN_DEMO_THU_CONG.md). Chỉ đọc tệp đã có, không train, không đọc split calibration.
 
     python scripts/demo_show.py flower --history tmp/demo/history.json     # server_app thủ công: băm, độ trễ, tốc độ từng client từng vòng
+    python scripts/demo_show.py flower                                     # lần chạy mới nhất trong artifacts/network_live: đúng lần trang #flower đang hiện
     python scripts/demo_show.py run --run runs/v4_sweep/fedavg_s42_label_alpha_0_1_flower   # run train_v4: thông số Flower theo vòng
     python scripts/demo_show.py compare --a runs/v4b/centralized_s42 --b runs/v4b/fedavg_s42   # so trọng số và dự đoán của hai mô hình
     python scripts/demo_show.py w0 --seed 42 --run runs/v4_sweep/fedavg_s42_label_alpha_0_1_flower   # W0 dựng từ hạt giống so với W0 run đã ghi
@@ -22,49 +23,55 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from src.federated.run_view import list_runs, load_run, run_view  # noqa: E402
+from src.federated.verification_view import SWEEP_ROWS, sweep_view  # noqa: E402,F401
+
 
 def read_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def view_lines(view: dict[str, Any], server_address: Any = None) -> list[str]:
+    """In bản tóm tắt của src/federated/run_view.py: cùng một hàm tính với trang #flower của web, nên số hai bên trùng nhau."""
+    address = f", máy chủ {server_address}" if server_address else ""
+    lines = [f"Flower: {view['num_clients']} client, {view['total_rounds']} vòng, seed {view['seed']}{address}"]
+    for round_ in view["rounds"]:
+        transfer = round_["transfer_s"]
+        transfer_text = "chưa ước tính" if transfer is None else f"{transfer:.2f} giây"
+        lines.append(f"\nVòng {round_['round']}: {round_['accepted']} client được nhận, {round_['rejected']} bị từ chối; cả vòng {round_['elapsed_s']:.2f} giây; "
+                     f"gộp {round_['aggregate_ms']:.1f} ms; truyền ước tính {transfer_text}")
+        # Độ chính xác do MÁY CHỦ tính trên ảnh giữ riêng của máy chủ (client không gửi độ chính xác).
+        if round_["accuracy"] is not None:
+            lines.append(f"  máy chủ tự kiểm mô hình chung trên ảnh giữ riêng: độ chính xác {round_['accuracy'] * 100:.2f}%, loss {round_['loss']:.3f}")
+        lines.append(f"  mã băm mô hình chung: trước {round_['parent_hash']}  sau {round_['global_hash']}")
+        for client in round_["clients"]:
+            speed = "" if client["up_mb_s"] is None or client["down_mb_s"] is None else f", lên {client['up_mb_s']:.2f} MiB/s, xuống {client['down_mb_s']:.2f} MiB/s"
+            train = "chưa rõ" if client["train_s"] is None else f"{client['train_s']:.2f}"
+            who = " (máy chủ ước lượng)" if client["train_is_server_estimate"] else ""
+            reply = "" if client["response_s"] is None else f", phản hồi {client['response_s']:.2f} giây"
+            rtt = "chưa đo" if client["rtt_ms"] is None else f"{client['rtt_ms']:.1f} ms"
+            place = "" if client["machine"] == "chưa rõ" else f" ({client['machine']})"
+            learnable = "" if client["learnable_update_norm"] is None else f", độ lệch cập nhật {client['learnable_update_norm']:.4f}"
+            lines.append(f"  client {client['client_id']}{place}: {client['num_examples']} ảnh, học {train} giây{who}{reply}, RTT {rtt}{speed}{learnable}")
+            if client["update_norm_reported"] is not None:
+                lines.append(f"            độ biến thiên: client khai {client['update_norm_reported']:.4f} / máy chủ tự tính {client['update_norm_server']:.4f} -> {'KHỚP' if client['update_norm_matches'] is True else 'SAI'}")
+            lines.append(f"            băm client gửi {client['client_hash']} / máy chủ tính lại {client['server_hash']} -> {'KHỚP' if client['hash_ok'] else 'SAI'}")
+    if view["client_reported_losses"]:
+        lines.append("\nMức sai (loss) qua các vòng: " + " -> ".join(f"{value:.2f}" for _, value in view["client_reported_losses"]))
+    checks = view["checks"]
+    lines.append(f"\nTổng cộng {checks['hash_ok']}/{checks['hash_total']} lượt băm khớp. Mã băm mô hình cuối: {view['final_model_hash']}")
+    if checks["host_check_available"]:
+        lines.append(f"Client đến từ {checks['machines']} máy; số client chung máy với máy chủ: {checks['clients_on_server_host']}.")
+    if view["final_test"]:
+        lines.append(f"Máy chủ kiểm lần cuối trên ảnh giữ riêng: độ chính xác {view['final_test']['accuracy'] * 100:.2f}%, macro-F1 {view['final_test']['macro_f1']:.4f}.")
+    if view["caveat"]:
+        lines.append(view["caveat"])
+    return lines
+
+
 def flower_lines(history: dict[str, Any]) -> list[str]:
     """Bảng từng vòng từ nhật ký của src/federated/server_app.py."""
-    lines = [f"Flower: {history['num_clients_required']} client, {history['rounds']} vòng, seed {history['seed']}, máy chủ {history['server_address']}"]
-    checks = passed = 0
-    for round_ in history["audit_rounds"]:
-        transfer = round_.get("transfer_estimate_ms")
-        transfer_text = "chưa ước tính" if transfer is None else f"{transfer / 1000:.2f} giây"
-        lines.append(f"\nVòng {round_['round']}: {round_['accepted_clients']} client được nhận, {round_['rejected_clients']} bị từ chối; cả vòng {round_['round_fit_elapsed_ms'] / 1000:.2f} giây; "
-                     f"gộp {round_['server_aggregate_ms']:.1f} ms; truyền ước tính {transfer_text}")
-        # Độ chính xác do MÁY CHỦ tính trên ảnh giữ riêng của máy chủ (client không gửi độ chính xác).
-        server_eval = round_.get("server_validation_metrics")
-        if server_eval:
-            lines.append(f"  máy chủ tự kiểm mô hình chung trên ảnh giữ riêng: độ chính xác {server_eval['accuracy'] * 100:.2f}%, loss {server_eval['loss']:.3f}")
-        lines.append(f"  mã băm mô hình chung: trước {round_['parent_model_hash'][:12]}  sau {round_['global_model_hash'][:12]}")
-        for client in sorted(round_["clients"], key=lambda c: c["client_id"]):
-            checks += 1
-            same = bool(client["upload_hash_ok"] and client["client_reported_hash"] == client["server_recomputed_hash"])
-            passed += same
-            # Cùng trường với báo cáo (summarize_network_speedtest): RTT trên kết nối giữ sẵn; nhật ký cũ chỉ có RTT một lần.
-            rtt = client.get("probe_rtt_persistent_ms", client.get("probe_rtt_ms"))
-            up, down = client.get("probe_up_mb_per_s"), client.get("probe_down_mb_per_s")
-            speed = "" if up is None or down is None else f", lên {up:.2f} MiB/s, xuống {down:.2f} MiB/s"
-            train = client.get("local_train_time_s")
-            train_text = "chưa rõ" if train is None else f"{train:.2f}"
-            reply = client.get("response_ms")
-            # Nhật ký mới: máy chủ tự bấm giờ (ước lượng); nhật ký cũ: client tự đo.
-            who = " (máy chủ ước lượng)" if client.get("local_train_time_source", "client_measured") != "client_measured" else ""
-            reply_text = "" if reply is None else f", phản hồi {reply / 1000:.2f} giây"
-            lines.append(f"  client {client['client_id']}: {client['num_examples']} ảnh, học {train_text} giây{who}{reply_text}, RTT {'chưa đo' if rtt is None else f'{rtt:.1f} ms'}{speed}, độ lệch cập nhật {client['received_learnable_update_norm']:.4f}")
-            if client.get("update_norm_reported") is not None:
-                norm_ok = client.get("update_norm_matches") is True
-                lines.append(f"            độ biến thiên: client khai {client['update_norm_reported']:.4f} / máy chủ tự tính {client['received_update_norm']:.4f} -> {'KHỚP' if norm_ok else 'SAI'}")
-            lines.append(f"            băm client gửi {client['client_reported_hash'][:12]} / máy chủ tính lại {client['server_recomputed_hash'][:12]} -> {'KHỚP' if same else 'SAI'}")
-    losses = history.get("losses_distributed") or []
-    if losses:
-        lines.append("\nMức sai (loss) qua các vòng: " + " -> ".join(f"{value:.2f}" for _, value in losses))
-    lines.append(f"\nTổng cộng {passed}/{checks} lượt băm khớp. Mã băm mô hình cuối: {history['final_model_hash'][:16]}")
-    return lines
+    return view_lines(run_view({"history": history}), history.get("server_address"))
 
 
 def run_lines(run: Path, every: int) -> list[str]:
@@ -148,26 +155,16 @@ def w0_lines(seed: int, run: Path | None) -> list[str]:
     return lines
 
 
-SWEEP_ROWS = [("centralized", "", "Tập trung, học bằng SGD (trần chính)"), ("centralized+adamw", "", "Tập trung, học bằng AdamW (đối chứng)"), ("fedavg+flower", "iid", "Phân tán trên Flower, chia đều"),
-              ("fedavg", "label_alpha_100_0", "Phân tán, gần như đều (α=100)"), ("fedavg", "label_alpha_10_0", "Phân tán, lệch ít (α=10)"), ("fedavg", "label_alpha_1_0", "Phân tán, lệch vừa (α=1)"),
-              ("fedavg", "label_alpha_0_5", "Phân tán, lệch nhiều (α=0,5)"), ("fedavg", "label_alpha_0_1", "Phân tán tự cài, rất lệch (α=0,1)"), ("fedavg+flower", "label_alpha_0_1", "Phân tán trên Flower, rất lệch (α=0,1)"),
-              ("local", "label_alpha_0_1", "Mỗi máy tự học một mình, rất lệch")]
-SWEEP_SOURCES = (("plantvillage_test", "PlantVillage"), ("field_same_source_test", "Ngoài đồng"), ("plantdoc_holdout_v3", "PlantDoc"))
-
-
 def sweep_lines(table: Path) -> list[str]:
-    """Bảng độ chính xác đọc thẳng từ artifacts/sweep_v4/table_main.csv để số trên màn hình luôn khớp báo cáo."""
-    with table.open(encoding="utf-8", newline="") as handle:
-        rows = {(row["variant"], row["scheme"], row["part"]): row for row in csv.DictReader(handle)}
-    first = rows[("centralized", "", "all_test")]
-    lines = [f"Độ chính xác trên {first['n']} ảnh thử, trung bình ± độ lệch chuẩn của {first['seeds']} lần chạy:", ""]
-    for variant, scheme, label in SWEEP_ROWS:
-        row = rows[(variant, scheme, "all_test")]
-        gap = "" if not scheme else f"   thấp hơn tập trung {float(row['gap_top1_points']):5.2f} điểm"
-        lines.append(f"  {label:<40} {float(row['top1_mean_%']):6.2f} ± {float(row['top1_std_%']):.2f}%   macro-F1 {float(row['macro_f1_mean_%']):6.2f}%{gap}")
-    lines += ["", "Tách theo nguồn ảnh (độ chính xác, %):", f"  {'':<40} " + " ".join(f"{name:>12}" for _, name in SWEEP_SOURCES)]
-    for variant, scheme, label in SWEEP_ROWS:
-        lines.append(f"  {label:<40} " + " ".join(f"{float(rows[(variant, scheme, part)]['top1_mean_%']):12.2f}" for part, _ in SWEEP_SOURCES))
+    """Bảng độ chính xác lấy từ verification_view: cùng hàm với tab "Phân tán và tập trung" của web."""
+    view = sweep_view(table)
+    lines = [f"Độ chính xác trên {view['images']} ảnh thử, trung bình ± độ lệch chuẩn của {view['seeds']} lần chạy:", ""]
+    for row in view["rows"]:
+        gap = "" if row["gap"] is None else f"   thấp hơn tập trung {row['gap']:5.2f} điểm"
+        lines.append(f"  {row['label']:<40} {row['top1']:6.2f} ± {row['top1_std']:.2f}%   macro-F1 {row['macro_f1']:6.2f}%{gap}")
+    lines += ["", "Tách theo nguồn ảnh (độ chính xác, %):", f"  {'':<40} " + " ".join(f"{name:>12}" for name in view["sources"])]
+    for row in view["rows"]:
+        lines.append(f"  {row['label']:<40} " + " ".join(f"{row['by_source'][name]:12.2f}" for name in view["sources"]))
     return lines
 
 
@@ -252,7 +249,9 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     commands = parser.add_subparsers(dest="command", required=True)
-    commands.add_parser("flower").add_argument("--history", type=Path, required=True)
+    flower_parser = commands.add_parser("flower", help="không truyền gì = lần chạy mới nhất trong artifacts/network_live, đúng lần web đang hiện")
+    flower_parser.add_argument("--history", type=Path, default=None)
+    flower_parser.add_argument("--run", type=Path, default=None, help="thư mục một lần chạy trong artifacts/network_live")
     run_parser = commands.add_parser("run")
     run_parser.add_argument("--run", type=Path, required=True)
     run_parser.add_argument("--every", type=int, default=10, help="in mỗi N vòng")
@@ -271,7 +270,13 @@ def main() -> int:
     speed_parser.add_argument("--names", default="", help="client_id=tên máy, cách nhau bởi dấu phẩy")
     args = parser.parse_args()
     if args.command == "flower":
-        lines = flower_lines(read_json(args.history))
+        if args.history is not None:
+            lines = flower_lines(read_json(args.history))
+        else:
+            runs = [args.run] if args.run is not None else list_runs(ROOT / "artifacts" / "network_live")[:1]
+            if not runs:
+                raise SystemExit("Chưa có lần chạy nào trong artifacts/network_live; truyền --history hoặc --run")
+            lines = view_lines(run_view(load_run(runs[0])))
     elif args.command == "run":
         lines = run_lines(args.run, args.every)
     elif args.command == "compare":

@@ -9,6 +9,7 @@ import json
 import multiprocessing
 import socket
 import time
+from pathlib import Path
 
 import flwr as fl
 import pytest
@@ -16,6 +17,7 @@ import torch
 
 from src.federated.client_app import FlowerClientAdapter, PlantVillageClient
 from src.federated.network_probe import ProbeServer, obey_server_measurement
+from src.federated.run_view import load_run, run_view
 from src.federated.server_app import AuditedFlowerFedAvg, start_flower_server
 from src.model.mobilenetv3 import create_model, get_parameters
 
@@ -112,7 +114,7 @@ def test_min_clients_cannot_exceed_total_clients():
 def _server(port: int, metrics: str, checkpoint: str) -> None:
     # Tổng 3 client dự kiến nhưng chỉ cần 2 để bắt đầu: run phải chạy được với đúng 2 client.
     start_flower_server(server_address=f"127.0.0.1:{port}", num_clients=3, min_clients=2, rounds=2, local_epochs=1,
-                        metrics_file=metrics, checkpoint_file=checkpoint, probe_payload_bytes=64 * 1024)
+                        metrics_file=metrics, checkpoint_file=checkpoint, probe_payload_bytes=64 * 1024, progress_file=str(Path(metrics).with_name("progress.json")))
 
 
 def _client(client_id: int, port: int) -> None:
@@ -151,6 +153,14 @@ def test_flower_run_with_min_clients_records_server_measured_numbers(tmp_path):
             assert all(key not in row for audit in payload["audit_rounds"] for row in audit["clients"]), key
         ckpt = torch.load(checkpoint, map_location="cpu", weights_only=False)
         assert ckpt["num_clients"] == 3
+        # Tệp tiến độ mà web và terminal cùng đọc
+        progress = json.loads(metrics.with_name("progress.json").read_text(encoding="utf-8"))
+        assert progress["status"] == "finished" and progress["meta"]["num_clients"] == 3 and progress["meta"]["min_clients"] == 2 and progress["updated_at_utc"]
+        assert {reply["client_id"] for reply in progress["round_replies"]} == {0, 1}
+        assert len(progress["rounds"]) == 2
+        row = progress["rounds"][0]["clients"][0]
+        assert row["machine_id"] and len(row["peer_hash"]) == 8 and row["same_host_as_server"] is True, "client nối qua loopback phải bị ghi là cùng máy với máy chủ"
+        assert "127.0.0.1" not in json.dumps(run_view(load_run(metrics.parent))), "bản hiển thị không được chứa IP"
     finally:
         for proc in [*clients, server]:
             if proc.is_alive():

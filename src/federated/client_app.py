@@ -272,6 +272,8 @@ try:
                 "model_version": int(config.get("model_version", round_num - 1)),
                 "local_epochs": int(configured_local_epochs),
                 "client_id": int(self.core.client_id),
+                # Nhãn máy (băm tên máy, không phải tên thật) để nhóm client theo máy. Chỉ để hiển thị; "có chung máy với server không" do server tự kiểm từ IP.
+                "machine_id": hashlib.sha256(socket.gethostname().encode()).hexdigest()[:8],
                 "data_mode": str(self.core.data_mode),
                 "training_seed": int(self.core.seed),
                 "partition_id": str(self.core.partition_id),

@@ -1858,3 +1858,45 @@ body[data-group="demo"] .page-title { letter-spacing: -0.01em; }
   .verdict-grid { grid-template-columns: minmax(0, 1fr); }
   .comm-session { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Trang Flower: lần đo thật chạy trực tiếp */
+.live-stage { display: flex; align-items: stretch; gap: var(--space-3); }
+.live-side { flex: 2 1 0; display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.live-group, .live-server { padding: var(--space-3); border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-subtle); }
+.live-group { flex: 1 1 auto; }
+.live-server { flex: 1 1 0; min-width: 170px; display: flex; flex-direction: column; justify-content: center; text-align: center; border-color: var(--border-strong); }
+.live-server.is-flowing { border-color: var(--accent-emerald); }
+.live-group-title { margin: 0; font-weight: 600; }
+.live-group-sub { margin: 2px 0 0; font-size: var(--fs-xs); color: var(--text-muted); }
+.live-server-round { margin: var(--space-2) 0 0; font-size: var(--fs-lg); font-weight: 600; color: var(--accent-emerald); }
+.live-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+.live-chip { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; min-width: 52px; min-height: 42px; padding: 2px 6px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-surface); font-size: var(--fs-sm); transition: background-color .3s, border-color .3s; }
+.live-chip small { font-size: var(--fs-xs); color: var(--text-muted); }
+.live-chip.is-idle { opacity: .55; }
+.live-chip.is-connected { border-color: var(--accent-sky); color: var(--accent-sky); }
+.live-chip.is-learning { border-color: var(--accent-amber); color: var(--accent-amber); animation: live-breathe 1.6s ease-in-out infinite; }
+.live-chip.is-done { border-color: var(--accent-emerald); background: var(--accent-emerald); color: var(--bg-surface); }
+.live-chip.is-done small { color: var(--bg-surface); }
+@keyframes live-breathe { 50% { opacity: .55; } }
+.live-link { flex: 0 0 34px; align-self: center; height: 0; border-top: 2px dashed var(--border-strong); }
+.live-link.is-flowing { border-top-color: var(--accent-emerald); animation: live-breathe 1.2s ease-in-out infinite; }
+.live-key { display: inline-block; width: 12px; height: 12px; margin: 0 2px 0 var(--space-2); border: 1px solid var(--border-color); border-radius: 3px; vertical-align: -1px; }
+.live-key.is-learning { border-color: var(--accent-amber); }
+.live-key.is-done { background: var(--accent-emerald); border-color: var(--accent-emerald); }
+.live-key.is-connected { border-color: var(--accent-sky); }
+.live-key.is-idle { opacity: .55; }
+.live-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--space-3); }
+.live-tile { display: flex; flex-direction: column; gap: 2px; border: 1px solid var(--border-color); }
+.live-tile.is-ok { border-color: var(--accent-emerald); }
+.live-tile.is-ok .kpi-mini-value { color: var(--accent-emerald); }
+.live-tile.is-bad { border-color: var(--accent-rose); }
+.live-tile.is-bad .kpi-mini-value { color: var(--accent-rose); }
+.live-tile-note { font-size: var(--fs-xs); color: var(--text-muted); }
+.live-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.live-round-pick { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.live-round-pick input[type="range"] { flex: 1 1 220px; min-width: 160px; }
+.is-bad-row td { color: var(--accent-rose); }
+.is-muted-row td { color: var(--text-muted); }
+.form-control-sm { padding: 2px 6px; border: 1px solid var(--border-input); border-radius: var(--radius-sm); background: var(--bg-surface); color: inherit; }
+@media (prefers-reduced-motion: reduce) { .live-chip.is-learning, .live-link.is-flowing { animation: none; } }
+@media (max-width: 1100px) { .live-charts { grid-template-columns: minmax(0, 1fr); } .live-stage { flex-direction: column; } .live-link { display: none; } }

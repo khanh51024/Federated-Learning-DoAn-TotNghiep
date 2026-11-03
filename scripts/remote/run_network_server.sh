@@ -8,13 +8,14 @@
 #   Máy chủ chỉ giữ ảnh kiểm tra, KHÔNG giữ ảnh của client nào.
 # - Mở cổng Flower và cổng đo mạng (cổng + 1) CHỈ cho các IP khai bằng --ip, và tự gỡ khi xong, lỗi, hoặc sau --max-hours (mặc định 3).
 #   Quy tắc Oracle Security List (ngoài VM) phải do chủ tài khoản thêm và xóa tay.
-# - Không đụng dịch vụ web đang chạy: dùng chung mã/venv của bản đang phục vụ nhưng chạy tiến trình riêng, ưu tiên thấp, ghi ra thư mục riêng.
-# - Kết quả ở --out (mặc định ~/net10-out): history.json, global.pt, progress.json, server.log.
+# - Không đụng dịch vụ web đang chạy: dùng chung mã/venv của bản đang phục vụ nhưng chạy tiến trình riêng, ưu tiên thấp.
+# - Kết quả ghi vào artifacts/network_live/<giờ UTC> của bản web đó: history.json, global.pt, progress.json, server.log. Trang #flower và
+#   scripts/demo_show.py cùng đọc thư mục này (src/federated/run_view.py), nên web tự cập nhật theo từng vòng trong lúc chạy.
 set -euo pipefail
 
-RELEASE="${RELEASE:-$HOME/net10-code}"   # thư mục chứa src/ mới và .venv (liên kết tới venv của bản web); KHÔNG trỏ vào thư mục dịch vụ web đang chạy
+RELEASE="${RELEASE:-$(systemctl show cropfed-demo -p WorkingDirectory --value)}"   # bản web đang phục vụ: chỉ đọc mã và .venv, không đổi gì của dịch vụ
 DATA="$HOME/net10-data"
-OUT="$HOME/net10-out"
+OUT=""
 PORT=18089
 CLIENTS=10
 MIN_CLIENTS=""
@@ -36,6 +37,7 @@ while [ $# -gt 0 ]; do
   esac
 done
 MIN_CLIENTS="${MIN_CLIENTS:-$CLIENTS}"
+OUT="${OUT:-$RELEASE/artifacts/network_live/$(date -u +%Y%m%dT%H%M%SZ)_${CLIENTS}client}"
 
 [ ${#IPS[@]} -gt 0 ] || { echo "Cần ít nhất một --ip (IP công khai của laptop). Không mở cổng cho cả Internet." >&2; exit 2; }
 for ip in "${IPS[@]}"; do
@@ -47,7 +49,6 @@ if ss -ltn | awk '{print $4}' | grep -qE ":($PORT|$((PORT + 1)))$"; then
   echo "Cổng $PORT hoặc $((PORT + 1)) đang bận: còn máy chủ Flower cũ?" >&2; exit 2
 fi
 mkdir -p "$OUT"
-rm -f "$OUT/history.json" "$OUT/global.pt" "$OUT/progress.json"
 
 RULES=()
 cleanup() {

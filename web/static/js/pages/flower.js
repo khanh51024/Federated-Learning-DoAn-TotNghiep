@@ -4,6 +4,7 @@
 import { getJson, postJson } from "../core/api.js";
 import { clearCredential, storedAuthHeader, ADMIN_PAGE } from "../core/admin-auth.js";
 import { byId, esc, fmtInt, fmtNum, notify, setHtml, skeleton } from "../core/dom.js";
+import { mountLive, showLive } from "./flower-live.js";
 
 const REFRESH_MS = 3000;
 const EVIDENCE_TIMEOUT_MS = 30000; // một bảng bằng chứng có thể spawn vài tiến trình kiểm tra rồi mới trả lời
@@ -310,21 +311,25 @@ function bind(root) {
   });
 }
 
+const smokeOpen = () => byId("flower-smoke-fold")?.open === true;
+
 function schedule() {
   clearInterval(timer);
   timer = setInterval(() => {
     if (location.hash !== "#flower") { clearInterval(timer); return; } // rời trang: dừng poll
-    if (!document.hidden) refresh();
+    if (!document.hidden && smokeOpen()) refresh();     // phiên thử nằm trong khối gập: đóng thì không hỏi
   }, REFRESH_MS);
 }
 
 export async function mount() {
   bind(byId("flower-root"));
-  await refresh();
+  byId("flower-smoke-fold")?.addEventListener("toggle", () => { if (smokeOpen()) refresh(); });
+  await mountLive();
   schedule();
 }
 
 export async function onShow() {
-  await refresh();
+  await showLive();
+  if (smokeOpen()) await refresh();
   schedule();
 }

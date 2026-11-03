@@ -47,8 +47,8 @@ export const ROUTES = [
   },
   {
     id: "flower", step: 8, group: "Demo", label: "Flower",
-    title: "Flower có đang chạy thật không?",
-    desc: "Bằng chứng một phiên Flower thật: 5 client kết nối, các vòng gộp đủ cập nhật, mã băm khớp đến checkpoint",
+    title: "Học liên kết qua mạng thật",
+    desc: "Lần đo chạy bằng terminal hiện ở đây theo từng vòng: client chỉ gửi trọng số, số ảnh và độ biến thiên; máy chủ tự tính độ chính xác và độ trễ",
     load: () => import("../pages/flower.js"),
   },
   {

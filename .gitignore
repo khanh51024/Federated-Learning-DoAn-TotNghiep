@@ -57,6 +57,7 @@ data/partitions_stage2_scratch_v3/source_cache.json
 
 # Output runtime smoke (web demo runs, report experiments)
 artifacts/web_runs/
+artifacts/network_live/
 artifacts/report_experiments/
 artifacts/network_run_logs/
 

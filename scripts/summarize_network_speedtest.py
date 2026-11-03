@@ -97,6 +97,7 @@ def summarize_run(history: dict[str, Any], machines: dict[int, str], local_epoch
         out_rounds.append(entry)
     return {
         "rounds": len(rounds), "clients": len(per_client),
+        "clients_on_server_host": len({int(c["client_id"]) for a in rounds for c in a["clients"] if c.get("same_host_as_server") is True}),
         "local_epochs": epochs,
         "throughput_definition": "train_images_per_s counts unique shard examples; processed_train_images_per_s includes local epochs and is null when epochs are unknown",
         "all_upload_hashes_ok": all(c.get("upload_hash_ok") is True for a in rounds for c in a["clients"]),

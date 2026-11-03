@@ -87,6 +87,7 @@ GD4_COMPRESSION_JSON = "artifacts/gd4_compression.json"  # scripts/eval_gd4_comp
 MODEL_WEIGHT_COMPARISON_JSON = "artifacts/model_weight_comparison.json"  # scripts/compare_model_weights.py (khoảng cách trọng số, CKA, nội suy Centralized-FedAvg)
 AGGREGATION_EQUIVALENCE_JSON = "artifacts/aggregation_equivalence.json"  # scripts/aggregation_equivalence.py (FedSGD trùng GD tập trung, client drift)
 EXTERNAL_EVAL_RESULTS_JSON = "artifacts/external_eval_results.json"  # scripts/eval_external_set.py (7 mô hình trên PlantWild đã loại ảnh trùng)
+NETWORK_LIVE_DIR = "artifacts/network_live"  # scripts/remote/run_network_server.sh: mỗi lần chạy một thư mục (progress.json, history.json); web và terminal cùng đọc (src/federated/run_view.py)
 NETWORK_SPEEDTEST_DIR = "artifacts/network_speedtest"  # scripts/summarize_network_speedtest.py (đo tốc độ FedAvg giữa hai máy; KHÔNG phải độ chính xác)
 FOUNDATION_MODEL_EVAL_JSON = "artifacts/foundation_model_eval.json"  # scripts/eval_foundation_models.py (BioCLIP, DINOv2: zero-shot và kNN, không huấn luyện)
 DATA_GAP_REPORT_JSON = "artifacts/data_gap_report.json"  # scripts/report_data_gaps.py (ảnh ngoài đồng đã sẵn sàng theo lớp, trần Local-only)

@@ -17,10 +17,14 @@ import hashlib
 import json
 import logging
 import math
+import os
 import random
 import re
 import sys
+import threading
 import time
+import traceback
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -43,6 +47,7 @@ from src.model.mobilenetv3 import (
 )
 from .client_app import PlantVillageClient
 from .network_probe import ProbeServer
+from .run_view import HEARTBEAT_S
 from .strategy import aggregate_fedavg
 from .telemetry import ServerRoundTelemetry, TelemetryManager
 from .update_validator import learnable_update_stats, validate_client_update
@@ -409,6 +414,7 @@ class AuditedFlowerFedAvg:
         probe_payload_bytes: int = -1,
         probe_server: Optional[ProbeServer] = None,
         min_clients: Optional[int] = None,
+        run_meta: Optional[Dict[str, Any]] = None,
     ) -> Any:
         from flwr.common import FitIns, ndarrays_to_parameters, parameters_to_ndarrays
         from flwr.server.client_proxy import ClientProxy
@@ -426,9 +432,9 @@ class AuditedFlowerFedAvg:
         class _TimedProxy(ClientProxy):
             """Bọc một ClientProxy để SERVER bấm giờ từ lúc gửi yêu cầu học đến lúc nhận đủ trả lời (đồng hồ của server, gồm tải xuống + học + tải lên)."""
 
-            def __init__(self, inner: Any, sink: Dict[tuple, float], server_round: int) -> None:
+            def __init__(self, inner: Any, sink: Dict[tuple, float], server_round: int, on_reply: Any = None) -> None:
                 super().__init__(inner.cid)
-                self._inner, self._sink, self._round = inner, sink, int(server_round)
+                self._inner, self._sink, self._round, self._on_reply = inner, sink, int(server_round), on_reply
                 self.properties = getattr(inner, "properties", {})
 
             def get_properties(self, *args: Any, **kwargs: Any) -> Any:
@@ -440,7 +446,10 @@ class AuditedFlowerFedAvg:
             def fit(self, *args: Any, **kwargs: Any) -> Any:
                 started = time.perf_counter()
                 result = self._inner.fit(*args, **kwargs)
-                self._sink[(self._round, str(self.cid))] = (time.perf_counter() - started) * 1000.0
+                elapsed_ms = (time.perf_counter() - started) * 1000.0
+                self._sink[(self._round, str(self.cid))] = elapsed_ms
+                if self._on_reply is not None:
+                    self._on_reply(result, elapsed_ms)
                 return result
 
             def evaluate(self, *args: Any, **kwargs: Any) -> Any:
@@ -452,6 +461,9 @@ class AuditedFlowerFedAvg:
         class _AuditedFedAvg(FedAvg):
             def __init__(self) -> None:
                 self._response_ms: Dict[tuple, float] = {}
+                self._live_lock = threading.RLock()
+                # Trạng thái sống, ghi ra progress_file: web (/api/flower/live) và terminal cùng đọc tệp này.
+                self._live: Dict[str, Any] = {"meta": dict(run_meta or {}), "status": "waiting", "connected_clients": 0, "rounds": [], "round_replies": []}
                 self._parent_by_round: Dict[int, Dict[str, np.ndarray]] = {}
                 self._fit_started_at: Dict[int, float] = {}
                 self._parent_hash_by_round: Dict[int, str] = {}
@@ -470,13 +482,34 @@ class AuditedFlowerFedAvg:
                 )
 
             def _write_progress(self, payload: Dict[str, Any]) -> None:
-                if progress_file is None:
-                    return
-                progress_path = Path(progress_file)
-                progress_path.parent.mkdir(parents=True, exist_ok=True)
-                pending = progress_path.with_suffix(progress_path.suffix + ".tmp")
-                pending.write_text(json.dumps(payload), encoding="utf-8")
-                pending.replace(progress_path)
+                """Gộp vào trạng thái sống rồi ghi nguyên tử. Nhiều luồng cùng gọi (Flower gọi client song song), nên có khóa.
+                Ghi tiến độ hỏng không được làm hỏng việc học: chỉ cảnh báo."""
+                with self._live_lock:
+                    self._live.update(payload)
+                    self._live["updated_at_utc"] = _utc_now()
+                    if progress_file is None:
+                        return
+                    progress_path = Path(progress_file)
+                    progress_path.parent.mkdir(parents=True, exist_ok=True)
+                    pending = progress_path.with_suffix(progress_path.suffix + ".tmp")
+                    pending.write_text(json.dumps(self._live), encoding="utf-8")
+                    for attempt in range(5):
+                        try:
+                            pending.replace(progress_path)
+                            return
+                        except PermissionError:     # Windows: web đang mở tệp để đọc đúng lúc thay
+                            time.sleep(0.05 * (attempt + 1))
+                    logger.warning("Không thay được %s (đang bị tiến trình khác giữ); bỏ qua một lần cập nhật tiến độ", progress_path)
+
+            def update_live(self, **fields: Any) -> None:
+                self._write_progress(fields)
+
+            def _record_reply(self, result: Any, elapsed_ms: float) -> None:
+                """Một client vừa trả lời: ghi ngay để giao diện thấy client nào xong trong vòng, không phải đợi hết vòng."""
+                client_id = int(result.metrics.get("client_id", -1)) if getattr(result, "metrics", None) else -1
+                with self._live_lock:
+                    replies = [*(self._live.get("round_replies") or []), {"client_id": client_id, "response_ms": round(elapsed_ms, 1)}]
+                    self._write_progress({"round_replies": replies})
 
             def configure_fit(self, server_round, parameters, client_manager):
                 arrays = parameters_to_ndarrays(parameters)
@@ -488,11 +521,14 @@ class AuditedFlowerFedAvg:
                 self._down_payload_bytes_by_round[int(server_round)] = int(sum(len(t) for t in parameters.tensors))
 
                 pairs = super().configure_fit(server_round, parameters, client_manager)
-                pairs = [(_TimedProxy(client, self._response_ms, server_round), fit_ins) for client, fit_ins in pairs]
+                pairs = [(_TimedProxy(client, self._response_ms, server_round, self._record_reply), fit_ins) for client, fit_ins in pairs]
                 # Đồng hồ vòng chỉ bắt đầu SAU khi đủ client đã kết nối (sample() chờ client): đặt trước đó thì vòng 1 bị cộng
                 # thêm thời gian khởi động client (15-22 s đo được) và bị đọc nhầm là thời gian truyền.
                 self._fit_started_at[int(server_round)] = time.perf_counter()
                 self._write_progress({
+                    "status": "running",
+                    "round_replies": [],
+                    "round_participants": len(pairs),
                     "round_in_progress": int(server_round),
                     "completed_round": len(self.audit_rounds),
                     "connected_clients": int(client_manager.num_available()),
@@ -642,6 +678,9 @@ class AuditedFlowerFedAvg:
                         "payload_bytes_up": payload_up,
                         "payload_bytes_down": payload_down,
                         # Số đo mạng do SERVER điều khiển và bấm giờ (network_probe.ProbeServer._run_measurement); None = không đo được.
+                        "machine_id": str(fit_res.metrics.get("machine_id", "")),
+                        "peer_hash": link.get("peer_hash"),
+                        "same_host_as_server": link.get("same_host_as_server"),
                         "probe_rtt_persistent_ms": rtt_ms,
                         "probe_up_mb_per_s": up_rate,
                         "probe_down_mb_per_s": down_rate,
@@ -727,6 +766,7 @@ class AuditedFlowerFedAvg:
                     # Lưu bằng chứng của vòng thất bại TRƯỚC khi hủy vòng (trước đây chỉ in ra stdout).
                     self.failed_rounds.append({"round": int(server_round), "clients": client_records, "failures": len(failures)})
                     self._write_progress({
+                        "status": "failed", "error": f"Vòng {server_round}: nhận {len(accepted_results)}/{len(results)} client, cần ít nhất {required_clients}, lỗi {len(failures)}",
                         "round_in_progress": int(server_round), "completed_round": len(self.audit_rounds),
                         "failed_round": self.failed_rounds[-1], "rounds": self.audit_rounds,
                     })
@@ -839,6 +879,10 @@ class AuditedFlowerFedAvg:
         return _AuditedFedAvg()
 
 
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def start_flower_server(
     server_address: str = "127.0.0.1:8089",
     num_clients: int = 5,
@@ -863,6 +907,7 @@ def start_flower_server(
     """Khởi chạy Flower Server lắng nghe kết nối từ các client process qua IP:Port."""
     import flwr as fl
     from flwr.common import ndarrays_to_parameters, parameters_to_ndarrays
+    from flwr.server.client_manager import SimpleClientManager
 
     print(f"[*] Starting Flower Server listening on {server_address}")
     required_clients = int(num_clients if min_clients is None else min_clients)
@@ -940,15 +985,48 @@ def start_flower_server(
         probe_payload_bytes=probe_payload_bytes,
         probe_server=probe_server,
         min_clients=required_clients,
+        run_meta={
+            "num_clients": int(num_clients), "min_clients": int(required_clients), "rounds": int(rounds), "local_epochs": int(local_epochs),
+            "seed": int(seed), "pretrained_init": bool(pretrained_init), "started_at_utc": _utc_now(),
+            "require_real_clients": bool(require_real_clients), "server_evaluation": evaluation_loader is not None,
+            "eval_images": len(evaluation_loader.dataset) if evaluation_loader is not None else 0,
+        },
     )
 
+    class _LiveClientManager(SimpleClientManager):
+        """Báo số client đang nối ngay khi có client vào/ra, để thấy cảnh "đang chờ 6/10" trước khi vòng đầu bắt đầu."""
+
+        def register(self, client: Any) -> bool:
+            added = super().register(client)
+            strategy.update_live(connected_clients=self.num_available())
+            return added
+
+        def unregister(self, client: Any) -> None:
+            super().unregister(client)
+            strategy.update_live(connected_clients=self.num_available())
+
+    strategy.update_live(status="waiting", connected_clients=0)
+    # Ghi nhịp đều đặn, kể cả lúc đang chờ client: tệp ngừng cập nhật nghĩa là máy chủ đã chết, giao diện báo mất kết nối thay vì đứng "đang chạy".
+    heartbeat_stop = threading.Event()
+
+    def _heartbeat() -> None:
+        while not heartbeat_stop.wait(HEARTBEAT_S):
+            strategy.update_live()
+
+    threading.Thread(target=_heartbeat, name="live-heartbeat", daemon=True).start()
     try:
         history = fl.server.start_server(
             server_address=server_address,
             config=fl.server.ServerConfig(num_rounds=rounds),
             strategy=strategy,
+            client_manager=_LiveClientManager(),
         )
+    except BaseException as error:
+        if strategy._live.get("status") != "failed":     # lỗi vòng đã ghi câu rõ hơn ở aggregate_fit: không ghi đè
+            strategy.update_live(status="failed", error=str(error)[:500])
+        raise
     finally:
+        heartbeat_stop.set()
         probe_server.stop()
 
     if len(strategy.audit_rounds) != rounds or any(
@@ -1011,6 +1089,9 @@ def start_flower_server(
             "rounds": int(rounds),
             "seed": int(seed),
             "pretrained_init": bool(pretrained_init),
+            "local_epochs": int(local_epochs),
+            "started_at_utc": strategy._live["meta"].get("started_at_utc"),
+            "finished_at_utc": _utc_now(),
             "evaluation_dataset_root": str(evaluation_dataset_root) if evaluation_dataset_root is not None else None,
             "evaluation_partition_dir": str(evaluation_partition_dir) if evaluation_dataset_root is not None else None,
             "require_real_evaluation": bool(require_real_evaluation),
@@ -1027,6 +1108,7 @@ def start_flower_server(
         with open(metrics_path, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2)
 
+    strategy.update_live(status="finished", final_test_metrics=final_test_metrics, final_model_hash=final_model_hash, finished_at_utc=_utc_now())
     print("[+] Flower Network Server completed successfully!")
     return history
 
@@ -1098,7 +1180,7 @@ if __name__ == "__main__":
                 print(f"[!] Cảnh báo: {warning}")
         except ValueError as exc:
             parser.error(str(exc))
-        start_flower_server(
+        launch_args = dict(
             server_address=f"{args.host}:{args.port}",
             num_clients=args.num_clients,
             min_clients=args.min_clients,
@@ -1119,6 +1201,15 @@ if __name__ == "__main__":
             probe_payload_bytes=args.probe_payload_bytes,
             pretrained_init=args.pretrained_init,
         )
+        try:
+            start_flower_server(**launch_args)
+        except Exception:
+            # Sau lỗi, luồng gRPC của Flower giữ tiến trình sống khi client còn nối. Phải thoát hẳn để cổng được đóng và script dọn tường lửa ngay,
+            # không để tường lửa mở tới hết thời hạn. Trạng thái "failed" đã ghi vào tệp tiến độ trước đó.
+            traceback.print_exc()
+            sys.stdout.flush()
+            sys.stderr.flush()
+            os._exit(1)
     else:
         run_federated_simulation(
             partition_dir=args.partition_dir,

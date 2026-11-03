@@ -3,6 +3,7 @@ import { centralizedNoteHtml, holdoutPlantdocHtml, modelTraining, overallHtml, s
 import { getDetails, getEvidence, getSummary, modelsById } from "../core/store.js";
 import { attachCrosshair } from "../core/crosshair.js";
 import { barRise, lineDraw, makeChartWhenVisible, pillarColors } from "../core/charts.js";
+import { buildVerification } from "./verification.js";
 import { play } from "../core/motion.js";
 import { chartHtml } from "../core/comm-weights.js";
 import { factsOf, scopeText } from "../core/facts-text.js";
@@ -1007,7 +1008,7 @@ function buildCompression() {
 }
 
 const BUILDERS = {
-  summary: buildSummary, holdout: buildHoldout, errors: buildErrorAnalysis, calibration: buildCalibration, three: buildThree, compression: buildCompression,
+  summary: buildSummary, holdout: buildHoldout, errors: buildErrorAnalysis, calibration: buildCalibration, three: buildThree, compression: buildCompression, verification: buildVerification,
 };
 const building = new Map();
 

@@ -13,7 +13,7 @@ from starlette.concurrency import run_in_threadpool
 from src import registry as reg
 from src.common.image_io import to_rgb
 from web.demo_evidence import PROTOCOL_ID, load_evidence
-from web.services import evidence_service, model_service
+from web.services import evidence_service, model_service, verification_service
 
 router = APIRouter()
 
@@ -139,6 +139,12 @@ def get_evidence_summary() -> Dict[str, Any]:
 
     Mỗi phần fail-closed riêng; toàn bộ phần có số liệu mô hình chỉ ra khi cổng registry cho phép CẢ bộ."""
     return evidence_service.summary(_gated_evidence())
+
+
+@router.get("/api/evidence/verification")
+def get_evidence_verification() -> Dict[str, Any]:
+    """So sánh phân tán/tập trung, lịch sử đo tốc độ, kiểm trọng số: endpoint riêng vì /api/evidence/summary đã gần trần kích thước."""
+    return verification_service.build()
 
 
 @router.get("/api/compare")
