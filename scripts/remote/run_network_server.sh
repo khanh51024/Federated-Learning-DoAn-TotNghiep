@@ -74,7 +74,7 @@ echo "[server] $CLIENTS client (tối thiểu $MIN_CLIENTS để bắt đầu), 
 
 cd "$RELEASE"
 export PYTHONUNBUFFERED=1 PYTHONUTF8=1 OMP_NUM_THREADS=2 MKL_NUM_THREADS=2
-nice -n 10 timeout "$((MAX_HOURS * 3600))" .venv/bin/python -m src.federated.server_app \
+nice -n 10 timeout --foreground "$((MAX_HOURS * 3600))" .venv/bin/python -m src.federated.server_app \
   --mode deployment --host 0.0.0.0 --port "$PORT" --rounds "$ROUNDS" \
   --num-clients "$CLIENTS" --min-clients "$MIN_CLIENTS" --local-epochs 1 --seed 42 --pretrained-init \
   --require-real-clients --reject-suspicious-updates --max-update-norm 500 \

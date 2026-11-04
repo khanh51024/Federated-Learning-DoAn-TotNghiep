@@ -37,7 +37,17 @@ Mở sẵn 2 tab: `https://datn.tranngochung.id.vn/#flower` và chương 4, tab 
 | 2 | Còn gì chưa xong? | Chỉ nói, chủ động nói trước | "Tự học một mình mới có α=0,1. Lệch số lượng, lệch miền mới chia dữ liệu. 4 thuật toán có mã và test, chưa có kết quả. Tập niêm phong chưa mở, đúng quy tắc." |
 | 1 | Kế hoạch tiếp | Chỉ nói | "Khi có GPU: xong Đợt 2 trước, rồi FedProx, FedBN, SCAFFOLD, MOON." |
 
-**Chạy trực tiếp 7 client, 3 vòng:**
+**Chạy trực tiếp bằng nút trên web (không cần file `.bat` lúc demo):**
+
+Chuẩn bị một lần: mỗi laptop nhấp đúp `CAI_NUT_WEB.bat` (laptop 1 ở `deploy\lan_client`, laptop 2 trong thư mục đã giải nén). Đăng nhập ở `/quan-tri` trên laptop 1.
+
+1. Laptop 1, trang `#flower`: chọn `7 client, 3 vòng`, bấm **Bắt đầu lần đo**. Máy chủ mở trên VM, nhật ký máy chủ hiện ngay trên trang.
+2. Trên từng laptop, mở trang `#flower`, bấm **Mở client trên máy này**. Trình duyệt hỏi thì chọn Mở.
+3. Đủ client thì tự học. Muốn dừng sớm, bấm **Dừng lần đo** trên laptop đã bấm Bắt đầu.
+
+Sau demo, mỗi laptop nhấp đúp `GO_NUT_WEB.bat` để gỡ.
+
+**Dự phòng khi nút trên web lỗi, chạy bằng file:**
 
 1. Laptop 1: cắm ổ F chứa khóa SSH, nhấp đúp `DEMO_NHANH.bat`. File tự mở máy chủ trên VM, mở trang web và mở 5 client.
 2. Khi file báo `BÂY GIỜ`, laptop 2 nhấp đúp `LAPTOP_2_DEMO_NHANH.bat` trong thư mục đã giải nén.

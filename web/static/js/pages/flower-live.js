@@ -1,6 +1,7 @@
 // Demo · Flower: lần đo thật đang chạy (hoặc vừa chạy). Chạy bằng terminal và .bat; trang này chỉ đọc /api/flower/live.
 // Máy chủ tính sẵn mọi số trong src/federated/run_view.py, đúng hàm mà scripts/demo_show.py dùng, nên web và terminal luôn trùng nhau.
-import { getJson } from "../core/api.js";
+import { ADMIN_PAGE, clearCredential, readCredential, storedAuthHeader } from "../core/admin-auth.js";
+import { getJson, postJson } from "../core/api.js";
 import { makeChart, pillarColors } from "../core/charts.js";
 import { byId, copyButton, copyFromButton, esc, fmtInt, fmtNum, notify, setBar } from "../core/dom.js";
 
@@ -8,6 +9,12 @@ const ACTIVE_POLL_MS = 3000;
 const IDLE_POLL_MS = 15000;   // đã xong hoặc chưa có lần đo: vẫn hỏi chậm để tự thấy lần đo mới
 const TIMEOUT_MS = 12000;
 const DETAIL_DEBOUNCE_MS = 150;
+const FOLLOW_MS = 90000;
+const CLIENT_LINK = "cropfed-demo:start";     // CAI_NUT_WEB.bat đăng ký; lệnh trên máy không nhận gì từ địa chỉ này
+const PRESETS = [
+  { clients: 7, rounds: 3, label: "7 client, 3 vòng (2 laptop)" },
+  { clients: 5, rounds: 1, label: "5 client, 1 vòng (chỉ laptop 1)" },
+];
 const ROUND_BOUND = /^(client:|server$)/;   // các mục này đổi theo vòng đang xem
 
 let timer = 0;
@@ -21,6 +28,10 @@ let selected = null;          // mục đang mở, ví dụ "client:7"; null = k
 let detailKey = "";
 let detailToken = 0;
 let detailTimer = 0;
+let demo = { can_start: false, running: false };
+let demoBusy = false;         // đang chờ máy chủ trả lời nút Bắt đầu hoặc Dừng
+let followUntil = 0;          // vừa bấm Bắt đầu: hỏi nhanh để thấy ngay lần đo mới
+let lastControl = null;
 
 const num = (value, digits = 2) => (value === null || value === undefined ? "—" : fmtNum(value, digits));
 const isActive = state => state === "waiting" || state === "running" || state === "stale";
@@ -35,7 +46,9 @@ function bannerHtml(data) {
     waiting: { tone: "is-unknown", title: `Đang chờ client: ${data.connected_clients ?? 0}/${data.num_clients}`, meta: `Máy chủ chỉ bắt đầu khi đủ ${data.min_clients} client, nên không client nào vào trễ.` },
     running: { tone: "is-correct", title: `Đang học vòng ${data.round_in_progress}/${total}`, meta: `${replies}/${data.round_participants ?? data.num_clients} client đã gửi trọng số về ở vòng này.` },
     finished: { tone: "is-correct", title: `Đã xong ${done}/${total} vòng`, meta: `${data.num_clients} client từ ${data.checks.machines} máy${data.checks.host_check_available && data.checks.clients_on_server_host === 0 ? ", máy chủ tách riêng, không client nào chung máy" : ""}. Kết thúc lúc ${when(data.finished_at_utc)}.` },
-    failed: { tone: "is-wrong", title: `Lần đo dừng vì lỗi${data.failed_round ? ` ở vòng ${data.failed_round}` : ""}`, meta: data.error || "Xem nhật ký máy chủ." },
+    failed: data.error?.startsWith("Đã dừng bằng nút")
+      ? { tone: "is-unknown", title: "Lần đo đã dừng", meta: `${data.error} Cổng đo đã đóng.` }
+      : { tone: "is-wrong", title: `Lần đo dừng vì lỗi${data.failed_round ? ` ở vòng ${data.failed_round}` : ""}`, meta: data.error || "Xem nhật ký máy chủ." },
     stale: { tone: "is-wrong", title: "Mất liên lạc với máy chủ đo", meta: `${data.seconds_since_update ?? "?"} giây chưa có cập nhật. Máy chủ có thể đã dừng; số dưới đây là tới lần cập nhật cuối.` },
   };
   const state = states[data.state] || states.running;
@@ -380,9 +393,93 @@ function openDetail(item) {
   loadDetail({ reveal: true });
 }
 
+function controlHtml() {
+  const active = view && (view.state === "waiting" || view.state === "running");
+  if (active) {
+    return `<section class="panel live-control" aria-label="Điều khiển lần đo">
+        <div class="live-control-row">
+          <a class="btn btn-primary" href="${CLIENT_LINK}">Mở client trên máy này</a>
+          ${demo.running ? `<button type="button" class="btn" id="live-demo-stop"${demoBusy ? " disabled" : ""}>Dừng lần đo</button>` : ""}
+        </div>
+        <p class="field-hint mt-2">Bấm trên từng laptop, trình duyệt hỏi thì chọn Mở. Bấm mà không có gì xảy ra nghĩa là laptop đó chưa cài: chạy <code class="code">CAI_NUT_WEB.bat</code> một lần.</p>
+      </section>`;
+  }
+  if (!demo.can_start) return "";
+  if (!readCredential()) return `<p class="field-hint">Muốn chạy lần đo mới từ trang này, <a href="${ADMIN_PAGE}">đăng nhập quản trị</a> rồi quay lại.</p>`;
+  return `<section class="panel live-control" aria-label="Điều khiển lần đo">
+      <div class="live-control-row">
+        <label class="field-hint" for="live-demo-preset">Lần đo mới</label>
+        <select id="live-demo-preset" class="form-control-sm">${PRESETS.map((preset, index) => `<option value="${index}">${esc(preset.label)}</option>`).join("")}</select>
+        <button type="button" class="btn btn-primary" id="live-demo-start"${demoBusy ? " disabled" : ""}>${demoBusy ? "Đang mở máy chủ…" : "Bắt đầu lần đo"}</button>
+      </div>
+      <p class="field-hint mt-2">Máy chủ mở trên VM, cổng đo mở cho mọi IP trong lúc đo và tự đóng khi xong, khi bấm dừng, hoặc sau 1 giờ.</p>
+    </section>`;
+}
+
+function renderControl() {
+  const host = byId("live-control");
+  if (!host) return;
+  const html = controlHtml();
+  if (html === lastControl) return;       // không dựng lại nếu không đổi, để không mất lựa chọn đang mở
+  lastControl = html;
+  host.innerHTML = html;
+}
+
+function demoFailed(error, title) {
+  if (error?.status === 401) {
+    clearCredential();
+    notify("warning", "Cần đăng nhập quản trị", "Hãy đăng nhập ở trang quản trị rồi quay lại bấm nút này.");
+    setTimeout(() => location.assign(ADMIN_PAGE), 1200);
+  } else {
+    notify("error", title, error.message);
+  }
+}
+
+async function startDemo() {
+  const preset = PRESETS[Number(byId("live-demo-preset")?.value ?? 0)] || PRESETS[0];
+  demoBusy = true;
+  renderControl();
+  try {
+    await postJson("/api/flower/demo/start", { clients: preset.clients, rounds: preset.rounds }, { headers: storedAuthHeader(), timeoutMs: 30000 });
+    notify("info", "Đã mở máy chủ", "Bấm Mở client trên từng laptop.");
+    chosenRun = "";
+    chosenRound = null;
+    built = false;
+    lastSignature = "";
+    lastControl = null;
+    followUntil = Date.now() + FOLLOW_MS;
+    closeDetail();
+    selected = "server";      // hiện luôn terminal của máy chủ
+    detailKey = "";
+  } catch (error) {
+    demoFailed(error, "Không mở được máy chủ");
+  } finally {
+    demoBusy = false;
+    renderControl();
+    refresh();
+  }
+}
+
+async function stopDemo() {
+  demoBusy = true;
+  renderControl();
+  try {
+    await postJson("/api/flower/demo/stop", {}, { headers: storedAuthHeader(), timeoutMs: 40000 });
+    notify("info", "Đã dừng lần đo", "Cổng đo đã đóng.");
+  } catch (error) {
+    demoFailed(error, "Không dừng được lần đo");
+  } finally {
+    demoBusy = false;
+    lastSignature = "";
+    renderControl();
+    refresh();
+  }
+}
+
 function layoutHtml() {
   return `
     <div id="live-banner"></div>
+    <div id="live-control" class="mt-4"></div>
     <section class="panel mt-4" aria-labelledby="live-stage-title">
       <div class="panel-header-flex">
         <h3 class="panel-title panel-title-sm" id="live-stage-title">Client và máy chủ lúc này</h3>
@@ -423,6 +520,7 @@ function render(data) {
   if (!built) {
     root.innerHTML = layoutHtml();
     built = true;
+    lastControl = null;
   }
   const focused = document.activeElement?.dataset?.detail;   // dựng lại khung thì giữ nguyên chỗ đang đứng khi dùng bàn phím
   byId("live-banner").innerHTML = bannerHtml(data);
@@ -449,7 +547,14 @@ async function refresh() {
   loading = true;
   try {
     const query = chosenRun ? `?run=${encodeURIComponent(chosenRun)}` : "";
-    render(await getJson(`/api/flower/live${query}`, { timeoutMs: TIMEOUT_MS }));
+    const [live, status] = await Promise.all([getJson(`/api/flower/live${query}`, { timeoutMs: TIMEOUT_MS }), getJson("/api/flower/demo/status", { timeoutMs: TIMEOUT_MS })]);
+    demo = status;
+    render(live);
+    renderControl();
+    if (view && isActive(view.state)) {
+      followUntil = 0;
+      if (selected === "server") loadDetail();      // nhật ký máy chủ chạy tiếp cả khi chưa có client mới xong
+    }
     byId("flower-live-root")?.querySelector("[data-live-error]")?.remove();
   } catch (error) {
     const root = byId("flower-live-root");
@@ -468,7 +573,7 @@ function schedule() {
   timer = setTimeout(() => {
     if (document.hidden) { schedule(); return; }
     refresh();
-  }, view && isActive(view.state) ? ACTIVE_POLL_MS : IDLE_POLL_MS);
+  }, (view && isActive(view.state)) || Date.now() < followUntil ? ACTIVE_POLL_MS : IDLE_POLL_MS);
 }
 
 function bind(root) {
@@ -486,6 +591,8 @@ function bind(root) {
   root.addEventListener("click", event => {
     const copy = event.target.closest(".copy-btn");
     if (copy) { copyFromButton(copy); return; }
+    if (event.target.closest("#live-demo-start")) { startDemo(); return; }
+    if (event.target.closest("#live-demo-stop")) { stopDemo(); return; }
     if (event.target.closest("[data-detail-close]")) { closeDetail({ refocus: true }); return; }
     const button = event.target.closest("[data-detail]");
     if (button) openDetail(button.dataset.detail);

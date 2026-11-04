@@ -344,3 +344,83 @@ def test_real_fairness_and_drift_files_show_the_gap_widening():
     drift = drift_view("artifacts/sweep_v4/client_drift.csv")["rows"]
     values = [row["to_merged_last5"] for row in drift]
     assert [row["level"] for row in drift] == ["chia đều", "α=100", "α=10", "α=1", "α=0,5", "α=0,1"] and values == sorted(values)
+
+
+def _demo_client(monkeypatch, tmp_path):
+    """Ứng dụng web với mật khẩu quản trị thử và script đo giả: không mở cổng nào."""
+    from web.app import app
+    from web.services import flower_demo as fd
+    monkeypatch.setenv("COMMUNITY_ADMIN_TOKEN", "mat-khau-thu-du-dai-1")
+    monkeypatch.setattr(fd, "_blocked_reason", lambda: None)
+    monkeypatch.setattr(fd, "_process", None)
+    monkeypatch.setattr(fd, "_output", None)
+    return TestClient(app), fd, ("admin", "mat-khau-thu-du-dai-1")
+
+
+class _FakeProcess:
+    pid = 4321
+
+    def __init__(self, code=None):
+        self.code = code
+
+    def poll(self):
+        return self.code
+
+    def wait(self, _timeout=None):
+        self.code = 0
+        return 0
+
+
+def test_demo_buttons_require_admin_and_validate_numbers(monkeypatch, tmp_path):
+    client, fd, auth = _demo_client(monkeypatch, tmp_path)
+    calls = []
+    monkeypatch.setattr(fd.subprocess, "Popen", lambda *a, **k: calls.append((a, k)) or _FakeProcess())
+    monkeypatch.setattr(fd, "EARLY_EXIT_WAIT_S", 0.0)
+    assert client.post("/api/flower/demo/start", json={"clients": 7, "rounds": 3}).status_code == 401
+    assert client.post("/api/flower/demo/stop").status_code == 401
+    assert client.post("/api/flower/demo/start", json={"clients": 7, "rounds": 3}, auth=("admin", "sai-mat-khau-roi-nhe")).status_code == 401
+    assert calls == []
+    for bad in ({"clients": 0}, {"clients": 11}, {"rounds": 0}, {"rounds": 21}, {"clients": "7; rm -rf /"}):
+        assert client.post("/api/flower/demo/start", json=bad, auth=auth).status_code == 422, bad
+    assert calls == []
+    assert client.post("/api/flower/demo/start", json={"clients": 7, "rounds": 3}, auth=auth).status_code == 200
+    (argv,), kwargs = calls[0]
+    assert argv[0] == "bash" and argv[1].endswith("run_network_server.sh")
+    assert argv[2:] == ["--public", "--clients", "7", "--rounds", "3", "--max-hours", "1"]
+    assert kwargs.get("shell") in (None, False) and kwargs["start_new_session"] is True
+    assert "COMMUNITY_ADMIN_TOKEN" not in kwargs["env"] and set(kwargs["env"]) == {"PATH", "HOME", "LANG", "PYTHONUNBUFFERED", "RELEASE"}
+    assert client.get("/api/flower/demo/status").json() == {"can_start": True, "running": True}
+    assert client.post("/api/flower/demo/start", json={}, auth=auth).status_code == 409
+    assert len(calls) == 1
+
+
+def test_demo_start_reports_script_error_and_refuses_where_it_cannot_run(monkeypatch, tmp_path):
+    client, fd, auth = _demo_client(monkeypatch, tmp_path)
+
+    def popen(*_args, **kwargs):
+        kwargs["stdout"].write("Cổng 18089 hoặc 18090 đang bận: còn máy chủ Flower cũ?\n".encode("utf-8"))
+        return _FakeProcess(2)
+
+    monkeypatch.setattr(fd.subprocess, "Popen", popen)
+    reply = client.post("/api/flower/demo/start", json={}, auth=auth)
+    assert reply.status_code == 409 and "đang bận" in reply.json()["detail"]
+    monkeypatch.setattr(fd, "_blocked_reason", lambda: "Chỉ chạy được trên máy chủ Linux.")
+    assert client.post("/api/flower/demo/start", json={}, auth=auth).status_code == 503
+    assert client.get("/api/flower/demo/status").json()["can_start"] is False
+
+
+def test_demo_stop_marks_the_newest_run_so_the_page_does_not_wait_90_seconds(monkeypatch, tmp_path):
+    from src import registry as reg
+    client, fd, auth = _demo_client(monkeypatch, tmp_path)
+    monkeypatch.setattr(reg, "NETWORK_LIVE_DIR", str(tmp_path))
+    run = tmp_path / "20261104T000000Z_7client"
+    run.mkdir()
+    (run / rv.PROGRESS_FILE).write_text(json.dumps(_progress()), encoding="utf-8")
+    assert client.post("/api/flower/demo/stop", auth=auth).status_code == 409
+    signals = []
+    monkeypatch.setattr(fd, "_process", _FakeProcess())
+    monkeypatch.setattr(fd.os, "killpg", lambda pid, sig: signals.append((pid, sig)), raising=False)
+    assert client.post("/api/flower/demo/stop", auth=auth).status_code == 200
+    assert signals and signals[0][0] == 4321
+    view = rv.run_view(rv.load_run(run))
+    assert view["state"] == "failed" and view["error"] == fd.STOPPED_MESSAGE

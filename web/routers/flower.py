@@ -10,14 +10,15 @@ import threading
 import time
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
 from src import registry as reg
 from src.federated.run_detail import ITEM, detail_for_run
 from src.federated.run_view import list_runs, load_run, run_view
 from web import state
-from web.services import admin_auth, flower_evidence, flower_health
+from web.services import admin_auth, flower_demo, flower_evidence, flower_health
 
 router = APIRouter(prefix="/api/flower", tags=["flower"])
 
@@ -113,6 +114,38 @@ async def get_flower_detail(
     if built is None:
         raise HTTPException(status_code=404, detail="Không có mục này.")
     return built
+
+
+class DemoStart(BaseModel):
+    clients: int = Field(default=7, ge=1, le=10)
+    rounds: int = Field(default=3, ge=1, le=20)
+
+
+@router.get("/demo/status")
+async def get_flower_demo_status(request: Request) -> Dict[str, Any]:
+    """Nút "Bắt đầu lần đo" có dùng được ở máy chủ này không, và có lần đo nào đang chạy từ nút không. Không chứa đường dẫn."""
+    allowed, wait = admin_auth.LIMITER.allow(f"flower-demo:{admin_auth.client_ip(request)}", LIVE_PER_MINUTE, 60)
+    if not allowed:
+        raise HTTPException(status_code=429, detail=f"Bạn thao tác quá nhanh. Hãy thử lại sau {int(wait)} giây.",
+                            headers={"Retry-After": str(int(wait))})
+    return flower_demo.status()
+
+
+@router.post("/demo/start", dependencies=[Depends(admin_auth.require_admin)])
+async def post_flower_demo_start(body: DemoStart) -> Dict[str, Any]:
+    """Mở máy chủ đo. Cổng đo mở cho mọi IP trong lúc đo và tự đóng khi xong, nên chỉ quản trị viên được bấm."""
+    try:
+        return await run_in_threadpool(flower_demo.start, body.clients, body.rounds)
+    except flower_demo.DemoError as error:
+        raise HTTPException(status_code=error.status, detail=error.message) from error
+
+
+@router.post("/demo/stop", dependencies=[Depends(admin_auth.require_admin)])
+async def post_flower_demo_stop() -> Dict[str, Any]:
+    try:
+        return await run_in_threadpool(flower_demo.stop)
+    except flower_demo.DemoError as error:
+        raise HTTPException(status_code=error.status, detail=error.message) from error
 
 
 @router.get("/health")
