@@ -25,7 +25,7 @@ sys.path.insert(0, str(ROOT))
 
 from src.federated.run_detail import detail_for_run, detail_lines, detail_view  # noqa: E402
 from src.federated.run_view import list_runs, load_run, run_view  # noqa: E402
-from src.federated.verification_view import SWEEP_ROWS, sweep_view  # noqa: E402,F401
+from src.federated.verification_view import SWEEP_ROWS, drift_view, fairness_view, sweep_view  # noqa: E402,F401
 
 
 def read_json(path: Path) -> Any:
@@ -170,18 +170,24 @@ def sweep_lines(table: Path) -> list[str]:
     return lines
 
 
-FAIRNESS_NAMES = {"iid": "chia đều", "label_alpha_100_0": "α=100", "label_alpha_10_0": "α=10", "label_alpha_1_0": "α=1", "label_alpha_0_5": "α=0,5", "label_alpha_0_1": "α=0,1"}
-FAIRNESS_METHODS = {"fedavg": "Phân tán tự cài", "fedavg+flower": "Phân tán Flower", "local": "Tự học một mình"}
-
-
-def fairness_lines(table: Path) -> list[str]:
-    """Độ chính xác theo từng client từ table_fairness.csv, cùng phép lọc với báo cáo: tập thử, mọi miền."""
-    with table.open(encoding="utf-8", newline="") as handle:
-        rows = [row for row in csv.DictReader(handle) if row["split"] == "legacy_diagnostic_test" and row["domain"] == "all"]
-    lines = ["Độ chính xác trên ảnh thử có tỉ lệ loại bệnh giống dữ liệu của từng client, trung bình 3 lần chạy (%):", "",
+def fairness_lines(table: Path, split: str = "legacy_diagnostic_test") -> list[str]:
+    """Độ chính xác theo từng client từ table_fairness.csv, mặc định cùng phép lọc với báo cáo: tập thử, mọi miền. `--split val` ra đúng bảng trên web."""
+    rows = fairness_view(table, split)["rows"]
+    source = "kiểm định (val)" if split == "val" else "thử"
+    lines = [f"Độ chính xác trên ảnh {source} có tỉ lệ loại bệnh giống dữ liệu của từng client, trung bình 3 lần chạy (%):", "",
              f"  {'Cách học':<18}{'Mức lệch':<10}{'Trung bình':>11}{'Lệch chuẩn':>12}{'Mạnh - yếu':>12}{'Client nhỏ nhất':>17}"]
     for row in rows:
-        lines.append(f"  {FAIRNESS_METHODS[row['variant']]:<18}{FAIRNESS_NAMES[row['scheme']]:<10}{float(row['mean_%']):>11.2f}{float(row['std_between_clients_%']):>12.2f}{float(row['gap_best_worst_points']):>12.2f}{float(row['smallest_client_%']):>17.2f}")
+        lines.append(f"  {row['method']:<18}{row['level']:<10}{row['mean']:>11.2f}{row['std']:>12.2f}{row['gap']:>12.2f}{row['smallest']:>17.2f}")
+    return lines
+
+
+def drift_lines(table: Path) -> list[str]:
+    """Client trôi xa mô hình chung bao nhiêu theo mức lệch, đúng bảng trên web."""
+    rows = drift_view(table)["rows"]
+    lines = ["Khoảng cách từ mô hình client đến mô hình vừa gộp, không tính BatchNorm, trung bình 5 vòng cuối:", "",
+             f"  {'Mức lệch':<10}{'Đường chạy':<12}{'5 vòng cuối':>12}{'Lệch chuẩn':>12}{'Cả 40 vòng':>12}"]
+    for row in rows:
+        lines.append(f"  {row['level']:<10}{row['runtime']:<12}{row['to_merged_last5']:>12.3f}{row['to_merged_last5_std']:>12.3f}{row['to_merged_mean']:>12.3f}")
     return lines
 
 
@@ -266,7 +272,10 @@ def main() -> int:
     w0_parser.add_argument("--seed", type=int, required=True)
     w0_parser.add_argument("--run", type=Path, default=None)
     commands.add_parser("sweep").add_argument("--table", type=Path, default=ROOT / "artifacts" / "sweep_v4" / "table_main.csv")
-    commands.add_parser("fairness").add_argument("--table", type=Path, default=ROOT / "artifacts" / "sweep_v4" / "table_fairness.csv")
+    fairness_parser = commands.add_parser("fairness")
+    fairness_parser.add_argument("--table", type=Path, default=ROOT / "artifacts" / "sweep_v4" / "table_fairness.csv")
+    fairness_parser.add_argument("--split", choices=("val", "legacy_diagnostic_test"), default="legacy_diagnostic_test", help="val: đúng bảng trên web")
+    commands.add_parser("drift").add_argument("--table", type=Path, default=ROOT / "artifacts" / "sweep_v4" / "client_drift.csv")
     commands.add_parser("partitions").add_argument("--manifest", type=Path, default=ROOT / "data" / "dataset_sources" / "mixed" / "pv_pd_v4" / "partitions_extra" / "extra_manifest.json")
     commands.add_parser("compression").add_argument("--report", type=Path, default=ROOT / "artifacts" / "gd4_compression.json")
     speed_parser = commands.add_parser("speed")
@@ -300,7 +309,9 @@ def main() -> int:
     elif args.command == "sweep":
         lines = sweep_lines(args.table)
     elif args.command == "fairness":
-        lines = fairness_lines(args.table)
+        lines = fairness_lines(args.table, args.split)
+    elif args.command == "drift":
+        lines = drift_lines(args.table)
     elif args.command == "partitions":
         lines = partition_lines(args.manifest)
     elif args.command == "compression":

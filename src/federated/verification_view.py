@@ -36,6 +36,25 @@ EXPECTED_CELLS = (
     ("local", "quantity_alpha_0_5", "Tự học một mình, lệch số lượng ảnh"),
     ("local", "source_skew", "Tự học một mình, lệch nguồn ảnh"),
 )
+FAIRNESS_ROWS = (
+    ("fedavg+flower", "iid", "Phân tán Flower", "chia đều"),
+    ("fedavg", "label_alpha_100_0", "Phân tán tự cài", "α=100"),
+    ("fedavg", "label_alpha_10_0", "Phân tán tự cài", "α=10"),
+    ("fedavg", "label_alpha_1_0", "Phân tán tự cài", "α=1"),
+    ("fedavg", "label_alpha_0_5", "Phân tán tự cài", "α=0,5"),
+    ("fedavg", "label_alpha_0_1", "Phân tán tự cài", "α=0,1"),
+    ("fedavg+flower", "label_alpha_0_1", "Phân tán Flower", "α=0,1"),
+    ("local", "label_alpha_0_1", "Tự học một mình", "α=0,1"),
+)
+FAIRNESS_SPLITS = ("val", "legacy_diagnostic_test")     # không có `calibration`: tập niêm phong
+DRIFT_ROWS = (
+    ("iid", "flower", "chia đều", "Flower"),
+    ("label_alpha_100_0", "tu_cai", "α=100", "tự cài"),
+    ("label_alpha_10_0", "tu_cai", "α=10", "tự cài"),
+    ("label_alpha_1_0", "tu_cai", "α=1", "tự cài"),
+    ("label_alpha_0_5", "tu_cai", "α=0,5", "tự cài"),
+    ("label_alpha_0_1", "flower", "α=0,1", "Flower"),
+)
 # Sự thật về các lần đo cũ mà tệp tóm tắt không ghi thành trường riêng (đọc từ `notes` của từng lần đo).
 SPEEDTEST_FACTS = {
     "loopback_baseline": {"title": "Cùng một laptop (mốc so sánh)", "server_host_machines": ("laptop", "vm_oracle", "laptop_1_may_chu"), "all_on_server_host": True, "via_ssh_tunnel": False},
@@ -101,6 +120,42 @@ def sweep_view(table: Path) -> dict[str, Any]:
         "by_alpha": {"labels": [name for _, name in ALPHA_ORDER], "fedavg": points("fedavg"), "flower": points("fedavg+flower"), "local": points("local")},
         "not_measured": [label for variant, scheme, label in EXPECTED_CELLS if (variant, scheme, "all_test") not in cells],
     }
+
+
+def fairness_view(table: Path, split: str = "val") -> dict[str, Any]:
+    """Độ chính xác trên ảnh có tỉ lệ loại bệnh giống dữ liệu của từng client, đọc từ artifacts/sweep_v4/table_fairness.csv."""
+    if split not in FAIRNESS_SPLITS:
+        raise ValueError(f"split không hợp lệ: {split}")
+    with Path(table).open(encoding="utf-8", newline="") as handle:
+        cells = {(row["variant"], row["scheme"]): row for row in csv.DictReader(handle) if row["split"] == split and row["domain"] == "all"}
+    rows = []
+    for variant, scheme, method, level in FAIRNESS_ROWS:
+        row = cells.get((variant, scheme))
+        if row is None:
+            continue
+        rows.append({
+            "variant": variant, "scheme": scheme, "method": method, "level": level,
+            "mean": _float(row["mean_%"]), "std": _float(row["std_between_clients_%"]), "best": _float(row.get("best_%")), "worst": _float(row.get("worst_%")),
+            "gap": _float(row["gap_best_worst_points"]), "smallest": _float(row["smallest_client_%"]), "seeds": row.get("seeds"),
+        })
+    return {"available": bool(rows), "split": split, "rows": rows, "reason": None if rows else "Bảng chưa có hàng nào."}
+
+
+def drift_view(table: Path) -> dict[str, Any]:
+    """Client trôi xa mô hình chung bao nhiêu, đọc từ artifacts/sweep_v4/client_drift.csv (scripts/report_client_drift.py)."""
+    with Path(table).open(encoding="utf-8", newline="") as handle:
+        cells = {(row["scheme"], row["runtime"]): row for row in csv.DictReader(handle)}
+    rows = []
+    for scheme, runtime, level, runtime_name in DRIFT_ROWS:
+        row = cells.get((scheme, runtime))
+        if row is None:
+            continue
+        rows.append({
+            "scheme": scheme, "level": level, "runtime": runtime_name, "seeds": row["seeds"], "rounds": row["rounds"],
+            "changed_mean": _float(row["changed_mean"]), "to_merged_mean": _float(row["to_merged_mean"]),
+            "to_merged_last5": _float(row["to_merged_last5"]), "to_merged_last5_std": _float(row["to_merged_last5_std"]),
+        })
+    return {"available": bool(rows), "rows": rows, "reason": None if rows else "Bảng chưa có hàng nào."}
 
 
 def speed_view(root: Path) -> dict[str, Any]:

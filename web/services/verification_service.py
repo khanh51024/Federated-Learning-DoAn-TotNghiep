@@ -9,7 +9,7 @@ import time
 from typing import Any, Callable, Dict
 
 from src import registry as reg
-from src.federated.verification_view import speed_view, sweep_view, weight_view
+from src.federated.verification_view import drift_view, fairness_view, speed_view, sweep_view, weight_view
 
 logger = logging.getLogger(__name__)
 CACHE_S = 30.0
@@ -30,6 +30,8 @@ def build() -> Dict[str, Any]:
         return _cache["value"]
     value = {
         "sweep": _guard("sweep", lambda: sweep_view(reg.abs_path(reg.SWEEP_V4_DIR) / "table_main.csv")),
+        "fairness": _guard("fairness", lambda: fairness_view(reg.abs_path(reg.SWEEP_V4_DIR) / "table_fairness.csv")),
+        "drift": _guard("drift", lambda: drift_view(reg.abs_path(reg.SWEEP_V4_DIR) / "client_drift.csv")),
         "speed": _guard("speed", lambda: speed_view(reg.abs_path(reg.NETWORK_SPEEDTEST_DIR))),
         "weights": _guard("weights", lambda: weight_view(reg.abs_path(reg.DISTRIBUTED_VERIFICATION_DIR), reg.abs_path(reg.FEDSGD_EQUIVALENCE_JSON))),
     }

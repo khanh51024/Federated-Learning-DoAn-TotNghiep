@@ -40,6 +40,50 @@ function sweepHtml(sweep) {
     </table></div>${pending}`;
 }
 
+function fairnessHtml(fairness, sweep) {
+  if (!fairness?.available) return missing(fairness);
+  const localTop1 = sweep?.rows?.find(row => row.variant === "local")?.top1;
+  const localNote = localTop1 === null || localTop1 === undefined ? "" : ` Kiểm trên toàn bộ ảnh, cách học này chỉ đạt ${esc(num(localTop1))}%.`;
+  const rows = fairness.rows.map(row => `<tr><td>${esc(row.method)}</td><td>${esc(row.level)}</td><td>${num(row.mean)}</td><td>${num(row.std)}</td><td>${num(row.best)}</td><td>${num(row.worst)}</td><td>${num(row.smallest)}</td></tr>`).join("");
+  return `
+    <p class="panel-desc">Mỗi client được kiểm trên ảnh có tỉ lệ loại bệnh giống dữ liệu của nó, trung bình 3 lần chạy. Độ lệch chuẩn càng lớn, các client càng được phục vụ không đều.</p>
+    <div class="table-responsive mt-3" tabindex="0" role="region" aria-label="Bảng độ chính xác theo từng client"><table class="data-table wrap-head">
+      <thead><tr><th>Cách học</th><th>Mức lệch</th><th>Trung bình (%)</th><th>Độ lệch chuẩn</th><th>Client mạnh nhất (%)</th><th>Client yếu nhất (%)</th><th>Client ít ảnh nhất (%)</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <p class="field-hint mt-2">Dòng "Tự học một mình" cao vì mỗi client chỉ tự kiểm trên đúng loại bệnh nó có.${localNote} Terminal: <code class="code">python scripts/demo_show.py fairness --split val</code></p>`;
+}
+
+function driftHtml(drift) {
+  if (!drift?.available) return missing(drift);
+  const rows = drift.rows.map(row => `<tr><td>${esc(row.level)}</td><td>${esc(row.runtime)}</td><td>${num(row.to_merged_last5, 3)}</td><td>${num(row.to_merged_last5_std, 3)}</td><td>${num(row.to_merged_mean, 3)}</td></tr>`).join("");
+  return `
+    <p class="panel-desc">Sau mỗi vòng, đo mô hình của từng client cách mô hình vừa gộp bao xa, không tính BatchNorm. Số càng lớn, các client càng kéo mô hình về các hướng khác nhau.</p>
+    <div class="chart-container mt-3"><canvas id="chart-client-drift" aria-label="Khoảng cách từ mô hình client đến mô hình chung trong 5 vòng cuối, theo mức lệch dữ liệu"></canvas></div>
+    <div class="table-responsive mt-3" tabindex="0" role="region" aria-label="Bảng client trôi xa mô hình chung"><table class="data-table wrap-head">
+      <thead><tr><th>Mức lệch</th><th>Đường chạy</th><th>5 vòng cuối</th><th>Độ lệch chuẩn giữa các lần chạy</th><th>Trung bình cả các vòng</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <p class="field-hint mt-2">Chia đều và α=0,1 chạy trên Flower, các mức còn lại chạy bản tự cài. Đây là số đo độ trôi, chưa phải phép tách riêng nguyên nhân gây giảm độ chính xác. Terminal: <code class="code">python scripts/demo_show.py drift</code></p>`;
+}
+
+function drawDrift(drift) {
+  makeChartWhenVisible(byId("chart-client-drift"), () => {
+    const colors = pillarColors();
+    return {
+      type: "bar",
+      data: { labels: drift.rows.map(row => row.level), datasets: [{ label: "Khoảng cách đến mô hình chung, 5 vòng cuối", data: drift.rows.map(row => row.to_merged_last5), backgroundColor: colors.fedavg }] },
+      options: {
+        animation: barRise(),
+        scales: {
+          x: { title: { display: true, text: "Mức lệch dữ liệu giữa các client: phải là lệch nhiều hơn" } },
+          y: { min: 0, title: { display: true, text: "Khoảng cách L2" } },
+        },
+      },
+    };
+  });
+}
+
 function speedHtml(speed) {
   if (!speed?.available) return missing(speed);
   const rows = speed.runs.flatMap(run => run.machines.map((machine, index) => `<tr${machine.on_server_host ? ' class="is-muted-row"' : ""}>
@@ -119,7 +163,10 @@ export async function buildVerification() {
   root.innerHTML = `
     ${sectionHead("4.7", "Phân tán và tập trung", { lead: "Học phân tán đạt gần mức học tập trung tới đâu, trọng số có được gửi đúng không, và mạng thật nhanh chậm thế nào." })}
     <section class="panel mt-3"><h4 class="panel-title panel-title-sm">Độ chính xác theo mức lệch dữ liệu</h4>${sweepHtml(data.sweep)}</section>
+    <section class="panel mt-4"><h4 class="panel-title panel-title-sm">Theo từng client: ai chịu thiệt khi dữ liệu lệch</h4>${fairnessHtml(data.fairness, data.sweep)}</section>
+    <section class="panel mt-4"><h4 class="panel-title panel-title-sm">Client trôi xa mô hình chung theo mức lệch</h4>${driftHtml(data.drift)}</section>
     <section class="panel mt-4"><h4 class="panel-title panel-title-sm">Kiểm trọng số</h4><div class="mt-3">${weightsHtml(data.weights)}</div></section>
     <section class="panel mt-4"><h4 class="panel-title panel-title-sm">Các lần đo tốc độ giữa các máy</h4>${speedHtml(data.speed)}</section>`;
   if (data.sweep?.available) drawSweep(data.sweep);
+  if (data.drift?.available) drawDrift(data.drift);
 }

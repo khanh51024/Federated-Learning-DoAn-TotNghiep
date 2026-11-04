@@ -17,24 +17,35 @@ Mọi thứ chạy từ một file: nhấp đúp **`DEMO_TUNG_MUC.bat`** ở th�
 
 ## 1. Chuẩn bị trước giờ demo
 
-1. Chép `tmp\LAPTOP_2_CHAY_NGAY.zip` sang laptop 2 bằng USB, giải nén ra một thư mục. Không phải cài gì.
-2. Chạy thử đo 2 laptop một lần theo mục 5, xem wifi có cho 2 máy nối với nhau không.
-3. Trên laptop chính, đóng bớt Chrome và game, chạy thử mục A → 5.
-4. Mở sẵn file này để nhìn khi nói.
+1. Chép `tmp\LAPTOP_2_10_CLIENT.zip` sang laptop 2, giải nén ra một thư mục. Không phải cài gì. Windows chặn file `.bat` thì xem mục 7.
+2. Oracle Cloud còn rule mở `18089-18090` cho `0.0.0.0/0`. Xóa rule này sau khi demo xong.
+3. Cả 2 laptop: tắt game và ứng dụng nặng, cắm sạc, tắt WARP hoặc VPN nếu được.
+4. Diễn tập trọn mục 2 một lần với 2 laptop, bấm giờ.
+5. Mở sẵn file này để nhìn khi nói.
 
-Không dùng web `datn.tranngochung.id.vn` cho phần này, vì web vẫn là bản 22/10 và chưa có phần kiểm chứng.
+## 2. Kịch bản demo 15 phút (bản mới, dùng web)
 
-## 2. Thứ tự trình bày, khoảng 15 phút
+Mở sẵn 2 tab: `https://datn.tranngochung.id.vn/#flower` và chương 4, tab **Phân tán và tập trung**. Kể theo các câu hỏi dưới, không đi theo danh sách nhiệm vụ.
 
-| Phút | Làm | Câu chốt |
-|---|---|---|
-| 1 | Nói kết luận | "Gửi trọng số không làm sai dữ liệu. Phân tán đạt 94–97%, tập trung 97,69%, tự học một mình chỉ 46,55%." |
-| 3 | A → 1, A → 3 | "Em kiểm tra 2.400 lần đều khớp, và cố tình làm sai thì hệ thống bắt được." |
-| 2 | A → 2 | "Lệch do cách học, không do gửi." |
-| 3 | A → 5 (mở trước, nói trong lúc chạy), A → 7 | "Đây là Flower chạy thật, và đây là code hai cách học." |
-| 3 | A → L, đo trực tiếp 2 laptop | "Đây là 2 máy thật qua mạng thật." |
-| 2 | A → 9, biểu đồ | "Càng lệch, khoảng cách càng lớn." |
-| 1 | Nói phần chưa xong | Xem cuối mục 4 |
+| Phút | Câu hỏi | Làm gì | Câu chốt |
+|---|---|---|---|
+| 1 | Đề tài chứng minh gì? | Chỉ nói | "Dữ liệu nằm riêng ở từng nơi, chỉ gửi trọng số, mà vẫn tiệm cận học tập trung." |
+| 4 | Có thật sự gửi qua mạng không? | Chạy 7 client, 3 vòng (xem dưới). Xem `#flower` tự chạy. Bấm ô **Trọng số gửi đúng**, rồi bấm một client | "Máy chủ riêng, 2 laptop. Client chỉ gửi trọng số, số ảnh và độ biến thiên. Độ chính xác và độ trễ do máy chủ tự tính." |
+| 2 | Chạy lâu hơn thì sao? | Chọn lần đo 10 client, kéo thanh chọn vòng | "20 vòng, mã băm khớp 200/200, không lượt nào bị loại. 90% trên 190 ảnh chỉ chứng minh hệ thống chạy đúng, không phải độ chính xác của đề tài." |
+| 3 | Phân tán thua tập trung bao nhiêu? | Chương 4, biểu đồ theo mức lệch | "Tập trung 97,69%. Phân tán 96,97% khi gần như chia đều, 93,93% khi lệch mạnh. Tự học một mình 46,55%. Lệch càng mạnh, khoảng cách càng rộng." |
+| 2 | Ai chịu thiệt khi lệch? | Bảng từng client, bảng client trôi xa mô hình chung | "Lệch mạnh thì client yếu nhất 84,29%, mạnh nhất 94,59%, độ lệch chuẩn từ 0,53 lên 3,60. Client cũng trôi xa mô hình chung hơn: từ 0,038 lên 0,147." |
+| 2 | Còn gì chưa xong? | Chỉ nói, chủ động nói trước | "Tự học một mình mới có α=0,1. Lệch số lượng, lệch miền mới chia dữ liệu. 4 thuật toán có mã và test, chưa có kết quả. Tập niêm phong chưa mở, đúng quy tắc." |
+| 1 | Kế hoạch tiếp | Chỉ nói | "Khi có GPU: xong Đợt 2 trước, rồi FedProx, FedBN, SCAFFOLD, MOON." |
+
+**Chạy trực tiếp 7 client, 3 vòng:**
+
+1. VM (Claude chạy giúp): `bash <thư mục bản web>/scripts/remote/run_network_server.sh --public --clients 7 --rounds 3`.
+2. Laptop 1: `deploy\lan_client\CHAY_CLIENT.bat 0 5 149.118.51.118`.
+3. Laptop 2: nhấp đúp `LAPTOP_2_DEMO_NHANH.bat` trong thư mục đã giải nén.
+
+Trước đó tắt ứng dụng nặng, cắm sạc cả 2 máy. Nếu mạng hoặc laptop 2 lỗi thì bỏ phần chạy trực tiếp, dùng lần đo 10 client đã lưu và thanh chọn vòng; số đã lưu không bị ảnh hưởng.
+
+**Về 2 bộ số:** số trên web là bộ seed 42, 123, 2026 trong repo này. Báo cáo Đợt 2 của bạn cùng nhóm là bộ chạy riêng (seed 42, 43, 44, có thêm PD-463, EXT-TEST). Không đọc số của bộ này như số của bộ kia.
 
 Nếu thầy hỏi theo file Word thì chuyển sang phần B ở mục 4.
 
@@ -226,6 +237,10 @@ So sánh phân tán và tập trung, kiểm trọng số, các lần đo tốc �
 | Dòng float32 trong báo cáo trùng dự đoán chỉ 76,47%? | "Em làm đối chứng chỉ đổi thứ tự ảnh, về toán phải trùng mà float32 vẫn lệch cùng cỡ. Nên không quy cho phân tán. Nguyên nhân cụ thể em chưa chứng minh được." |
 | Flower có tương đương bản tự cài không? | "Trên toàn bộ ảnh chênh 0,11 điểm, nhưng ảnh ngoài đồng chênh 0,96 điểm, lớn hơn dao động giữa các lần chạy. Nên em chưa kết luận tương đương trên mọi nhóm." |
 | 5 client có phải 5 máy thật không? | "Không, 5 client là mô phỏng trên một GPU. Máy thật là phần đo 2 laptop." |
+| Số này sao khác báo cáo Đợt 2? | "Đó là hai bộ chạy riêng, khác seed và tập đánh giá. Tụi em không trộn hai bộ số." |
+| Trên PlantDoc thì sao? | "172 ảnh: tập trung 57,56%, phân tán lệch mạnh 40,50%. Tập nhỏ nên phải đọc kèm khoảng tin cậy, và cả tập trung cũng yếu trên ảnh ngoài đồng." |
+| Có tiết kiệm truyền thông không? | "Không. 40 vòng gửi 2.510 MB, gấp 1,65 lần gửi thẳng ảnh. Lợi ích chính là ảnh không rời máy." |
+| Sao laptop 2 chậm vậy? | "Chạy 5 client thì học chậm hơn laptop 1 khoảng 9 lần, nguyên nhân chưa kiểm tra. Nên demo trực tiếp em giảm còn 2 client." |
 | Phân tán có đảm bảo riêng tư tuyệt đối không? | "Không. Ảnh không rời máy, nhưng em chưa có DP hay mã hóa nên chưa có bảo đảm toán học." |
 
 ## 7. Lỗi thường gặp

@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from scripts import demo_show as ds
 from src.federated import run_detail as rd
 from src.federated import run_view as rv
-from src.federated.verification_view import speed_view, sweep_view, weight_view
+from src.federated.verification_view import drift_view, fairness_view, speed_view, sweep_view, weight_view
 
 NOW = datetime(2026, 11, 4, 12, 0, 0, tzinfo=timezone.utc)
 STAMP = "%Y-%m-%dT%H:%M:%SZ"
@@ -282,3 +282,65 @@ def test_log_tail_drops_only_the_flower_summary_and_says_so(tmp_path):
     log = rd.read_log_tail(tmp_path)
     assert log["lines"] == ["INFO : [ROUND 1]", "[+] xong"] and log["skipped_summary_lines"] == 3 and log["total_lines"] == 5
     assert "đã bỏ 3 dòng" in rd.log_title(log)
+
+
+FAIRNESS_HEAD = "scheme,variant,split,domain,seeds,mean_%,std_between_clients_%,best_%,worst_%,gap_best_worst_points,smallest_client_%\n"
+
+
+def test_fairness_view_reads_only_the_requested_split_and_terminal_prints_the_same_numbers(tmp_path):
+    table = tmp_path / "fair.csv"
+    table.write_text(FAIRNESS_HEAD
+                     + "label_alpha_0_1,fedavg,val,all,3,90.79,3.60,94.59,84.29,10.30,84.29\n"
+                     + "label_alpha_0_1,fedavg,legacy_diagnostic_test,all,3,88.58,4.67,93.44,79.90,13.54,79.90\n"
+                     + "label_alpha_0_1,fedavg,calibration,all,3,11.11,1.00,1.00,1.00,1.00,1.00\n"
+                     + "label_alpha_0_1,fedavg,val,field,3,22.22,1.00,1.00,1.00,1.00,1.00\n", encoding="utf-8")
+    view = fairness_view(table)
+    assert [row["mean"] for row in view["rows"]] == [90.79] and view["rows"][0]["worst"] == 84.29 and view["rows"][0]["best"] == 94.59
+    text = "\n".join(ds.fairness_lines(table, "val"))
+    assert "90.79" in text and "84.29" in text and "88.58" not in text and "11.11" not in text and "22.22" not in text
+    assert "11.11" not in json.dumps(view)
+    try:
+        fairness_view(table, "calibration")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("fairness_view không được nhận split calibration")
+
+
+def _drift_history(path, deltas):
+    path.mkdir()
+    (path / "config.json").write_text(json.dumps({"method": "fedavg", "scheme": "label_alpha_0_1", "runtime": "flower", "seed": 1}), encoding="utf-8")
+    lines = [json.dumps({"train": {"clients": [{"delta_l2_without_bn": 2.0, "l2_to_merged_without_bn": value}, {"delta_l2_without_bn": 4.0, "l2_to_merged_without_bn": value + 2}]}}) for value in deltas]
+    (path / "history.jsonl").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def test_client_drift_is_averaged_over_clients_rounds_and_seeds_and_skips_old_logs(tmp_path):
+    from scripts import report_client_drift as rcd
+    _drift_history(tmp_path / "a", [100.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+    _drift_history(tmp_path / "b", [100.0, 3.0, 3.0, 3.0, 3.0, 3.0])
+    old = tmp_path / "old"
+    old.mkdir()
+    (old / "config.json").write_text(json.dumps({"method": "fedavg", "scheme": "label_alpha_0_1"}), encoding="utf-8")
+    (old / "history.jsonl").write_text(json.dumps({"train": {"clients": [{"loss": 1.0}]}}) + "\n", encoding="utf-8")
+    rows, skipped = rcd.collect(tmp_path)
+    assert skipped == ["old"] and len(rows) == 1
+    row = rows[0]
+    # Mỗi vòng: trung bình 2 client là giá trị + 1. 5 vòng cuối bỏ vòng đầu 100. Hai seed: 2 và 4.
+    assert row["seeds"] == 2 and row["rounds"] == 6 and row["to_merged_last5"] == 3.0 and row["changed_mean"] == 3.0
+    csv_path = tmp_path / "drift.csv"
+    import csv as csv_module
+    with csv_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv_module.DictWriter(handle, fieldnames=rcd.COLUMNS)
+        writer.writeheader()
+        writer.writerows(rows)
+    view = drift_view(csv_path)
+    assert view["rows"][0]["level"] == "α=0,1" and view["rows"][0]["to_merged_last5"] == 3.0
+    assert "3.000" in "\n".join(ds.drift_lines(csv_path))
+
+
+def test_real_fairness_and_drift_files_show_the_gap_widening():
+    fair = {(row["variant"], row["scheme"]): row for row in fairness_view("artifacts/sweep_v4/table_fairness.csv")["rows"]}
+    assert fair[("fedavg", "label_alpha_100_0")]["std"] < fair[("fedavg", "label_alpha_0_1")]["std"]
+    drift = drift_view("artifacts/sweep_v4/client_drift.csv")["rows"]
+    values = [row["to_merged_last5"] for row in drift]
+    assert [row["level"] for row in drift] == ["chia đều", "α=100", "α=10", "α=1", "α=0,5", "α=0,1"] and values == sorted(values)

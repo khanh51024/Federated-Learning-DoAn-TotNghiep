@@ -219,12 +219,22 @@ function machineTableHtml() {
     </table></div><p class="field-hint mt-2">Trung vị qua các vòng. Mọi thời gian và tốc độ do máy chủ tự đo; thời gian học là ước lượng của máy chủ vì client không gửi thời gian.</p>`;
 }
 
+// Tên thư mục lần đo là giờ UTC và số client, ví dụ 20261104T075312Z_10client. Tên lạ thì hiện nguyên.
+function runLabel(id) {
+  const match = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z_(\d+)client$/.exec(id);
+  if (!match) return id;
+  const [, year, month, day, hour, minute, second, clients] = match;
+  const time = new Date(Date.UTC(+year, +month - 1, +day, +hour, +minute, +second));
+  const pad = value => String(value).padStart(2, "0");
+  return `${pad(time.getDate())}/${pad(time.getMonth() + 1)} ${pad(time.getHours())}:${pad(time.getMinutes())}, ${clients} client`;
+}
+
 function pickerHtml(data) {
   const runs = data.runs || [];
   if (runs.length < 2) return "";
   return `<label class="field-hint">Lần đo <select id="live-run" class="form-control-sm">
       <option value="">Mới nhất</option>
-      ${runs.map(id => `<option value="${esc(id)}"${id === chosenRun ? " selected" : ""}>${esc(id)}</option>`).join("")}
+      ${runs.map(id => `<option value="${esc(id)}"${id === chosenRun ? " selected" : ""}>${esc(runLabel(id))}</option>`).join("")}
     </select></label>`;
 }
 

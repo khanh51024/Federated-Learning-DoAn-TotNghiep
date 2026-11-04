@@ -1,0 +1,7 @@
+scheme,runtime,seeds,rounds,changed_mean,to_merged_mean,to_merged_last5,to_merged_last5_std
+iid,flower,3,40,1.0859,0.9008,0.0363,0.0002
+label_alpha_0_1,flower,3,40,1.1997,1.1108,0.1472,0.0012
+label_alpha_0_5,tu_cai,3,40,1.1501,1.0144,0.1019,0.0009
+label_alpha_100_0,tu_cai,3,40,1.0884,0.9042,0.0378,0.0002
+label_alpha_10_0,tu_cai,3,40,1.0892,0.9104,0.0456,0.0001
+label_alpha_1_0,tu_cai,3,40,1.1181,0.9651,0.0808,0.0003
