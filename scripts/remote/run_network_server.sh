@@ -3,10 +3,11 @@
 #
 # Cách dùng (trên VM):
 #   bash scripts/remote/run_network_server.sh --ip 1.2.3.4 --ip 5.6.7.8 [--clients 10] [--min-clients 10] [--rounds 20] [--data ~/net10-data]
+#   bash scripts/remote/run_network_server.sh --public ...   (mở cho mọi IP trong lúc đo: không cần biết IP laptop, nhưng máy chủ Flower không có mật khẩu nên ai dò ra cổng cũng nối được)
 #
 # - Dữ liệu (partition/ + images_eval/) lấy từ tmp/net10 của máy dev (scripts/prepare_network_speedtest.py --clients 10 ...), chép lên --data.
 #   Máy chủ chỉ giữ ảnh kiểm tra, KHÔNG giữ ảnh của client nào.
-# - Mở cổng Flower và cổng đo mạng (cổng + 1) CHỈ cho các IP khai bằng --ip, và tự gỡ khi xong, lỗi, hoặc sau --max-hours (mặc định 3).
+# - Mở cổng Flower và cổng đo mạng (cổng + 1) cho các IP khai bằng --ip, hoặc mọi IP nếu có --public, và tự gỡ khi xong, lỗi, hoặc sau --max-hours (mặc định 3).
 #   Quy tắc Oracle Security List (ngoài VM) phải do chủ tài khoản thêm và xóa tay.
 # - Không đụng dịch vụ web đang chạy: dùng chung mã/venv của bản đang phục vụ nhưng chạy tiến trình riêng, ưu tiên thấp.
 # - Kết quả ghi vào artifacts/network_live/<giờ UTC> của bản web đó: history.json, global.pt, progress.json, server.log. Trang #flower và
@@ -22,10 +23,12 @@ MIN_CLIENTS=""
 ROUNDS=20
 MAX_HOURS=3
 IPS=()
+PUBLIC=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --ip) IPS+=("$2"); shift 2 ;;
+    --public) PUBLIC=1; shift ;;
     --clients) CLIENTS="$2"; shift 2 ;;
     --min-clients) MIN_CLIENTS="$2"; shift 2 ;;
     --rounds) ROUNDS="$2"; shift 2 ;;
@@ -39,10 +42,12 @@ done
 MIN_CLIENTS="${MIN_CLIENTS:-$CLIENTS}"
 OUT="${OUT:-$RELEASE/artifacts/network_live/$(date -u +%Y%m%dT%H%M%SZ)_${CLIENTS}client}"
 
-[ ${#IPS[@]} -gt 0 ] || { echo "Cần ít nhất một --ip (IP công khai của laptop). Không mở cổng cho cả Internet." >&2; exit 2; }
-for ip in "${IPS[@]}"; do
-  [[ "$ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "IP không hợp lệ: $ip" >&2; exit 2; }
+[ "$PUBLIC" = 0 ] || [ ${#IPS[@]} -eq 0 ] || { echo "Chỉ dùng một trong hai: --public hoặc --ip." >&2; exit 2; }
+[ "$PUBLIC" = 1 ] || [ ${#IPS[@]} -gt 0 ] || { echo "Cần --ip (IP công khai của laptop) hoặc --public (mở cho mọi IP trong lúc đo)." >&2; exit 2; }
+for ip in "${IPS[@]:-}"; do
+  [ "$PUBLIC" = 1 ] || [[ "$ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "IP không hợp lệ: $ip" >&2; exit 2; }
 done
+[ "$PUBLIC" = 0 ] || IPS=("0.0.0.0/0")
 [ -d "$DATA/partition" ] && [ -d "$DATA/images_eval" ] || { echo "Thiếu $DATA/partition hoặc $DATA/images_eval" >&2; exit 2; }
 [ -x "$RELEASE/.venv/bin/python" ] || { echo "Không thấy $RELEASE/.venv/bin/python" >&2; exit 2; }
 if ss -ltn | awk '{print $4}' | grep -qE ":($PORT|$((PORT + 1)))$"; then

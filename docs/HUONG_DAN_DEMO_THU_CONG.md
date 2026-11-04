@@ -165,6 +165,7 @@ Laptop chính là máy chủ và client 0, laptop 2 là client 1. Mất khoảng
 | Laptop 2 báo `KHÔNG NỐI ĐƯỢC` | Kiểm tra IP. Đổi sang điểm phát điện thoại, rồi chạy lại vì IP sẽ đổi |
 | Laptop chính báo chưa mở được cổng | Chạy lại và chọn Yes |
 | Laptop chính báo cổng đang bận | Đóng các cửa sổ "Máy chủ Flower", "Client" cũ |
+| Windows chặn file `.bat` ("Windows đã bảo vệ PC của bạn") | Chuột phải trong thư mục đã giải nén, chọn Mở trong Terminal, gõ `Get-ChildItem -Recurse \| Unblock-File`, rồi nhấp đúp lại. Hoặc bấm "Thông tin thêm" rồi "Vẫn chạy" |
 | Laptop 2 báo thiếu DLL hoặc không chạy được Python | Chụp màn hình gửi lại. Khi đang demo thì dùng A → 8 |
 | Vẫn không được khi đang demo | Dùng A → 8 và nói: "Mạng ở đây chặn, em cho xem số đã đo." |
 
@@ -191,7 +192,7 @@ Máy chủ chạy trên VM Oracle `149.118.51.118`, **không có client nào tr�
 
 **Ngày đo:**
 
-1. **VM** (Claude chạy giúp): `bash <thư mục bản web>/scripts/remote/run_network_server.sh --ip <IP laptop 1> --ip <IP laptop 2> --clients 10 --rounds 20`. Script mở cổng riêng cho 2 IP đó, tự đóng khi xong, khi lỗi, hoặc sau 3 giờ.
+1. **VM** (Claude chạy giúp): `bash <thư mục bản web>/scripts/remote/run_network_server.sh --ip <IP laptop 1> --ip <IP laptop 2> --clients 10 --rounds 20`. Script mở cổng riêng cho 2 IP đó, tự đóng khi xong, khi lỗi, hoặc sau 3 giờ. Không muốn lấy IP thì thay các `--ip` bằng `--public` và để rule Oracle là `0.0.0.0/0`: trong lúc đo mọi IP đều nối được, vì máy chủ Flower không có mật khẩu.
    Mở sẵn `https://datn.tranngochung.id.vn/#flower` để chiếu: trang tự cập nhật, không cần tải lại.
 2. **Laptop 1:** mở PowerShell trong thư mục dự án, gõ `deploy\lan_client\CHAY_CLIENT.bat 0 5 149.118.51.118`. Ảnh lấy từ `tmp\net10`.
 3. **Laptop 2:** giải nén `LAPTOP_2_10_CLIENT.zip` (có sẵn Python, không cần cài), nhấp đúp `LAPTOP_2_BAM_DAY.bat`. Đừng nhấp đúp `CHAY_CLIENT.bat`, file đó không có tham số thì chỉ mở client 1.
