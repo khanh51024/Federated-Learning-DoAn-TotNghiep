@@ -51,7 +51,7 @@ function buildSummary() {
       <p class="field-hint mt-2" id="result-comparison-source"></p>
       <div class="viewer-comparison mt-3" id="result-key-comparison"></div>
       <p class="viewer-takeaway mt-3" id="result-takeaway" aria-live="polite"></p>
-      <p class="viewer-scope mt-2"><b class="scope-tag">Phạm vi</b> ${esc(scopeText(factsOf(summary)))} <a href="#ket-luan">Xem hạn chế ở chương 5</a></p>
+      <p class="viewer-scope mt-2"><b class="scope-tag">Phạm vi</b> ${esc(scopeText(factsOf(summary)))} Mục 4.7 cho số khác vì là trung bình 3 hạt giống trên tập thử riêng, còn đây là một hạt giống trên tập kiểm tra. <a href="#ket-luan">Xem hạn chế ở chương 5</a></p>
     </section>
 
     <section class="panel mt-4" aria-labelledby="result-chart-title">

@@ -278,7 +278,10 @@ goto :end
 
 :n23
 echo.
-"%PY%" scripts/demo_show.py fairness
+"%PY%" scripts/demo_show.py fairness --split val
+if errorlevel 1 goto :error
+echo.
+"%PY%" scripts/demo_show.py drift
 if errorlevel 1 goto :error
 goto :end
 
@@ -337,7 +340,7 @@ echo [3] Chi phí truyền thông:
 if errorlevel 1 goto :error
 echo.
 echo [4] Công bằng giữa các client:
-"%PY%" scripts/demo_show.py fairness
+"%PY%" scripts/demo_show.py fairness --split val
 if errorlevel 1 goto :error
 echo.
 echo [5] Riêng tư: ảnh không rời client, chỉ gửi trọng số. Chưa có bảo đảm DP.

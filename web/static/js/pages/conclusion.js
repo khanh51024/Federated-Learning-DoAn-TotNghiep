@@ -18,16 +18,16 @@ function baseLimits(seed, facts, summary) {
     ? `Hiệu chuẩn làm ECE của FedAvg giảm ở ${shift.improved.length ? names(shift.improved) : "không nhóm nào"} nhưng tăng ở ${names(shift.worsened)} (xem chương 4, mục 4.4), nên với ảnh khác nguồn ảnh đã học xác suất hiển thị vẫn không đáng tin.`
     : "Với ảnh khác nguồn ảnh đã học, xác suất hiển thị vẫn có thể cao hơn độ chính xác thực (xem chương 4, mục 4.4).";
   return [
-    ["Mới có một kịch bản", `Mới thử ${alpha}; ${runs > 1 ? `đã chạy ${fmtInt(runs)} hạt giống, các trang chi tiết hiển thị hạt giống ${seed ?? "—"} (bảng các hạt giống ở trang Kết quả cho thấy độ dao động giữa các lần chạy)` : `các trang chi tiết hiển thị hạt giống ${seed ?? "—"}`}, chưa đủ để nói kết quả ổn định khi mức lệch thay đổi (chương 2 liệt kê các cách chia của release, nhưng chỉ ${alpha} có mô hình).`],
+    ["Các mức lệch mới đủ ở một phần", `Mục 4.1 đến 4.6 hiển thị ${alpha}, hạt giống ${seed ?? "—"}${runs > 1 ? ` (đã chạy ${fmtInt(runs)} hạt giống)` : ""}. FedAvg đã quét đủ 5 mức α với 3 hạt giống ở mục 4.7. Local-only mới có α = 0,1. Lệch số lượng và lệch nguồn ảnh mới chia dữ liệu, chưa có kết quả.`],
     ["Chưa có kiểm thử thực địa độc lập", "PlantVillage là ảnh chụp trong phòng; PlantDoc là ảnh ngoài đồng nhưng chỉ phủ một phần các nhóm và không có lá khỏe. Cả tập kiểm tra lẫn tập giữ riêng đều lấy từ cùng bộ dữ liệu."],
     ["Chỉ nhận ảnh một chiếc lá đã cắt", "Mô hình không tự tìm lá trong ảnh toàn cây; ảnh khác kiểu sẽ cho kết quả kém dù xác suất dự đoán hiển thị vẫn cao."],
     ["Xác suất dự đoán chỉ được hiệu chuẩn một phần", `Web hiện cả xác suất gốc và xác suất đã hiệu chuẩn. ${calibrationText}`],
     ["Chưa thử nghiệm client lỗi hay bị tấn công", "Máy chủ có cơ chế kiểm tra bản cập nhật (chạy thử ở Phụ lục kỹ thuật), nhưng chưa có thí nghiệm đo độ chính xác nên chưa kết luận được."],
-    ["FedAvg chưa chạy lại qua Flower", `Kết quả FedAvg dùng runner in_process_simulation (5 client mô phỏng trong một tiến trình). Lịch sử từng vòng được ghi đủ${facts?.delta_l2_recorded === false ? ", nhưng độ lệch ‖Δ‖₂ của từng client chưa được ghi" : ""}${facts?.delta_l2_recorded === false ? " và " : ", nhưng "}số byte là kích thước mô hình, không phải lưu lượng đo trên mạng. Phiên Flower trên web dùng ảnh nhiễu, chỉ kiểm tra hệ thống; Local-only chưa có lịch sử từng vòng trong báo cáo.${net?.available ? ` Riêng đường mạng đã được chạy với ảnh thật: ${fmtInt(net.num_clients)} client, ${fmtInt(net.rounds)} vòng qua Flower trên localhost, theo cách chia cũ chỉ có PlantVillage và học từ đầu (Phụ lục A). Lượt này khác dữ liệu và công thức với mô hình trên web nên không thay số FedAvg.` : ""}`],
+    ["FedAvg trên Flower chưa tương đương trên mọi tập ảnh", "Đã chạy FedAvg trên Flower với 3 hạt giống ở α = 0,1 và chia đều (mục 4.7). Trên toàn bộ ảnh, chênh lệch với bản tự cài rất nhỏ; riêng ảnh ngoài đồng chênh lớn hơn dao động giữa các hạt giống, nên chưa kết luận tương đương trên mọi tập. Mục 4.1 đến 4.6 vẫn dùng bản tự cài chạy trong một tiến trình."],
     ["Chênh lệch miền dữ liệu là vấn đề của dữ liệu", "Mô hình Centralized đạt rất cao trên PlantVillage nhưng thấp hơn nhiều trên PlantDoc, nên khoảng cách này không riêng của học liên kết. Mohanty và cộng sự (2016) cũng ghi nhận độ chính xác giảm mạnh khi ảnh được chụp trong điều kiện khác; Noyan (2022) chỉ ra PlantVillage có thiên lệch khi chụp."],
     ["BatchNorm trong học liên kết", "MobileNetV3 có lớp BatchNorm; khi đặc trưng giữa các client khác nhau, việc lấy trung bình cả thống kê BatchNorm có thể gây hại (FedBN, Li và cộng sự 2021). FedBN (giữ BatchNorm riêng ở từng client) đã có trong mã nguồn kèm kiểm thử đơn vị nhưng chưa chạy thí nghiệm, nên đây vẫn là giả thuyết cần kiểm chứng."],
     fairnessLimit,
-    ["Năm client là giả lập", "Năm client là năm phần của cùng một bộ dữ liệu, không phải năm nông hộ thật; không có độ trễ mạng hay thiết bị khác nhau."],
+    ["Kết quả chính dùng client giả lập", "Trong các số về độ chính xác, năm client là năm phần của cùng một bộ dữ liệu, không phải năm nông hộ thật. Lần đo qua mạng thật ở trang Flower chứng minh hệ thống chạy đúng, không phải độ chính xác của đề tài."],
     ["Học phân tán cộng đồng có giới hạn đã đo", "Người tham gia chỉ học lớp cuối trên đặc trưng của backbone đóng băng, với ảnh và nhãn tự gán (chưa có chuyên gia kiểm). Thí nghiệm mô phỏng ở mục 4.5 cho thấy mức tăng khiêm tốn (khoảng 1 đến 2 điểm phần trăm khi dữ liệu người tham gia đủ đa dạng), gần như không tăng với ảnh ngoài đồng, và vòng có ít người mà mỗi người chỉ có một nhóm bệnh thì dễ bị cổng chất lượng từ chối. Người thật chưa được thử ở quy mô lớn."],
     ["Riêng tư chưa tuyệt đối", "Học phân tán chỉ giữ ảnh gốc không rời client; trọng số vẫn có thể làm lộ thông tin. Muốn bảo đảm mạnh hơn cần thêm kỹ thuật như differential privacy hoặc secure aggregation."],
   ];
@@ -133,13 +133,13 @@ function answersHtml(evidence, facts) {
 function futureList(facts) {
   return FUTURE.filter(([title]) => !(title === "Huấn luyện cùng điều kiện" && facts?.same_recipe === true))
     .map(([title, text]) => (title === "Chạy lặp lại nhiều lần"
-      ? [title, `Chạy nhiều mức lệch dữ liệu (không chỉ ${alphaText(facts) || "một mức"}) để biết kết quả có ổn định khi điều kiện thay đổi không, và dò riêng tốc độ học cho FedAvg trên dữ liệu lệch. Cần GPU.`]
+      ? [title, "Chạy Local-only ở các mức α còn lại, và cả FedAvg lẫn Local-only ở lệch số lượng, lệch nguồn ảnh, để đủ bộ so sánh của Đợt 2. Cần GPU."]
       : [title, text]));
 }
 
 const FUTURE = [
   ["Chạy lặp lại nhiều lần", ""],
-  ["Đối chiếu FedAvg trên Flower", "Dùng cùng release, W0, phân hoạch và cấu hình; lưu đủ log, đối chiếu checkpoint với runner hiện tại, rồi đo mạng thật riêng."],
+  ["Xem vì sao Flower lệch trên ảnh ngoài đồng", "Đối chiếu thêm với bản tự cài ở các mức α khác để biết chênh lệch trên ảnh ngoài đồng đến từ đâu."],
   ["Thuật toán chịu non-IID", "Chạy FedProx, FedBN, SCAFFOLD, FedAvgM và MOON (đã cài trong mã nguồn, có kiểm thử đơn vị) trên cùng phân hoạch rồi so với FedAvg; chưa có kết quả để khẳng định cải thiện. Cần GPU."],
   ["Huấn luyện cùng điều kiện", "Cho Centralized, FedAvg và Local-only cùng bộ tối ưu và số bước, rồi so sánh lại."],
   ["Kiểm thử ngoài đồng", "Thu thêm ảnh ngoài đồng phủ đủ các nhóm bệnh, giữ riêng một tập chưa từng dùng để chọn mô hình."],
@@ -167,7 +167,7 @@ export async function mount() {
     <section class="panel report-section mt-4" aria-labelledby="c-limits">
       ${sectionHead("5.2", "Hạn chế", { id: "c-limits", lead: "Những gì nghiên cứu chưa làm được" })}
       <div class="viewer-limits mt-3">
-        <article><h4>Chưa đánh giá qua nhiều kịch bản</h4><p>Một mức lệch dữ liệu${facts?.alpha != null ? ` (${esc(alphaText(facts))})` : ""}, ${esc(runsText(facts))}; các client là phân vùng giả lập.</p></article>
+        <article><h4>Chưa đủ mọi kịch bản lệch</h4><p>FedAvg đủ 5 mức α, 3 hạt giống (mục 4.7). Local-only mới có α = 0,1; lệch số lượng và lệch nguồn ảnh chưa có kết quả. Các client trong số về độ chính xác là phân vùng giả lập.</p></article>
         <article><h4>Chưa có kiểm thử độc lập trong điều kiện thực tế</h4><p>Ảnh ngoài đồng hiện có chỉ phủ một phần nhóm lá; kết quả chưa đại diện cho triển khai thực tế.</p></article>
         <article><h4>Cần ảnh một lá đã cắt</h4><p>Web chưa tự tìm lá trên ảnh toàn cây. Xác suất dự đoán cao vẫn có thể sai.</p></article>
       </div>
@@ -185,8 +185,8 @@ export async function mount() {
       ${sectionHead("5.4", "Tiến độ và nguồn tham khảo", { id: "c-progress" })}
       <div tabindex="0" role="region" aria-label="Tiến độ theo giai đoạn" class="table-responsive mt-3"><table class="data-table wrap-head"><thead><tr><th scope="col">Giai đoạn</th><th scope="col">Đã có</th><th scope="col">Còn thiếu</th></tr></thead><tbody>
         <tr><th scope="row">Mốc so sánh</th><td>Centralized, FedAvg và 5 Local-only; ${facts?.same_recipe === true ? "cùng công thức, cùng số bước, " : ""}cùng validation; đánh giá bổ sung trên tập test giữ riêng</td><td>${facts?.same_recipe === true ? "Dò riêng tốc độ học cho FedAvg trên dữ liệu lệch" : "Đối chứng cùng bộ tối ưu và ngân sách"}</td></tr>
-        <tr><th scope="row">Non-IID</th><td>Các phân hoạch của release; kết quả huấn luyện ${esc(alphaText(facts) || "một mức lệch")}, hạt giống ${seed ?? "—"} hiển thị${facts?.seeds_run?.length ? ` (${fmtInt(facts.seeds_run.length)} hạt giống đã chạy)` : ""}</td><td>Huấn luyện nhiều mức lệch</td></tr>
-        <tr><th scope="row">Flower</th><td>Mã legacy và phiên localhost dùng ảnh nhiễu trên web; lần đo qua Internet với máy chủ tách riêng ở <a href="#flower">trang Flower</a>${summary?.network_run?.available ? `; một lượt ${fmtInt(summary.network_run.num_clients)} client qua mạng localhost trên ảnh PlantVillage thật (cách chia cũ, <a href="#phu-luc">Phụ lục A</a>)` : ""}</td><td>${summary?.network_run?.available ? "Chạy FedAvg cùng công thức của mô hình trên web qua Flower và đối chiếu runner" : "Chạy lại FedAvg trên Flower và đối chiếu runner"}</td></tr>
+        <tr><th scope="row">Non-IID</th><td>Các phân hoạch của release; FedAvg 5 mức α với 3 hạt giống (<a href="#ket-qua">mục 4.7</a>); Local-only ${esc(alphaText(facts) || "một mức lệch")}</td><td>Local-only ở các mức α còn lại; kết quả lệch số lượng và lệch nguồn ảnh</td></tr>
+        <tr><th scope="row">Flower</th><td>FedAvg trên Flower 3 hạt giống ở α = 0,1 và chia đều (<a href="#ket-qua">mục 4.7</a>); lần đo qua Internet với máy chủ tách riêng ở <a href="#flower">trang Flower</a>; phiên thử localhost dùng ảnh nhiễu trên web</td><td>Làm rõ chênh lệch với bản tự cài trên ảnh ngoài đồng</td></tr>
         <tr><th scope="row">Thuật toán chịu non-IID</th><td>FedProx, FedBN, SCAFFOLD, FedAvgM và MOON đã cài trong mã nguồn, có kiểm thử đơn vị</td><td>Chạy thí nghiệm trên cùng phân hoạch và so với FedAvg</td></tr>
         <tr><th scope="row">Tối ưu phía client</th><td>MobileNetV3-Small; học lớp cuối trong demo cộng đồng${summary?.gd4?.available ? '; đo nén trọng số khi truyền và lượng tử hóa int8 (<a href="#ket-qua">chương 4</a>, mục 4.6)' : ""}</td><td>${summary?.gd4?.available ? "Nén ở mỗi vòng trong lúc huấn luyện, đo trên điện thoại" : "Nén trọng số khi truyền, lượng tử hóa"}, thử nhiều máy và client thật</td></tr>
         <tr><th scope="row">Đánh giá triển khai</th><td>Phân tích lỗi, hiệu chuẩn, phép đo ảnh toàn cảnh trên dữ liệu hiện có</td><td>Tập thực địa mới, nhãn được chuyên gia duyệt, test cuối cùng được niêm phong</td></tr>

@@ -257,6 +257,9 @@ try:
                 res = self.core.fit(weights_dict, round_num=round_num)
             finally:
                 self.core.local_epochs = previous_local_epochs
+            # Chỉ in ra màn hình của máy này, không gửi lên máy chủ: để so mã băm trên cửa sổ client với mã trên trang web.
+            print(f"[Client {self.core.client_id}] Vòng {round_num}: nhận mô hình {res['recv_hash'][:8]}, học {res['num_examples']} ảnh, "
+                  f"gửi trọng số mã băm {res['hash'][:8]}, độ biến thiên {res['update_norm']:.4f}", flush=True)
             updated_ndarrays = [
                 v.detach().cpu().numpy() if isinstance(v, torch.Tensor) else np.asarray(v)
                 for v in res["weights"].values()

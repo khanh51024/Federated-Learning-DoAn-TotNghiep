@@ -867,6 +867,12 @@ class AuditedFlowerFedAvg:
                         "server_validation_metrics": server_eval_metrics,
                     }
                 )
+                checked = [record for record in client_records if record.get("upload_hash_ok") is not None]
+                accuracy = (server_eval_metrics or {}).get("accuracy")
+                print(f"[Vòng {int(server_round)}] nhận {int(len(accepted_results))} client, loại {int(rejected_count)}, "
+                      f"mã băm khớp {sum(record['upload_hash_ok'] is True for record in checked)}/{len(checked)}"
+                      + (f", độ chính xác {accuracy * 100:.2f}%" if accuracy is not None else "")
+                      + f", mô hình {str(self._parent_hash_by_round.get(int(server_round)))[:8]} -> {str(global_model_hash)[:8]}", flush=True)
                 self._write_progress({
                     "round_in_progress": int(server_round),
                     "completed_round": int(server_round),

@@ -391,10 +391,10 @@ function layoutHtml() {
       <div id="live-stage" class="mt-3"></div>
       <div id="live-stage-detail" class="live-detail hidden" role="region" aria-label="Chi tiết mục đang chọn"></div>
     </section>
-    <div id="live-caveats" class="mt-4"></div>
     <div id="live-proofs" class="mt-4"></div>
     <p class="field-hint mt-2">Bấm vào một ô để xem số đó làm ra thế nào.</p>
     <section id="live-proofs-detail" class="live-detail panel mt-3 hidden" aria-label="Chi tiết ô đang chọn"></section>
+    <div id="live-caveats" class="mt-4"></div>
     <div class="live-charts mt-4">
       <section class="panel"><h3 class="panel-title panel-title-sm">Máy chủ kiểm mô hình chung sau mỗi vòng</h3>
         <div class="chart-container mt-3"><canvas id="live-chart-accuracy" aria-label="Độ chính xác và loss theo vòng"></canvas></div></section>

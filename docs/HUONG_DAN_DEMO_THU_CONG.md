@@ -39,9 +39,11 @@ Mở sẵn 2 tab: `https://datn.tranngochung.id.vn/#flower` và chương 4, tab 
 
 **Chạy trực tiếp 7 client, 3 vòng:**
 
-1. VM (Claude chạy giúp): `bash <thư mục bản web>/scripts/remote/run_network_server.sh --public --clients 7 --rounds 3`.
-2. Laptop 1: `deploy\lan_client\CHAY_CLIENT.bat 0 5 149.118.51.118`.
-3. Laptop 2: nhấp đúp `LAPTOP_2_DEMO_NHANH.bat` trong thư mục đã giải nén.
+1. Laptop 1: cắm ổ F chứa khóa SSH, nhấp đúp `DEMO_NHANH.bat`. File tự mở máy chủ trên VM, mở trang web và mở 5 client.
+2. Khi file báo `BÂY GIỜ`, laptop 2 nhấp đúp `LAPTOP_2_DEMO_NHANH.bat` trong thư mục đã giải nén.
+3. Muốn cho thầy thấy client gửi thật: mở cửa sổ một client, so `gửi trọng số mã băm ...` với cột mã băm trên trang web ở cùng vòng. Hai mã phải giống nhau.
+
+Không có ổ F: đặt biến `DEMO_SSH_KEY` trỏ tới khóa, hoặc bỏ phần chạy trực tiếp.
 
 Trước đó tắt ứng dụng nặng, cắm sạc cả 2 máy. Nếu mạng hoặc laptop 2 lỗi thì bỏ phần chạy trực tiếp, dùng lần đo 10 client đã lưu và thanh chọn vòng; số đã lưu không bị ảnh hưởng.
 
@@ -121,7 +123,7 @@ Ký hiệu: ✅ làm trực tiếp được, 📊 xem số đã đo, ⚠️ làm
 |---|---|---|---|
 | 2.1, 2.4 | ⚠️ | Bảng, 2 biểu đồ | "Phân tán đủ 5 mức α, mỗi mức 3 lần chạy. Khoảng cách từ 0,73 điểm lên 3,77 điểm khi dữ liệu càng lệch. Local-only mới có ở α=0,1." |
 | 2.2 | ⚠️ | Số ảnh từng client | "Đã chia xong dữ liệu: lệch số lượng gấp 7,7 lần, lệch nguồn ảnh từ 0% đến 83% ảnh ngoài đồng. Chưa train vì máy thuê mất kết nối." |
-| 2.3 | ✅ | Bảng theo client | "Rất lệch: trung bình 88,58%, mạnh hơn yếu 13,54 điểm, client nhỏ nhất 79,90%." |
+| 2.3 | ✅ | Bảng theo client, bảng client trôi xa mô hình chung | "Rất lệch: trung bình 90,79%, mạnh hơn yếu 10,30 điểm, client ít ảnh nhất 84,29%. Client cũng trôi xa mô hình chung hơn: từ 0,038 lên 0,147." |
 
 - **Nếu hỏi vì sao Local-only ở bảng 2.3 cao tới 96,57%:** bảng này đo trên loại bệnh mà chính client đó có. Trên ảnh chung thì Local-only chỉ 46,55%.
 - **Nếu hỏi nguyên nhân suy giảm:** "Em đo được 2 cơ chế tạo lệch: học nhiều bước trên dữ liệu riêng và BatchNorm. Em chưa tách được mỗi nguyên nhân chiếm bao nhiêu."
@@ -142,7 +144,7 @@ Ký hiệu: ✅ làm trực tiếp được, 📊 xem số đã đo, ⚠️ làm
 | 4.1 | 📊 | Bảng nén | "Mô hình int8 còn 2,12 MB so với 6,24 MB, độ chính xác 93,81% so với 93,88%, 5,14 ms một ảnh trên laptop. Chưa đo trên điện thoại." |
 | 4.2 | 📊 | Bảng nén | "Nén 8-bit còn 26,4% dung lượng, độ chính xác gần như không đổi. Em đo bằng cách nén một lần sau khi học xong, chưa học với nén ở mỗi vòng. Số 661 MB cho 40 vòng chỉ là ước tính." |
 | 4.3 | ⚠️ | `4 passed` | "Phần này là tùy chọn. Đã có code thêm nhiễu và tính ε, nhưng chưa chạy đường ε – độ chính xác vì chưa đủ thời gian GPU." |
-| 4.4 | ✅ | Đo 2 laptop (mục 5) | "2 client thật trên 2 máy và một máy chủ tổng hợp." |
+| 4.4 | ✅ | Trang Flower, lần đo 10 client | "10 client trên 2 laptop, máy chủ riêng trên VM, qua Internet thật." |
 
 - **Nếu hỏi vì sao không dùng bản int8 nén toàn bộ:** bản đó độ chính xác tụt còn 9,98%, nên em chỉ nén một phần các lớp.
 
@@ -159,6 +161,8 @@ Ký hiệu: ✅ làm trực tiếp được, 📊 xem số đã đo, ⚠️ làm
 **Câu nói về tiến độ:** "Em chưa đạt đủ mức Tối thiểu. Để đủ, còn phải train 2 dạng lệch cho phân tán (6 lần chạy, khoảng 1 giờ GPU) và Local-only ở các mức còn lại (90 lần chạy). Máy thuê bị mất kết nối giữa chừng nên phần này chưa có."
 
 ## 5. Đo trực tiếp giữa 2 laptop
+
+**Cách cũ, chỉ dùng khi không nối được VM:** máy chủ nằm chung laptop chính nên không phải máy chủ tách riêng. Khi demo chính dùng `DEMO_NHANH.bat` ở mục 2.
 
 Laptop chính là máy chủ và client 0, laptop 2 là client 1. Mất khoảng 2 phút.
 
@@ -237,6 +241,7 @@ So sánh phân tán và tập trung, kiểm trọng số, các lần đo tốc �
 | Dòng float32 trong báo cáo trùng dự đoán chỉ 76,47%? | "Em làm đối chứng chỉ đổi thứ tự ảnh, về toán phải trùng mà float32 vẫn lệch cùng cỡ. Nên không quy cho phân tán. Nguyên nhân cụ thể em chưa chứng minh được." |
 | Flower có tương đương bản tự cài không? | "Trên toàn bộ ảnh chênh 0,11 điểm, nhưng ảnh ngoài đồng chênh 0,96 điểm, lớn hơn dao động giữa các lần chạy. Nên em chưa kết luận tương đương trên mọi nhóm." |
 | 5 client có phải 5 máy thật không? | "Không, 5 client là mô phỏng trên một GPU. Máy thật là phần đo 2 laptop." |
+| Tab 4.1 ghi 96,71%, tab 4.7 ghi 96,85%, số nào đúng? | "Cả hai đúng, khác tập đo. Tab 4.1 là một hạt giống trên tập kiểm tra. Tab 4.7 là trung bình 3 hạt giống trên tập thử riêng, em dùng tab 4.7 để so sánh." |
 | Số này sao khác báo cáo Đợt 2? | "Đó là hai bộ chạy riêng, khác seed và tập đánh giá. Tụi em không trộn hai bộ số." |
 | Trên PlantDoc thì sao? | "172 ảnh: tập trung 57,56%, phân tán lệch mạnh 40,50%. Tập nhỏ nên phải đọc kèm khoảng tin cậy, và cả tập trung cũng yếu trên ảnh ngoài đồng." |
 | Có tiết kiệm truyền thông không? | "Không. 40 vòng gửi 2.510 MB, gấp 1,65 lần gửi thẳng ảnh. Lợi ích chính là ảnh không rời máy." |
@@ -244,6 +249,8 @@ So sánh phân tán và tập trung, kiểm trọng số, các lần đo tốc �
 | Phân tán có đảm bảo riêng tư tuyệt đối không? | "Không. Ảnh không rời máy, nhưng em chưa có DP hay mã hóa nên chưa có bảo đảm toán học." |
 
 ## 7. Lỗi thường gặp
+
+Cửa sổ `.bat` hiện `?` thay chữ có dấu: chỉ do phông chữ, vẫn chạy đúng. Muốn đẹp thì chuột phải thanh tiêu đề cửa sổ, Properties, Font, chọn Consolas.
 
 | Hiện tượng | Xử lý |
 |---|---|

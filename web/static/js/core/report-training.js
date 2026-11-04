@@ -51,7 +51,7 @@ export function configsHtml(training) {
     <h4 class="subhead mt-4">Bảy bộ trọng số dùng khi đánh giá và nhận diện</h4>${table(["Mô hình", "Mốc chọn / đã chạy", "Dung lượng tệp", "SHA-256 (rút gọn)"], models, "Bảy checkpoint đã kiểm SHA-256")}
     <p class="field-hint mt-2">Trọng số mô hình là tensor đã học; p_k trong FedAvg là hệ số gộp theo số ảnh, hai khái niệm khác nhau. Dung lượng checkpoint không phải dung lượng truyền mỗi vòng.</p>
     <h4 class="subhead mt-4">Flower nằm ở đâu?</h4>
-    <p class="section-lead">Nhánh legacy có ServerApp, ClientApp và launcher gọi Flower + Ray. ${esc(MODEL_LABELS.fedavg)} trong bảng kết quả dùng runner một tiến trình; chạy lại qua Flower và đối chiếu với runner hiện tại vẫn là việc tiếp theo. Phiên Flower trên web chạy một server và năm tiến trình client localhost bằng ảnh nhiễu để kiểm tra hệ thống, không tạo ra kết quả khoa học.</p>
+    <p class="section-lead">${esc(MODEL_LABELS.fedavg)} trong các bảng 4.1 đến 4.6 dùng bản tự cài chạy trong một tiến trình. FedAvg cũng đã chạy trên Flower (ServerApp, ClientApp, mô phỏng bằng Ray) với 3 hạt giống, kết quả ở mục 4.7. Lần đo qua Internet thật, máy chủ tách riêng, ở trang Flower: phần đó chứng minh hệ thống chạy đúng, không phải độ chính xác của đề tài.</p>
     <p class="field-hint mt-2">Xem <a href="#flower">bằng chứng Flower</a>; muốn chạy phiên mới, dùng <a href="#phu-luc">Phụ lục kỹ thuật, mục D</a>. “Đã chạy thành công” và “đang có tiến trình chạy” là hai trạng thái cần đọc riêng.</p>`;
 }
 
