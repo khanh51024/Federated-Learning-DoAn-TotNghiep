@@ -1,0 +1,49 @@
+[*] Starting Flower Server listening on 0.0.0.0:18089
+[*] Configured for up to 5 clients (at least 5 to start each round), 2 round(s), seed=42...
+[*] Held-out evaluator enabled: val=114, test=190, data_mode=real
+[93mWARNING [0m:   DEPRECATED FEATURE: flwr.server.start_server() is deprecated.
+	Instead, use the `flower-superlink` CLI command to start a SuperLink as shown below:
+
+		$ flower-superlink --insecure
+
+	To view usage and all available options, run:
+
+		$ flower-superlink --help
+
+	Using `start_server()` is deprecated.
+
+            This is a deprecated feature. It will be removed
+            entirely in future versions of Flower.
+        
+[92mINFO [0m:      Starting Flower server, config: num_rounds=2, no round_timeout
+[92mINFO [0m:      Flower ECE: gRPC server running (2 rounds), SSL is disabled
+[92mINFO [0m:      [INIT]
+[92mINFO [0m:      Using initial global parameters provided by strategy
+[92mINFO [0m:      Starting evaluation of initial global parameters
+[92mINFO [0m:      Evaluation returned no results (`None`)
+[92mINFO [0m:      
+[92mINFO [0m:      [ROUND 1]
+[92mINFO [0m:      configure_fit: strategy sampled 5 clients (out of 5)
+[92mINFO [0m:      aggregate_fit: received 5 results and 0 failures
+[!] Flower client 689980561ab249d6a36076967e353fe6 rejected: upload_hash_mismatch (client=b5196ae84099 server=ffb2fc56d278)
+Traceback (most recent call last):
+  File "/home/ubuntu/fl-demo-20261104-bangchung/src/federated/server_app.py", line 1218, in <module>
+    start_flower_server(**launch_args)
+  File "/home/ubuntu/fl-demo-20261104-bangchung/src/federated/server_app.py", line 1031, in start_flower_server
+    history = fl.server.start_server(
+              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/fl-demo-20261104-bangchung/.venv/lib/python3.11/site-packages/flwr/compat/server/app.py", line 165, in start_server
+    hist = run_fl(
+           ^^^^^^^
+  File "/home/ubuntu/fl-demo-20261104-bangchung/.venv/lib/python3.11/site-packages/flwr/server/server.py", line 487, in run_fl
+    hist, elapsed_time = server.fit(
+                         ^^^^^^^^^^^
+  File "/home/ubuntu/fl-demo-20261104-bangchung/.venv/lib/python3.11/site-packages/flwr/server/server.py", line 114, in fit
+    res_fit = self.fit_round(
+              ^^^^^^^^^^^^^^^
+  File "/home/ubuntu/fl-demo-20261104-bangchung/.venv/lib/python3.11/site-packages/flwr/server/server.py", line 246, in fit_round
+    ] = self.strategy.aggregate_fit(server_round, results, failures)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/fl-demo-20261104-bangchung/src/federated/server_app.py", line 777, in aggregate_fit
+    raise RuntimeError(
+RuntimeError: Round 1 requires exactly 5 accepted clients; received=5 accepted=4 failures=0
