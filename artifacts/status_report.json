@@ -133,7 +133,7 @@
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-11-04T00:57:28",
+      "generated_at": "2026-11-04T17:41:19",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,7 +145,7 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-11-04T00:57:30",
+      "generated_at": "2026-11-04T17:41:22",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
@@ -165,7 +165,7 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-11-04T00:57:34",
+      "generated_at": "2026-11-04T17:41:28",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
@@ -212,7 +212,7 @@
       "id": "no_hardcode",
       "title": "Không hardcode đường dẫn artifact",
       "status": "CHƯA",
-      "detail": "9 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/demo_show.py:268', 'scripts/demo_show.py:265', 'scripts/demo_show.py:266', 'scripts/demo_show.py:277', 'scripts/eval_dp_noise_sensitivity.py:81']",
+      "detail": "9 chỗ hardcode đường dẫn artifacts/ (quét AST): ['scripts/demo_show.py:271', 'scripts/demo_show.py:268', 'scripts/demo_show.py:269', 'scripts/demo_show.py:286', 'scripts/eval_dp_noise_sensitivity.py:81']",
       "unlock": []
     },
     {

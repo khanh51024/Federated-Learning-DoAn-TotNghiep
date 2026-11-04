@@ -23,6 +23,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from src.federated.run_detail import detail_for_run, detail_lines, detail_view  # noqa: E402
 from src.federated.run_view import list_runs, load_run, run_view  # noqa: E402
 from src.federated.verification_view import SWEEP_ROWS, sweep_view  # noqa: E402,F401
 
@@ -253,6 +254,8 @@ def main() -> int:
     flower_parser = commands.add_parser("flower", help="không truyền gì = lần chạy mới nhất trong artifacts/network_live, đúng lần web đang hiện")
     flower_parser.add_argument("--history", type=Path, default=None)
     flower_parser.add_argument("--run", type=Path, default=None, help="thư mục một lần chạy trong artifacts/network_live")
+    flower_parser.add_argument("--detail", default=None, help="in chi tiết một mục như khi bấm trên web: client:7, machine:A, server, hash, norm, rounds, host, bytes, accuracy")
+    flower_parser.add_argument("--round", type=int, default=None, help="vòng cần xem, dùng với --detail client:N hoặc server; mặc định là vòng mới nhất")
     run_parser = commands.add_parser("run")
     run_parser.add_argument("--run", type=Path, required=True)
     run_parser.add_argument("--every", type=int, default=10, help="in mỗi N vòng")
@@ -272,12 +275,24 @@ def main() -> int:
     args = parser.parse_args()
     if args.command == "flower":
         if args.history is not None:
-            lines = flower_lines(read_json(args.history))
+            if args.detail:
+                built = detail_view({"history": read_json(args.history)}, args.detail, args.round)
+                if built is None:
+                    raise SystemExit(f"Không có mục {args.detail} hoặc vòng {args.round} trong lần chạy này")
+                lines = detail_lines(built)
+            else:
+                lines = flower_lines(read_json(args.history))
         else:
             runs = [args.run] if args.run is not None else list_runs(ROOT / "artifacts" / "network_live")[:1]
             if not runs:
                 raise SystemExit("Chưa có lần chạy nào trong artifacts/network_live; truyền --history hoặc --run")
-            lines = view_lines(run_view(load_run(runs[0])))
+            if args.detail:
+                built = detail_for_run(runs[0], args.detail, args.round)
+                if built is None:
+                    raise SystemExit(f"Không có mục {args.detail} hoặc vòng {args.round} trong lần chạy này")
+                lines = detail_lines(built)
+            else:
+                lines = view_lines(run_view(load_run(runs[0])))
     elif args.command == "run":
         lines = run_lines(args.run, args.every)
     elif args.command == "compare":

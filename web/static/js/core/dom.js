@@ -42,6 +42,19 @@ export function withAlpha(hex, alpha) {
   return hex + Math.round(alpha * 255).toString(16).padStart(2, "0");
 }
 
+export function copyButton(value, what) {
+  return `<button type="button" class="copy-btn" data-copy="${esc(value)}" data-what="${esc(what)}" aria-label="Sao chép ${esc(what)}">sao chép</button>`;
+}
+
+export async function copyFromButton(button) {
+  try {
+    await navigator.clipboard.writeText(button.dataset.copy);
+    notify("success", "Đã sao chép", button.dataset.what);
+  } catch (_error) {
+    notify("warning", "Không sao chép được", "Trình duyệt chặn clipboard; hãy bôi đen và sao chép thủ công.");
+  }
+}
+
 export function setText(el, text) {
   const next = String(text);
   if (el && el.textContent !== next) {

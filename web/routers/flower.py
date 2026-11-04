@@ -14,6 +14,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from starlette.concurrency import run_in_threadpool
 
 from src import registry as reg
+from src.federated.run_detail import ITEM, detail_for_run
 from src.federated.run_view import list_runs, load_run, run_view
 from web import state
 from web.services import admin_auth, flower_evidence, flower_health
@@ -26,6 +27,7 @@ LIVE_PER_MINUTE = 120       # trang hỏi mỗi 3 giây; cả lớp xem chung m�
 LIVE_CACHE_S = 2.0          # nhiều người cùng xem chỉ đọc tệp một lần mỗi 2 giây
 RUN_NAME = re.compile(r"^[0-9A-Za-z_-]{1,80}$")
 _live_cache: Dict[str, tuple[float, Dict[str, Any]]] = {}
+_detail_cache: Dict[str, tuple[float, Optional[Dict[str, Any]]]] = {}
 _live_lock = threading.Lock()
 
 
@@ -72,6 +74,45 @@ async def get_flower_live(request: Request, run: Optional[str] = Query(default=N
     if run is not None and not RUN_NAME.fullmatch(run):
         raise HTTPException(status_code=404, detail="Không có lần đo này.")
     return await run_in_threadpool(_cached_live, run)
+
+
+def _cached_detail(run: Optional[str], item: str, round_no: Optional[int]) -> Optional[Dict[str, Any]]:
+    root = reg.abs_path(reg.NETWORK_LIVE_DIR)
+    names = [path.name for path in list_runs(root)]
+    if not names or (run is not None and run not in names):     # chỉ nhận đúng tên đã liệt kê, không ghép đường dẫn từ dữ liệu người dùng
+        return None
+    key = f"{run or names[0]}|{item}|{round_no}"
+    now = time.monotonic()
+    with _live_lock:
+        cached = _detail_cache.get(key)
+        if cached and now - cached[0] < LIVE_CACHE_S:
+            return cached[1]
+    built = detail_for_run(root / (run or names[0]), item, round_no)
+    with _live_lock:
+        if len(_detail_cache) > 256:
+            _detail_cache.clear()
+        _detail_cache[key] = (now, built)
+    return built
+
+
+@router.get("/detail")
+async def get_flower_detail(
+    request: Request,
+    item: str = Query(max_length=16),
+    run: Optional[str] = Query(default=None, max_length=80),
+    round: Optional[int] = Query(default=None, ge=1, le=100000),
+) -> Dict[str, Any]:
+    """Một mục trên trang: số đó làm ra thế nào, kèm các dòng terminal. Cùng hàm với scripts/demo_show.py flower --detail. Không chứa IP."""
+    allowed, wait = admin_auth.LIMITER.allow(f"flower-detail:{admin_auth.client_ip(request)}", LIVE_PER_MINUTE, 60)
+    if not allowed:
+        raise HTTPException(status_code=429, detail=f"Bạn thao tác quá nhanh. Hãy thử lại sau {int(wait)} giây.",
+                            headers={"Retry-After": str(int(wait))})
+    if not ITEM.fullmatch(item) or (run is not None and not RUN_NAME.fullmatch(run)):
+        raise HTTPException(status_code=404, detail="Không có mục này.")
+    built = await run_in_threadpool(_cached_detail, run, item, round)
+    if built is None:
+        raise HTTPException(status_code=404, detail="Không có mục này.")
+    return built
 
 
 @router.get("/health")

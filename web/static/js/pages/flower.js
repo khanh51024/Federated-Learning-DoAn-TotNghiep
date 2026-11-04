@@ -3,7 +3,7 @@
 // session/history/progress, mã băm tính lại từ tệp). Trang không khởi động gì — muốn có phiên mới thì mở Phụ lục kỹ thuật mục D.
 import { getJson, postJson } from "../core/api.js";
 import { clearCredential, storedAuthHeader, ADMIN_PAGE } from "../core/admin-auth.js";
-import { byId, esc, fmtInt, fmtNum, notify, setHtml, skeleton } from "../core/dom.js";
+import { byId, copyButton, copyFromButton, esc, fmtInt, fmtNum, notify, setHtml, skeleton } from "../core/dom.js";
 import { mountLive, showLive } from "./flower-live.js";
 
 const REFRESH_MS = 3000;
@@ -28,10 +28,6 @@ const EVIDENCE = new Map();
 
 const sec = ms => (ms === null || ms === undefined ? "—" : `${fmtNum(Number(ms) / 1000, 1)} s`);
 const when = iso => (iso ? new Date(iso).toLocaleString("vi-VN") : "—");
-
-function copyButton(value, what) {
-  return `<button type="button" class="copy-btn" data-copy="${esc(value)}" data-what="${esc(what)}" aria-label="Sao chép ${esc(what)}">sao chép</button>`;
-}
 
 // ---------------------------------------------------------------------------
 // từng loại khối bằng chứng
@@ -301,13 +297,7 @@ function bind(root) {
   root.addEventListener("click", async event => {
     if (event.target.closest("#flower-verify-now")) { verifyNow(); return; }
     const button = event.target.closest(".copy-btn");
-    if (!button) return;
-    try {
-      await navigator.clipboard.writeText(button.dataset.copy);
-      notify("success", "Đã sao chép", button.dataset.what);
-    } catch (_error) {
-      notify("warning", "Không sao chép được", "Trình duyệt chặn clipboard; hãy bôi đen và sao chép thủ công.");
-    }
+    if (button) await copyFromButton(button);
   });
 }
 

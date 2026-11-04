@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
 
 from scripts import demo_show as ds
+from src.federated import run_detail as rd
 from src.federated import run_view as rv
 from src.federated.verification_view import speed_view, sweep_view, weight_view
 
@@ -195,3 +196,89 @@ def test_clients_on_one_machine_get_a_plain_warning_and_notes_are_shown_everywhe
 
 def test_two_machines_do_not_get_the_shared_machine_warning():
     assert rv.run_view({"progress": _progress(), "history": None}, now=NOW)["shared_machine_note"] is None
+
+
+ALL_ITEMS = ["client:0", "client:1", "machine:A", "machine:B", "server", *rd.PROOF_ITEMS]
+
+
+def _detail_run(tmp_path, *, finished: bool = False):
+    progress = _progress()
+    if finished:
+        progress = {**progress, "status": "finished", "calibration_metrics": {"accuracy": 0.123456},
+                    "final_test_metrics": {"accuracy": 0.9, "loss": 0.3, "macro_f1": 0.89, "per_class_metrics": {"0": {"f1": 0.5, "support": 5}, "1": {"f1": 1.0, "support": 5}}}}
+    (tmp_path / rv.PROGRESS_FILE).write_text(json.dumps(progress), encoding="utf-8")
+    (tmp_path / rd.LOG_FILE).write_text(
+        "\x1b[92mINFO \x1b[0m: nghe 0.0.0.0:18089 tu 203.0.113.9\n[!] Flower client 0123456789abcdef0123456789abcdef rejected\nluu /home/ubuntu/a/global.pt\n", encoding="utf-8")
+    return tmp_path
+
+
+def test_every_detail_item_builds_and_terminal_prints_the_same_lines_as_the_api(tmp_path):
+    run = _detail_run(tmp_path, finished=True)
+    for item in ALL_ITEMS:
+        built = rd.detail_for_run(run, item, now=NOW)
+        assert built is not None, item
+        assert built["how"] and built["lines"] and built["title"]
+        printed = rd.detail_lines(built)
+        assert all(line in printed for line in built["lines"]), item
+        assert built["command"].endswith(f"--detail {item}")
+
+
+def test_detail_shows_real_numbers_of_the_chosen_round(tmp_path):
+    built = rd.detail_for_run(_detail_run(tmp_path), "client:1", 1, now=NOW)
+    text = "\n".join(built["lines"])
+    assert "Vòng 1, client 1 (Máy B)" in text and "6307176 byte" in text and "KHỚP" in text and "phản hồi 20.50 giây" in text
+    assert built["command"].endswith("--detail client:1 --round 1")
+    assert "2/2 lượt mã băm khớp" in rd.detail_for_run(tmp_path, "hash", now=NOW)["lines"][0]
+
+
+def test_detail_never_exposes_ip_cid_paths_or_calibration(tmp_path):
+    run = _detail_run(tmp_path, finished=True)
+    dumped = json.dumps([rd.detail_for_run(run, item, now=NOW) for item in ALL_ITEMS], ensure_ascii=False)
+    for secret in ("203.0.113.9", "0123456789abcdef0123456789abcdef", "/home/", "cid-bi-mat", "calibration", "0.123456", "\\u001b", "ppm1"):
+        assert secret not in dumped, secret
+    log = rd.detail_for_run(run, "server", now=NOW)["log"]
+    assert log["total_lines"] == 3 and log["lines"][0].startswith("INFO") and "0.0.0.0:18089" in log["lines"][0]
+    assert rd.detail_for_run(run, "hash", now=NOW)["log"] is None
+
+
+def test_detail_rejects_unknown_item_or_round(tmp_path):
+    run = _detail_run(tmp_path)
+    for item, round_no in (("client:99", None), ("machine:Z", None), ("../etc", None), ("server;ls", None), ("server", 99), ("client:0", 99)):
+        assert rd.detail_for_run(run, item, round_no, now=NOW) is None, (item, round_no)
+
+
+def test_detail_says_no_numbers_yet_while_waiting_and_shows_running_state(tmp_path):
+    (tmp_path / rv.PROGRESS_FILE).write_text(json.dumps(_progress("waiting", rounds=[], round_replies=[])), encoding="utf-8")
+    for item in ("client:0", "server", *rd.PROOF_ITEMS):
+        assert rd.detail_for_run(tmp_path, item, now=NOW) is not None, item
+    assert "Chưa xong vòng nào" in "\n".join(rd.detail_for_run(tmp_path, "client:0", now=NOW)["lines"])
+    assert rd.detail_for_run(tmp_path, "machine:A", now=NOW) is None
+    (tmp_path / rv.PROGRESS_FILE).write_text(json.dumps(_progress()), encoding="utf-8")
+    assert rd.detail_for_run(tmp_path, "client:0", now=NOW)["lines"][0] == "Vòng 2 đang chạy: đã gửi về sau 12.0 giây."
+    assert "chưa nhận trọng số" in rd.detail_for_run(tmp_path, "client:1", now=NOW)["lines"][0]
+
+
+def test_detail_api_matches_terminal_and_rejects_bad_input(tmp_path, monkeypatch):
+    from src import registry as reg
+    from web.app import app
+    from web.routers import flower as router
+    monkeypatch.setattr(reg, "NETWORK_LIVE_DIR", str(tmp_path))
+    router._detail_cache.clear()
+    run = tmp_path / "20261104T000000Z_2client"
+    run.mkdir()
+    _detail_run(run)
+    client = TestClient(app)
+    reply = client.get("/api/flower/detail", params={"item": "hash"})
+    assert reply.status_code == 200
+    assert reply.json()["lines"] == rd.detail_for_run(run, "hash")["lines"]
+    assert reply.json()["run_id"] == run.name
+    for params in ({"item": "khong-co"}, {"item": "hash", "run": "../../etc"}, {"item": "hash", "run": "khong_co"}, {"item": "client:99"}, {"item": "server", "round": 99}):
+        assert client.get("/api/flower/detail", params=params).status_code == 404, params
+    assert client.get("/api/flower/detail").status_code == 422
+
+
+def test_log_tail_drops_only_the_flower_summary_and_says_so(tmp_path):
+    (tmp_path / rd.LOG_FILE).write_text("INFO : [ROUND 1]\nINFO : [SUMMARY]\nINFO : bang 1\nINFO : bang 2\n[+] xong\n", encoding="utf-8")
+    log = rd.read_log_tail(tmp_path)
+    assert log["lines"] == ["INFO : [ROUND 1]", "[+] xong"] and log["skipped_summary_lines"] == 3 and log["total_lines"] == 5
+    assert "đã bỏ 3 dòng" in rd.log_title(log)

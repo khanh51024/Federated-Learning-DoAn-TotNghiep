@@ -205,6 +205,7 @@ Máy chủ chạy trên VM Oracle `149.118.51.118`, **không có client nào tr�
 - Khung client: mỗi ô là một client, xếp theo máy. Viền cam là đang học, nền xanh là đã gửi trọng số về.
 - 6 ô bằng chứng: mã băm khớp, độ biến thiên khớp, vòng đủ client, số client chung máy chủ (phải là 0), số MiB đã truyền, độ chính xác do máy chủ tính.
 - 2 biểu đồ: độ chính xác và loss theo vòng; thời gian mỗi vòng dùng vào đâu.
+- Bấm vào một client, một máy, máy chủ hoặc một ô bằng chứng: hiện ngay bên dưới cách làm và terminal chứa lệnh kèm kết quả. Lệnh đó gõ trên VM ra đúng các dòng này, ví dụ `python scripts/demo_show.py flower --detail client:7 --round 20`. Bấm lại hoặc nhấn Esc để đóng. Phần client là những gì máy chủ nhận và đo được; muốn cho xem màn hình client thì mở cửa sổ thật trên laptop.
 - Bảng từng client, có thanh kéo để xem lại bất kỳ vòng nào. Không chạy trực tiếp được thì vẫn dùng thanh kéo này để trình bày lần đo đã lưu.
 
 So sánh phân tán và tập trung, kiểm trọng số, các lần đo tốc độ cũ: chương 4, tab **Phân tán và tập trung**. Số lấy từ cùng tệp với mục 9 trên terminal.
