@@ -138,7 +138,7 @@ def speed_view(root: Path) -> dict[str, Any]:
                 "via_ssh_tunnel": bool(facts.get("via_ssh_tunnel", False)),
                 "client_on_server_host": any(m["on_server_host"] for m in machines) or bool(hosted),
                 "measured_by": str(summary.get("measured_by") or "client"),
-                "round_seconds": (run.get("round_fit_elapsed_ms") or {}).get("median"),
+                "round_ms": (run.get("round_fit_elapsed_ms") or {}).get("median"),
                 "machines": machines,
             })
     return {"available": bool(runs), "runs": runs}
