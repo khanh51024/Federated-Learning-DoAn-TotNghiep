@@ -40,15 +40,15 @@ export const ROUTES = [
     load: () => import("../pages/diagnosis.js"),
   },
   {
-    id: "hoc-lien-ket", step: 7, group: "Demo", label: "Học phân tán",
+    id: "hoc-lien-ket", step: 7, group: "Demo", label: "Cộng đồng tham gia",
     title: "Tham gia học phân tán (federated learning) từ trình duyệt",
-    desc: "Góp ảnh lá của bạn vào một vòng học phân tán thật, ngay trong trình duyệt",
+    desc: "Hướng mở rộng, không phải số của đề tài: người dùng góp ảnh ngay trong trình duyệt, chỉ học lớp cuối của mô hình. Khác với trang Đo qua mạng, nơi laptop học cả mô hình.",
     load: () => import("../pages/community.js"),
   },
   {
-    id: "flower", step: 8, group: "Demo", label: "Flower",
+    id: "flower", step: 8, group: "Demo", label: "Đo qua mạng",
     title: "Học liên kết qua mạng thật",
-    desc: "Lần đo chạy bằng terminal hiện ở đây theo từng vòng: client chỉ gửi trọng số, số ảnh và độ biến thiên; máy chủ tự tính độ chính xác và độ trễ",
+    desc: "Trả lời câu hỏi: học phân tán có chạy được qua mạng thật không. Máy chủ riêng, client ở máy khác. Client không gửi độ chính xác, loss, thời gian: máy chủ tự tính. Số so sánh của đề tài ở chương 4, mục 4.7.",
     load: () => import("../pages/flower.js"),
   },
   {

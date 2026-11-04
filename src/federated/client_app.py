@@ -31,7 +31,7 @@ from src.model.mobilenetv3 import (
     get_parameters,
     set_parameters,
 )
-from .faulty_client import apply_fault_mode
+from .faulty_client import TAMPER_AFTER_HASH, apply_fault_mode, tamper_after_hash
 from .network_probe import obey_server_measurement
 from .telemetry import ClientRoundTelemetry
 
@@ -166,6 +166,8 @@ class PlantVillageClient:
         check_parameters_finite(final_weights)
         sent_update_norm = _update_norm(final_weights)
         send_hash = compute_model_hash(final_weights)
+        if self.fault_mode == TAMPER_AFTER_HASH:
+            final_weights = tamper_after_hash(final_weights)
 
         bytes_sent = sum(t.numel() * t.element_size() for t in final_weights.values())
         bytes_received = sum(
@@ -334,7 +336,7 @@ if __name__ == "__main__":
         "--fault-mode",
         type=str,
         default="normal",
-        choices=["normal", "no_train", "random_weights", "scaled_update", "noise_update"],
+        choices=["normal", "no_train", "random_weights", "scaled_update", "noise_update", TAMPER_AFTER_HASH],
     )
     args = parser.parse_args()
 

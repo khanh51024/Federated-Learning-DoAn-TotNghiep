@@ -140,3 +140,40 @@ def test_missing_client_hash_is_recorded_as_unknown_not_as_verified():
     strategy, results = _round({}, {0: None, 1: None})
     strategy.aggregate_fit(1, results, [])
     assert [c["upload_hash_ok"] for c in strategy.audit_rounds[0]["clients"]] == [None, None]
+
+
+def test_server_records_download_check_and_independent_merge_check():
+    strategy, results = _round({}, {})
+    strategy.aggregate_fit(1, results, [])
+    record = strategy.audit_rounds[0]
+    for client in record["clients"]:
+        assert client["parent_hash_ok"] is True
+        assert client["reported_parent_hash"] == record["parent_model_hash"]
+    check = record["aggregation_check"]
+    assert check["tensors_compared"] > 0 and 0 <= check["max_abs_diff"] <= 1e-6
+
+
+def test_independent_merge_check_reports_a_wrong_merge():
+    from src.federated.algorithms import aggregation_error
+    updates = [{"num_examples": 1, "weights": {"w": torch.tensor([1.0, 3.0])}}, {"num_examples": 3, "weights": {"w": torch.tensor([5.0, 3.0])}}]
+    assert aggregation_error(updates, {"w": torch.tensor([4.0, 3.0])})["max_abs_diff"] == 0.0
+    assert aggregation_error(updates, {"w": torch.tensor([3.0, 3.0])})["max_abs_diff"] == 1.0   # trung bình thường, không theo số ảnh: phải bị phát hiện
+
+
+def test_client_sending_wrong_parent_hash_is_rejected_and_recorded():
+    strategy, results = _round({"reject_suspicious_updates": True}, {})
+    results[0][1].metrics["parent_model_hash"] = "0" * 64
+    with pytest.raises(RuntimeError, match="accepted=1"):
+        strategy.aggregate_fit(1, results, [])
+    clients = strategy.failed_rounds[-1]["clients"]
+    assert sorted(client["parent_hash_ok"] for client in clients) == [False, True]
+
+
+def test_tamper_after_hash_changes_exactly_one_number_so_the_hash_no_longer_matches():
+    from src.federated.faulty_client import TAMPER_AFTER_HASH, apply_fault_mode, tamper_after_hash
+    weights = {"a": torch.tensor([1.0, 2.0]), "b": torch.tensor([3], dtype=torch.int64)}
+    assert apply_fault_mode(TAMPER_AFTER_HASH, weights, weights) is weights
+    changed = tamper_after_hash(weights)
+    assert compute_model_hash(changed) != compute_model_hash(weights)
+    assert int((changed["a"] != weights["a"]).sum()) == 1 and torch.equal(changed["b"], weights["b"])
+    assert weights["a"][0].item() == 1.0

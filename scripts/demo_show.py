@@ -260,7 +260,7 @@ def main() -> int:
     flower_parser = commands.add_parser("flower", help="không truyền gì = lần chạy mới nhất trong artifacts/network_live, đúng lần web đang hiện")
     flower_parser.add_argument("--history", type=Path, default=None)
     flower_parser.add_argument("--run", type=Path, default=None, help="thư mục một lần chạy trong artifacts/network_live")
-    flower_parser.add_argument("--detail", default=None, help="in chi tiết một mục như khi bấm trên web: client:7, machine:A, server, hash, norm, rounds, host, bytes, accuracy")
+    flower_parser.add_argument("--detail", default=None, help="in chi tiết một mục như khi bấm trên web: client:7, machine:A, server, hash, norm, rounds, host, bytes, accuracy, validator, tamper")
     flower_parser.add_argument("--round", type=int, default=None, help="vòng cần xem, dùng với --detail client:N hoặc server; mặc định là vòng mới nhất")
     run_parser = commands.add_parser("run")
     run_parser.add_argument("--run", type=Path, required=True)
@@ -296,7 +296,7 @@ def main() -> int:
             if not runs:
                 raise SystemExit("Chưa có lần chạy nào trong artifacts/network_live; truyền --history hoặc --run")
             if args.detail:
-                built = detail_for_run(runs[0], args.detail, args.round)
+                built = detail_for_run(runs[0], args.detail, args.round, tamper_root=ROOT / "artifacts" / "network_tamper_check")
                 if built is None:
                     raise SystemExit(f"Không có mục {args.detail} hoặc vòng {args.round} trong lần chạy này")
                 lines = detail_lines(built)

@@ -50,6 +50,7 @@ from .network_probe import ProbeServer
 from .run_view import HEARTBEAT_S
 from .strategy import aggregate_fedavg
 from .telemetry import ServerRoundTelemetry, TelemetryManager
+from .algorithms import aggregation_error
 from .update_validator import learnable_update_stats, validate_client_update
 
 logger = logging.getLogger(__name__)
@@ -659,6 +660,9 @@ class AuditedFlowerFedAvg:
                         "probe_total_ms": probe_total_ms,
                         "update_norm_reported": reported_norm,
                         "update_norm_matches": norm_matches,
+                        # Chiều máy chủ -> client: mã của mô hình client nói đã nhận, so với mô hình máy chủ đã gửi.
+                        "reported_parent_hash": reported_parent_hash if _SHA256_HEX.fullmatch(reported_parent_hash) else "invalid",
+                        "parent_hash_ok": bool(validation.parent_hash_ok),
                         "probe_rtt_ms": probe_rtt_ms if probe_rtt_ms >= 0 else None,
                         "data_mode": data_mode,
                         "training_seed": training_seed,
@@ -794,6 +798,8 @@ class AuditedFlowerFedAvg:
                 ])
                 global_model_hash = compute_model_hash({k: averaged[k].detach().cpu().numpy() for k in model_keys})
                 aggregate_ms = (time.perf_counter() - aggregate_started) * 1000.0
+                # Tính lại trung bình theo số ảnh bằng NumPy float64, độc lập với aggregate_fedavg, rồi so với kết quả.
+                aggregation_check = aggregation_error(updates, averaged)
                 metrics: Dict[str, Any] = {}
 
                 server_eval_metrics: Optional[Dict[str, Any]] = None
@@ -858,6 +864,7 @@ class AuditedFlowerFedAvg:
                         "estimated_comm_overhead_ms": float(max(0.0, elapsed_ms - max_train_ms)),
                         "server_validate_ms": float(validate_ms),
                         "server_aggregate_ms": float(aggregate_ms),
+                        "aggregation_check": {"max_abs_diff": aggregation_check["max_abs_diff"], "tensors_compared": aggregation_check["tensors_compared"]},
                         "server_eval_ms": float(eval_ms),
                         "slowest_response_ms": slowest_response_ms,
                         "min_clients_required": required_clients,

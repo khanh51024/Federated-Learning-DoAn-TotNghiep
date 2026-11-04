@@ -1021,7 +1021,7 @@ def _network_run() -> Dict[str, Any]:
     nên là bằng chứng hệ thống chứ không phải số đo của mô hình trên web."""
     history = reg.real_network_run()
     if history is None:
-        return _withheld("mục này dành cho lượt chạy theo protocol cũ, hiện chưa có. Lần đo qua Internet thật, máy chủ tách riêng, xem ở trang Flower.")
+        return _withheld("mục này dành cho lượt chạy theo protocol cũ, hiện chưa có. Lần đo qua Internet thật, máy chủ tách riêng, xem ở trang Đo qua mạng.")
     per_round = []
     for audit in history.get("audit_rounds") or []:
         val = audit.get("server_validation_metrics") or {}

@@ -424,3 +424,99 @@ def test_demo_stop_marks_the_newest_run_so_the_page_does_not_wait_90_seconds(mon
     assert signals and signals[0][0] == 4321
     view = rv.run_view(rv.load_run(run))
     assert view["state"] == "failed" and view["error"] == fd.STOPPED_MESSAGE
+
+
+def _proof_client(client_id: int, machine: str) -> dict:
+    return {**_client(client_id, machine), "reported_parent_hash": "p1" + "0" * 62, "parent_hash_ok": True, "validation_reason": "ok"}
+
+
+def test_new_runs_show_download_check_and_independent_merge_and_old_runs_say_not_recorded(tmp_path):
+    old = rv.run_view({"run_id": "r", "progress": _progress(), "history": None}, now=NOW)
+    assert old["checks"]["parent_total"] == 0 and old["checks"]["aggregation_total"] == 0
+    assert old["rounds"][0]["aggregation_max_diff"] is None and old["rounds"][0]["clients"][0]["reported_parent"] is None
+    (tmp_path / rv.PROGRESS_FILE).write_text(json.dumps(_progress()), encoding="utf-8")
+    assert "lần đo này chưa ghi" in "\n".join(rd.detail_for_run(tmp_path, "client:0", 1, now=NOW)["lines"])
+    assert "lần đo này chưa ghi" in "\n".join(rd.detail_for_run(tmp_path, "server", 1, now=NOW)["lines"])
+    audit = {**_audit(1, "p1", "g1"), "clients": [_proof_client(1, "m2"), _proof_client(0, "m1")], "aggregation_check": {"max_abs_diff": 2.4e-07, "tensors_compared": 200}}
+    (tmp_path / rv.PROGRESS_FILE).write_text(json.dumps({**_progress(), "rounds": [audit]}), encoding="utf-8")
+    view = rv.run_view(rv.load_run(tmp_path), now=NOW)
+    assert view["checks"]["parent_ok"] == 2 and view["checks"]["parent_total"] == 2 and view["checks"]["aggregation_ok"] == 1 and view["checks"]["aggregation_total"] == 1
+    text = "\n".join(rd.detail_for_run(tmp_path, "client:0", 1, now=NOW)["lines"])
+    assert "client báo đã nhận p1" in text and "KHỚP" in text
+    assert "lệch lớn nhất 2.40e-07 -> KHỚP" in "\n".join(rd.detail_for_run(tmp_path, "server", 1, now=NOW)["lines"])
+    bad = {**audit, "aggregation_check": {"max_abs_diff": 0.01, "tensors_compared": 200}}
+    (tmp_path / rv.PROGRESS_FILE).write_text(json.dumps({**_progress(), "rounds": [bad]}), encoding="utf-8")
+    assert rv.run_view(rv.load_run(tmp_path), now=NOW)["checks"]["aggregation_ok"] == 0
+    assert "-> SAI" in "\n".join(rd.detail_for_run(tmp_path, "server", 1, now=NOW)["lines"])
+
+
+def test_client_detail_lists_what_is_and_is_not_sent(tmp_path):
+    (tmp_path / rv.PROGRESS_FILE).write_text(json.dumps(_progress()), encoding="utf-8")
+    built = rd.detail_for_run(tmp_path, "client:0", now=NOW)
+    assert "độ chính xác" in built["not_sent"] and "loss" in built["not_sent"] and "ảnh" in built["not_sent"]
+    assert "trọng số" in built["sent"] and not set(built["sent"]) & set(built["not_sent"])
+    assert "Client không gửi: " in "\n".join(rd.detail_lines(built))
+
+
+def test_validator_detail_shows_each_check_and_says_when_missing(tmp_path):
+    (tmp_path / rv.PROGRESS_FILE).write_text(json.dumps(_progress()), encoding="utf-8")
+    assert "chưa có kết quả" in rd.detail_for_run(tmp_path, "validator", now=NOW)["lines"][0]
+    assert rv.run_view(rv.load_run(tmp_path), now=NOW)["validation"] is None
+    (tmp_path / rv.VALIDATION_FILE).write_text(json.dumps({"ok": False, "checks": {"seed_matches": True, "expected_rounds": False}}), encoding="utf-8")
+    view = rv.run_view(rv.load_run(tmp_path), now=NOW)
+    assert view["validation"] == {"ok": False, "passed": 1, "total": 2, "failed": ["expected_rounds"]}
+    lines = rd.detail_for_run(tmp_path, "validator", now=NOW)["lines"]
+    assert "CHƯA ĐẠT, 1/2 mục" in lines[0] and any(line.startswith("  SAI") and "expected_rounds" in line for line in lines)
+
+
+def _tamper_progress() -> dict:
+    good = _proof_client(0, "m1")
+    bad = {**_proof_client(4, "m1"), "status": "rejected_upload_hash_mismatch", "validation_reason": "upload_hash_mismatch", "upload_hash_ok": False, "client_reported_hash": "b" * 64, "server_recomputed_hash": "c" * 64}
+    return {**_progress("failed"), "error": "Vòng 1: nhận 1/2 client", "rounds": [], "failed_round": {"round": 1, "clients": [good, bad], "failures": 0}}
+
+
+def test_tamper_check_reads_its_own_folder_and_shows_both_hashes(tmp_path):
+    assert rd.tamper_view(tmp_path) is None and rd.detail_for_run(tmp_path, "tamper", tamper_root=tmp_path) is None
+    run = tmp_path / "20261105T000000Z_5client"
+    run.mkdir()
+    (run / rv.PROGRESS_FILE).write_text(json.dumps(_tamper_progress()), encoding="utf-8")
+    assert rd.tamper_view(tmp_path)["rejected"]["client_id"] == 4
+    built = rd.detail_for_run(tmp_path, "tamper", tamper_root=tmp_path)
+    text = "\n".join(built["lines"])
+    assert "client 4: client gửi " + "b" * 12 + " / máy chủ tính lại " + "c" * 12 + " -> LỆCH, LOẠI (upload_hash_mismatch)" in text
+    assert "client 0" in text and "KHỚP, nhận" in text and "Máy chủ dừng lần đo" in text
+    dumped = json.dumps(built, ensure_ascii=False)
+    assert "cid-bi-mat" not in dumped and "ppm1" not in dumped
+    assert rd.detail_for_run(tmp_path, "tamper", 1, tamper_root=tmp_path) is None
+
+
+def test_tamper_view_ignores_a_failed_run_without_a_rejected_client(tmp_path):
+    run = tmp_path / "20261105T000000Z_5client"
+    run.mkdir()
+    progress = _tamper_progress()
+    progress["failed_round"]["clients"] = [_proof_client(0, "m1")]
+    (run / rv.PROGRESS_FILE).write_text(json.dumps(progress), encoding="utf-8")
+    assert rd.tamper_view(tmp_path) is None
+
+
+def test_live_api_carries_tamper_summary_without_secrets(tmp_path, monkeypatch):
+    from src import registry as reg
+    from web.app import app
+    from web.routers import flower as router
+    live, tamper = tmp_path / "live", tmp_path / "tamper"
+    (live / "20261104T000000Z_2client").mkdir(parents=True)
+    (live / "20261104T000000Z_2client" / rv.PROGRESS_FILE).write_text(json.dumps(_progress()), encoding="utf-8")
+    (tamper / "20261105T000000Z_5client").mkdir(parents=True)
+    (tamper / "20261105T000000Z_5client" / rv.PROGRESS_FILE).write_text(json.dumps(_tamper_progress()), encoding="utf-8")
+    monkeypatch.setattr(reg, "NETWORK_LIVE_DIR", str(live))
+    monkeypatch.setattr(reg, "NETWORK_TAMPER_DIR", str(tamper))
+    router._live_cache.clear()
+    router._detail_cache.clear()
+    client = TestClient(app)
+    data = client.get("/api/flower/live").json()
+    assert data["tamper_check"] == {"run_id": "20261105T000000Z_5client", "client_id": 4, "client_hash": "b" * 12, "server_hash": "c" * 12}
+    assert data["run_id"] == "20261104T000000Z_2client"     # không thành lần đo mới nhất
+    reply = client.get("/api/flower/detail", params={"item": "tamper"})
+    assert reply.status_code == 200 and "LỆCH, LOẠI" in "\n".join(reply.json()["lines"])
+    router._live_cache.clear()
+    router._detail_cache.clear()

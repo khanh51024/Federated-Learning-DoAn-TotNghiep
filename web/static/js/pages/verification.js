@@ -92,7 +92,7 @@ function speedHtml(speed) {
       <td>${num(machine.rtt_ms, 1)}</td><td>${num(machine.up_mb_s)}</td><td>${num(machine.down_mb_s)}</td><td>${num(machine.train_s, 1)}</td>
     </tr>`)).join("");
   return `
-    <p class="panel-desc">Trung vị qua các vòng. Dòng mờ là client nằm cùng máy với máy chủ: số mạng ở đó rất lớn và không phải đường truyền thật. Các lần đo qua đường hầm SSH có độ trễ cao hơn mạng thường. Lần đo có máy chủ tách riêng xem từng vòng ở <a href="#flower">trang Flower</a>.</p>
+    <p class="panel-desc">Trung vị qua các vòng. Dòng mờ là client nằm cùng máy với máy chủ: số mạng ở đó rất lớn và không phải đường truyền thật. Các lần đo qua đường hầm SSH có độ trễ cao hơn mạng thường. Lần đo có máy chủ tách riêng xem từng vòng ở <a href="#flower">trang Đo qua mạng</a>.</p>
     <div class="table-responsive mt-3" tabindex="0" role="region" aria-label="Bảng các lần đo tốc độ"><table class="data-table wrap-head">
       <thead><tr><th>Lần đo</th><th>Máy</th><th>RTT (ms)</th><th>Lên (MiB/s)</th><th>Xuống (MiB/s)</th><th>Học 1 vòng (s)</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -161,7 +161,7 @@ export async function buildVerification() {
   const root = byId("result-verification");
   const data = await getJson("/api/evidence/verification", { timeoutMs: 15000 });
   root.innerHTML = `
-    ${sectionHead("4.7", "Phân tán và tập trung", { lead: "Học phân tán đạt gần mức học tập trung tới đâu, trọng số có được gửi đúng không, và mạng thật nhanh chậm thế nào." })}
+    ${sectionHead("4.7", "Phân tán và tập trung", { lead: "Đây là số so sánh của đề tài: 5 client mô phỏng trên một GPU, 3 lần chạy, khác với lần đo ít ảnh qua mạng thật ở trang Đo qua mạng. Học phân tán đạt gần mức học tập trung tới đâu, trọng số có được gửi đúng không, và mạng thật nhanh chậm thế nào." })}
     <section class="panel mt-3"><h4 class="panel-title panel-title-sm">Độ chính xác theo mức lệch dữ liệu</h4>${sweepHtml(data.sweep)}</section>
     <section class="panel mt-4"><h4 class="panel-title panel-title-sm">Theo từng client: ai chịu thiệt khi dữ liệu lệch</h4>${fairnessHtml(data.fairness, data.sweep)}</section>
     <section class="panel mt-4"><h4 class="panel-title panel-title-sm">Client trôi xa mô hình chung theo mức lệch</h4>${driftHtml(data.drift)}</section>

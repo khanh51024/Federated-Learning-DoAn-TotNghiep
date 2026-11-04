@@ -25,13 +25,22 @@ Mọi thứ chạy từ một file: nhấp đúp **`DEMO_TUNG_MUC.bat`** ở th�
 
 ## 2. Kịch bản demo 15 phút (bản mới, dùng web)
 
+**Mỗi phần chứng minh gì:**
+
+| Phần | Trả lời câu hỏi | Kết quả cần thấy | Có phải số của đề tài? |
+|---|---|---|---|
+| Trang Đo qua mạng | Phân tán có chạy được qua mạng thật không? | Máy chủ riêng, đủ client, mã băm khớp, độ chính xác tăng dần | Không |
+| Chương 4, mục 4.7 | Phân tán thua tập trung bao nhiêu? | Tập trung 97,69%, phân tán 96,97 đến 93,93%, tự học 46,55% | **Có** |
+| Trang Cộng đồng tham gia | Người dùng thường có đóng góp được không? | Chỉ mở khi thầy hỏi, phiên đang đóng | Không |
+
 Mở sẵn 2 tab: `https://datn.tranngochung.id.vn/#flower` và chương 4, tab **Phân tán và tập trung**. Kể theo các câu hỏi dưới, không đi theo danh sách nhiệm vụ.
 
 | Phút | Câu hỏi | Làm gì | Câu chốt |
 |---|---|---|---|
 | 1 | Đề tài chứng minh gì? | Chỉ nói | "Dữ liệu nằm riêng ở từng nơi, chỉ gửi trọng số, mà vẫn tiệm cận học tập trung." |
-| 4 | Có thật sự gửi qua mạng không? | Chạy 7 client, 3 vòng (xem dưới). Xem `#flower` tự chạy. Bấm ô **Trọng số gửi đúng**, rồi bấm một client | "Máy chủ riêng, 2 laptop. Client chỉ gửi trọng số, số ảnh và độ biến thiên. Độ chính xác và độ trễ do máy chủ tự tính." |
-| 2 | Chạy lâu hơn thì sao? | Chọn lần đo 10 client, kéo thanh chọn vòng | "20 vòng, mã băm khớp 200/200, không lượt nào bị loại. 90% trên 190 ảnh chỉ chứng minh hệ thống chạy đúng, không phải độ chính xác của đề tài." |
+| 4 | Có thật sự gửi qua mạng không? | Chạy 7 client, 3 vòng (xem dưới). Xem `#flower` tự chạy. Bấm ô **Trọng số gửi đúng**, rồi bấm một client | "Máy chủ riêng, 2 laptop. Client không gửi độ chính xác, loss, thời gian: máy chủ tự tính. Mã băm hai đầu phải giống nhau." |
+| 2 | Chạy lâu hơn thì sao? | Chọn lần đo 10 client, kéo thanh chọn vòng | "20 vòng, mã băm khớp 200/200, trình kiểm đạt 17/17. Độ chính xác tăng từ 13% lên 90% chứng minh mô hình gộp thật sự học được. Đây là số thật trên tập nhỏ 190 ảnh, số so sánh của đề tài ở chương 4." |
+| 1 | Lỡ kiểm tra lúc nào cũng ra đúng thì sao? | Bấm ô **Thử cố tình sai** | "Khi em cố tình đổi trọng số trên đường truyền, máy chủ phát hiện và loại client đó." |
 | 3 | Phân tán thua tập trung bao nhiêu? | Chương 4, biểu đồ theo mức lệch | "Tập trung 97,69%. Phân tán 96,97% khi gần như chia đều, 93,93% khi lệch mạnh. Tự học một mình 46,55%. Lệch càng mạnh, khoảng cách càng rộng." |
 | 2 | Ai chịu thiệt khi lệch? | Bảng từng client, bảng client trôi xa mô hình chung | "Lệch mạnh thì client yếu nhất 84,29%, mạnh nhất 94,59%, độ lệch chuẩn từ 0,53 lên 3,60. Client cũng trôi xa mô hình chung hơn: từ 0,038 lên 0,147." |
 | 2 | Còn gì chưa xong? | Chỉ nói, chủ động nói trước | "Tự học một mình mới có α=0,1. Lệch số lượng, lệch miền mới chia dữ liệu. 4 thuật toán có mã và test, chưa có kết quả. Tập niêm phong chưa mở, đúng quy tắc." |
@@ -206,7 +215,7 @@ Máy chủ chạy trên VM Oracle `149.118.51.118`, **không có client nào tr�
 | 2. Máy chủ tách riêng | Máy chủ ở VM, client ở 2 laptop. Độ trễ đo qua Internet thật, không qua đường hầm |
 | 3. Nhiều vòng | 20 vòng |
 | 4. File .bat mở client cùng lúc | `deploy\lan_client\CHAY_CLIENT.bat <client đầu> <số client> <IP máy chủ>` |
-| 5. Client chỉ gửi trọng số, số mẫu, độ biến thiên | Client **không** còn gửi độ chính xác, loss, thời gian, độ trễ. Máy chủ tự tính, và tự tính lại độ biến thiên từ trọng số nhận được để đối chiếu với số client khai (lệch thì loại client đó) |
+| 5. Client không gửi độ chính xác, thời gian | Client **không** còn gửi độ chính xác, loss, thời gian, độ trễ. Máy chủ tự tính, và tự tính lại độ biến thiên từ trọng số nhận được để đối chiếu với số client khai (lệch thì loại client đó) |
 | 6. Máy chủ tính trung bình, độ chính xác, độ trễ | Trung bình theo số mẫu; độ chính xác tính trên ảnh giữ riêng của máy chủ sau mỗi vòng; độ trễ và tốc độ do máy chủ tự đo. Gửi đúng trọng số: băm SHA-256 khớp từng lượt, byte đúng 6.307.176 mỗi chiều |
 
 **Chuẩn bị một lần (chủ tài khoản Oracle làm):** thêm quy tắc cho 2 laptop nối vào VM, đo xong thì xóa.
@@ -252,6 +261,9 @@ So sánh phân tán và tập trung, kiểm trọng số, các lần đo tốc �
 | Flower có tương đương bản tự cài không? | "Trên toàn bộ ảnh chênh 0,11 điểm, nhưng ảnh ngoài đồng chênh 0,96 điểm, lớn hơn dao động giữa các lần chạy. Nên em chưa kết luận tương đương trên mọi nhóm." |
 | 5 client có phải 5 máy thật không? | "Không, 5 client là mô phỏng trên một GPU. Máy thật là phần đo 2 laptop." |
 | Tab 4.1 ghi 96,71%, tab 4.7 ghi 96,85%, số nào đúng? | "Cả hai đúng, khác tập đo. Tab 4.1 là một hạt giống trên tập kiểm tra. Tab 4.7 là trung bình 3 hạt giống trên tập thử riêng, em dùng tab 4.7 để so sánh." |
+| Seed là gì? | "Số cố định phần ngẫu nhiên. Em chạy 3 seed để xem kết quả có do may rủi không, dấu ± là độ dao động." |
+| Client gửi những gì? | "Trọng số, số ảnh, độ biến thiên và các mã để máy chủ đối chiếu. Không gửi ảnh, độ chính xác, loss, thời gian." |
+| Kiểm tra này chống được giả mạo không? | "Không. Nó bắt được trọng số bị đổi trên đường truyền hoặc client khai sai. Ai sửa cả trọng số lẫn mã băm thì không bắt được, vì máy chủ đo chưa có mã hóa." |
 | Số này sao khác báo cáo Đợt 2? | "Đó là hai bộ chạy riêng, khác seed và tập đánh giá. Tụi em không trộn hai bộ số." |
 | Trên PlantDoc thì sao? | "172 ảnh: tập trung 57,56%, phân tán lệch mạnh 40,50%. Tập nhỏ nên phải đọc kèm khoảng tin cậy, và cả tập trung cũng yếu trên ảnh ngoài đồng." |
 | Có tiết kiệm truyền thông không? | "Không. 40 vòng gửi 2.510 MB, gấp 1,65 lần gửi thẳng ảnh. Lợi ích chính là ảnh không rời máy." |

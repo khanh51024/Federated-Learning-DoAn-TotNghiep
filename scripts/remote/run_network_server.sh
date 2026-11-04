@@ -81,3 +81,5 @@ nice -n 10 timeout --foreground "$((MAX_HOURS * 3600))" .venv/bin/python -m src.
   --evaluation-partition-dir "$DATA/partition" --evaluation-dataset-root "$DATA/images_eval" --require-real-evaluation \
   --probe-payload-bytes 6275944 \
   --metrics-file "$OUT/history.json" --checkpoint-file "$OUT/global.pt" --progress-file "$OUT/progress.json" 2>&1 | tee "$OUT/server.log"
+# Đo xong thì chương trình riêng đọc lại tệp kết quả và tệp mô hình; web hiện kết quả này. Chưa đạt không làm script báo lỗi: kết quả nằm trong tệp.
+.venv/bin/python -X utf8 scripts/validate_network_artifact.py --metrics "$OUT/history.json" --checkpoint "$OUT/global.pt" --expected-clients "$CLIENTS" --expected-rounds "$ROUNDS" --output "$OUT/validation.json" > /dev/null || echo "[server] trình kiểm báo chưa đạt, xem $OUT/validation.json"

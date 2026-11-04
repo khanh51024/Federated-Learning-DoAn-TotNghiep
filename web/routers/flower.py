@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
 from src import registry as reg
-from src.federated.run_detail import ITEM, detail_for_run
+from src.federated.run_detail import ITEM, detail_for_run, tamper_view
 from src.federated.run_view import list_runs, load_run, run_view
 from web import state
 from web.services import admin_auth, flower_demo, flower_evidence, flower_health
@@ -40,7 +40,9 @@ def _live(run: Optional[str]) -> Dict[str, Any]:
         raise HTTPException(status_code=404, detail="Không có lần đo này.")
     if not runs:
         return {"available": False, "state": "none", "runs": []}
-    return {**run_view(load_run(root / (run or names[0]))), "runs": names}
+    tamper = tamper_view(reg.abs_path(reg.NETWORK_TAMPER_DIR))
+    summary = None if tamper is None else {"run_id": tamper["run_id"], "client_id": tamper["rejected"]["client_id"], "client_hash": tamper["rejected"]["client_hash"], "server_hash": tamper["rejected"]["server_hash"]}
+    return {**run_view(load_run(root / (run or names[0]))), "runs": names, "tamper_check": summary}
 
 
 def _cached_live(run: Optional[str]) -> Dict[str, Any]:
@@ -88,7 +90,7 @@ def _cached_detail(run: Optional[str], item: str, round_no: Optional[int]) -> Op
         cached = _detail_cache.get(key)
         if cached and now - cached[0] < LIVE_CACHE_S:
             return cached[1]
-    built = detail_for_run(root / (run or names[0]), item, round_no)
+    built = detail_for_run(root / (run or names[0]), item, round_no, tamper_root=reg.abs_path(reg.NETWORK_TAMPER_DIR))
     with _live_lock:
         if len(_detail_cache) > 256:
             _detail_cache.clear()

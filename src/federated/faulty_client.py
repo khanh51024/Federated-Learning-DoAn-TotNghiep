@@ -9,6 +9,17 @@ from typing import Dict
 import torch
 
 
+TAMPER_AFTER_HASH = "tamper_after_hash"
+
+
+def tamper_after_hash(weights: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
+    """Đổi một con số SAU KHI client đã băm, giả lập trọng số bị đổi trên đường truyền. Máy chủ băm lại phải thấy lệch."""
+    changed = {key: value.clone() for key, value in weights.items()}
+    key = next(name for name in sorted(changed) if changed[name].is_floating_point() and changed[name].numel() > 0)
+    changed[key].view(-1)[0] += 1e-3
+    return changed
+
+
 def apply_fault_mode(
     mode: str,
     trained_weights: Dict[str, torch.Tensor],
@@ -24,7 +35,7 @@ def apply_fault_mode(
     - 'scaled_update': phóng đại độ lệch update: w_malicious = w_global + scale * (w_k - w_global).
     - 'noise_update': thêm nhiễu Gaussian N(0, noise_std^2) vào weights.
     """
-    if mode == "normal":
+    if mode in ("normal", TAMPER_AFTER_HASH):      # TAMPER_AFTER_HASH đổi sau khi băm: xem tamper_after_hash, client_app gọi đúng chỗ
         return trained_weights
 
     corrupted: Dict[str, torch.Tensor] = {}

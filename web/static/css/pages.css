@@ -1914,6 +1914,11 @@ button.live-chip:hover { outline: 2px solid var(--accent-sky); outline-offset: 1
 .live-tile-note { font-size: var(--fs-xs); color: var(--text-muted); }
 .live-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
 .live-nowrap { white-space: nowrap; }
+.live-steps-box { margin-top: var(--space-3); padding: var(--space-3); border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-subtle); }
+.live-steps { margin: var(--space-3) 0; padding-left: 1.5rem; display: grid; gap: var(--space-2); font-size: var(--fs-sm); line-height: 1.5; }
+.live-step-ok { color: var(--accent-emerald); font-weight: 600; white-space: nowrap; }
+.live-step-bad { color: var(--accent-rose); font-weight: 600; white-space: nowrap; }
+.live-detail-list { margin: 0 0 var(--space-3); font-size: var(--fs-sm); line-height: 1.55; }
 .live-control-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 .live-control .btn { text-decoration: none; }
 .live-round-pick { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }

@@ -11,16 +11,18 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
-from src.federated.run_view import load_run, run_view
+from src.federated.run_view import AGGREGATION_TOLERANCE, _client_view, _machine_labels, list_runs, load_run, run_view
 
 LOG_FILE = "server.log"
 LOG_TAIL_LINES = 80
 MAX_LOG_LINE_CHARS = 300
 PROOF_ITEMS = ("hash", "norm", "rounds", "host", "bytes", "accuracy")
-ITEM = re.compile(r"^(?:client:\d{1,3}|machine:(?:[A-Z]|\d{1,3})|server|hash|norm|rounds|host|bytes|accuracy)$")
+ITEM = re.compile(r"^(?:client:\d{1,3}|machine:(?:[A-Z]|\d{1,3})|server|hash|norm|rounds|host|bytes|accuracy|validator|tamper)$")
 SOURCE_LINES = "Máy chủ ghi trong lúc đo (progress.json, history.json). Lệnh trên in đúng các dòng này."
-CLIENT_WINDOW_NOTE = ("Cửa sổ client nằm trên laptop và không gửi nhật ký lên máy chủ, vì client chỉ gửi trọng số, số ảnh và độ biến thiên. "
-                      "Đây là những gì máy chủ nhận và đo được, không phải màn hình của laptop.")
+CLIENT_WINDOW_NOTE = ("Cửa sổ client nằm trên laptop và không gửi nhật ký lên máy chủ. Đây là những gì máy chủ nhận và đo được, không phải màn hình của laptop. "
+                      "Muốn xem màn hình client, mở cửa sổ client trên laptop và so mã băm với trang này.")
+CLIENT_SENDS = ("trọng số", "số ảnh", "độ biến thiên", "mã băm trọng số gửi đi", "mã băm mô hình vừa nhận", "số vòng, số epoch, seed", "mã client, mã băm tên máy", "mã danh sách ảnh, ảnh thật hay giả")
+CLIENT_NOT_SENT = ("ảnh", "độ chính xác", "loss", "thời gian học", "độ trễ, tốc độ mạng")
 _ANSI = re.compile(r"\x1b\[[0-9;]*m")
 _IPV4 = re.compile(r"\b(?!0\.0\.0\.0\b)(?:\d{1,3}\.){3}\d{1,3}\b")
 _CID = re.compile(r"\b[0-9a-f]{32}\b")
@@ -121,6 +123,7 @@ def _client_detail(view: dict[str, Any], audits: list[dict[str, Any]], client_id
             f"  độ biến thiên khai: {_text(client['update_norm_reported'], 4)}",
             "MÁY CHỦ TỰ TÍNH VÀ TỰ ĐO",
             f"  mã băm tính lại: {client['server_hash']} -> {_yes(client['hash_ok'])}",
+            f"  mô hình gửi xuống {row['parent_hash']}, client báo đã nhận {client['reported_parent']} -> {_yes(client['parent_hash_ok'])}" if client["reported_parent"] else "  mô hình client báo đã nhận: lần đo này chưa ghi mã",
             f"  độ biến thiên tính lại: {_text(client['update_norm_server'], 4)} -> {_yes(client['update_norm_matches'])}",
             f"  RTT {_text(client['rtt_ms'], 1, ' ms')}, lên {_text(client['up_mb_s'], 2, ' MiB/s')}, xuống {_text(client['down_mb_s'], 2, ' MiB/s')}",
             f"  phản hồi {_text(client['response_s'], 2, ' giây')}",
@@ -136,12 +139,14 @@ def _client_detail(view: dict[str, Any], audits: list[dict[str, Any]], client_id
         "how": [
             "Máy chủ gửi mô hình chung của vòng xuống. Client tính mã băm bản vừa nhận để máy chủ đối chiếu.",
             f"Client học {view['local_epochs'] or '?'} epoch trên ảnh riêng. Ảnh không rời khỏi máy.",
-            "Client gửi lên trọng số, số ảnh, độ biến thiên và mã băm. Client không gửi độ chính xác hay thời gian.",
+            "Client gửi lên trọng số, số ảnh, độ biến thiên và các mã để máy chủ đối chiếu. Client không gửi độ chính xác, loss hay thời gian.",
             "Máy chủ tính lại mã băm và độ biến thiên từ chính trọng số nhận được. Lệch thì loại client đó khỏi vòng.",
             "Máy chủ tự bấm giờ và tự đo mạng. Thời gian học là ước lượng: phản hồi trừ đo mạng và truyền dự đoán.",
         ],
         "lines": lines,
         "note": CLIENT_WINDOW_NOTE,
+        "sent": list(CLIENT_SENDS),
+        "not_sent": list(CLIENT_NOT_SENT),
     }
 
 
@@ -189,6 +194,7 @@ def _server_detail(view: dict[str, Any], round_no: Optional[int]) -> dict[str, A
             f"Vòng {row['round']}: nhận {row['accepted']}, loại {row['rejected']}, nghi ngờ {row['suspicious']}",
             f"  cả vòng {_text(row['elapsed_s'], 2, ' giây')} = học và chờ {_text(row['learn_and_wait_s'], 2)} + truyền {_text(row['transfer_s'], 2)} + máy chủ {_text(row['server_s'], 2)}",
             f"  gộp FedAvg mất {_text(row['aggregate_ms'], 1, ' ms')}",
+            f"  tính lại phép gộp độc lập: lệch lớn nhất {row['aggregation_max_diff']:.2e} -> {_yes(row['aggregation_max_diff'] <= AGGREGATION_TOLERANCE)}" if row["aggregation_max_diff"] is not None else "  tính lại phép gộp độc lập: lần đo này chưa ghi",
             f"  mô hình trước {row['parent_hash']} -> sau {row['global_hash']}",
         ]
         if row["accuracy"] is not None:
@@ -202,7 +208,7 @@ def _server_detail(view: dict[str, Any], round_no: Optional[int]) -> dict[str, A
             "Máy chủ chạy riêng trên VM bằng scripts/remote/run_network_server.sh và chờ đủ client mới bắt đầu.",
             "Mỗi vòng, máy chủ gửi mô hình chung xuống rồi chờ đủ các client trả về.",
             "Kiểm từng client: mã băm, độ biến thiên, vòng, seed, danh sách ảnh và ảnh thật. Sai thì loại.",
-            "Gộp FedAvg: mô hình mới là trung bình trọng số của các client, theo tỉ lệ số ảnh của từng client.",
+            "Gộp FedAvg: mô hình mới là trung bình trọng số của các client, theo tỉ lệ số ảnh của từng client. Sau đó tính lại phép gộp bằng một đoạn mã độc lập rồi so.",
             "Tự kiểm mô hình mới trên ảnh giữ riêng của máy chủ. Client không có ảnh này.",
         ],
         "lines": lines,
@@ -212,7 +218,8 @@ def _server_detail(view: dict[str, Any], round_no: Optional[int]) -> dict[str, A
 
 def _hash_detail(view: dict[str, Any]) -> dict[str, Any]:
     checks = view["checks"]
-    lines = [f"Tổng: {checks['hash_ok']}/{checks['hash_total']} lượt mã băm khớp; chuỗi mô hình {'LIỀN' if checks['chain_ok'] else 'ĐỨT'}"]
+    lines = [f"Tổng: {checks['hash_ok']}/{checks['hash_total']} lượt mã băm khớp; chuỗi mô hình {'LIỀN' if checks['chain_ok'] else 'ĐỨT'}",
+             f"Client báo nhận đúng mô hình: {checks['parent_ok']}/{checks['parent_total']}" if checks["parent_total"] else "Client báo nhận đúng mô hình: lần đo này chưa ghi mã"]
     previous = None
     for row in view["rounds"]:
         ok = sum(c["hash_ok"] for c in row["clients"])
@@ -229,7 +236,8 @@ def _hash_detail(view: dict[str, Any]) -> dict[str, Any]:
         "round_bound": False,
         "how": [
             "Mã băm giống dấu vân tay của bộ trọng số: chỉ cần đổi một con số là mã đổi hẳn.",
-            "Client băm SHA-256 toàn bộ trọng số sắp gửi (hàm compute_model_hash, src/model/mobilenetv3.py).",
+            "Chiều xuống: client băm mô hình vừa nhận rồi báo lại, máy chủ so với mô hình đã gửi.",
+            "Chiều lên: client băm SHA-256 toàn bộ trọng số sắp gửi (hàm compute_model_hash, src/model/mobilenetv3.py).",
             "Máy chủ chạy đúng hàm đó trên trọng số nhận được rồi so hai mã. Lệch nghĩa là trọng số đã đổi trên đường truyền hoặc client khai sai, và client đó bị loại.",
             "Mô hình cuối vòng này phải là mô hình đầu vòng sau. Nhờ vậy không vòng nào bị thay mô hình giữa chừng.",
         ],
@@ -352,11 +360,79 @@ def _accuracy_detail(view: dict[str, Any], record: dict[str, Any]) -> dict[str, 
         "round_bound": False,
         "how": [
             "Client không gửi độ chính xác. Máy chủ tự tính trên ảnh của nó, client không có các ảnh này.",
+            "Vì vậy 2 số khác nhau: biểu đồ từng vòng là tập val, số cuối là tập test.",
             "Sau mỗi vòng, máy chủ kiểm mô hình vừa gộp trên tập val.",
             "Khi học xong, máy chủ kiểm mô hình cuối một lần trên tập test.",
         ],
         "lines": lines,
         "note": view["caveat"],
+    }
+
+
+def _validator_detail(view: dict[str, Any], record: dict[str, Any]) -> dict[str, Any]:
+    validation = view["validation"]
+    if validation is None:
+        lines = ["Lần đo này chưa có kết quả của trình kiểm."]
+    else:
+        checks = (record.get("validation") or {}).get("checks") or {}
+        lines = [f"Kết quả: {'ĐẠT' if validation['ok'] else 'CHƯA ĐẠT'}, {validation['passed']}/{validation['total']} mục"]
+        lines += [f"  {'đạt ' if value is True else 'SAI '} {name}" for name, value in sorted(checks.items())]
+    return {
+        "title": "Trình kiểm lần đo",
+        "round_bound": False,
+        "how": [
+            "Sau khi đo xong, một chương trình riêng (scripts/validate_network_artifact.py) đọc lại tệp kết quả và tệp mô hình.",
+            "Nó kiểm đủ vòng, đủ client, ảnh thật, đúng seed, và mã băm tệp mô hình cuối khớp với kết quả.",
+            "Chương trình này không chạy trong lúc học, nên không phụ thuộc vào phần đang được kiểm.",
+        ],
+        "lines": lines,
+        "note": None,
+    }
+
+
+def tamper_view(root: Path) -> Optional[dict[str, Any]]:
+    """Lần thử cố tình đổi trọng số mới nhất: client nào bị loại, 2 mã băm, lý do. Không có thì trả None."""
+    runs = list_runs(root)
+    if not runs:
+        return None
+    record = load_run(runs[0])
+    failed = (record.get("progress") or {}).get("failed_round") or {}
+    clients = [c for c in failed.get("clients") or [] if isinstance(c, dict)]
+    labels = _machine_labels([{"clients": clients}])
+    rows = sorted((_client_view(c, labels) for c in clients), key=lambda c: c["client_id"])
+    rejected = [c for c in rows if c["status"] != "ok"]
+    if not rejected:
+        return None
+    return {"run_id": record["run_id"], "round": failed.get("round"), "clients": rows, "rejected": rejected[0], "error": (record.get("progress") or {}).get("error")}
+
+
+def _tamper_detail(root: Path) -> Optional[dict[str, Any]]:
+    tamper = tamper_view(root)
+    if tamper is None:
+        return None
+    lines = [f"Lần thử {tamper['run_id']}, vòng {tamper['round']}: máy chủ trên VM, client từ laptop qua Internet"]
+    for client in tamper["clients"]:
+        verdict = "KHỚP, nhận" if client["hash_ok"] else f"LỆCH, LOẠI ({client['validation_reason']})"
+        lines.append(f"  client {client['client_id']}: client gửi {client['client_hash']} / máy chủ tính lại {client['server_hash']} -> {verdict}")
+    if tamper["error"]:
+        lines.append(f"Máy chủ dừng lần đo: {tamper['error']}")
+    return {
+        "title": "Thử cố tình sai",
+        "item": "tamper",
+        "run_id": tamper["run_id"],
+        "state": "failed",
+        "round": None,
+        "round_bound": False,
+        "how": [
+            "Một client được chạy ở chế độ cố tình sai: sau khi đã băm, nó đổi đúng một con số trong trọng số, giống như dữ liệu bị đổi trên đường truyền.",
+            "Máy chủ băm lại trọng số nhận được, thấy khác mã client gửi, và loại client đó.",
+            "Khi có client bị loại, máy chủ dừng cả lần đo chứ không gộp tiếp, nên mô hình chung không bị ảnh hưởng.",
+        ],
+        "lines": lines,
+        "note": "Đây là kiểm tra toàn vẹn, không phải xác thực: máy chủ đo không có mật khẩu hay mã hóa, nên người cố ý sửa cả trọng số lẫn mã băm thì phép kiểm này không bắt được.",
+        "command": "python scripts/demo_show.py flower --detail tamper",
+        "source": SOURCE_LINES,
+        "log": None,
     }
 
 
@@ -389,6 +465,8 @@ def detail_view(record: dict[str, Any], item: str, round_no: Optional[int] = Non
         built = _host_detail(view, audits)
     elif kind == "bytes":
         built = _bytes_detail(view)
+    elif kind == "validator":
+        built = _validator_detail(view, record)
     else:
         built = _accuracy_detail(view, record)
     if built is None:
@@ -407,8 +485,10 @@ def detail_view(record: dict[str, Any], item: str, round_no: Optional[int] = Non
     }
 
 
-def detail_for_run(run_dir: Path, item: str, round_no: Optional[int] = None, now: Optional[datetime] = None) -> Optional[dict[str, Any]]:
-    """Đọc một lần đo và dựng chi tiết. Riêng mục máy chủ kèm nhật ký thật."""
+def detail_for_run(run_dir: Path, item: str, round_no: Optional[int] = None, now: Optional[datetime] = None, tamper_root: Optional[Path] = None) -> Optional[dict[str, Any]]:
+    """Đọc một lần đo và dựng chi tiết. Riêng mục máy chủ kèm nhật ký thật; mục thử cố tình sai đọc thư mục riêng của nó."""
+    if item == "tamper":
+        return _tamper_detail(tamper_root) if tamper_root is not None and round_no is None else None
     built = detail_view(load_run(run_dir), item, round_no, now=now)
     if built is not None and item == "server":
         built["log"] = read_log_tail(run_dir)
@@ -426,6 +506,8 @@ def detail_lines(built: dict[str, Any]) -> list[str]:
     """Bản in terminal của `demo_show flower --detail`, đúng các dòng mà web hiện."""
     lines = [built["title"]]
     lines += [f"  {index}. {step}" for index, step in enumerate(built["how"], 1)]
+    if built.get("sent"):
+        lines += ["  Client gửi: " + ", ".join(built["sent"]), "  Client không gửi: " + ", ".join(built["not_sent"])]
     lines += [""] + built["lines"]
     if built["note"]:
         lines += ["", built["note"]]

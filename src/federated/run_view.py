@@ -13,12 +13,14 @@ from typing import Any, Optional
 
 PROGRESS_FILE = "progress.json"
 HISTORY_FILE = "history.json"
+VALIDATION_FILE = "validation.json"     # kết quả scripts/validate_network_artifact.py
+AGGREGATION_TOLERANCE = 1e-6            # sai lệch làm tròn float32 của phép gộp; cùng ngưỡng với báo cáo kiểm chứng
 NOTE_FILE = "note.txt"      # ghi chú của người đo về điều kiện lúc đo (không bắt buộc), hiện nguyên văn trên web và terminal
 # Server ghi nhịp mỗi HEARTBEAT_S giây kể cả khi đang chờ; quá STALE_AFTER_S không có gì mới nghĩa là server đã chết hoặc mất kết nối.
 HEARTBEAT_S = 20
 STALE_AFTER_S = 90
-CAVEAT_PRETRAINED = ("Phép đo này dùng tập ảnh nhỏ và mô hình khởi tạo từ ImageNet để chứng minh hệ thống chạy đúng qua mạng thật. "
-                     "Đây không phải độ chính xác của đề tài; kết quả chính xem ở bảng so sánh phân tán và tập trung.")
+CAVEAT_PRETRAINED = ("Số đo thật, nhưng trên tập ảnh nhỏ, 1 lần chạy và mô hình khởi tạo từ ImageNet. Nó chứng minh mô hình gộp qua mạng thật sự học được. "
+                     "Số để so phân tán với tập trung của đề tài nằm ở chương 4, mục 4.7. Mô hình của lần đo này không đưa lên web.")
 SHARED_MACHINE_NOTE = ("Các client này chạy trên cùng một máy nên dùng chung CPU và đường truyền: tốc độ mỗi client chỉ là phần chia của đường truyền đó, không cộng lại thành nhiều đường riêng, "
                        "và thời gian học có cả phần tranh CPU. Số này cho thấy hệ thống chạy đúng và độ trễ mạng thật, chưa phải hiệu năng của nhiều máy riêng.")
 
@@ -40,7 +42,7 @@ def _read_note(path: Path) -> Optional[str]:
 
 def load_run(run_dir: Path) -> dict[str, Any]:
     run_dir = Path(run_dir)
-    return {"run_id": run_dir.name, "progress": _read_json(run_dir / PROGRESS_FILE), "history": _read_json(run_dir / HISTORY_FILE), "note": _read_note(run_dir / NOTE_FILE)}
+    return {"run_id": run_dir.name, "progress": _read_json(run_dir / PROGRESS_FILE), "history": _read_json(run_dir / HISTORY_FILE), "note": _read_note(run_dir / NOTE_FILE), "validation": _read_json(run_dir / VALIDATION_FILE)}
 
 
 def list_runs(root: Path) -> list[Path]:
@@ -88,6 +90,9 @@ def _client_view(client: dict[str, Any], labels: dict[str, str]) -> dict[str, An
         "update_norm_reported": _num(client.get("update_norm_reported"), 4),
         "update_norm_server": _num(client.get("received_update_norm"), 4),
         "update_norm_matches": client.get("update_norm_matches"),
+        "reported_parent": str(client.get("reported_parent_hash"))[:12] if client.get("reported_parent_hash") else None,    # None: lần đo cũ chưa ghi
+        "parent_hash_ok": client.get("parent_hash_ok"),
+        "validation_reason": client.get("validation_reason"),
         "learnable_update_norm": _num(client.get("received_learnable_update_norm"), 4),
         "hash_ok": _hash_ok(client),
         "client_hash": str(client.get("client_reported_hash") or "")[:12],
@@ -135,6 +140,7 @@ def _round_view(audit: dict[str, Any], labels: dict[str, str]) -> dict[str, Any]
         "transfer_s": transfer,
         "server_s": round(server, 3),
         "aggregate_ms": _num(audit.get("server_aggregate_ms"), 1),
+        "aggregation_max_diff": _num((audit.get("aggregation_check") or {}).get("max_abs_diff")),   # None: lần đo cũ chưa ghi
         "parent_hash": str(audit.get("parent_model_hash") or "")[:12],
         "global_hash": str(audit.get("global_model_hash") or "")[:12],
         "clients": sorted((_client_view(c, labels) for c in audit.get("clients") or []), key=lambda c: c["client_id"]),
@@ -175,6 +181,10 @@ def _checks(audits: list[dict[str, Any]], rounds: list[dict[str, Any]], required
         "hash_total": len(clients),
         "norm_ok": sum(c["update_norm_matches"] is True for c in known_norm),
         "norm_total": len(known_norm),
+        "parent_ok": sum(c["parent_hash_ok"] is True for c in clients),
+        "parent_total": sum(c["parent_hash_ok"] is not None for c in clients),
+        "aggregation_ok": sum(r["aggregation_max_diff"] is not None and r["aggregation_max_diff"] <= AGGREGATION_TOLERANCE for r in rounds),
+        "aggregation_total": sum(r["aggregation_max_diff"] is not None for r in rounds),
         "chain_ok": bool(audits) and linked,
         "full_rounds": sum(r["accepted"] == required for r in rounds) if required else None,
         "rounds_total": len(rounds),
@@ -207,6 +217,14 @@ def _state(progress: Optional[dict[str, Any]], history: Optional[dict[str, Any]]
     if age is not None and age > STALE_AFTER_S:
         return "stale", age
     return (status or "running"), age
+
+
+def _validation_view(validation: Optional[dict[str, Any]]) -> Optional[dict[str, Any]]:
+    checks = (validation or {}).get("checks")
+    if not isinstance(checks, dict) or not checks:
+        return None
+    return {"ok": bool(validation.get("ok")), "passed": sum(value is True for value in checks.values()), "total": len(checks),
+            "failed": sorted(str(name) for name, value in checks.items() if value is not True)}
 
 
 def run_view(record: dict[str, Any], now: Optional[datetime] = None) -> dict[str, Any]:
@@ -253,6 +271,7 @@ def run_view(record: dict[str, Any], now: Optional[datetime] = None) -> dict[str
         "machines": _machines(rounds),
         "checks": checks,
         "note": record.get("note"),
+        "validation": _validation_view(record.get("validation")),
         "shared_machine_note": SHARED_MACHINE_NOTE if many_on_one else None,
         "final_test": {k: _num(final_test.get(k), 4) for k in ("accuracy", "loss", "macro_f1")} if isinstance(final_test, dict) else None,
         "final_model_hash": str(final_hash or "")[:16],

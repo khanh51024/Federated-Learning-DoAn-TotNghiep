@@ -32,6 +32,7 @@ let demo = { can_start: false, running: false };
 let demoBusy = false;         // đang chờ máy chủ trả lời nút Bắt đầu hoặc Dừng
 let followUntil = 0;          // vừa bấm Bắt đầu: hỏi nhanh để thấy ngay lần đo mới
 let lastControl = null;
+let chosenClient = null;      // client đang xem trong khung các bước kiểm; null = client đầu tiên
 
 const num = (value, digits = 2) => (value === null || value === undefined ? "—" : fmtNum(value, digits));
 const isActive = state => state === "waiting" || state === "running" || state === "stale";
@@ -125,9 +126,11 @@ function proofsHtml(data) {
       ${tile("hash", "Trọng số gửi đúng", `${fmtInt(c.hash_ok)}/${fmtInt(c.hash_total)}`, c.chain_ok ? "mã băm khớp, chuỗi mô hình liền" : "lượt mã băm khớp", c.hash_total ? c.hash_ok === c.hash_total : null)}
       ${tile("norm", "Độ biến thiên khớp", `${fmtInt(c.norm_ok)}/${fmtInt(c.norm_total)}`, "client khai so với máy chủ tự tính", c.norm_total ? c.norm_ok === c.norm_total : null)}
       ${tile("rounds", "Vòng nhận đủ client", `${fmtInt(c.full_rounds ?? 0)}/${fmtInt(c.rounds_total)}`, `đủ ${data.num_clients} client mỗi vòng`, c.rounds_total ? c.full_rounds === c.rounds_total : null)}
+      ${tile("validator", "Trình kiểm lần đo", data.validation ? `${fmtInt(data.validation.passed)}/${fmtInt(data.validation.total)}` : "chưa có", "đọc lại tệp kết quả và tệp mô hình", data.validation ? data.validation.ok : null)}
+      ${data.tamper_check ? tile("tamper", "Thử cố tình sai", "Bị loại", `client ${data.tamper_check.client_id}: ${data.tamper_check.client_hash.slice(0, 8)} khác ${data.tamper_check.server_hash.slice(0, 8)}`, true) : ""}
       ${tile("host", "Client chung máy chủ", onServer, `client đến từ ${fmtInt(c.machines)} máy`, c.host_check_available ? c.clients_on_server_host === 0 : null)}
       ${tile("bytes", "Đã truyền", `${megabytes(c.bytes_up + c.bytes_down)} MiB`, `lên ${megabytes(c.bytes_up)}, xuống ${megabytes(c.bytes_down)}`)}
-      ${tile("accuracy", "Độ chính xác máy chủ tính", accuracy === null || accuracy === undefined ? "—" : `${fmtNum(accuracy * 100, 2)}%`, data.final_test ? "tập test giữ riêng của máy chủ" : `sau vòng ${last?.round ?? "—"}`)}
+      ${tile("accuracy", data.final_test ? "Độ chính xác cuối, tập test" : "Độ chính xác, tập val", accuracy === null || accuracy === undefined ? "—" : `${fmtNum(accuracy * 100, 2)}%`, data.final_test ? "máy chủ tự tính, số đo trên tập nhỏ" : `máy chủ tự tính sau vòng ${last?.round ?? "—"}`)}
     </div>`;
 }
 
@@ -207,17 +210,57 @@ function clientRow(client) {
     </tr>`;
 }
 
+function stepRow(text, ok = null) {
+  const mark = ok === null ? "" : ok ? '<span class="live-step-ok">✓ khớp</span>' : '<span class="live-step-bad">✕ lệch</span>';
+  return `<li>${text} ${mark}</li>`;
+}
+
+const shortHash = value => `<span class="mono">${esc(String(value ?? "").slice(0, 8))}</span>`;
+
+function stepsHtml(row) {
+  const client = row.clients.find(item => item.client_id === chosenClient) || row.clients[0];
+  if (!client) return "";
+  const next = view.rounds.find(item => item.round === row.round + 1);
+  const total = row.clients.reduce((sum, item) => sum + (item.num_examples || 0), 0);
+  const share = total ? fmtNum((client.num_examples / total) * 100, 1) : "—";
+  const merge = row.aggregation_max_diff === null || row.aggregation_max_diff === undefined
+    ? stepRow(`Máy chủ gộp theo số ảnh, client này chiếm ${share}%. Kiểm lại phép gộp: lần đo này chưa ghi.`)
+    : stepRow(`Máy chủ gộp theo số ảnh, client này chiếm ${share}%. Tính lại phép gộp độc lập, lệch lớn nhất ${esc(row.aggregation_max_diff.toExponential(1))}.`, row.aggregation_max_diff <= 1e-6);
+  const end = next
+    ? stepRow(`Mô hình mới ${shortHash(row.global_hash)}, vòng ${esc(next.round)} bắt đầu từ ${shortHash(next.parent_hash)}.`, row.global_hash === next.parent_hash)
+    : stepRow(`Mô hình mới ${shortHash(row.global_hash)}${view.state === "finished" ? ", là mô hình cuối của lần đo" : ""}.`, view.state === "finished" && view.final_model_hash ? view.final_model_hash.startsWith(row.global_hash) : null);
+  return `<div class="live-steps-box">
+      <div class="live-control-row">
+        <h4 class="live-detail-title">Một vòng đi qua những bước kiểm nào</h4>
+        <label class="field-hint" for="live-step-client">Xem client</label>
+        <select id="live-step-client" class="form-control-sm">${row.clients.map(item => `<option value="${esc(item.client_id)}"${item.client_id === client.client_id ? " selected" : ""}>${esc(item.client_id)}</option>`).join("")}</select>
+      </div>
+      <ol class="live-steps">
+        ${stepRow(`Máy chủ gửi mô hình ${shortHash(row.parent_hash)} xuống client.`)}
+        ${client.reported_parent ? stepRow(`Client báo đã nhận ${shortHash(client.reported_parent)}.`, client.parent_hash_ok === true) : stepRow("Client báo mô hình đã nhận: lần đo này chưa ghi mã.")}
+        ${stepRow(`Client học ${esc(fmtInt(client.num_examples))} ảnh. Ảnh không rời khỏi máy.`)}
+        ${stepRow(`Client gửi trọng số, kèm mã băm ${shortHash(client.client_hash)}.`)}
+        ${stepRow(`Máy chủ băm lại trọng số nhận được, ra ${shortHash(client.server_hash)}.`, client.hash_ok)}
+        ${stepRow(`Độ biến thiên: client khai ${num(client.update_norm_reported, 3)}, máy chủ tự tính ${num(client.update_norm_server, 3)}.`, client.update_norm_matches === true)}
+        ${merge}
+        ${end}
+      </ol>
+      <p class="field-hint">Máy chủ còn so số vòng, seed, số epoch, danh sách ảnh của client và ảnh thật. Sai một mục là client đó bị loại.</p>
+    </div>`;
+}
+
 function roundTableHtml() {
   const row = shownRound();
   if (!row) return '<p class="field-hint">Chưa xong vòng nào.</p>';
   const count = view.rounds.length;
-  const accuracy = row.accuracy === null ? "" : ` · máy chủ tính độ chính xác ${fmtNum(row.accuracy * 100, 2)}%`;
+  const accuracy = row.accuracy === null ? "" : ` · máy chủ tính độ chính xác trên tập val ${fmtNum(row.accuracy * 100, 2)}%`;
   return `<div class="live-round-pick">
       <label for="live-round">Xem vòng <b id="live-round-value">${esc(row.round)}</b>/${esc(count)}</label>
       <input type="range" id="live-round" min="${esc(view.rounds[0].round)}" max="${esc(view.rounds[count - 1].round)}" value="${esc(row.round)}" step="1">
       <span class="field-hint">cả vòng ${num(row.elapsed_s, 1)} s${accuracy}</span>
     </div>
-    <div class="table-responsive mt-2" tabindex="0" role="region" aria-label="Bảng từng client trong vòng đang xem"><table class="data-table wrap-head">
+    ${stepsHtml(row)}
+    <div class="table-responsive mt-3" tabindex="0" role="region" aria-label="Bảng từng client trong vòng đang xem"><table class="data-table wrap-head">
       <thead><tr><th>Client</th><th>Máy</th><th>Ảnh</th><th>RTT (ms)</th><th>Lên (MiB/s)</th><th>Xuống (MiB/s)</th><th>Phản hồi (s)</th><th>Học, ước lượng (s)</th><th>Độ biến thiên: client khai / máy chủ tính</th><th>Mã băm: client gửi / máy chủ tính</th></tr></thead>
       <tbody>${row.clients.map(clientRow).join("")}</tbody>
     </table></div>
@@ -290,6 +333,7 @@ function detailHtml(data) {
       <div>
         <p class="live-detail-label">Cách làm</p>
         <ol class="live-detail-steps">${data.how.map(step => `<li>${esc(step)}</li>`).join("")}</ol>
+        ${data.sent ? `<p class="live-detail-label">Client gửi</p><p class="live-detail-list">${esc(data.sent.join(", "))}</p><p class="live-detail-label">Client không gửi</p><p class="live-detail-list">${esc(data.not_sent.join(", "))}</p>` : ""}
         ${data.note ? `<p class="field-hint">${esc(data.note)}</p>` : ""}
       </div>
       <div class="live-detail-terms">
@@ -493,7 +537,7 @@ function layoutHtml() {
     <section id="live-proofs-detail" class="live-detail panel mt-3 hidden" aria-label="Chi tiết ô đang chọn"></section>
     <div id="live-caveats" class="mt-4"></div>
     <div class="live-charts mt-4">
-      <section class="panel"><h3 class="panel-title panel-title-sm">Máy chủ kiểm mô hình chung sau mỗi vòng</h3>
+      <section class="panel"><h3 class="panel-title panel-title-sm">Máy chủ kiểm mô hình chung sau mỗi vòng, tập val</h3>
         <div class="chart-container mt-3"><canvas id="live-chart-accuracy" aria-label="Độ chính xác và loss theo vòng"></canvas></div></section>
       <section class="panel"><h3 class="panel-title panel-title-sm">Thời gian mỗi vòng dùng vào đâu</h3>
         <div class="chart-container mt-3"><canvas id="live-chart-time" aria-label="Thời gian học, truyền và xử lý của máy chủ theo vòng"></canvas></div></section>
@@ -601,6 +645,12 @@ function bind(root) {
     if (event.key === "Escape" && selected) closeDetail({ refocus: true });
   });
   root.addEventListener("change", event => {
+    if (event.target.id === "live-step-client") {
+      chosenClient = Number(event.target.value);
+      byId("live-round-table").innerHTML = roundTableHtml();
+      byId("live-step-client")?.focus();
+      return;
+    }
     if (event.target.id !== "live-run") return;
     chosenRun = event.target.value;
     chosenRound = null;
