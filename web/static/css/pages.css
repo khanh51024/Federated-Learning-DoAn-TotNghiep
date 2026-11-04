@@ -1913,6 +1913,7 @@ button.live-chip:hover { outline: 2px solid var(--accent-sky); outline-offset: 1
 .live-tile.is-bad .kpi-mini-value { color: var(--accent-rose); }
 .live-tile-note { font-size: var(--fs-xs); color: var(--text-muted); }
 .live-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.live-nowrap { white-space: nowrap; }
 .live-round-pick { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 .live-round-pick input[type="range"] { flex: 1 1 220px; min-width: 160px; }
 .is-bad-row td { color: var(--accent-rose); }

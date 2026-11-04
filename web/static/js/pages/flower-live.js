@@ -187,10 +187,10 @@ function clientRow(client) {
     : `${num(client.update_norm_reported, 3)} / ${num(client.update_norm_server, 3)} ${client.update_norm_matches === true ? "✓" : "✕"}`;
   const bad = client.status && client.status !== "ok" ? ' class="is-bad-row"' : "";
   return `<tr${bad}>
-      <td>${esc(client.client_id)}</td><td>${esc(client.machine)}${client.same_host_as_server ? " (cùng máy chủ)" : ""}</td><td>${esc(fmtInt(client.num_examples))}</td>
+      <td>${esc(client.client_id)}</td><td class="live-nowrap">${esc(client.machine)}${client.same_host_as_server ? " (cùng máy chủ)" : ""}</td><td>${esc(fmtInt(client.num_examples))}</td>
       <td>${num(client.rtt_ms, 1)}</td><td>${num(client.up_mb_s)}</td><td>${num(client.down_mb_s)}</td>
       <td>${num(client.response_s, 1)}</td><td>${num(client.train_s, 1)}</td><td>${norm}</td>
-      <td><span class="mono" title="client ${esc(client.client_hash)} / máy chủ ${esc(client.server_hash)}">${esc(client.server_hash.slice(0, 8))}</span> ${client.hash_ok ? "✓" : "✕"}</td>
+      <td class="live-nowrap"><span class="mono" title="client ${esc(client.client_hash)} / máy chủ ${esc(client.server_hash)}">${esc(client.client_hash.slice(0, 8))} / ${esc(client.server_hash.slice(0, 8))}</span> ${client.hash_ok ? "✓" : "✕"}</td>
     </tr>`;
 }
 
@@ -205,9 +205,10 @@ function roundTableHtml() {
       <span class="field-hint">cả vòng ${num(row.elapsed_s, 1)} s${accuracy}</span>
     </div>
     <div class="table-responsive mt-2" tabindex="0" role="region" aria-label="Bảng từng client trong vòng đang xem"><table class="data-table wrap-head">
-      <thead><tr><th>Client</th><th>Máy</th><th>Ảnh</th><th>RTT (ms)</th><th>Lên (MiB/s)</th><th>Xuống (MiB/s)</th><th>Phản hồi (s)</th><th>Học, ước lượng (s)</th><th>Độ biến thiên: client khai / máy chủ tính</th><th>Mã băm</th></tr></thead>
+      <thead><tr><th>Client</th><th>Máy</th><th>Ảnh</th><th>RTT (ms)</th><th>Lên (MiB/s)</th><th>Xuống (MiB/s)</th><th>Phản hồi (s)</th><th>Học, ước lượng (s)</th><th>Độ biến thiên: client khai / máy chủ tính</th><th>Mã băm: client gửi / máy chủ tính</th></tr></thead>
       <tbody>${row.clients.map(clientRow).join("")}</tbody>
-    </table></div>`;
+    </table></div>
+    <p class="field-hint mt-2">Mã băm giống dấu vân tay của bộ trọng số: chỉ cần đổi một con số là mã đổi hẳn. Client tính mã trước khi gửi, máy chủ tính lại sau khi nhận. Hai mã giống nhau nghĩa là trọng số đến nơi nguyên vẹn. Mỗi vòng mỗi client học ra trọng số khác nhau nên mã giữa các hàng khác nhau là đúng.</p>`;
 }
 
 function machineTableHtml() {

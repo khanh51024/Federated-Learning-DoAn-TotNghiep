@@ -228,6 +228,7 @@ def _hash_detail(view: dict[str, Any]) -> dict[str, Any]:
         "title": "Trọng số gửi đúng",
         "round_bound": False,
         "how": [
+            "Mã băm giống dấu vân tay của bộ trọng số: chỉ cần đổi một con số là mã đổi hẳn.",
             "Client băm SHA-256 toàn bộ trọng số sắp gửi (hàm compute_model_hash, src/model/mobilenetv3.py).",
             "Máy chủ chạy đúng hàm đó trên trọng số nhận được rồi so hai mã. Lệch nghĩa là trọng số đã đổi trên đường truyền hoặc client khai sai, và client đó bị loại.",
             "Mô hình cuối vòng này phải là mô hình đầu vòng sau. Nhờ vậy không vòng nào bị thay mô hình giữa chừng.",
