@@ -17,7 +17,7 @@ Mọi thứ chạy từ một file: nhấp đúp **`DEMO_TUNG_MUC.bat`** ở th�
 
 ## 1. Chuẩn bị trước giờ demo
 
-1. Chép `tmp\LAPTOP_2_10_CLIENT.zip` sang laptop 2, giải nén ra một thư mục. Không phải cài gì. Windows chặn file `.bat` thì xem mục 7.
+1. Chép `tmp\LAPTOP_2_10_CLIENT.zip` sang laptop 2, giải nén ra một thư mục. Không phải cài gì. Windows chặn file `.bat` thì xem bảng lỗi ở mục 5.
 2. Oracle Cloud còn rule mở `18089-18090` cho `0.0.0.0/0`. Xóa rule này sau khi demo xong.
 3. Cả 2 laptop: tắt game và ứng dụng nặng, cắm sạc, tắt WARP hoặc VPN nếu được.
 4. Diễn tập trọn mục 2 một lần với 2 laptop, bấm giờ.

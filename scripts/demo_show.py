@@ -187,7 +187,7 @@ def drift_lines(table: Path) -> list[str]:
     lines = ["Khoảng cách từ mô hình client đến mô hình vừa gộp, không tính BatchNorm, trung bình 5 vòng cuối:", "",
              f"  {'Mức lệch':<10}{'Đường chạy':<12}{'5 vòng cuối':>12}{'Lệch chuẩn':>12}{'Cả 40 vòng':>12}"]
     for row in rows:
-        lines.append(f"  {row['level']:<10}{row['runtime']:<12}{row['to_merged_last5']:>12.3f}{row['to_merged_last5_std']:>12.3f}{row['to_merged_mean']:>12.3f}")
+        lines.append(f"  {row['level']:<10}{row['runtime']:<12}{row['to_merged_last5']:>12.3f}{row['to_merged_last5_std']:>12.4f}{row['to_merged_mean']:>12.3f}")
     return lines
 
 

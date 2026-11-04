@@ -56,7 +56,7 @@ function fairnessHtml(fairness, sweep) {
 
 function driftHtml(drift) {
   if (!drift?.available) return missing(drift);
-  const rows = drift.rows.map(row => `<tr><td>${esc(row.level)}</td><td>${esc(row.runtime)}</td><td>${num(row.to_merged_last5, 3)}</td><td>${num(row.to_merged_last5_std, 3)}</td><td>${num(row.to_merged_mean, 3)}</td></tr>`).join("");
+  const rows = drift.rows.map(row => `<tr><td>${esc(row.level)}</td><td>${esc(row.runtime)}</td><td>${num(row.to_merged_last5, 3)}</td><td>${num(row.to_merged_last5_std, 4)}</td><td>${num(row.to_merged_mean, 3)}</td></tr>`).join("");
   return `
     <p class="panel-desc">Sau mỗi vòng, đo mô hình của từng client cách mô hình vừa gộp bao xa, không tính BatchNorm. Số càng lớn, các client càng kéo mô hình về các hướng khác nhau.</p>
     <div class="chart-container mt-3"><canvas id="chart-client-drift" aria-label="Khoảng cách từ mô hình client đến mô hình chung trong 5 vòng cuối, theo mức lệch dữ liệu"></canvas></div>
