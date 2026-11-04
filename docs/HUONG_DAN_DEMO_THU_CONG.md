@@ -185,7 +185,7 @@ Máy chủ chạy trên VM Oracle `149.118.51.118`, **không có client nào tr�
 
 **Chuẩn bị một lần (chủ tài khoản Oracle làm):** thêm quy tắc cho 2 laptop nối vào VM, đo xong thì xóa.
 
-1. Mỗi laptop mở trình duyệt vào `https://api.ipify.org` để biết IP công khai (nếu cùng một wifi thì hai máy cùng IP).
+1. Mỗi laptop tắt Cloudflare WARP hoặc VPN (bật thì IP công khai đổi theo lần nối và số mạng đo cả đường vòng qua VPN), rồi mở trình duyệt vào `https://api.ipify.org` để biết IP công khai (nếu cùng một wifi thì hai máy cùng IP).
 2. Oracle Cloud Console, Networking, Virtual Cloud Networks, chọn mạng của VM, Security Lists, danh sách mặc định, **Add Ingress Rules**: Source CIDR `<IP laptop>/32`, IP Protocol `TCP`, Destination Port Range `18089-18090`. Thêm một dòng cho mỗi IP.
 3. Báo lại IP của 2 laptop. Phần mở cổng trên chính VM do script tự làm và tự đóng.
 
@@ -194,7 +194,7 @@ Máy chủ chạy trên VM Oracle `149.118.51.118`, **không có client nào tr�
 1. **VM** (Claude chạy giúp): `bash <thư mục bản web>/scripts/remote/run_network_server.sh --ip <IP laptop 1> --ip <IP laptop 2> --clients 10 --rounds 20`. Script mở cổng riêng cho 2 IP đó, tự đóng khi xong, khi lỗi, hoặc sau 3 giờ.
    Mở sẵn `https://datn.tranngochung.id.vn/#flower` để chiếu: trang tự cập nhật, không cần tải lại.
 2. **Laptop 1:** mở PowerShell trong thư mục dự án, gõ `deploy\lan_client\CHAY_CLIENT.bat 0 5 149.118.51.118`. Ảnh lấy từ `tmp\net10`.
-3. **Laptop 2:** giải nén `LAPTOP_2_10_CLIENT.zip` (có sẵn Python, không cần cài), nhấp đúp hoặc gõ `CHAY_CLIENT.bat 5 5 149.118.51.118`.
+3. **Laptop 2:** giải nén `LAPTOP_2_10_CLIENT.zip` (có sẵn Python, không cần cài), nhấp đúp `LAPTOP_2_BAM_DAY.bat`. Đừng nhấp đúp `CHAY_CLIENT.bat`, file đó không có tham số thì chỉ mở client 1.
 4. Mỗi laptop mở 5 cửa sổ client. Máy chủ chờ đủ 10 rồi mới học. Cửa sổ chính báo `XONG` khi 5 client của máy đó học hết 20 vòng.
 5. Kết quả nằm ở `artifacts/network_live/<giờ>_10client/` của bản web trên VM. Trang `#flower` và lệnh `python scripts/demo_show.py flower` (chạy trên VM) cùng đọc thư mục này bằng cùng một hàm tính, nên số trên web và terminal trùng nhau.
 
