@@ -6,9 +6,13 @@ set "URL=@@BASE@@/api/flower/client-package/file"
 set "SHA=@@SHA256@@"
 set "DIR=%LOCALAPPDATA%\CropFedClient"
 set "ZIP=%DIR%\goi_@@SHORT@@.zip"
+rem Gọi đúng bản của Windows: máy có cài Git có thể có tar khác đứng trước trong PATH, bản đó không đọc được zip.
+set "CURL=%SystemRoot%\System32\curl.exe"
+set "TAR=%SystemRoot%\System32\tar.exe"
+set "CERTUTIL=%SystemRoot%\System32\certutil.exe"
 
-where curl.exe >nul 2>nul || goto :old_windows
-where tar.exe >nul 2>nul || goto :old_windows
+if not exist "%CURL%" goto :old_windows
+if not exist "%TAR%" goto :old_windows
 
 if defined DEMO_FORCE goto :go
 reg query "HKCU\Software\Classes\cropfed-demo\shell\open\command" /ve 2>nul | findstr /i /c:"deploy\lan_client" >nul
@@ -19,25 +23,35 @@ if not errorlevel 1 (
 
 :go
 if not exist "%DIR%" mkdir "%DIR%"
+if not exist "%ZIP%" goto :download
+"%CERTUTIL%" -hashfile "%ZIP%" SHA256 | findstr /i /x "%SHA%" >nul
+if errorlevel 1 goto :download
+echo [1/3] Gói đã tải đủ từ lần trước.
+goto :extract
+
+:download
 echo [1/3] Tải gói client, khoảng @@SIZE_MB@@ MB. Mất điện hoặc rớt mạng thì chạy lại file này, tải tiếp từ chỗ đang dở.
-curl.exe -fL --retry 3 --retry-delay 3 -C - -o "%ZIP%" "%URL%"
+"%CURL%" -fL --retry 3 --retry-delay 3 -C - -o "%ZIP%" "%URL%"
 if errorlevel 1 (
+  rem Mã 22: máy chủ từ chối, thường do tệp dở không còn tải tiếp được. Xóa để lần sau tải lại từ đầu.
+  if errorlevel 22 if not errorlevel 23 del "%ZIP%" >nul 2>nul
   echo [LỖI] Không tải được gói client. Kiểm tra mạng rồi chạy lại file này.
   goto :fail
 )
 
 echo [2/3] Kiểm tra mã băm của gói...
-certutil -hashfile "%ZIP%" SHA256 | findstr /i /x "%SHA%" >nul
+"%CERTUTIL%" -hashfile "%ZIP%" SHA256 | findstr /i /x "%SHA%" >nul
 if errorlevel 1 (
   echo [LỖI] Gói tải về không khớp mã băm, đã xóa. Chạy lại file này. Nếu vẫn lỗi, tải lại file cài từ trang web.
   del "%ZIP%"
   goto :fail
 )
 
+:extract
 echo [3/3] Giải nén, khoảng 1 đến 3 phút...
 if exist "%DIR%\app" rd /s /q "%DIR%\app"
 mkdir "%DIR%\app"
-tar.exe -xf "%ZIP%" -C "%DIR%\app"
+"%TAR%" -xf "%ZIP%" -C "%DIR%\app"
 if errorlevel 1 (
   echo [LỖI] Không giải nén được. Kiểm tra ổ đĩa còn trống ít nhất 2 GB rồi chạy lại file này.
   goto :fail
