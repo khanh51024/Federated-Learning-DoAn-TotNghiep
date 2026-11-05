@@ -2,6 +2,7 @@
 // (Web Worker + onnxruntime-web), chỉ lớp cuối của mô hình (~156 KB) được gửi lên máy chủ. Giao thức: docs/COMMUNITY_FL.md.
 import { getJson, postJson } from "../core/api.js";
 import { renderWeightsInto } from "../core/comm-weights.js";
+import { mountDemoTrail, renderCommunityCompare } from "../core/demo-compare.js";
 import { getSummary } from "../core/store.js";
 import { decodeHead, encodeHead } from "../core/community-math.js";
 import {
@@ -532,7 +533,10 @@ async function loadStatus() {
     return;
   }
   renderStatus();
-  if (S.status.enabled !== false) await loadHistory();
+  if (S.status.enabled !== false) {
+    renderCommunityCompare(byId("comm-version-compare"), S.status);
+    await loadHistory();
+  }
 }
 
 async function loadHistory() {
@@ -888,6 +892,7 @@ async function renderSimulation() {
 export async function mount() {
   if (S.mounted) return;
   S.mounted = true;
+  mountDemoTrail("hoc-lien-ket");
   renderSimulation();
   loadSession();
   byId("comm-join-form").addEventListener("submit", join);

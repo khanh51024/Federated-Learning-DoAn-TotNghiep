@@ -548,3 +548,37 @@ def test_live_api_carries_tamper_summary_without_secrets(tmp_path, monkeypatch):
     assert reply.status_code == 200 and "LỆCH, LOẠI" in "\n".join(reply.json()["lines"])
     router._live_cache.clear()
     router._detail_cache.clear()
+
+
+def test_run_summary_covers_finished_failed_and_light_runs():
+    finished = rv.run_view({"run_id": "20261104T100000Z_2client", "progress": _progress("finished", final_test_metrics={"accuracy": 0.86, "loss": 0.4, "macro_f1": 0.8}), "history": None}, now=NOW)
+    row = rv.run_summary(finished)
+    assert row["state"] == "finished" and row["light"] is False and row["num_clients"] == 2 and row["completed_rounds"] == 1
+    assert row["median_round_s"] == 26.0 and row["final_accuracy"] == 0.86 and row["client_upload_bytes"] == 6307176 and row["machines"] == 2
+
+    failed = rv.run_summary(rv.run_view({"run_id": "20261104T100000Z_10client_nhe", "progress": _progress("failed", error="hong"), "history": None}, now=NOW))
+    assert failed["state"] == "failed" and failed["light"] is True and failed["final_accuracy"] is None and failed["median_round_s"] == 26.0
+
+    empty = rv.run_summary(rv.run_view({"run_id": "x", "progress": _progress(rounds=[]), "history": None}, now=NOW))
+    assert empty["median_round_s"] is None and empty["client_upload_bytes"] is None and empty["completed_rounds"] == 0
+
+
+def test_flower_runs_route_lists_newest_first_without_network_identifiers(tmp_path, monkeypatch):
+    from src import registry as reg
+    from web.app import app
+    from web.routers import flower as router
+
+    monkeypatch.setattr(reg, "NETWORK_LIVE_DIR", str(tmp_path))
+    router._runs_cache = None
+    client = TestClient(app)
+    assert client.get("/api/flower/runs").json() == {"runs": []}
+
+    router._runs_cache = None
+    _write_run(tmp_path, "20261103T100000Z_2client", _progress("finished"))
+    _write_run(tmp_path, "20261104T100000Z_2client_nhe", _progress())
+    response = client.get("/api/flower/runs")
+    rows = response.json()["runs"]
+    assert [row["run_id"] for row in rows] == ["20261104T100000Z_2client_nhe", "20261103T100000Z_2client"]
+    assert rows[0]["light"] is True and rows[1]["light"] is False
+    assert "peer_hash" not in response.text and "cid-bi-mat" not in response.text
+    router._runs_cache = None

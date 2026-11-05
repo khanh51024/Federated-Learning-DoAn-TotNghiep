@@ -3,6 +3,7 @@
 import { ADMIN_PAGE, clearCredential, readCredential, storedAuthHeader } from "../core/admin-auth.js";
 import { getJson, postJson } from "../core/api.js";
 import { makeChart, pillarColors } from "../core/charts.js";
+import { renderRunsCompare, runLabel } from "../core/demo-compare.js";
 import { byId, copyButton, copyFromButton, esc, fmtInt, fmtNum, notify, setBar } from "../core/dom.js";
 
 const ACTIVE_POLL_MS = 3000;
@@ -36,6 +37,7 @@ let demoBusy = false;         // đang chờ máy chủ trả lời nút Bắt �
 let followUntil = 0;          // vừa bấm Bắt đầu: hỏi nhanh để thấy ngay lần đo mới
 let lastControl = null;
 let chosenClient = null;      // client đang xem trong khung các bước kiểm; null = client đầu tiên
+let runsKey = "";             // biểu đồ so các lần đo chỉ hỏi lại khi có lần đo mới hoặc xong thêm vòng
 
 const num = (value, digits = 2) => (value === null || value === undefined ? "—" : fmtNum(value, digits));
 const isActive = state => state === "waiting" || state === "running" || state === "stale";
@@ -368,16 +370,6 @@ function machineTableHtml() {
     </table></div><p class="field-hint mt-2">Trung vị qua các vòng. Mọi thời gian và tốc độ do máy chủ tự đo; thời gian học là ước lượng của máy chủ vì client không gửi thời gian.</p>`;
 }
 
-// Tên thư mục lần đo là giờ UTC và số client, ví dụ 20261104T075312Z_10client. Tên lạ thì hiện nguyên.
-function runLabel(id) {
-  const match = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z_(\d+)client(_nhe)?$/.exec(id);
-  if (!match) return id;
-  const [, year, month, day, hour, minute, second, clients, light] = match;
-  const time = new Date(Date.UTC(+year, +month - 1, +day, +hour, +minute, +second));
-  const pad = value => String(value).padStart(2, "0");
-  return `${pad(time.getDate())}/${pad(time.getMonth() + 1)} ${pad(time.getHours())}:${pad(time.getMinutes())}, ${clients} client${light ? ", bộ ảnh nhẹ" : ""}`;
-}
-
 function pickerHtml(data) {
   const runs = data.runs || [];
   if (runs.length < 2) return "";
@@ -652,9 +644,19 @@ function layoutHtml() {
         <div id="live-client-norms" class="live-norm-grid"></div>
         <p class="field-hint mt-2">Các biểu đồ dùng chung một thang dọc nên so được với nhau. Số của từng vòng nằm ở bảng "Từng client, từng vòng" bên dưới.</p></section>
     </div>
+    <section class="panel mt-4" id="live-runs-compare" aria-label="So các lần đo"></section>
     <section class="panel mt-4"><h3 class="panel-title panel-title-sm">Từng client, từng vòng</h3><div id="live-round-table" class="mt-3"></div></section>
     <section class="panel mt-4"><h3 class="panel-title panel-title-sm">Theo từng máy</h3><div id="live-machines"></div></section>
     <p class="field-hint mt-3" id="live-note"></p>`;
+}
+
+function syncRunsCompare() {
+  const host = byId("live-runs-compare");
+  if (!host) return;
+  const key = JSON.stringify([view.runs, view.state, view.completed_rounds]);
+  if (key === runsKey && host.childElementCount) return;
+  runsKey = key;
+  renderRunsCompare(host).catch(error => console.warn("Không dựng được biểu đồ so các lần đo:", error));   // các phần khác của trang vẫn dùng được
 }
 
 function render(data) {
@@ -694,6 +696,7 @@ function render(data) {
   refreshChart("live-chart-time", timeConfig);
   refreshChart("live-chart-norm", normConfig);
   renderClientNorms();
+  syncRunsCompare();
   if (focused) root.querySelector(`[data-detail="${focused}"]`)?.focus();
   syncDetail();
 }

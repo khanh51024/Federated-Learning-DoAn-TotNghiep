@@ -16,6 +16,7 @@ HISTORY_FILE = "history.json"
 VALIDATION_FILE = "validation.json"     # kết quả scripts/validate_network_artifact.py
 AGGREGATION_TOLERANCE = 1e-6            # sai lệch làm tròn float32 của phép gộp; cùng ngưỡng với báo cáo kiểm chứng
 NOTE_FILE = "note.txt"      # ghi chú của người đo về điều kiện lúc đo (không bắt buộc), hiện nguyên văn trên web và terminal
+LIGHT_RUN_SUFFIX = "_nhe"   # run_network_server.sh --light đặt tên thư mục lần đo có đuôi này
 # Server ghi nhịp mỗi HEARTBEAT_S giây kể cả khi đang chờ; quá STALE_AFTER_S không có gì mới nghĩa là server đã chết hoặc mất kết nối.
 HEARTBEAT_S = 20
 STALE_AFTER_S = 90
@@ -234,6 +235,25 @@ def _validation_view(validation: Optional[dict[str, Any]]) -> Optional[dict[str,
         return None
     return {"ok": bool(validation.get("ok")), "passed": sum(value is True for value in checks.values()), "total": len(checks),
             "failed": sorted(str(name) for name, value in checks.items() if value is not True)}
+
+
+def run_summary(view: dict[str, Any]) -> dict[str, Any]:
+    """Một dòng cho biểu đồ so các lần đo, tính từ kết quả của run_view để không có chỗ tính thứ hai."""
+    rounds = view.get("rounds") or []
+    payloads = [client["payload_bytes_up"] for round_ in rounds for client in round_["clients"] if client.get("payload_bytes_up")]
+    return {
+        "run_id": view.get("run_id"),
+        "state": view.get("state"),
+        "light": str(view.get("run_id") or "").endswith(LIGHT_RUN_SUFFIX),
+        "num_clients": view.get("num_clients"),
+        "total_rounds": view.get("total_rounds"),
+        "completed_rounds": view.get("completed_rounds", 0),
+        "machines": (view.get("checks") or {}).get("machines"),
+        "eval_images": view.get("eval_images"),
+        "median_round_s": _median([round_["elapsed_s"] for round_ in rounds]),
+        "final_accuracy": (view.get("final_test") or {}).get("accuracy"),
+        "client_upload_bytes": max(payloads) if payloads else None,
+    }
 
 
 def run_view(record: dict[str, Any], now: Optional[datetime] = None) -> dict[str, Any]:

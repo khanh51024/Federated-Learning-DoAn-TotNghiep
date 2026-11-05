@@ -4,6 +4,7 @@
 import { getJson, postJson } from "../core/api.js";
 import { clearCredential, storedAuthHeader, ADMIN_PAGE } from "../core/admin-auth.js";
 import { byId, copyButton, copyFromButton, esc, fmtInt, fmtNum, notify, setHtml, skeleton } from "../core/dom.js";
+import { mountDemoTrail } from "../core/demo-compare.js";
 import { mountLive, showLive } from "./flower-live.js";
 
 const REFRESH_MS = 3000;
@@ -314,6 +315,7 @@ function schedule() {
 export async function mount() {
   bind(byId("flower-root"));
   byId("flower-smoke-fold")?.addEventListener("toggle", () => { if (smokeOpen()) refresh(); });
+  mountDemoTrail("flower");
   await mountLive();
   schedule();
 }

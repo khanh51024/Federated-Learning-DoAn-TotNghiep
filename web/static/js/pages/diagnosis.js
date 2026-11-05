@@ -1,4 +1,5 @@
 // Demo · Chẩn đoán ảnh: một ảnh, bảy mô hình, đúng/sai và lý do (ảnh train của lớp đó trong shard).
+import { mountDemoTrail, renderModelCompare } from "../core/demo-compare.js";
 import { getEvidence, getGallery, getModels, getSummary } from "../core/store.js";
 import { ApiError, isAbort, postForm } from "../core/api.js";
 import {
@@ -1117,7 +1118,13 @@ function renderBrief(evidence, summary) {
   }
 }
 
+/** Router gọi sau khi dựng và mỗi lần quay lại trang: bản Cộng đồng có thể đã lên phiên bản mới. Không chờ, để biểu đồ chậm hay lỗi không ảnh hưởng phần chẩn đoán. */
+export function onShow() {
+  renderModelCompare(byId("diag-model-compare")).catch(error => console.warn("Không dựng được biểu đồ so sánh mô hình:", error));
+}
+
 export async function mount() {
+  mountDemoTrail("chan-doan");
   const [evidence, summary, gallery] = await Promise.all([
     getEvidence().catch(() => null),
     getSummary().catch(() => null),

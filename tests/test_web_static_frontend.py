@@ -758,3 +758,14 @@ def test_diagnosis_has_three_peer_methods_with_the_seven_model_summary_behind_a_
     assert "const GROUPS" in diagnosis and "data-toggle-locals" in diagnosis, "bảng trong hộp thoại gom Centralized / FedAvg / Local-only"
     assert "runPv(" in diagnosis and "runCommunity(" in diagnosis and "renderLocal()" in diagnosis
     assert '$$("#page-ket-qua .subtab")' in JS_BY_REL["pages/results.js"], "tab của chương Kết quả không được bắt nhầm tab của trang Chẩn đoán"
+
+
+def test_three_demo_pages_share_one_trail_and_each_has_a_comparison_chart():
+    for route in ("chan-doan", "hoc-lien-ket", "flower"):
+        section = HTML[HTML.index(f'id="page-{route}"'):]
+        assert section.index(f'id="demo-trail-{route}"') < section.index("</div>"), route
+    assert 'mountDemoTrail("chan-doan")' in JS_BY_REL["pages/diagnosis.js"] and 'mountDemoTrail("hoc-lien-ket")' in JS_BY_REL["pages/community.js"] and 'mountDemoTrail("flower")' in JS_BY_REL["pages/flower.js"]
+    assert 'id="diag-model-compare"' in HTML and 'id="comm-version-compare"' in HTML and 'id="live-runs-compare"' in JS_BY_REL["pages/flower-live.js"]
+    compare = JS_BY_REL["core/demo-compare.js"]
+    assert "Flower" not in compare, "dải nối cũng hiện trên trang Cộng đồng, nơi không được trộn với kiểm thử Flower"
+    assert "Mô hình của các lần đo không được đưa sang trang Chẩn đoán" in compare, "không được để người xem hiểu mô hình của lần đo là mô hình đang nhận diện ảnh"

@@ -1937,3 +1937,18 @@ button.live-chip:hover { outline: 2px solid var(--accent-sky); outline-offset: 1
 .form-control-sm { padding: 2px 6px; border: 1px solid var(--border-input); border-radius: var(--radius-sm); background: var(--bg-surface); color: inherit; }
 @media (prefers-reduced-motion: reduce) { .live-chip.is-learning, .live-link.is-flowing { animation: none; } }
 @media (max-width: 1100px) { .live-charts, .live-detail-grid { grid-template-columns: minmax(0, 1fr); } .live-norm-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .live-stage { flex-direction: column; } .live-link { display: none; } }
+
+/* Dải nối ba trang demo và biểu đồ so sánh */
+.demo-trail-host { margin-bottom: var(--space-4); }
+.demo-trail { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+.demo-trail-step { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: var(--space-3) var(--space-4); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: inherit; text-decoration: none; background: var(--bg-surface); }
+.demo-trail-step:hover { border-color: var(--text-muted); }
+.demo-trail-step.is-current { border-color: var(--accent-emerald); box-shadow: inset 0 0 0 1px var(--accent-emerald); }
+.demo-trail-title { display: flex; align-items: center; gap: var(--space-2); font-weight: 600; font-size: var(--fs-sm); }
+.demo-trail-question { font-size: var(--fs-sm); color: var(--text-secondary); }
+.demo-chart-upload { height: 130px; }
+.demo-chart-runs { height: 300px; }
+.demo-legend { display: flex; flex-wrap: wrap; gap: var(--space-4); font-size: var(--fs-sm); color: var(--text-secondary); }
+.demo-key { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; }
+.demo-key.is-full { background: var(--chart-1); }
+.demo-key.is-light { background: var(--chart-4); }
