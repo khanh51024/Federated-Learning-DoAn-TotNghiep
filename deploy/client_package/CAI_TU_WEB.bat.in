@@ -1,0 +1,63 @@
+@echo off
+chcp 65001 >nul
+rem Tải từ trang Đo qua mạng. Tự tải gói client (có sẵn Python), kiểm mã băm, giải nén vào thư mục của tài khoản này rồi cài nút mở client.
+rem Không cần quyền quản trị. Muốn gỡ: chạy GO_NUT_WEB.bat trong thư mục cài rồi xóa thư mục đó.
+set "URL=@@BASE@@/api/flower/client-package/file"
+set "SHA=@@SHA256@@"
+set "DIR=%LOCALAPPDATA%\CropFedClient"
+set "ZIP=%DIR%\goi_@@SHORT@@.zip"
+
+where curl.exe >nul 2>nul || goto :old_windows
+where tar.exe >nul 2>nul || goto :old_windows
+
+if defined DEMO_FORCE goto :go
+reg query "HKCU\Software\Classes\cropfed-demo\shell\open\command" /ve 2>nul | findstr /i /c:"deploy\lan_client" >nul
+if not errorlevel 1 (
+  echo Máy này đã cài client từ thư mục dự án, không cần cài lại.
+  goto :end
+)
+
+:go
+if not exist "%DIR%" mkdir "%DIR%"
+echo [1/3] Tải gói client, khoảng @@SIZE_MB@@ MB. Mất điện hoặc rớt mạng thì chạy lại file này, tải tiếp từ chỗ đang dở.
+curl.exe -fL --retry 3 --retry-delay 3 -C - -o "%ZIP%" "%URL%"
+if errorlevel 1 (
+  echo [LỖI] Không tải được gói client. Kiểm tra mạng rồi chạy lại file này.
+  goto :fail
+)
+
+echo [2/3] Kiểm tra mã băm của gói...
+certutil -hashfile "%ZIP%" SHA256 | findstr /i /x "%SHA%" >nul
+if errorlevel 1 (
+  echo [LỖI] Gói tải về không khớp mã băm, đã xóa. Chạy lại file này. Nếu vẫn lỗi, tải lại file cài từ trang web.
+  del "%ZIP%"
+  goto :fail
+)
+
+echo [3/3] Giải nén, khoảng 1 đến 3 phút...
+if exist "%DIR%\app" rd /s /q "%DIR%\app"
+mkdir "%DIR%\app"
+tar.exe -xf "%ZIP%" -C "%DIR%\app"
+if errorlevel 1 (
+  echo [LỖI] Không giải nén được. Kiểm tra ổ đĩa còn trống ít nhất 2 GB rồi chạy lại file này.
+  goto :fail
+)
+del "%ZIP%"
+
+set DEMO_NOPAUSE=1
+call "%DIR%\app\CAI_NUT_WEB.bat"
+if errorlevel 1 goto :fail
+echo.
+echo XONG. Quay lại trang web, khi lần đo bắt đầu thì bấm "Mở client trên máy này".
+
+:end
+echo Bấm phím bất kỳ để đóng...
+pause >nul
+exit /b 0
+
+:old_windows
+echo [LỖI] Bản Windows này chưa có curl hoặc tar. Cần Windows 10 bản 1803 trở lên.
+:fail
+echo Bấm phím bất kỳ để đóng...
+pause >nul
+exit /b 1

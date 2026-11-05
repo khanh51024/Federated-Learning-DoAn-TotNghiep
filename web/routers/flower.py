@@ -11,6 +11,7 @@ import time
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
@@ -18,12 +19,13 @@ from src import registry as reg
 from src.federated.run_detail import ITEM, detail_for_run, tamper_view
 from src.federated.run_view import list_runs, load_run, run_view
 from web import state
-from web.services import admin_auth, flower_demo, flower_evidence, flower_health
+from web.services import admin_auth, client_package, flower_demo, flower_evidence, flower_health
 
 router = APIRouter(prefix="/api/flower", tags=["flower"])
 
 PER_MINUTE = 30
 EVIDENCE_PER_MINUTE = 20
+PACKAGE_PER_HOUR = 20       # một gói vài trăm MB, cho phép tải lại và tải tiếp nhưng không để một IP tải mãi
 LIVE_PER_MINUTE = 120       # trang hỏi mỗi 3 giây; cả lớp xem chung một IP vẫn đủ
 LIVE_CACHE_S = 2.0          # nhiều người cùng xem chỉ đọc tệp một lần mỗi 2 giây
 RUN_NAME = re.compile(r"^[0-9A-Za-z_-]{1,80}$")
@@ -116,6 +118,47 @@ async def get_flower_detail(
     if built is None:
         raise HTTPException(status_code=404, detail="Không có mục này.")
     return built
+
+
+def _package_or_503() -> Dict[str, Any]:
+    package = client_package.info()
+    if package is None:
+        raise HTTPException(status_code=503, detail="Máy chủ này chưa có gói client.")
+    return package
+
+
+def _limit_package(request: Request) -> None:
+    allowed, wait = admin_auth.LIMITER.allow(f"client-package:{admin_auth.client_ip(request)}", PACKAGE_PER_HOUR, 3600)
+    if not allowed:
+        raise HTTPException(status_code=429, detail=f"Tải quá nhiều lần. Hãy thử lại sau {int(wait)} giây.",
+                            headers={"Retry-After": str(int(wait))})
+
+
+@router.get("/client-package/status")
+async def get_client_package_status() -> Dict[str, Any]:
+    """Trang dùng để biết có nên hiện nút tải bộ cài không."""
+    package = client_package.info()
+    return {"available": True, "bytes": package["bytes"]} if package else {"available": False}
+
+
+@router.get("/client-package/install.bat")
+async def get_client_package_installer(request: Request) -> Response:
+    """File cài nhỏ, điền sẵn địa chỉ và mã băm của gói. Không cần đăng nhập: laptop cần cài thường chưa đăng nhập, và gói không có gì bí mật."""
+    _limit_package(request)
+    package = _package_or_503()
+    try:
+        body = client_package.installer(str(request.base_url), package)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail="Địa chỉ không hợp lệ.") from error
+    return Response(content=body, media_type="application/octet-stream",
+                    headers={"Content-Disposition": 'attachment; filename="CAI_CLIENT_CROPFED.bat"', "Cache-Control": "no-store"})
+
+
+@router.get("/client-package/file")
+async def get_client_package_file(request: Request) -> FileResponse:
+    _limit_package(request)
+    _package_or_503()
+    return FileResponse(client_package.zip_path(), media_type="application/zip", filename=client_package.ZIP_NAME)
 
 
 class DemoStart(BaseModel):

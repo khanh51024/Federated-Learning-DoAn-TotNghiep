@@ -11,9 +11,9 @@ const TIMEOUT_MS = 12000;
 const DETAIL_DEBOUNCE_MS = 150;
 const FOLLOW_MS = 90000;
 const CLIENT_LINK = "cropfed-demo:start";     // CAI_NUT_WEB.bat đăng ký; lệnh trên máy không nhận gì từ địa chỉ này
-const LIGHT_CLIENT_LINK = "cropfed-demo-nhe:start";   // CAI_NUT_WEB.bat trên laptop 1: mở cả 10 client bằng bộ ảnh nhẹ
+const LIGHT_CLIENT_LINK = "cropfed-demo-nhe:start";   // CAI_NUT_WEB.bat: mở cả 10 client bằng bộ ảnh nhẹ
 const PRESETS = [
-  { clients: 10, rounds: 10, light: true, label: "10 client, 10 vòng, bộ ảnh nhẹ (chỉ laptop 1)" },
+  { clients: 10, rounds: 10, light: true, label: "10 client, 10 vòng, bộ ảnh nhẹ (chỉ cần 1 laptop)" },
   { clients: 7, rounds: 3, label: "7 client, 3 vòng (2 laptop)" },
   { clients: 5, rounds: 1, label: "5 client, 1 vòng (chỉ laptop 1)" },
 ];
@@ -31,6 +31,7 @@ let detailKey = "";
 let detailToken = 0;
 let detailTimer = 0;
 let demo = { can_start: false, running: false };
+let clientPackage = null;     // gói client trên máy chủ cho nút tải bộ cài; null = chưa biết hoặc không có
 let demoBusy = false;         // đang chờ máy chủ trả lời nút Bắt đầu hoặc Dừng
 let followUntil = 0;          // vừa bấm Bắt đầu: hỏi nhanh để thấy ngay lần đo mới
 let lastControl = null;
@@ -460,6 +461,14 @@ function openDetail(item) {
   loadDetail({ reveal: true });
 }
 
+function installHtml() {
+  if (!clientPackage?.available) return "";
+  return `<div class="live-control-row mt-3">
+      <a class="btn" href="/api/flower/client-package/install.bat" download>Tải bộ cài cho máy này</a>
+      <span class="field-hint">Chỉ cần một lần, máy Windows. Mở file vừa tải, nó tự tải thêm ${fmtInt(Math.round(clientPackage.bytes / 1000000))} MB và tự cài, không cần quyền quản trị. Windows cảnh báo thì chọn "More info" rồi "Run anyway".</span>
+    </div>`;
+}
+
 function controlHtml() {
   const active = view && (view.state === "waiting" || view.state === "running");
   if (active) {
@@ -469,11 +478,12 @@ function controlHtml() {
           <a class="btn btn-primary" href="${light ? LIGHT_CLIENT_LINK : CLIENT_LINK}">Mở client trên máy này</a>
           ${demo.running ? `<button type="button" class="btn" id="live-demo-stop"${demoBusy ? " disabled" : ""}>Dừng lần đo</button>` : ""}
         </div>
-        <p class="field-hint mt-2">${light ? "Chỉ bấm trên laptop 1, máy này mở cả 10 client" : "Bấm trên từng laptop"}, trình duyệt hỏi thì chọn Mở. Bấm mà không có gì xảy ra nghĩa là laptop đó chưa cài: chạy <code class="code">CAI_NUT_WEB.bat</code> một lần.</p>
+        <p class="field-hint mt-2">${light ? "Chỉ bấm trên một laptop, máy đó mở cả 10 client" : "Bấm trên từng laptop"}, trình duyệt hỏi thì chọn Mở. Bấm mà không có gì xảy ra nghĩa là máy đó chưa cài.</p>
+        ${installHtml()}
       </section>`;
   }
-  if (!demo.can_start) return "";
-  if (!readCredential()) return `<p class="field-hint">Muốn chạy lần đo mới từ trang này, <a href="${ADMIN_PAGE}">đăng nhập quản trị</a> rồi quay lại.</p>`;
+  if (!demo.can_start) return installHtml();
+  if (!readCredential()) return `<p class="field-hint">Muốn chạy lần đo mới từ trang này, <a href="${ADMIN_PAGE}">đăng nhập quản trị</a> rồi quay lại.</p>${installHtml()}`;
   return `<section class="panel live-control" aria-label="Điều khiển lần đo">
       <div class="live-control-row">
         <label class="field-hint" for="live-demo-preset">Lần đo mới</label>
@@ -689,6 +699,15 @@ function bind(root) {
   });
 }
 
+async function loadClientPackage() {
+  try {
+    clientPackage = await getJson("/api/flower/client-package/status", { timeoutMs: TIMEOUT_MS });
+    renderControl();
+  } catch (error) {
+    console.warn("Không hỏi được gói client, ẩn nút tải bộ cài:", error);   // trang đo vẫn dùng được, chỉ thiếu nút này
+  }
+}
+
 export async function mountLive() {
   const root = byId("flower-live-root");
   if (!root) {
@@ -696,6 +715,7 @@ export async function mountLive() {
     return;
   }
   bind(root);
+  loadClientPackage();
   await refresh();
 }
 
