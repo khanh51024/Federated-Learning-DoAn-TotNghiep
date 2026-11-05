@@ -1914,6 +1914,14 @@ button.live-chip:hover { outline: 2px solid var(--accent-sky); outline-offset: 1
 .live-tile-note { font-size: var(--fs-xs); color: var(--text-muted); }
 .live-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
 .live-chart-wide { grid-column: 1 / -1; }
+.live-norm-legend { display: flex; flex-wrap: wrap; gap: var(--space-4); margin: var(--space-2) 0 var(--space-3); font-size: var(--fs-sm); color: var(--text-secondary); }
+.live-norm-key { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; }
+.live-norm-key.is-total { background: var(--chart-1); }
+.live-norm-key.is-learnable { background: var(--chart-2); }
+.live-norm-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--space-3); }
+.live-norm-card { margin: 0; padding: var(--space-2); border: 1px solid var(--border-color); border-radius: var(--radius-md); }
+.live-norm-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); font-size: var(--fs-sm); }
+.live-norm-chart { position: relative; height: 170px; min-width: 0; }
 .live-nowrap { white-space: nowrap; }
 .live-steps-box { margin-top: var(--space-3); padding: var(--space-3); border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-subtle); }
 .live-steps { margin: var(--space-3) 0; padding-left: 1.5rem; display: grid; gap: var(--space-2); font-size: var(--fs-sm); line-height: 1.5; }
@@ -1928,4 +1936,4 @@ button.live-chip:hover { outline: 2px solid var(--accent-sky); outline-offset: 1
 .is-muted-row td { color: var(--text-muted); }
 .form-control-sm { padding: 2px 6px; border: 1px solid var(--border-input); border-radius: var(--radius-sm); background: var(--bg-surface); color: inherit; }
 @media (prefers-reduced-motion: reduce) { .live-chip.is-learning, .live-link.is-flowing { animation: none; } }
-@media (max-width: 1100px) { .live-charts, .live-detail-grid { grid-template-columns: minmax(0, 1fr); } .live-stage { flex-direction: column; } .live-link { display: none; } }
+@media (max-width: 1100px) { .live-charts, .live-detail-grid { grid-template-columns: minmax(0, 1fr); } .live-norm-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .live-stage { flex-direction: column; } .live-link { display: none; } }

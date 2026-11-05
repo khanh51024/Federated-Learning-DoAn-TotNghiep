@@ -204,14 +204,83 @@ function normConfig() {
   };
 }
 
+const NORM_LINES = [
+  { key: "update_norm_server", label: "Có cả thống kê BatchNorm", color: "fedavg" },
+  { key: "learnable_update_norm", label: "Riêng trọng số học được", color: "centralized" },
+];
+
+// Giống đường trung bình: client bị loại ở vòng nào thì vòng đó không có điểm.
+function acceptedNorm(row, clientId, key) {
+  const client = row.clients.find(item => item.client_id === clientId);
+  return client?.status === "ok" ? client[key] : null;
+}
+
+// Cùng một thang dọc cho mọi client thì mới so được hai biểu đồ với nhau.
+function sharedNormMax() {
+  const values = view.rounds.flatMap(row => row.clients.filter(client => client.status === "ok").flatMap(client => NORM_LINES.map(line => client[line.key]))).filter(value => value !== null);
+  const top = Math.max(0, ...values);
+  if (!top) return undefined;
+  const step = 10 ** Math.floor(Math.log10(top)) / 2;
+  return Math.ceil(top / step) * step;
+}
+
+function clientNormConfig(clientId) {
+  const colors = pillarColors();
+  const rows = view.rounds;
+  return {
+    type: "line",
+    data: {
+      labels: rows.map(r => r.round),
+      datasets: NORM_LINES.map(line => ({ label: line.label, data: rows.map(r => acceptedNorm(r, clientId, line.key)), borderColor: colors[line.color], backgroundColor: colors[line.color], borderWidth: 2, tension: 0.2, pointRadius: 2 })),
+    },
+    options: {
+      animation: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { display: false },     // chú thích chung nằm trên lưới biểu đồ
+        tooltip: { callbacks: { title: items => `Client ${clientId}, vòng ${items[0].label}` } },
+      },
+      scales: {
+        x: { title: { display: true, text: "Vòng" }, ticks: { maxRotation: 0, autoSkipPadding: 8 } },
+        y: { min: 0, max: sharedNormMax(), ticks: { maxTicksLimit: 5 } },
+      },
+    },
+  };
+}
+
+function clientNormNote(clientId) {
+  const owner = view.rounds.flatMap(row => row.clients).find(client => client.client_id === clientId);
+  const rejected = view.rounds.filter(row => row.clients.some(client => client.client_id === clientId && client.status !== "ok")).map(row => row.round);
+  return [owner?.machine, rejected.length ? `bị loại vòng ${rejected.join(", ")}` : ""].filter(Boolean).join(", ");
+}
+
+function renderClientNorms() {
+  const host = byId("live-client-norms");
+  if (!host) return;
+  const ids = [...new Set(view.rounds.flatMap(row => row.clients.map(client => client.client_id)))].sort((a, b) => a - b);
+  const cards = ids.map(id => ({ id, note: clientNormNote(id) }));
+  const shape = JSON.stringify(cards);
+  if (host.dataset.shape !== shape) {       // chỉ dựng lại khung khi đổi client hoặc đổi dòng ghi chú, còn lại chỉ thay số
+    host.dataset.shape = shape;
+    host.innerHTML = cards.length
+      ? cards.map(card => `<figure class="live-norm-card">
+          <figcaption class="live-norm-head"><b>Client ${esc(card.id)}</b>${card.note ? `<span class="field-hint">${esc(card.note)}</span>` : ""}</figcaption>
+          <div class="live-norm-chart"><canvas id="live-chart-norm-${esc(card.id)}" aria-label="Độ biến thiên của client ${esc(card.id)} theo vòng"></canvas></div>
+        </figure>`).join("")
+      : '<p class="field-hint">Chưa xong vòng nào.</p>';
+  }
+  ids.forEach(id => refreshChart(`live-chart-norm-${id}`, () => clientNormConfig(id)));
+}
+
 function refreshChart(id, factory) {
   const canvas = byId(id);
   if (!canvas) return;
   const chart = window.Chart?.getChart?.(canvas);
   if (!chart) { makeChart(canvas, factory); return; }
-  const next = factory().data;
-  chart.data.labels = next.labels;
-  next.datasets.forEach((dataset, index) => { chart.data.datasets[index].data = dataset.data; });
+  const next = factory();
+  chart.data.labels = next.data.labels;
+  next.data.datasets.forEach((dataset, index) => { chart.data.datasets[index].data = dataset.data; });
+  chart.options.scales.y.max = next.options.scales.y.max;   // thang chung của các client có thể đổi khi có vòng mới
   chart.update("none");
 }
 
@@ -577,7 +646,11 @@ function layoutHtml() {
         <div class="chart-container mt-3"><canvas id="live-chart-time" aria-label="Thời gian học, truyền và xử lý của máy chủ theo vòng"></canvas></div></section>
       <section class="panel live-chart-wide"><h3 class="panel-title panel-title-sm">Độ biến thiên trung bình của client theo vòng</h3>
         <div class="chart-container mt-3"><canvas id="live-chart-norm" aria-label="Độ biến thiên trung bình của các client được nhận, theo vòng"></canvas></div>
-        <p class="field-hint mt-2">Độ biến thiên là mức trọng số của client thay đổi sau khi học. Đường giảm nghĩa là mô hình thay đổi ít dần, nhưng tự nó không chứng minh mô hình tốt lên, nên cần đọc cùng biểu đồ độ chính xác.</p></section>
+        <p class="field-hint mt-2">Độ biến thiên là mức trọng số của client thay đổi sau khi học. Đường giảm nghĩa là mô hình thay đổi ít dần, nhưng tự nó không chứng minh mô hình tốt lên, nên cần đọc cùng biểu đồ độ chính xác.</p>
+        <h4 class="live-detail-title mt-4">Từng client</h4>
+        <p class="live-norm-legend"><span><i class="live-norm-key is-total"></i>${esc(NORM_LINES[0].label)}</span><span><i class="live-norm-key is-learnable"></i>${esc(NORM_LINES[1].label)}</span></p>
+        <div id="live-client-norms" class="live-norm-grid"></div>
+        <p class="field-hint mt-2">Các biểu đồ dùng chung một thang dọc nên so được với nhau. Số của từng vòng nằm ở bảng "Từng client, từng vòng" bên dưới.</p></section>
     </div>
     <section class="panel mt-4"><h3 class="panel-title panel-title-sm">Từng client, từng vòng</h3><div id="live-round-table" class="mt-3"></div></section>
     <section class="panel mt-4"><h3 class="panel-title panel-title-sm">Theo từng máy</h3><div id="live-machines"></div></section>
@@ -620,6 +693,7 @@ function render(data) {
   refreshChart("live-chart-accuracy", accuracyConfig);
   refreshChart("live-chart-time", timeConfig);
   refreshChart("live-chart-norm", normConfig);
+  renderClientNorms();
   if (focused) root.querySelector(`[data-detail="${focused}"]`)?.focus();
   syncDetail();
 }
