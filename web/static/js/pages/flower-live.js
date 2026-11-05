@@ -4,6 +4,7 @@ import { ADMIN_PAGE, clearCredential, readCredential, storedAuthHeader } from ".
 import { getJson, postJson } from "../core/api.js";
 import { makeChart, pillarColors } from "../core/charts.js";
 import { renderRunsCompare, runLabel } from "../core/demo-compare.js";
+import { renderFlowDiagram } from "../core/flow-diagram.js";
 import { byId, copyButton, copyFromButton, esc, fmtInt, fmtNum, notify, setBar } from "../core/dom.js";
 
 const ACTIVE_POLL_MS = 3000;
@@ -631,6 +632,7 @@ function layoutHtml() {
     <p class="field-hint mt-2">Bấm vào một ô để xem số đó làm ra thế nào.</p>
     <section id="live-proofs-detail" class="live-detail panel mt-3 hidden" aria-label="Chi tiết ô đang chọn"></section>
     <div id="live-caveats" class="mt-4"></div>
+    <section class="panel mt-4" id="live-flow" aria-label="Sơ đồ truyền nhận dữ liệu trong một vòng"></section>
     <div class="live-charts mt-4">
       <section class="panel"><h3 class="panel-title panel-title-sm">Máy chủ kiểm mô hình chung sau mỗi vòng, tập val</h3>
         <div class="chart-container mt-3"><canvas id="live-chart-accuracy" aria-label="Độ chính xác và loss theo vòng"></canvas></div></section>
@@ -648,6 +650,12 @@ function layoutHtml() {
     <section class="panel mt-4"><h3 class="panel-title panel-title-sm">Từng client, từng vòng</h3><div id="live-round-table" class="mt-3"></div></section>
     <section class="panel mt-4"><h3 class="panel-title panel-title-sm">Theo từng máy</h3><div id="live-machines"></div></section>
     <p class="field-hint mt-3" id="live-note"></p>`;
+}
+
+function syncFlowDiagram() {
+  const row = shownRound();
+  const client = row ? row.clients.find(item => item.client_id === chosenClient) || row.clients[0] || null : null;
+  renderFlowDiagram(byId("live-flow"), { row, client, tamper: view.tamper_check || null, numClients: view.num_clients });
 }
 
 function syncRunsCompare() {
@@ -697,6 +705,7 @@ function render(data) {
   refreshChart("live-chart-norm", normConfig);
   renderClientNorms();
   syncRunsCompare();
+  syncFlowDiagram();
   if (focused) root.querySelector(`[data-detail="${focused}"]`)?.focus();
   syncDetail();
 }
@@ -742,6 +751,7 @@ function bind(root) {
     chosenRound = value === view.rounds[view.rounds.length - 1]?.round ? null : value;   // kéo về cuối là lại theo vòng mới nhất
     const body = byId("live-round-table");
     body.innerHTML = roundTableHtml();
+    syncFlowDiagram();
     const slider = byId("live-round");
     slider.focus();
     clearTimeout(detailTimer);
@@ -763,6 +773,7 @@ function bind(root) {
     if (event.target.id === "live-step-client") {
       chosenClient = Number(event.target.value);
       byId("live-round-table").innerHTML = roundTableHtml();
+      syncFlowDiagram();
       byId("live-step-client")?.focus();
       return;
     }

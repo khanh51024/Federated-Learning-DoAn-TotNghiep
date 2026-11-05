@@ -769,3 +769,13 @@ def test_three_demo_pages_share_one_trail_and_each_has_a_comparison_chart():
     compare = JS_BY_REL["core/demo-compare.js"]
     assert "Flower" not in compare, "dải nối cũng hiện trên trang Cộng đồng, nơi không được trộn với kiểm thử Flower"
     assert "Mô hình của các lần đo không được đưa sang trang Chẩn đoán" in compare, "không được để người xem hiểu mô hình của lần đo là mô hình đang nhận diện ảnh"
+
+
+def test_flow_diagram_states_what_never_leaves_the_client_and_respects_reduced_motion():
+    flow = JS_BY_REL["core/flow-diagram.js"]
+    assert 'id="live-flow"' in JS_BY_REL["pages/flower-live.js"] and "renderFlowDiagram" in JS_BY_REL["pages/flower-live.js"]
+    assert "Ảnh ở lại máy này" in flow and "Không gửi:" in flow, "sơ đồ phải nói rõ ảnh không rời máy và client không gửi gì"
+    assert "prefersReducedMotion()" in flow, "người tắt chuyển động không được thấy gói chạy và không tự phát"
+    assert "style=" not in flow, "CSP chặn style trực tiếp trong HTML"
+    for item in ("ảnh", "độ chính xác", "loss", "thời gian học"):
+        assert item in flow, item
