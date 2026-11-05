@@ -26,13 +26,16 @@ MAX_HOURS=3
 IPS=()
 PUBLIC=0
 LIGHT=0
-LIGHT_NOTE="Bộ ảnh nhẹ: chỉ lấy 10 trong 38 loại bệnh, rất ít ảnh, để thấy mô hình gộp học được qua từng vòng. Không dùng số này làm kết quả của đề tài."
+# Phép đo tốc độ mỗi vòng gửi một khối mỗi chiều cho mỗi client, chung đường truyền với trọng số. Bằng cỡ mô hình thì đo sát nhất nhưng đội gần gấp đôi lượng truyền.
+PROBE_BYTES=6275944
+LIGHT_PROBE_BYTES=1048576
+LIGHT_NOTE="Bộ ảnh nhẹ: chỉ lấy 10 trong 38 loại bệnh, rất ít ảnh, để thấy mô hình gộp học được qua từng vòng. Không dùng số này làm kết quả của đề tài. Tốc độ mạng đo bằng khối 1 MiB để vòng học nhanh hơn, nên có thể hơi thấp hơn thực tế."
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --ip) IPS+=("$2"); shift 2 ;;
     --public) PUBLIC=1; shift ;;
-    --light) LIGHT=1; DATA="$HOME/mini10-data"; shift ;;
+    --light) LIGHT=1; DATA="$HOME/mini10-data"; PROBE_BYTES="$LIGHT_PROBE_BYTES"; shift ;;
     --clients) CLIENTS="$2"; shift 2 ;;
     --min-clients) MIN_CLIENTS="$2"; shift 2 ;;
     --rounds) ROUNDS="$2"; shift 2 ;;
@@ -86,7 +89,7 @@ nice -n 10 timeout --foreground "$((MAX_HOURS * 3600))" .venv/bin/python -m src.
   --num-clients "$CLIENTS" --min-clients "$MIN_CLIENTS" --local-epochs 1 --seed 42 --pretrained-init \
   --require-real-clients --reject-suspicious-updates --max-update-norm 500 \
   --evaluation-partition-dir "$DATA/partition" --evaluation-dataset-root "$DATA/images_eval" --require-real-evaluation \
-  --probe-payload-bytes 6275944 \
+  --probe-payload-bytes "$PROBE_BYTES" \
   --metrics-file "$OUT/history.json" --checkpoint-file "$OUT/global.pt" --progress-file "$OUT/progress.json" 2>&1 | tee "$OUT/server.log"
 # Đo xong thì chương trình riêng đọc lại tệp kết quả và tệp mô hình; web hiện kết quả này. Chưa đạt không làm script báo lỗi: kết quả nằm trong tệp.
 .venv/bin/python -X utf8 scripts/validate_network_artifact.py --metrics "$OUT/history.json" --checkpoint "$OUT/global.pt" --expected-clients "$CLIENTS" --expected-rounds "$ROUNDS" --output "$OUT/validation.json" > /dev/null || echo "[server] trình kiểm báo chưa đạt, xem $OUT/validation.json"

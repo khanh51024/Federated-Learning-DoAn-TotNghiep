@@ -552,6 +552,14 @@ def test_background_agent_uses_the_same_state_folder_as_the_install_that_printed
     assert command[command.index("--state-dir") + 1] == str(tmp_path)
 
 
+def test_light_run_uses_a_small_speed_probe_and_the_full_run_keeps_the_model_sized_one():
+    """Phép đo chiếm khoảng 37% thời gian phản hồi ở lần đo 3 máy. Lần đo bộ thường giữ nguyên để còn so được với các lần đo cũ."""
+    script = (ROOT / "scripts" / "remote" / "run_network_server.sh").read_text(encoding="utf-8")
+    assert "PROBE_BYTES=6275944" in script and "LIGHT_PROBE_BYTES=1048576" in script
+    assert 'DATA="$HOME/mini10-data"; PROBE_BYTES="$LIGHT_PROBE_BYTES"' in script
+    assert '--probe-payload-bytes "$PROBE_BYTES"' in script and "--probe-payload-bytes 6275944" not in script
+
+
 def test_the_light_button_on_the_page_opens_five_clients():
     install = (ROOT / "deploy" / "lan_client" / "CAI_NUT_WEB.bat").read_text(encoding="utf-8")
     assert 'CHAY_CLIENT.bat\\" 0 5 %VM% %LIGHT%' in install and " 0 10 " not in install
