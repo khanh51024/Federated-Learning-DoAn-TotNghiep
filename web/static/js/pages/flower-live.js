@@ -464,7 +464,7 @@ function openDetail(item) {
 function installHtml() {
   if (!clientPackage?.available) return "";
   return `<div class="live-control-row mt-3">
-      <a class="btn" href="/api/flower/client-package/install.bat" download>Tải bộ cài cho máy này</a>
+      <a class="btn btn-secondary" href="/api/flower/client-package/install.bat" download>Tải bộ cài cho máy này</a>
       <span class="field-hint">Chỉ cần một lần, máy Windows. Mở file vừa tải, nó tự tải thêm ${fmtInt(Math.round(clientPackage.bytes / 1000000))} MB và tự cài, không cần quyền quản trị. Windows cảnh báo thì chọn "More info" rồi "Run anyway".</span>
     </div>`;
 }
