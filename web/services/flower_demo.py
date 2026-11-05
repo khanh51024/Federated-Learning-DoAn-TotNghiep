@@ -48,6 +48,10 @@ def _data_dir() -> Path:
     return Path.home() / "net10-data"
 
 
+def _light_data_dir() -> Path:
+    return Path.home() / "mini10-data"
+
+
 def _blocked_reason() -> Optional[str]:
     if os.name != "posix":
         return "Chỉ chạy được trên máy chủ Linux."
@@ -85,11 +89,13 @@ def _last_line(stream: IO[bytes]) -> str:
     return lines[-1][:300] if lines else "Script dừng mà không báo gì."
 
 
-def start(clients: int, rounds: int) -> dict[str, Any]:
+def start(clients: int, rounds: int, light: bool = False) -> dict[str, Any]:
     global _process, _output
     reason = _blocked_reason()
     if reason is not None:
         raise DemoError(503, reason)
+    if light and not (_light_data_dir() / "partition").is_dir():
+        raise DemoError(503, "Máy chủ này chưa có bộ ảnh nhẹ.")
     with _lock:
         if _running():
             raise DemoError(409, "Đang có một lần đo chạy từ trang này.")
@@ -97,6 +103,8 @@ def start(clients: int, rounds: int) -> dict[str, Any]:
             _output.close()
         _output = tempfile.TemporaryFile()
         argv = ["bash", str(SCRIPT), "--public", "--clients", str(int(clients)), "--rounds", str(int(rounds)), "--max-hours", str(MAX_HOURS)]
+        if light:
+            argv.append("--light")
         _process = subprocess.Popen(argv, cwd=str(ROOT), env=_child_env(), stdin=subprocess.DEVNULL, stdout=_output, stderr=subprocess.STDOUT, start_new_session=True)
         logger.info("Bắt đầu lần đo từ trang web: %d client, %d vòng, pid %d", clients, rounds, _process.pid)
         deadline = time.monotonic() + EARLY_EXIT_WAIT_S
@@ -106,7 +114,7 @@ def start(clients: int, rounds: int) -> dict[str, Any]:
             time.sleep(0.1)
         if _process.poll() is not None:
             raise DemoError(409, _last_line(_output))
-    return {"started": True, "clients": clients, "rounds": rounds, "closes_after_hours": MAX_HOURS}
+    return {"started": True, "clients": clients, "rounds": rounds, "light": light, "closes_after_hours": MAX_HOURS}
 
 
 def _mark_newest_run_stopped() -> None:

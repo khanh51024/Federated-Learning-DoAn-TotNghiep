@@ -11,7 +11,9 @@ const TIMEOUT_MS = 12000;
 const DETAIL_DEBOUNCE_MS = 150;
 const FOLLOW_MS = 90000;
 const CLIENT_LINK = "cropfed-demo:start";     // CAI_NUT_WEB.bat đăng ký; lệnh trên máy không nhận gì từ địa chỉ này
+const LIGHT_CLIENT_LINK = "cropfed-demo-nhe:start";   // CAI_NUT_WEB.bat trên laptop 1: mở cả 10 client bằng bộ ảnh nhẹ
 const PRESETS = [
+  { clients: 10, rounds: 10, light: true, label: "10 client, 10 vòng, bộ ảnh nhẹ (chỉ laptop 1)" },
   { clients: 7, rounds: 3, label: "7 client, 3 vòng (2 laptop)" },
   { clients: 5, rounds: 1, label: "5 client, 1 vòng (chỉ laptop 1)" },
 ];
@@ -277,12 +279,12 @@ function machineTableHtml() {
 
 // Tên thư mục lần đo là giờ UTC và số client, ví dụ 20261104T075312Z_10client. Tên lạ thì hiện nguyên.
 function runLabel(id) {
-  const match = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z_(\d+)client$/.exec(id);
+  const match = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z_(\d+)client(_nhe)?$/.exec(id);
   if (!match) return id;
-  const [, year, month, day, hour, minute, second, clients] = match;
+  const [, year, month, day, hour, minute, second, clients, light] = match;
   const time = new Date(Date.UTC(+year, +month - 1, +day, +hour, +minute, +second));
   const pad = value => String(value).padStart(2, "0");
-  return `${pad(time.getDate())}/${pad(time.getMonth() + 1)} ${pad(time.getHours())}:${pad(time.getMinutes())}, ${clients} client`;
+  return `${pad(time.getDate())}/${pad(time.getMonth() + 1)} ${pad(time.getHours())}:${pad(time.getMinutes())}, ${clients} client${light ? ", bộ ảnh nhẹ" : ""}`;
 }
 
 function pickerHtml(data) {
@@ -440,12 +442,13 @@ function openDetail(item) {
 function controlHtml() {
   const active = view && (view.state === "waiting" || view.state === "running");
   if (active) {
+    const light = /_nhe$/.test(view.run_id || "");
     return `<section class="panel live-control" aria-label="Điều khiển lần đo">
         <div class="live-control-row">
-          <a class="btn btn-primary" href="${CLIENT_LINK}">Mở client trên máy này</a>
+          <a class="btn btn-primary" href="${light ? LIGHT_CLIENT_LINK : CLIENT_LINK}">Mở client trên máy này</a>
           ${demo.running ? `<button type="button" class="btn" id="live-demo-stop"${demoBusy ? " disabled" : ""}>Dừng lần đo</button>` : ""}
         </div>
-        <p class="field-hint mt-2">Bấm trên từng laptop, trình duyệt hỏi thì chọn Mở. Bấm mà không có gì xảy ra nghĩa là laptop đó chưa cài: chạy <code class="code">CAI_NUT_WEB.bat</code> một lần.</p>
+        <p class="field-hint mt-2">${light ? "Chỉ bấm trên laptop 1, máy này mở cả 10 client" : "Bấm trên từng laptop"}, trình duyệt hỏi thì chọn Mở. Bấm mà không có gì xảy ra nghĩa là laptop đó chưa cài: chạy <code class="code">CAI_NUT_WEB.bat</code> một lần.</p>
       </section>`;
   }
   if (!demo.can_start) return "";
@@ -484,8 +487,8 @@ async function startDemo() {
   demoBusy = true;
   renderControl();
   try {
-    await postJson("/api/flower/demo/start", { clients: preset.clients, rounds: preset.rounds }, { headers: storedAuthHeader(), timeoutMs: 30000 });
-    notify("info", "Đã mở máy chủ", "Bấm Mở client trên từng laptop.");
+    await postJson("/api/flower/demo/start", { clients: preset.clients, rounds: preset.rounds, light: Boolean(preset.light) }, { headers: storedAuthHeader(), timeoutMs: 30000 });
+    notify("info", "Đã mở máy chủ", preset.light ? "Bấm Mở client trên laptop 1." : "Bấm Mở client trên từng laptop.");
     chosenRun = "";
     chosenRound = null;
     built = false;

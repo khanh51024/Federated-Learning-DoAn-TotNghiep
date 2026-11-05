@@ -121,6 +121,7 @@ async def get_flower_detail(
 class DemoStart(BaseModel):
     clients: int = Field(default=7, ge=1, le=10)
     rounds: int = Field(default=3, ge=1, le=20)
+    light: bool = False       # bộ ảnh nhẹ trên máy chủ; đường dẫn do máy chủ tự biết, không nhận từ trang
 
 
 @router.get("/demo/status")
@@ -137,7 +138,7 @@ async def get_flower_demo_status(request: Request) -> Dict[str, Any]:
 async def post_flower_demo_start(body: DemoStart) -> Dict[str, Any]:
     """Mở máy chủ đo. Cổng đo mở cho mọi IP trong lúc đo và tự đóng khi xong, nên chỉ quản trị viên được bấm."""
     try:
-        return await run_in_threadpool(flower_demo.start, body.clients, body.rounds)
+        return await run_in_threadpool(flower_demo.start, body.clients, body.rounds, body.light)
     except flower_demo.DemoError as error:
         raise HTTPException(status_code=error.status, detail=error.message) from error
 

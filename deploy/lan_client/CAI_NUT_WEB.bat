@@ -21,6 +21,12 @@ set "BASE=HKCU\Software\Classes\cropfed-demo"
 reg add "%BASE%" /ve /t REG_SZ /d "URL:CropFed demo" /f >nul || goto :reg_fail
 reg add "%BASE%" /v "URL Protocol" /t REG_SZ /d "" /f >nul || goto :reg_fail
 reg add "%BASE%\shell\open\command" /ve /t REG_SZ /d "cmd /c \"\"%~dp0CHAY_CLIENT.bat\" %FIRST% %COUNT% %VM%\"" /f >nul || goto :reg_fail
+rem Laptop 1 thêm một nút: cả 10 client bằng bộ ảnh nhẹ, không cần laptop 2.
+if "%FIRST%"=="0" (
+  reg add "%BASE%-nhe" /ve /t REG_SZ /d "URL:CropFed demo bo anh nhe" /f >nul || goto :reg_fail
+  reg add "%BASE%-nhe" /v "URL Protocol" /t REG_SZ /d "" /f >nul || goto :reg_fail
+  reg add "%BASE%-nhe\shell\open\command" /ve /t REG_SZ /d "cmd /c \"\"%~dp0CHAY_CLIENT.bat\" 0 10 %VM% tmp\mini10\"" /f >nul || goto :reg_fail
+)
 echo Đã cài xong. %ROLE%.
 echo Từ giờ bấm "Mở client trên máy này" trên trang web, trình duyệt hỏi thì chọn Mở.
 if not defined DEMO_NOPAUSE (echo Bấm phím bất kỳ để đóng... & pause >nul)

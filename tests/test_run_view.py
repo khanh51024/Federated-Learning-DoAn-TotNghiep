@@ -394,6 +394,22 @@ def test_demo_buttons_require_admin_and_validate_numbers(monkeypatch, tmp_path):
     assert len(calls) == 1
 
 
+def test_demo_light_set_uses_the_server_side_folder_and_refuses_when_missing(monkeypatch, tmp_path):
+    client, fd, auth = _demo_client(monkeypatch, tmp_path)
+    calls = []
+    monkeypatch.setattr(fd.subprocess, "Popen", lambda *a, **k: calls.append((a, k)) or _FakeProcess())
+    monkeypatch.setattr(fd, "EARLY_EXIT_WAIT_S", 0.0)
+    monkeypatch.setattr(fd, "_light_data_dir", lambda: tmp_path / "chua-co")
+    body = {"clients": 10, "rounds": 10, "light": True}
+    reply = client.post("/api/flower/demo/start", json=body, auth=auth)
+    assert reply.status_code == 503 and "bộ ảnh nhẹ" in reply.json()["detail"] and calls == []
+    (tmp_path / "co" / "partition").mkdir(parents=True)
+    monkeypatch.setattr(fd, "_light_data_dir", lambda: tmp_path / "co")
+    assert client.post("/api/flower/demo/start", json={**body, "data": "/etc"}, auth=auth).status_code == 200
+    (argv,), _kwargs = calls[0]
+    assert argv[2:] == ["--public", "--clients", "10", "--rounds", "10", "--max-hours", "1", "--light"]
+
+
 def test_demo_start_reports_script_error_and_refuses_where_it_cannot_run(monkeypatch, tmp_path):
     client, fd, auth = _demo_client(monkeypatch, tmp_path)
 

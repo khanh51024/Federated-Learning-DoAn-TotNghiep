@@ -4,6 +4,7 @@ rem Mở các client Flower cùng một lúc trên máy này và nối vào máy
 rem   CHAY_CLIENT.bat                    : một client số 1 (như bản cũ của phép đo 2 laptop)
 rem   CHAY_CLIENT.bat 0 5                : 5 client, số 0 đến 4
 rem   CHAY_CLIENT.bat 5 5 149.118.51.118 : 5 client, số 5 đến 9, máy chủ ở địa chỉ đã cho (không hỏi lại)
+rem   CHAY_CLIENT.bat 0 10 149.118.51.118 tmp\mini10 : thêm thư mục dữ liệu (bộ ảnh nhẹ)
 rem Máy chủ chỉ bắt đầu học khi ĐỦ client của cả hai máy đã nối; client nào nối trước sẽ đợi, không ai bị lệch vòng.
 cd /d "%~dp0"
 set PYTHONUTF8=1
@@ -15,6 +16,11 @@ rem Chạy từ thư mục gốc của dự án (có .venv, ảnh ở tmp\net10)
 if not exist src\ if exist ..\..\src\ cd /d "%~dp0..\.."
 set DATA=.
 if not exist partition\ if exist tmp\net10\partition\ set DATA=tmp\net10
+if not "%~4"=="" set "DATA=%~4"
+if not exist "%DATA%\partition\" (
+  echo [LỖI] Không thấy dữ liệu ở %DATA%\partition.
+  goto :fail
+)
 
 rem Gói chạy ngay có sẵn Python trong thư mục python; gói nhỏ thì dùng môi trường từ CAI_DAT.bat; trong dự án thì dùng .venv
 set "CLIENT_PY="
@@ -71,7 +77,7 @@ goto :ask
 echo Đã nối được. Mở %COUNT% client, số %FIRST% đến %LAST%...
 for /l %%i in (%FIRST%,1,%LAST%) do call :launch %%i
 echo.
-echo Các client đã mở trong %COUNT% cửa sổ riêng. Máy chủ sẽ bắt đầu khi đủ client của cả hai máy.
+echo Các client đã mở trong %COUNT% cửa sổ riêng. Máy chủ sẽ bắt đầu khi đủ client.
 echo Cửa sổ này đợi tới khi các client học xong (tối đa 3 giờ).
 set /a WAITED=0
 :wait_done

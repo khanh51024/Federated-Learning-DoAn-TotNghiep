@@ -62,15 +62,18 @@ def sealed_hashes(manifest: Path) -> frozenset[str]:
 
 
 def pick_disjoint_shards(root: Path, classes: list[str], per_class: int, clients: int, seed: int, *, val_per_class: int = 0,
-                         test_per_class: int = 0, sealed: frozenset[str] = frozenset()) -> tuple[list[list[tuple[str, int, str]]], list[tuple[str, int, str]], list[tuple[str, int, str]]]:
+                         test_per_class: int = 0, sealed: frozenset[str] = frozenset(), class_step: int = 1) -> tuple[list[list[tuple[str, int, str]]], list[tuple[str, int, str]], list[tuple[str, int, str]]]:
     """Mỗi client nhận `per_class` ảnh mỗi lớp, các client không trùng ảnh; ảnh kiểm tra (val, test) rời với mọi shard.
-    Trả (shards, val, test), mỗi phần tử là (đường dẫn tương đối, nhãn, lớp). Ảnh có mã băm trong `sealed` bị bỏ qua."""
+    Trả (shards, val, test), mỗi phần tử là (đường dẫn tương đối, nhãn, lớp). Ảnh có mã băm trong `sealed` bị bỏ qua.
+    `class_step` = K: chỉ lấy mỗi K lớp một lớp, nhãn giữ nguyên số trong 38 lớp (bộ nhẹ để thấy mô hình học nhanh, không phải kết quả)."""
     rng = random.Random(seed)
     shards: list[list[tuple[str, int, str]]] = [[] for _ in range(clients)]
     val: list[tuple[str, int, str]] = []
     test: list[tuple[str, int, str]] = []
     need = per_class * clients + val_per_class + test_per_class
     for label, name in enumerate(classes):
+        if label % class_step:
+            continue
         files = sorted(p.name for p in (root / name).iterdir() if p.suffix.lower() in {".jpg", ".jpeg", ".png"})
         rng.shuffle(files)
         if sealed:
@@ -123,6 +126,7 @@ def main() -> int:
     parser.add_argument("--clients", type=int, default=CLIENTS, help="số client (shard rời nhau)")
     parser.add_argument("--val-per-class", type=int, default=0, help="ảnh kiểm tra của máy chủ mỗi lớp (val, đo mỗi vòng); 0 = không dựng tập kiểm tra")
     parser.add_argument("--test-per-class", type=int, default=0, help="ảnh test cuối của máy chủ mỗi lớp")
+    parser.add_argument("--class-step", type=int, default=1, help="chỉ lấy mỗi K lớp một lớp (bộ nhẹ); nhãn giữ nguyên")
     parser.add_argument("--bundles", default="", help="khoảng client cho từng gói .zip, ví dụ 0-4,5-9; để trống = gói cũ cho client 01")
     parser.add_argument("--release-dir", default=reg.RELEASE_V4_DIR if hasattr(reg, "RELEASE_V4_DIR") else "data/dataset_sources/mixed/pv_pd_v4")
     args = parser.parse_args()
@@ -164,7 +168,7 @@ def main() -> int:
             return 1
         sealed = sealed_hashes(calibration)
     shards, val, test = pick_disjoint_shards(pv_root, classes, args.per_class, args.clients, SEED,
-                                             val_per_class=args.val_per_class, test_per_class=args.test_per_class, sealed=sealed)
+                                             val_per_class=args.val_per_class, test_per_class=args.test_per_class, sealed=sealed, class_step=args.class_step)
     write_partition(out, shards, classes)
     if with_eval:
         write_eval_manifests(out, val, test)

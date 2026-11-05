@@ -24,6 +24,14 @@ def test_shards_and_eval_sets_are_disjoint(tmp_path):
     assert {row[1] for row in val} == {0, 1} and {row[2] for row in test} == {"a", "b"}
 
 
+def test_class_step_keeps_every_kth_class_with_its_original_label(tmp_path):
+    _make_tree(tmp_path, classes=("a", "b", "c", "d", "e"))
+    shards, val, test = pick_disjoint_shards(tmp_path, ["a", "b", "c", "d", "e"], per_class=2, clients=2, seed=1, val_per_class=1, test_per_class=1, class_step=2)
+    assert {row[1:] for row in val} == {(0, "a"), (2, "c"), (4, "e")}
+    assert {row[1] for shard in shards for row in shard} == {0, 2, 4} and {row[1] for row in test} == {0, 2, 4}
+    assert all(len(shard) == 3 * 2 for shard in shards)
+
+
 def test_default_call_keeps_the_old_two_client_shards(tmp_path):
     _make_tree(tmp_path)
     shards, val, test = pick_disjoint_shards(tmp_path, ["a", "b"], per_class=3, clients=2, seed=42)

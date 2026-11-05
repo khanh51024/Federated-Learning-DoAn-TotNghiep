@@ -56,6 +56,10 @@ Chuẩn bị một lần: mỗi laptop nhấp đúp `CAI_NUT_WEB.bat` (laptop 1 
 
 Sau demo, mỗi laptop nhấp đúp `GO_NUT_WEB.bat` để gỡ.
 
+**Chỉ có 1 laptop, muốn thấy độ chính xác tăng:** chọn `10 client, 10 vòng, bộ ảnh nhẹ`, bấm **Bắt đầu lần đo**, rồi bấm **Mở client trên máy này** trên laptop 1. Bộ này có 10 trong 38 loại bệnh, mỗi client 40 ảnh, nên đây chỉ là bằng chứng mô hình gộp học được, không phải kết quả của đề tài. Trang tự ghi chú điều này và đặt tên lần đo là `bộ ảnh nhẹ`.
+
+Chuẩn bị bộ nhẹ một lần: `python scripts/prepare_network_speedtest.py --out tmp/mini10 --clients 10 --per-class 4 --val-per-class 3 --test-per-class 5 --class-step 4`, chép `partition` và `images_eval` lên `~/mini10-data` của VM, rồi chạy lại `CAI_NUT_WEB.bat` trên laptop 1 để có thêm nút.
+
 **Dự phòng khi nút trên web lỗi, chạy bằng file:**
 
 1. Laptop 1: cắm ổ F chứa khóa SSH, nhấp đúp `DEMO_NHANH.bat`. File tự mở máy chủ trên VM, mở trang web và mở 5 client.

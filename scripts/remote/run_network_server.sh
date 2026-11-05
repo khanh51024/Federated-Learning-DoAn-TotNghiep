@@ -4,6 +4,7 @@
 # Cách dùng (trên VM):
 #   bash scripts/remote/run_network_server.sh --ip 1.2.3.4 --ip 5.6.7.8 [--clients 10] [--min-clients 10] [--rounds 20] [--data ~/net10-data]
 #   bash scripts/remote/run_network_server.sh --public ...   (mở cho mọi IP trong lúc đo: không cần biết IP laptop, nhưng máy chủ Flower không có mật khẩu nên ai dò ra cổng cũng nối được)
+#   bash scripts/remote/run_network_server.sh --public --light --clients 10 --rounds 10   (bộ ảnh nhẹ ở ~/mini10-data, chỉ để thấy mô hình học; lần đo có đuôi _nhe và ghi chú trên trang)
 #
 # - Dữ liệu (partition/ + images_eval/) lấy từ tmp/net10 của máy dev (scripts/prepare_network_speedtest.py --clients 10 ...), chép lên --data.
 #   Máy chủ chỉ giữ ảnh kiểm tra, KHÔNG giữ ảnh của client nào.
@@ -24,11 +25,14 @@ ROUNDS=20
 MAX_HOURS=3
 IPS=()
 PUBLIC=0
+LIGHT=0
+LIGHT_NOTE="Bộ ảnh nhẹ: chỉ lấy 10 trong 38 loại bệnh, rất ít ảnh, để thấy mô hình gộp học được qua từng vòng. Không dùng số này làm kết quả của đề tài."
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --ip) IPS+=("$2"); shift 2 ;;
     --public) PUBLIC=1; shift ;;
+    --light) LIGHT=1; DATA="$HOME/mini10-data"; shift ;;
     --clients) CLIENTS="$2"; shift 2 ;;
     --min-clients) MIN_CLIENTS="$2"; shift 2 ;;
     --rounds) ROUNDS="$2"; shift 2 ;;
@@ -40,7 +44,9 @@ while [ $# -gt 0 ]; do
   esac
 done
 MIN_CLIENTS="${MIN_CLIENTS:-$CLIENTS}"
-OUT="${OUT:-$RELEASE/artifacts/network_live/$(date -u +%Y%m%dT%H%M%SZ)_${CLIENTS}client}"
+SUFFIX=""
+[ "$LIGHT" = 0 ] || SUFFIX="_nhe"
+OUT="${OUT:-$RELEASE/artifacts/network_live/$(date -u +%Y%m%dT%H%M%SZ)_${CLIENTS}client$SUFFIX}"
 
 [ "$PUBLIC" = 0 ] || [ ${#IPS[@]} -eq 0 ] || { echo "Chỉ dùng một trong hai: --public hoặc --ip." >&2; exit 2; }
 [ "$PUBLIC" = 1 ] || [ ${#IPS[@]} -gt 0 ] || { echo "Cần --ip (IP công khai của laptop) hoặc --public (mở cho mọi IP trong lúc đo)." >&2; exit 2; }
@@ -54,6 +60,7 @@ if ss -ltn | awk '{print $4}' | grep -qE ":($PORT|$((PORT + 1)))$"; then
   echo "Cổng $PORT hoặc $((PORT + 1)) đang bận: còn máy chủ Flower cũ?" >&2; exit 2
 fi
 mkdir -p "$OUT"
+[ "$LIGHT" = 0 ] || printf '%s\n' "$LIGHT_NOTE" > "$OUT/note.txt"
 
 RULES=()
 cleanup() {
