@@ -15,11 +15,12 @@ const FOLLOW_MS = 90000;
 const CLIENT_LINK = "cropfed-demo:start";     // CAI_NUT_WEB.bat đăng ký; lệnh trên máy không nhận gì từ địa chỉ này
 const LIGHT_CLIENT_LINK = "cropfed-demo-nhe:start";   // CAI_NUT_WEB.bat: mở cả 10 client bằng bộ ảnh nhẹ
 const PRESETS = [
-  { clients: 10, rounds: 10, light: true, label: "10 client, 10 vòng, bộ ảnh nhẹ (chỉ cần 1 laptop)" },
+  { clients: 10, rounds: 10, light: true, label: "10 client, 10 vòng, bộ ảnh nhẹ" },
   { clients: 7, rounds: 3, label: "7 client, 3 vòng (2 laptop)" },
   { clients: 5, rounds: 1, label: "5 client, 1 vòng (chỉ laptop 1)" },
 ];
 const ROUND_BOUND = /^(client:|server$)/;   // các mục này đổi theo vòng đang xem
+const AGENT_STATES = { ready: "sẵn sàng", starting: "đang mở client", running: "đang chạy client", done: "đã chạy xong client", failed: "có client lỗi, xem cửa sổ client trên máy đó", offline: "mất kết nối" };
 
 let timer = 0;
 let loading = false;
@@ -39,6 +40,9 @@ let followUntil = 0;          // vừa bấm Bắt đầu: hỏi nhanh để th�
 let lastControl = null;
 let chosenClient = null;      // client đang xem trong khung các bước kiểm; null = client đầu tiên
 let runsKey = "";             // biểu đồ so các lần đo chỉ hỏi lại khi có lần đo mới hoặc xong thêm vòng
+let agents = [];              // máy đã cài bộ client và đang báo danh
+let pickedMachines = new Set();    // máy quản trị viên đã đánh dấu. Không chọn sẵn: ai cũng báo danh được, máy lạ được chọn sẵn sẽ làm lần đo chờ mãi
+let chosenPreset = 0;
 
 const num = (value, digits = 2) => (value === null || value === undefined ? "—" : fmtNum(value, digits));
 const isActive = state => state === "waiting" || state === "running" || state === "stale";
@@ -95,13 +99,21 @@ function groupHtml(data, title, sub, ids, offset, item = null) {
     </div>`;
 }
 
+// Máy đã nhận phần việc của lần đo đang chờ. Chỉ biết máy nào được giao, chưa biết từng client đã nối chưa, nên ô client chưa tô; số đã nối nằm ở dòng trên cùng.
+function assignedAgents(data) {
+  return data.state === "waiting" && !chosenRun ? agents.filter(agent => agent.clients.length) : [];
+}
+
 function stageHtml(data) {
   // Trước vòng đầu chưa biết client nào ở máy nào: hiện chung một nhóm, đếm số đã nối.
   const machines = data.machines || [];
+  const assigned = assignedAgents(data);
   const groups = machines.length
     ? machines.map(machine => groupHtml(data, machine.label,
         machine.same_host_as_server ? "CÙNG MÁY VỚI MÁY CHỦ" : (machine.rtt_ms === null ? "" : `độ trễ ${fmtNum(machine.rtt_ms, 1)} ms`), machine.client_ids, 0, `machine:${machine.label.split(" ").pop()}`))
-    : [groupHtml(data, "Client", "chưa biết máy nào, sẽ rõ sau vòng đầu", Array.from({ length: data.num_clients || 0 }, (_unused, i) => i), 0)];
+    : assigned.length
+      ? assigned.map(agent => groupHtml(data, agent.label, `mã ${agent.code}, ${AGENT_STATES[agent.state]}`, agent.clients, data.num_clients))
+      : [groupHtml(data, "Client", "chưa biết máy nào, sẽ rõ sau vòng đầu", Array.from({ length: data.num_clients || 0 }, (_unused, i) => i), 0)];
   const flowing = data.state === "running" ? " is-flowing" : "";
   const middle = Math.ceil(groups.length / 2);
   return `<div class="live-stage">
@@ -527,20 +539,59 @@ function installHtml() {
   if (!clientPackage?.available) return "";
   return `<div class="live-control-row mt-3">
       <a class="btn btn-secondary" href="/api/flower/client-package/install.bat" download>Tải bộ cài cho máy này</a>
-      <span class="field-hint">Chỉ cần một lần, máy Windows. Mở file vừa tải, nó tự tải thêm ${fmtInt(Math.round(clientPackage.bytes / 1000000))} MB và tự cài, không cần quyền quản trị. Windows cảnh báo thì chọn "More info" rồi "Run anyway".</span>
+      <span class="field-hint">Chỉ cần một lần, máy Windows. Mở file vừa tải, nó tự tải thêm ${fmtInt(Math.round(clientPackage.bytes / 1000000))} MB và tự cài, không cần quyền quản trị. Cài xong máy tự nối với trang mỗi lần bật, hiện ở mục Máy đã cài bộ client, và quản trị viên có thể cho máy tự mở client để tham gia lần đo; muốn tắt thì chạy GO_NUT_WEB.bat. Windows cảnh báo thì chọn "More info" rồi "Run anyway".</span>
     </div>`;
+}
+
+function agentRow(agent) {
+  const ram = agent.ram_gb === null ? "" : `, trống ${fmtNum(agent.ram_free_gb, 1)}/${fmtNum(agent.ram_gb, 1)} GB RAM`;
+  const clients = agent.clients.length ? `, client ${agent.clients[0]} đến ${agent.clients[agent.clients.length - 1]}` : "";
+  return `<li class="live-agent is-${esc(agent.state)}">
+      <span class="live-agent-dot" aria-hidden="true"></span>
+      <b>${esc(agent.label)}</b>
+      <span class="mono">${esc(agent.code)}</span>
+      <span>${esc(AGENT_STATES[agent.state] ?? agent.state)}${esc(clients)}</span>
+      <span class="field-hint">${agent.cores === null ? "" : `${esc(agent.cores)} nhân`}${esc(ram)}</span>
+    </li>`;
+}
+
+function agentsHtml() {
+  return `<h4 class="live-detail-title">Máy đã cài bộ client</h4>
+    ${agents.length
+      ? `<ul class="live-agents">${agents.map(agentRow).join("")}</ul>
+         <p class="field-hint mt-2">Máy cài xong tự nối với trang này và tự nối lại mỗi lần bật máy. Mã để biết máy nào là máy nào, trình cài in mã đó khi cài xong.</p>`
+      : '<p class="field-hint">Chưa có máy nào đang nối. Mở trang này trên máy cần tham gia, bấm Tải bộ cài, cài xong máy tự hiện ở đây sau vài giây.</p>'}`;
+}
+
+function renderAgents() {
+  const host = byId("live-agents");
+  if (host) host.innerHTML = agentsHtml();
+}
+
+// Chỉ dựng theo mã và tên máy, không theo số RAM đang đổi, để không mất lựa chọn đang mở (xem renderControl).
+function machinePickHtml(preset) {
+  if (!preset.light) return "";
+  const online = agents.filter(agent => agent.state !== "offline");
+  if (!online.length) return "";
+  const picked = online.filter(agent => pickedMachines.has(agent.id)).length;
+  return `<fieldset class="live-machine-pick mt-3">
+      <legend class="field-hint">Máy tự mở client</legend>
+      ${online.map(agent => `<label><input type="checkbox" data-machine="${esc(agent.id)}"${pickedMachines.has(agent.id) ? " checked" : ""}> ${esc(agent.label)} <span class="mono">${esc(agent.code)}</span></label>`).join("")}
+      <p class="field-hint">${picked ? `${esc(preset.clients)} client chia đều cho ${esc(picked)} máy, không cần bấm gì trên các máy đó. Mỗi client tốn khoảng 0,6–0,9 GB RAM.` : "Đánh dấu các máy tham gia, đối chiếu mã với mã trình cài đã in. Không chọn máy nào thì bấm Mở client trên một laptop như trước."}</p>
+    </fieldset>`;
 }
 
 function controlHtml() {
   const active = view && (view.state === "waiting" || view.state === "running");
   if (active) {
     const light = /_nhe$/.test(view.run_id || "");
+    const auto = agents.some(agent => agent.clients.length);    // đã giao cho máy: bấm tay nữa sẽ mở trùng client
     return `<section class="panel live-control" aria-label="Điều khiển lần đo">
         <div class="live-control-row">
-          <a class="btn btn-primary" href="${light ? LIGHT_CLIENT_LINK : CLIENT_LINK}">Mở client trên máy này</a>
+          ${auto ? "" : `<a class="btn btn-primary" href="${light ? LIGHT_CLIENT_LINK : CLIENT_LINK}">Mở client trên máy này</a>`}
           ${demo.running ? `<button type="button" class="btn" id="live-demo-stop"${demoBusy ? " disabled" : ""}>Dừng lần đo</button>` : ""}
         </div>
-        <p class="field-hint mt-2">${light ? "Chỉ bấm trên một laptop, máy đó mở cả 10 client" : "Bấm trên từng laptop"}, trình duyệt hỏi thì chọn Mở. Bấm mà không có gì xảy ra nghĩa là máy đó chưa cài.</p>
+        <p class="field-hint mt-2">${auto ? "Các máy được chọn tự mở client, không cần bấm gì trên máy đó." : `${light ? "Chỉ bấm trên một laptop, máy đó mở cả 10 client" : "Bấm trên từng laptop"}, trình duyệt hỏi thì chọn Mở. Bấm mà không có gì xảy ra nghĩa là máy đó chưa cài.`}</p>
         ${installHtml()}
       </section>`;
   }
@@ -549,9 +600,10 @@ function controlHtml() {
   return `<section class="panel live-control" aria-label="Điều khiển lần đo">
       <div class="live-control-row">
         <label class="field-hint" for="live-demo-preset">Lần đo mới</label>
-        <select id="live-demo-preset" class="form-control-sm">${PRESETS.map((preset, index) => `<option value="${index}">${esc(preset.label)}</option>`).join("")}</select>
+        <select id="live-demo-preset" class="form-control-sm">${PRESETS.map((preset, index) => `<option value="${index}"${index === chosenPreset ? " selected" : ""}>${esc(preset.label)}</option>`).join("")}</select>
         <button type="button" class="btn btn-primary" id="live-demo-start"${demoBusy ? " disabled" : ""}>${demoBusy ? "Đang mở máy chủ…" : "Bắt đầu lần đo"}</button>
       </div>
+      ${machinePickHtml(PRESETS[chosenPreset])}
       <p class="field-hint mt-2">Máy chủ mở trên VM, cổng đo mở cho mọi IP trong lúc đo và tự đóng khi xong, khi bấm dừng, hoặc sau 1 giờ.</p>
     </section>`;
 }
@@ -576,12 +628,13 @@ function demoFailed(error, title) {
 }
 
 async function startDemo() {
-  const preset = PRESETS[Number(byId("live-demo-preset")?.value ?? 0)] || PRESETS[0];
+  const preset = PRESETS[chosenPreset];
+  const machines = preset.light ? agents.filter(agent => agent.state !== "offline" && pickedMachines.has(agent.id)).map(agent => agent.id) : [];
   demoBusy = true;
   renderControl();
   try {
-    await postJson("/api/flower/demo/start", { clients: preset.clients, rounds: preset.rounds, light: Boolean(preset.light) }, { headers: storedAuthHeader(), timeoutMs: 30000 });
-    notify("info", "Đã mở máy chủ", preset.light ? "Bấm Mở client trên laptop 1." : "Bấm Mở client trên từng laptop.");
+    await postJson("/api/flower/demo/start", { clients: preset.clients, rounds: preset.rounds, light: Boolean(preset.light), machines }, { headers: storedAuthHeader(), timeoutMs: 30000 });
+    notify("info", "Đã mở máy chủ", machines.length ? `${machines.length} máy sẽ tự mở client.` : preset.light ? "Bấm Mở client trên laptop 1." : "Bấm Mở client trên từng laptop.");
     chosenRun = "";
     chosenRound = null;
     built = false;
@@ -627,6 +680,7 @@ function layoutHtml() {
       </div>
       <div id="live-stage" class="mt-3"></div>
       <div id="live-stage-detail" class="live-detail hidden" role="region" aria-label="Chi tiết mục đang chọn"></div>
+      <div id="live-agents" class="live-detail"></div>
     </section>
     <div id="live-proofs" class="mt-4"></div>
     <p class="field-hint mt-2">Bấm vào một ô để xem số đó làm ra thế nào.</p>
@@ -678,7 +732,7 @@ function render(data) {
     return;
   }
   view = data;
-  const signature = JSON.stringify({ ...data, seconds_since_update: undefined });
+  const signature = JSON.stringify({ ...data, seconds_since_update: undefined, assigned: assignedAgents(data) });
   if (signature === lastSignature && built) return;   // nhịp ghi của máy chủ không đổi gì: không dựng lại để khỏi mất chỗ đang xem
   lastSignature = signature;
   if (!built) {
@@ -715,9 +769,11 @@ async function refresh() {
   loading = true;
   try {
     const query = chosenRun ? `?run=${encodeURIComponent(chosenRun)}` : "";
-    const [live, status] = await Promise.all([getJson(`/api/flower/live${query}`, { timeoutMs: TIMEOUT_MS }), getJson("/api/flower/demo/status", { timeoutMs: TIMEOUT_MS })]);
+    const [live, status, machines] = await Promise.all([getJson(`/api/flower/live${query}`, { timeoutMs: TIMEOUT_MS }), getJson("/api/flower/demo/status", { timeoutMs: TIMEOUT_MS }), getJson("/api/flower/agents", { timeoutMs: TIMEOUT_MS })]);
     demo = status;
+    agents = machines.agents;
     render(live);
+    renderAgents();
     renderControl();
     if (view && isActive(view.state)) {
       followUntil = 0;
@@ -770,6 +826,20 @@ function bind(root) {
     if (event.key === "Escape" && selected) closeDetail({ refocus: true });
   });
   root.addEventListener("change", event => {
+    if (event.target.id === "live-demo-preset") {
+      chosenPreset = Number(event.target.value);
+      renderControl();
+      byId("live-demo-preset")?.focus();
+      return;
+    }
+    if (event.target.dataset?.machine) {
+      const id = event.target.dataset.machine;
+      if (event.target.checked) pickedMachines.add(id);
+      else pickedMachines.delete(id);
+      renderControl();
+      byId("live-control")?.querySelector(`[data-machine="${id}"]`)?.focus();
+      return;
+    }
     if (event.target.id === "live-step-client") {
       chosenClient = Number(event.target.value);
       byId("live-round-table").innerHTML = roundTableHtml();

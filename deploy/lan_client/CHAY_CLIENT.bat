@@ -109,7 +109,7 @@ exit /b 0
 set "ID=0%1"
 set "ID=%ID:~-2%"
 if exist done_client_%1.flag del done_client_%1.flag
-start "Client %1" cmd %KEEP% ""%CLIENT_PY%" -m src.federated.client_app --client-id %1 --server %IP%:%PORT% --partition-dir %DATA%\partition --dataset-root %DATA%\images_client_%ID% --require-real-data --local-epochs 1 --seed 42 && (echo ok> done_client_%1.flag) || (echo fail> done_client_%1.flag)"
+start "Client %1" cmd %KEEP% ""%CLIENT_PY%" -m src.federated.client_app --client-id %1 --server %IP%:%PORT% --partition-dir %DATA%\partition --dataset-root %DATA%\images_client_%ID% --require-real-data --local-epochs 1 --seed 42 && (echo ok> done_client_%1.flag) || (echo fail> done_client_%1.flag & timeout /t 120)"
 exit /b 0
 
 :fail

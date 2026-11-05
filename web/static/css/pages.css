@@ -1929,6 +1929,17 @@ button.live-chip:hover { outline: 2px solid var(--accent-sky); outline-offset: 1
 .live-step-bad { color: var(--accent-rose); font-weight: 600; white-space: nowrap; }
 .live-detail-list { margin: 0 0 var(--space-3); font-size: var(--fs-sm); line-height: 1.55; }
 .live-control-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.live-agents { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: var(--space-2); margin: var(--space-2) 0 0; padding: 0; list-style: none; }
+.live-agent { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-subtle); }
+.live-agent-dot { align-self: center; width: 10px; height: 10px; border-radius: 50%; background: var(--accent-emerald); }
+.live-agent.is-starting .live-agent-dot { background: var(--accent-sky); }
+.live-agent.is-running .live-agent-dot { background: var(--accent-amber); }
+.live-agent.is-failed .live-agent-dot { background: var(--accent-rose); }
+.live-agent.is-offline { opacity: .6; }
+.live-agent.is-offline .live-agent-dot { background: var(--text-muted); }
+.live-machine-pick { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); margin-inline: 0; padding: var(--space-2) var(--space-3); border: 1px solid var(--border-color); border-radius: var(--radius-md); }
+.live-machine-pick legend { padding: 0 var(--space-1); }
+.live-machine-pick p { flex-basis: 100%; margin: 0; }
 .live-control .btn { text-decoration: none; }
 .live-round-pick { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 .live-round-pick input[type="range"] { flex: 1 1 220px; min-width: 160px; }

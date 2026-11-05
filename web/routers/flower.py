@@ -8,18 +8,18 @@ from __future__ import annotations
 import re
 import threading
 import time
-from typing import Any, Dict, Optional
+from typing import Annotated, Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 from starlette.concurrency import run_in_threadpool
 
 from src import registry as reg
 from src.federated.run_detail import ITEM, detail_for_run, tamper_view
 from src.federated.run_view import list_runs, load_run, run_summary, run_view
 from web import state
-from web.services import admin_auth, client_package, flower_demo, flower_evidence, flower_health
+from web.services import admin_auth, client_agents, client_package, flower_demo, flower_evidence, flower_health
 
 router = APIRouter(prefix="/api/flower", tags=["flower"])
 
@@ -27,6 +27,7 @@ PER_MINUTE = 30
 EVIDENCE_PER_MINUTE = 20
 PACKAGE_PER_HOUR = 20       # một gói vài trăm MB, cho phép tải lại và tải tiếp nhưng không để một IP tải mãi
 LIVE_PER_MINUTE = 120       # trang hỏi mỗi 3 giây; cả lớp xem chung một IP vẫn đủ
+AGENT_PER_MINUTE = 240      # mỗi máy báo danh 12 lần một phút; cả phòng máy chung một IP vẫn đủ
 LIVE_CACHE_S = 2.0          # nhiều người cùng xem chỉ đọc tệp một lần mỗi 2 giây
 RUNS_CACHE_S = 5.0          # phải đọc tệp của mọi lần đo, và cả ba trang demo đều hỏi
 RUN_NAME = re.compile(r"^[0-9A-Za-z_-]{1,80}$")
@@ -185,10 +186,47 @@ async def get_client_package_file(request: Request) -> FileResponse:
     return FileResponse(client_package.zip_path(), media_type="application/zip", filename=client_package.ZIP_NAME)
 
 
+class AgentBeat(BaseModel):
+    key: str = Field(pattern=r"^[0-9a-f]{32}$")
+    cores: Optional[int] = Field(default=None, ge=1, le=4096)
+    ram_gb: Optional[float] = Field(default=None, ge=0, le=65536)
+    ram_free_gb: Optional[float] = Field(default=None, ge=0, le=65536)
+    running: Optional[str] = Field(default=None, pattern=r"^[0-9a-f]{16}$")
+    result: Optional[Literal["ok", "failed"]] = None
+    result_job: Optional[str] = Field(default=None, pattern=r"^[0-9a-f]{16}$")
+
+
+@router.post("/agents/heartbeat")
+async def post_agent_heartbeat(body: AgentBeat, request: Request) -> Dict[str, Any]:
+    """Máy đã cài bộ client báo danh và hỏi có phần việc không. Không cần đăng nhập vì bộ cài công khai: báo danh không đem lại quyền gì, quản trị viên mới chọn máy."""
+    allowed, wait = admin_auth.LIMITER.allow(f"flower-agent:{admin_auth.client_ip(request)}", AGENT_PER_MINUTE, 60)
+    if not allowed:
+        raise HTTPException(status_code=429, detail="Báo danh quá nhanh.", headers={"Retry-After": str(int(wait))})
+    # status() phải chờ khóa của nút Dừng tới 20 giây: không được chờ trên vòng lặp sự kiện, kẻo cả trang đứng theo.
+    run_active = (await run_in_threadpool(flower_demo.status))["running"]
+    try:
+        return client_agents.heartbeat(body.key, source=admin_auth.client_ip(request), cores=body.cores, ram_gb=body.ram_gb, ram_free_gb=body.ram_free_gb,
+                                       running=body.running, result=body.result, result_job=body.result_job, run_active=run_active)
+    except client_agents.AgentsFull as error:
+        raise HTTPException(status_code=503, detail="Quá nhiều máy đang báo danh.", headers={"Retry-After": "60"}) from error
+
+
+@router.get("/agents")
+async def get_agents(request: Request) -> Dict[str, Any]:
+    """Các máy đã cài bộ client, cho mục Máy đã cài trên trang. Không chứa khóa, IP hay tên máy."""
+    allowed, wait = admin_auth.LIMITER.allow(f"flower-agents:{admin_auth.client_ip(request)}", LIVE_PER_MINUTE, 60)
+    if not allowed:
+        raise HTTPException(status_code=429, detail=f"Bạn thao tác quá nhanh. Hãy thử lại sau {int(wait)} giây.",
+                            headers={"Retry-After": str(int(wait))})
+    return {"agents": client_agents.view(run_active=(await run_in_threadpool(flower_demo.status))["running"])}
+
+
 class DemoStart(BaseModel):
     clients: int = Field(default=7, ge=1, le=10)
     rounds: int = Field(default=3, ge=1, le=20)
     light: bool = False       # bộ ảnh nhẹ trên máy chủ; đường dẫn do máy chủ tự biết, không nhận từ trang
+    # Máy tự mở client, chia đều số client. Chỉ dùng với bộ nhẹ: mọi máy cài đều có ảnh của cả 10 client bộ nhẹ, còn bộ thường mỗi máy chỉ có client 5 và 6.
+    machines: List[Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]] = Field(default_factory=list, max_length=10)
 
 
 @router.get("/demo/status")
@@ -204,10 +242,19 @@ async def get_flower_demo_status(request: Request) -> Dict[str, Any]:
 @router.post("/demo/start", dependencies=[Depends(admin_auth.require_admin)])
 async def post_flower_demo_start(body: DemoStart) -> Dict[str, Any]:
     """Mở máy chủ đo. Cổng đo mở cho mọi IP trong lúc đo và tự đóng khi xong, nên chỉ quản trị viên được bấm."""
+    if body.machines:
+        if not body.light:
+            raise HTTPException(status_code=400, detail="Máy tự mở client chỉ dùng được với bộ ảnh nhẹ.")
+        try:
+            client_agents.check_assignable(body.machines, body.clients)
+        except client_agents.CannotAssign as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
     try:
-        return await run_in_threadpool(flower_demo.start, body.clients, body.rounds, body.light)
+        started = await run_in_threadpool(flower_demo.start, body.clients, body.rounds, body.light)
     except flower_demo.DemoError as error:
         raise HTTPException(status_code=error.status, detail=error.message) from error
+    # Giao sau khi máy chủ đã mở: lần mở thất bại thì không máy nào bị mở client vô ích.
+    return {**started, "assigned": client_agents.assign(body.machines, body.clients)} if body.machines else started
 
 
 @router.post("/demo/stop", dependencies=[Depends(admin_auth.require_admin)])

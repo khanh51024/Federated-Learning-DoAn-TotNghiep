@@ -2,6 +2,7 @@
 chcp 65001 >nul
 rem Tải từ trang Đo qua mạng. Tự tải gói client (có sẵn Python), kiểm mã băm, giải nén vào thư mục của tài khoản này rồi cài nút mở client.
 rem Không cần quyền quản trị. Muốn gỡ: chạy GO_NUT_WEB.bat trong thư mục cài rồi xóa thư mục đó.
+rem Cài xong máy tự nối với trang web, cả sau khi bật lại máy, và tự mở client khi quản trị viên chọn máy này cho một lần đo.
 set "URL=@@BASE@@/api/flower/client-package/file"
 set "SHA=@@SHA256@@"
 set "DIR=%LOCALAPPDATA%\CropFedClient"
@@ -10,6 +11,7 @@ rem Gọi đúng bản của Windows: máy có cài Git có thể có tar khác 
 set "CURL=%SystemRoot%\System32\curl.exe"
 set "TAR=%SystemRoot%\System32\tar.exe"
 set "CERTUTIL=%SystemRoot%\System32\certutil.exe"
+set "CROPFED_WEB=@@BASE@@"
 
 if not exist "%CURL%" goto :old_windows
 if not exist "%TAR%" goto :old_windows
@@ -17,7 +19,7 @@ if not exist "%TAR%" goto :old_windows
 if defined DEMO_FORCE goto :go
 reg query "HKCU\Software\Classes\cropfed-demo\shell\open\command" /ve 2>nul | findstr /i /c:"deploy\lan_client" >nul
 if not errorlevel 1 (
-  echo Máy này đã cài client từ thư mục dự án, không cần cài lại.
+  echo Máy này đã cài client từ thư mục dự án. Chạy lại deploy\lan_client\CAI_NUT_WEB.bat để máy tự nối với trang web.
   goto :end
 )
 
@@ -49,6 +51,12 @@ if errorlevel 1 (
 
 :extract
 echo [3/3] Giải nén, khoảng 1 đến 3 phút...
+rem Bản cài cũ đang chạy nền thì giữ tệp trong thư mục app: dừng hẳn trước khi xóa.
+if exist "%DIR%\app\client_agent.py" "%DIR%\app\python\python.exe" "%DIR%\app\client_agent.py" --stop
+if errorlevel 1 (
+  echo [LỖI] Không dừng được bản đang chạy. Khởi động lại máy rồi chạy lại file này.
+  goto :fail
+)
 if exist "%DIR%\app" rd /s /q "%DIR%\app"
 mkdir "%DIR%\app"
 "%TAR%" -xf "%ZIP%" -C "%DIR%\app"
@@ -62,7 +70,7 @@ set DEMO_NOPAUSE=1
 call "%DIR%\app\CAI_NUT_WEB.bat"
 if errorlevel 1 goto :fail
 echo.
-echo XONG. Quay lại trang web, khi lần đo bắt đầu thì bấm "Mở client trên máy này".
+echo XONG. Quay lại trang web, máy này sẽ hiện ở mục Máy đã cài bộ client sau vài giây.
 
 :end
 echo Bấm phím bất kỳ để đóng...
