@@ -182,6 +182,27 @@ function timeConfig() {
   };
 }
 
+function normConfig() {
+  const colors = pillarColors();
+  const rows = view.rounds;
+  const line = (label, key, color) => ({ label, data: rows.map(r => r[key]), borderColor: color, backgroundColor: color, tension: 0.2, pointRadius: 3 });
+  return {
+    type: "line",
+    data: {
+      labels: rows.map(r => r.round),
+      datasets: [
+        line("Số máy chủ dùng để kiểm (có cả thống kê BatchNorm)", "mean_update_norm", colors.fedavg),
+        line("Riêng phần trọng số học được", "mean_learnable_update_norm", colors.centralized),
+      ],
+    },
+    options: {
+      animation: false,
+      interaction: { mode: "index", intersect: false },
+      scales: { x: { title: { display: true, text: "Vòng" } }, y: { min: 0, title: { display: true, text: "Độ biến thiên trung bình" } } },
+    },
+  };
+}
+
 function refreshChart(id, factory) {
   const canvas = byId(id);
   if (!canvas) return;
@@ -544,6 +565,9 @@ function layoutHtml() {
         <div class="chart-container mt-3"><canvas id="live-chart-accuracy" aria-label="Độ chính xác và loss theo vòng"></canvas></div></section>
       <section class="panel"><h3 class="panel-title panel-title-sm">Thời gian mỗi vòng dùng vào đâu</h3>
         <div class="chart-container mt-3"><canvas id="live-chart-time" aria-label="Thời gian học, truyền và xử lý của máy chủ theo vòng"></canvas></div></section>
+      <section class="panel live-chart-wide"><h3 class="panel-title panel-title-sm">Độ biến thiên trung bình của client theo vòng</h3>
+        <div class="chart-container mt-3"><canvas id="live-chart-norm" aria-label="Độ biến thiên trung bình của các client được nhận, theo vòng"></canvas></div>
+        <p class="field-hint mt-2">Độ biến thiên là mức trọng số của client thay đổi sau khi học. Đường giảm nghĩa là mô hình thay đổi ít dần, nhưng tự nó không chứng minh mô hình tốt lên, nên cần đọc cùng biểu đồ độ chính xác.</p></section>
     </div>
     <section class="panel mt-4"><h3 class="panel-title panel-title-sm">Từng client, từng vòng</h3><div id="live-round-table" class="mt-3"></div></section>
     <section class="panel mt-4"><h3 class="panel-title panel-title-sm">Theo từng máy</h3><div id="live-machines"></div></section>
@@ -585,6 +609,7 @@ function render(data) {
   setBar(fill, fill?.dataset.percent);
   refreshChart("live-chart-accuracy", accuracyConfig);
   refreshChart("live-chart-time", timeConfig);
+  refreshChart("live-chart-norm", normConfig);
   if (focused) root.querySelector(`[data-detail="${focused}"]`)?.focus();
   syncDetail();
 }

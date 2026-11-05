@@ -120,12 +120,19 @@ def _machine_labels(audits: list[dict[str, Any]]) -> dict[str, str]:
     return {key: f"Máy {chr(ord('A') + index)}" if index < 26 else f"Máy {index + 1}" for index, key in enumerate(ordered)}
 
 
+def _mean_norm(clients: list[dict[str, Any]], key: str) -> Optional[float]:
+    """Trung bình của các client được nhận; client bị loại không kéo lệch đường trên biểu đồ."""
+    values = [client[key] for client in clients if client.get("status") == "ok" and client.get(key) is not None]
+    return round(sum(values) / len(values), 4) if values else None
+
+
 def _round_view(audit: dict[str, Any], labels: dict[str, str]) -> dict[str, Any]:
     metrics = audit.get("server_validation_metrics") or {}
     elapsed = _seconds(audit.get("round_fit_elapsed_ms"))
     server = sum(_num(audit.get(key)) or 0.0 for key in ("server_validate_ms", "server_aggregate_ms", "server_eval_ms")) / 1000.0
     transfer = _seconds(audit.get("transfer_estimate_ms"))
     learn = max(elapsed - server - (transfer or 0.0), 0.0) if elapsed is not None else None
+    clients = sorted((_client_view(c, labels) for c in audit.get("clients") or []), key=lambda c: c["client_id"])
     return {
         "round": int(audit.get("round", 0)),
         "accepted": audit.get("accepted_clients"),
@@ -143,7 +150,9 @@ def _round_view(audit: dict[str, Any], labels: dict[str, str]) -> dict[str, Any]
         "aggregation_max_diff": _num((audit.get("aggregation_check") or {}).get("max_abs_diff")),   # None: lần đo cũ chưa ghi
         "parent_hash": str(audit.get("parent_model_hash") or "")[:12],
         "global_hash": str(audit.get("global_model_hash") or "")[:12],
-        "clients": sorted((_client_view(c, labels) for c in audit.get("clients") or []), key=lambda c: c["client_id"]),
+        "mean_update_norm": _mean_norm(clients, "update_norm_server"),
+        "mean_learnable_update_norm": _mean_norm(clients, "learnable_update_norm"),
+        "clients": clients,
     }
 
 

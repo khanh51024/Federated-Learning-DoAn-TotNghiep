@@ -346,6 +346,18 @@ def test_real_fairness_and_drift_files_show_the_gap_widening():
     assert [row["level"] for row in drift] == ["chia đều", "α=100", "α=10", "α=1", "α=0,5", "α=0,1"] and values == sorted(values)
 
 
+def test_round_mean_norms_skip_rejected_clients_and_old_runs_without_them():
+    clients = [
+        {"client_id": 0, "status": "ok", "received_update_norm": 8.0, "received_learnable_update_norm": 0.8},
+        {"client_id": 1, "status": "ok", "received_update_norm": 6.0, "received_learnable_update_norm": 0.6},
+        {"client_id": 2, "status": "rejected", "received_update_norm": 900.0, "received_learnable_update_norm": 90.0},
+    ]
+    row = rv._round_view({"round": 1, "clients": clients}, {})
+    assert row["mean_update_norm"] == 7.0 and row["mean_learnable_update_norm"] == 0.7
+    old = rv._round_view({"round": 1, "clients": [{"client_id": 0, "status": "ok"}]}, {})
+    assert old["mean_update_norm"] is None and old["mean_learnable_update_norm"] is None
+
+
 def _demo_client(monkeypatch, tmp_path):
     """Ứng dụng web với mật khẩu quản trị thử và script đo giả: không mở cổng nào."""
     from web.app import app
