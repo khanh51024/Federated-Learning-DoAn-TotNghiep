@@ -583,9 +583,9 @@ function splitText(clients, machineCount) {
 }
 
 function machinePickHtml(preset) {
-  if (!preset.light) return "";
   const online = agents.filter(agent => agent.state !== "offline");
   if (!online.length) return "";
+  if (!preset.light) return `<p class="field-hint mt-2">Lựa chọn này phải bấm Mở client trên từng laptop, vì máy cài chỉ có ảnh của client 5 và 6. Muốn các máy đã cài tự mở client, chọn lần đo có bộ ảnh nhẹ.</p>`;
   const picked = online.filter(agent => pickedMachines.has(agent.id)).length;
   return `<fieldset class="live-machine-pick mt-3">
       <legend class="field-hint">Máy tự mở client</legend>
