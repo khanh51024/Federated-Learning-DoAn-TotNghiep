@@ -785,3 +785,9 @@ def test_hover_dimming_knows_horizontal_bars():
     """Cột ngang có giá trị trên trục x: tính như cột dọc thì các dải mờ phủ sai chỗ trên biểu đồ So các lần đo."""
     charts = JS_BY_REL["core/charts.js"]
     assert 'chart.options.indexAxis === "y"' in charts and "Math.abs(x - base)" in charts
+
+
+def test_dialog_is_centered_despite_the_global_margin_reset():
+    """`* { margin: 0 }` xóa lề tự căn giữa của <dialog>, nên hộp phải tự khai margin: auto, nếu không sẽ dính vào góc trên bên trái."""
+    rule = re.search(r"\.diag-dialog \{([^}]*)\}", re.sub(r"/\*.*?\*/", "", CSS, flags=re.S))
+    assert rule and "margin: auto" in rule.group(1)
