@@ -191,11 +191,13 @@ const hoverDim = {
     const { ctx, chartArea } = chart;
     ctx.save();
     ctx.fillStyle = withAlpha(cssVar("--bg-surface", "#ffffff"), 0.6);
+    const horizontal = chart.options.indexAxis === "y";     // cột ngang: giá trị nằm trên trục x, còn y là giữa cột
     chart.data.datasets.forEach((_dataset, di) => {
       chart.getDatasetMeta(di).data.forEach((bar, index) => {
         if (index === hi || !bar) return;
-        const { x, y, base, width } = bar.getProps(["x", "y", "base", "width"], true);
-        ctx.fillRect(x - width / 2, Math.min(y, base), width, Math.abs(base - y));
+        const { x, y, base, width, height } = bar.getProps(["x", "y", "base", "width", "height"], true);
+        if (horizontal) ctx.fillRect(Math.min(x, base), y - height / 2, Math.abs(x - base), height);
+        else ctx.fillRect(x - width / 2, Math.min(y, base), width, Math.abs(base - y));
       });
     });
     ctx.restore();

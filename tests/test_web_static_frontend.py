@@ -779,3 +779,9 @@ def test_flow_diagram_states_what_never_leaves_the_client_and_respects_reduced_m
     assert "style=" not in flow, "CSP chặn style trực tiếp trong HTML"
     for item in ("ảnh", "độ chính xác", "loss", "thời gian học"):
         assert item in flow, item
+
+
+def test_hover_dimming_knows_horizontal_bars():
+    """Cột ngang có giá trị trên trục x: tính như cột dọc thì các dải mờ phủ sai chỗ trên biểu đồ So các lần đo."""
+    charts = JS_BY_REL["core/charts.js"]
+    assert 'chart.options.indexAxis === "y"' in charts and "Math.abs(x - base)" in charts
