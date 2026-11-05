@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import ast
 import importlib.util
+import os
 import subprocess
 import sys
 import time
@@ -174,16 +175,27 @@ def test_full_list_refuses_only_while_everyone_is_online_and_known_machines_keep
 def test_assignment_needs_online_machines_and_enough_clients():
     _beat(KEY_A, run_active=False, now=100.0)
     agent_id = _id(KEY_A)
-    ca.check_assignable([agent_id], 10, now=101.0)
+    ca.check_assignable([agent_id], 5, now=101.0)
     with pytest.raises(ca.CannotAssign):
-        ca.check_assignable([agent_id], 10, now=100.0 + ca.ONLINE_S + 1)
+        ca.check_assignable([agent_id], 5, now=100.0 + ca.ONLINE_S + 1)
     with pytest.raises(ca.CannotAssign):
-        ca.check_assignable(["a" * 64], 10, now=101.0)
+        ca.check_assignable(["a" * 64], 5, now=101.0)
     with pytest.raises(ca.CannotAssign):
-        ca.check_assignable([agent_id, agent_id], 10, now=101.0)
+        ca.check_assignable([agent_id, agent_id], 5, now=101.0)
     _beat(KEY_B, run_active=False, now=101.0)
     with pytest.raises(ca.CannotAssign):
         ca.check_assignable([agent_id, _id(KEY_B)], 1, now=101.0)
+
+
+def test_no_machine_gets_more_than_five_clients():
+    _beat(KEY_A, run_active=False, now=100.0)
+    _beat(KEY_B, run_active=False, now=100.0)
+    with pytest.raises(ca.CannotAssign, match="tối đa 5"):
+        ca.check_assignable([_id(KEY_A)], 6, now=101.0)
+    ca.check_assignable([_id(KEY_A), _id(KEY_B)], 10, now=101.0)
+    for machines in range(2, 11):
+        clients = min(10, ca.MAX_PER_MACHINE * machines)
+        assert max(count for _first, count in ca.split(clients, machines)) <= ca.MAX_PER_MACHINE
 
 
 # ---- API
@@ -233,13 +245,13 @@ def test_heartbeat_refuses_anything_outside_the_expected_shape(api, bad):
 def test_only_admin_can_put_a_machine_to_work(api):
     _post_beat(api, KEY_A)
     agent_id = _id(KEY_A)
-    body = {"clients": 10, "rounds": 10, "light": True, "machines": [agent_id]}
+    body = {"clients": 5, "rounds": 10, "light": True, "machines": [agent_id]}
     assert api.post("/api/flower/demo/start", json=body).status_code == 401
     assert _post_beat(api, KEY_A).json()["job"] is None
     reply = api.post("/api/flower/demo/start", json=body, auth=ADMIN)
-    assert reply.status_code == 200 and reply.json()["assigned"] == [{"id": agent_id, "first": 0, "count": 10}]
+    assert reply.status_code == 200 and reply.json()["assigned"] == [{"id": agent_id, "first": 0, "count": 5}]
     job = _post_beat(api, KEY_A).json()["job"]
-    assert (job["first"], job["count"]) == (0, 10)
+    assert (job["first"], job["count"]) == (0, 5)
     assert set(job) == {"id", "first", "count"}, "web không được gửi địa chỉ hay lệnh xuống máy"
 
 
@@ -251,6 +263,22 @@ def test_machines_are_rejected_for_the_full_image_set_and_when_offline(api):
     assert api.post("/api/flower/demo/start", json={"clients": 10, "rounds": 3, "light": True, "machines": ["; rm -rf /"]}, auth=ADMIN).status_code == 422
 
 
+def test_more_than_five_clients_on_one_machine_is_refused_before_the_server_opens(api, monkeypatch):
+    from web.services import flower_demo as fd
+    opened = []
+    monkeypatch.setattr(fd, "start", lambda *a, **k: opened.append(a))
+    _post_beat(api, KEY_A)
+    reply = api.post("/api/flower/demo/start", json={"clients": 10, "rounds": 3, "light": True, "machines": [_id(KEY_A)]}, auth=ADMIN)
+    assert reply.status_code == 409 and "tối đa 5" in reply.json()["detail"]
+    by_hand = api.post("/api/flower/demo/start", json={"clients": 6, "rounds": 3, "light": True}, auth=ADMIN)
+    assert by_hand.status_code == 400 and "5 client" in by_hand.json()["detail"]
+    assert opened == []
+
+
+def test_two_laptops_by_hand_on_the_full_image_set_still_work(api):
+    assert api.post("/api/flower/demo/start", json={"clients": 7, "rounds": 3}, auth=ADMIN).status_code == 200
+
+
 def test_start_that_fails_gives_no_machine_any_work(api, monkeypatch):
     from web.services import flower_demo as fd
     _post_beat(api, KEY_A)
@@ -259,7 +287,7 @@ def test_start_that_fails_gives_no_machine_any_work(api, monkeypatch):
         raise fd.DemoError(409, "Cổng đang bận")
 
     monkeypatch.setattr(fd, "start", refused)
-    assert api.post("/api/flower/demo/start", json={"clients": 10, "rounds": 3, "light": True, "machines": [_id(KEY_A)]}, auth=ADMIN).status_code == 409
+    assert api.post("/api/flower/demo/start", json={"clients": 5, "rounds": 3, "light": True, "machines": [_id(KEY_A)]}, auth=ADMIN).status_code == 409
     assert _post_beat(api, KEY_A).json()["job"] is None
 
 
@@ -286,6 +314,7 @@ def test_agent_and_web_compute_the_same_machine_code():
     {"id": "a" * 16, "first": -1, "count": 1},
     {"id": "a" * 16, "first": 0, "count": 0},
     {"id": "a" * 16, "first": 8, "count": 3},
+    {"id": "a" * 16, "first": 0, "count": 6},
     {"id": "a" * 16, "first": "0 & calc", "count": 1},
     {"id": "a" * 16, "first": True, "count": 1},
     {"id": "a" * 16 + " & calc", "first": 0, "count": 1},
@@ -481,6 +510,13 @@ def test_stop_running_waits_for_the_lock_and_cleans_up(tmp_path):
     assert not (tmp_path / "agent.stop").exists(), "tệp dừng còn lại sẽ làm agent mới thoát ngay"
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="file .bat chỉ chạy trên Windows")
+def test_client_launcher_refuses_more_than_five_clients_on_one_machine():
+    done = subprocess.run(["cmd", "/c", str(ROOT / "deploy" / "lan_client" / "CHAY_CLIENT.bat"), "0", "6", "127.0.0.1"], env={**os.environ, "DEMO_NOPAUSE": "1"},
+                          stdin=subprocess.DEVNULL, capture_output=True, timeout=30, check=False)
+    assert done.returncode == 1 and "tối đa 5 client" in done.stdout.decode("utf-8", "replace")
+
+
 @pytest.mark.skipif(sys.platform != "win32", reason="registry chỉ có trên Windows")
 def test_autostart_value_keeps_paths_with_special_characters_as_one_argument():
     """Ghi vào một khóa thử rồi xóa, không đụng khóa tự chạy thật. Đọc lại đúng cách Windows tách dòng lệnh."""
@@ -514,6 +550,11 @@ def test_background_agent_uses_the_same_state_folder_as_the_install_that_printed
     module = _load_agent_module()
     command = module.background_command("https://x.vn", "1.2.3.4", "mini10", tmp_path)
     assert command[command.index("--state-dir") + 1] == str(tmp_path)
+
+
+def test_the_light_button_on_the_page_opens_five_clients():
+    install = (ROOT / "deploy" / "lan_client" / "CAI_NUT_WEB.bat").read_text(encoding="utf-8")
+    assert 'CHAY_CLIENT.bat\\" 0 5 %VM% %LIGHT%' in install and " 0 10 " not in install
 
 
 def test_real_autostart_key_is_what_install_writes_and_what_remove_deletes():

@@ -13,9 +13,11 @@ const TIMEOUT_MS = 12000;
 const DETAIL_DEBOUNCE_MS = 150;
 const FOLLOW_MS = 90000;
 const CLIENT_LINK = "cropfed-demo:start";     // CAI_NUT_WEB.bat đăng ký; lệnh trên máy không nhận gì từ địa chỉ này
-const LIGHT_CLIENT_LINK = "cropfed-demo-nhe:start";   // CAI_NUT_WEB.bat: mở cả 10 client bằng bộ ảnh nhẹ
+const LIGHT_CLIENT_LINK = "cropfed-demo-nhe:start";   // CAI_NUT_WEB.bat: mở 5 client bằng bộ ảnh nhẹ
+const MAX_PER_MACHINE = 5;    // máy chủ và client_agent.py cũng chặn đúng số này
+const LIGHT_IMAGE_SETS = 10;  // bộ ảnh nhẹ chỉ có ảnh của 10 client
 const PRESETS = [
-  { clients: 10, rounds: 10, light: true, label: "10 client, 10 vòng, bộ ảnh nhẹ" },
+  { rounds: 10, light: true, label: "Mỗi máy 5 client, 10 vòng, bộ ảnh nhẹ" },   // số client tính theo số máy đã chọn
   { clients: 7, rounds: 3, label: "7 client, 3 vòng (2 laptop)" },
   { clients: 5, rounds: 1, label: "5 client, 1 vòng (chỉ laptop 1)" },
 ];
@@ -569,6 +571,17 @@ function renderAgents() {
 }
 
 // Chỉ dựng theo mã và tên máy, không theo số RAM đang đổi, để không mất lựa chọn đang mở (xem renderControl).
+function lightClients(machineCount) {
+  return Math.min(LIGHT_IMAGE_SETS, MAX_PER_MACHINE * Math.max(1, machineCount));
+}
+
+// Cùng cách chia với split() ở web/services/client_agents.py: máy trước nhận phần dư.
+function splitText(clients, machineCount) {
+  const size = Math.floor(clients / machineCount);
+  const extra = clients % machineCount;
+  return Array.from({ length: machineCount }, (_unused, index) => size + (index < extra ? 1 : 0)).join(", ");
+}
+
 function machinePickHtml(preset) {
   if (!preset.light) return "";
   const online = agents.filter(agent => agent.state !== "offline");
@@ -577,7 +590,7 @@ function machinePickHtml(preset) {
   return `<fieldset class="live-machine-pick mt-3">
       <legend class="field-hint">Máy tự mở client</legend>
       ${online.map(agent => `<label><input type="checkbox" data-machine="${esc(agent.id)}"${pickedMachines.has(agent.id) ? " checked" : ""}> ${esc(agent.label)} <span class="mono">${esc(agent.code)}</span></label>`).join("")}
-      <p class="field-hint">${picked ? `${esc(preset.clients)} client chia đều cho ${esc(picked)} máy, không cần bấm gì trên các máy đó. Mỗi client tốn khoảng 0,6–0,9 GB RAM.` : "Đánh dấu các máy tham gia, đối chiếu mã với mã trình cài đã in. Không chọn máy nào thì bấm Mở client trên một laptop như trước."}</p>
+      <p class="field-hint">${picked ? `${esc(lightClients(picked))} client cho ${esc(picked)} máy, mỗi máy ${esc(splitText(lightClients(picked), picked))} client, không cần bấm gì trên các máy đó. Mỗi máy tối đa ${MAX_PER_MACHINE} client${picked > 2 ? `, và bộ ảnh nhẹ chỉ có ảnh của ${LIGHT_IMAGE_SETS} client` : ""}.` : `Đánh dấu các máy tham gia, đối chiếu mã với mã trình cài đã in. Không chọn máy nào thì lần đo có ${MAX_PER_MACHINE} client, bấm Mở client trên một laptop như trước.`}</p>
     </fieldset>`;
 }
 
@@ -591,7 +604,7 @@ function controlHtml() {
           ${auto ? "" : `<a class="btn btn-primary" href="${light ? LIGHT_CLIENT_LINK : CLIENT_LINK}">Mở client trên máy này</a>`}
           ${demo.running ? `<button type="button" class="btn" id="live-demo-stop"${demoBusy ? " disabled" : ""}>Dừng lần đo</button>` : ""}
         </div>
-        <p class="field-hint mt-2">${auto ? "Các máy được chọn tự mở client, không cần bấm gì trên máy đó." : `${light ? "Chỉ bấm trên một laptop, máy đó mở cả 10 client" : "Bấm trên từng laptop"}, trình duyệt hỏi thì chọn Mở. Bấm mà không có gì xảy ra nghĩa là máy đó chưa cài.`}</p>
+        <p class="field-hint mt-2">${auto ? "Các máy được chọn tự mở client, không cần bấm gì trên máy đó." : `${light ? `Chỉ bấm trên một laptop, máy đó mở ${MAX_PER_MACHINE} client` : "Bấm trên từng laptop"}, trình duyệt hỏi thì chọn Mở. Bấm mà không có gì xảy ra nghĩa là máy đó chưa cài.`}</p>
         ${installHtml()}
       </section>`;
   }
@@ -633,7 +646,7 @@ async function startDemo() {
   demoBusy = true;
   renderControl();
   try {
-    await postJson("/api/flower/demo/start", { clients: preset.clients, rounds: preset.rounds, light: Boolean(preset.light), machines }, { headers: storedAuthHeader(), timeoutMs: 30000 });
+    await postJson("/api/flower/demo/start", { clients: preset.light ? lightClients(machines.length) : preset.clients, rounds: preset.rounds, light: Boolean(preset.light), machines }, { headers: storedAuthHeader(), timeoutMs: 30000 });
     notify("info", "Đã mở máy chủ", machines.length ? `${machines.length} máy sẽ tự mở client.` : preset.light ? "Bấm Mở client trên laptop 1." : "Bấm Mở client trên từng laptop.");
     chosenRun = "";
     chosenRound = null;

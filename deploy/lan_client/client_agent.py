@@ -33,6 +33,7 @@ JOB_ID = re.compile(r"^[0-9a-f]{16}$")
 SAFE_WEB = re.compile(r"^https?://[A-Za-z0-9.-]+(:[0-9]{1,5})?$")
 SAFE_ARG = re.compile(r"^[A-Za-z0-9.:_\\-]+$")     # máy chủ và thư mục ảnh được ghép vào dòng lệnh cmd
 MAX_CLIENTS = 10
+MAX_PER_MACHINE = 5     # web/services/client_agents.py và CHAY_CLIENT.bat cũng chặn đúng số này
 POLL_S = 5
 RETRY_MAX_S = 30
 HTTP_TIMEOUT_S = 5
@@ -103,7 +104,7 @@ def parse_job(raw: Any) -> Optional[dict[str, Any]]:
     if not isinstance(raw, dict) or not isinstance(raw.get("id"), str) or not JOB_ID.fullmatch(raw["id"]):
         return None
     first, count = raw.get("first"), raw.get("count")
-    if type(first) is not int or type(count) is not int or first < 0 or count < 1 or first + count > MAX_CLIENTS:
+    if type(first) is not int or type(count) is not int or first < 0 or count < 1 or count > MAX_PER_MACHINE or first + count > MAX_CLIENTS:
         return None
     return {"id": raw["id"], "first": first, "count": count}
 

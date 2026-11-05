@@ -4,7 +4,7 @@
 # Cách dùng (trên VM):
 #   bash scripts/remote/run_network_server.sh --ip 1.2.3.4 --ip 5.6.7.8 [--clients 10] [--min-clients 10] [--rounds 20] [--data ~/net10-data]
 #   bash scripts/remote/run_network_server.sh --public ...   (mở cho mọi IP trong lúc đo: không cần biết IP laptop, nhưng máy chủ Flower không có mật khẩu nên ai dò ra cổng cũng nối được)
-#   bash scripts/remote/run_network_server.sh --public --light --clients 10 --rounds 10   (bộ ảnh nhẹ ở ~/mini10-data, chỉ để thấy mô hình học; lần đo có đuôi _nhe và ghi chú trên trang)
+#   bash scripts/remote/run_network_server.sh --public --light --clients 5 --rounds 10   (bộ ảnh nhẹ ở ~/mini10-data, chỉ để thấy mô hình học; lần đo có đuôi _nhe và ghi chú trên trang)
 #
 # - Dữ liệu (partition/ + images_eval/) lấy từ tmp/net10 của máy dev (scripts/prepare_network_speedtest.py --clients 10 ...), chép lên --data.
 #   Máy chủ chỉ giữ ảnh kiểm tra, KHÔNG giữ ảnh của client nào.

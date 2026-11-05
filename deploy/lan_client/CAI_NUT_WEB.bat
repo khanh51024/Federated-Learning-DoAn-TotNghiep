@@ -26,10 +26,10 @@ set "BASE=HKCU\Software\Classes\cropfed-demo"
 reg add "%BASE%" /ve /t REG_SZ /d "URL:CropFed demo" /f >nul || goto :reg_fail
 reg add "%BASE%" /v "URL Protocol" /t REG_SZ /d "" /f >nul || goto :reg_fail
 reg add "%BASE%\shell\open\command" /ve /t REG_SZ /d "cmd /c \"\"%~dp0CHAY_CLIENT.bat\" %FIRST% %COUNT% %VM%\"" /f >nul || goto :reg_fail
-rem Thêm một nút: cả 10 client bằng bộ ảnh nhẹ, chỉ cần một laptop.
+rem Thêm một nút: 5 client bằng bộ ảnh nhẹ, chỉ cần một laptop.
 reg add "%BASE%-nhe" /ve /t REG_SZ /d "URL:CropFed demo bo anh nhe" /f >nul || goto :reg_fail
 reg add "%BASE%-nhe" /v "URL Protocol" /t REG_SZ /d "" /f >nul || goto :reg_fail
-reg add "%BASE%-nhe\shell\open\command" /ve /t REG_SZ /d "cmd /c \"\"%~dp0CHAY_CLIENT.bat\" 0 10 %VM% %LIGHT%\"" /f >nul || goto :reg_fail
+reg add "%BASE%-nhe\shell\open\command" /ve /t REG_SZ /d "cmd /c \"\"%~dp0CHAY_CLIENT.bat\" 0 5 %VM% %LIGHT%\"" /f >nul || goto :reg_fail
 rem Python không có cửa sổ để chạy nền: trong gói nằm ở python, trong dự án nằm ở .venv.
 set "AGENT_DIR=%~dp0python"
 if not exist "%AGENT_DIR%\pythonw.exe" set "AGENT_DIR=%~dp0..\..\.venv\Scripts"

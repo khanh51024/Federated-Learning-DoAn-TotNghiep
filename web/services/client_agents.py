@@ -19,6 +19,7 @@ ONLINE_S = 20       # lỡ tới 3 nhịp báo danh mới coi là mất kết n�
 FORGET_S = 600
 MAX_AGENTS = 64
 MAX_ONLINE_PER_SOURCE = 16     # một IP không thể làm đầy danh sách; cả phòng máy chung IP vẫn đủ
+MAX_PER_MACHINE = 5            # mỗi client tốn 0,6–0,9 GB RAM và tranh CPU; deploy/lan_client cũng chặn đúng số này
 
 
 class AgentsFull(Exception):
@@ -149,6 +150,8 @@ def check_assignable(agent_ids: list[str], clients: int, now: Optional[float] = 
         raise CannotAssign("Danh sách máy bị trùng.")
     if len(agent_ids) > clients:
         raise CannotAssign(f"Chọn {len(agent_ids)} máy nhưng chỉ có {clients} client.")
+    if clients > MAX_PER_MACHINE * len(agent_ids):
+        raise CannotAssign(f"Mỗi máy tối đa {MAX_PER_MACHINE} client: {clients} client cần ít nhất {-(-clients // MAX_PER_MACHINE)} máy.")
     with _lock:
         gone = [code_of(agent_id) for agent_id in agent_ids if agent_id not in _agents or now - _agents[agent_id].last_seen > ONLINE_S]
     if gone:

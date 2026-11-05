@@ -249,6 +249,8 @@ async def post_flower_demo_start(body: DemoStart) -> Dict[str, Any]:
             client_agents.check_assignable(body.machines, body.clients)
         except client_agents.CannotAssign as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
+    elif body.light and body.clients > client_agents.MAX_PER_MACHINE:     # bấm tay chỉ mở được trên một máy, số dư sẽ không có ai nối vào
+        raise HTTPException(status_code=400, detail=f"Bộ ảnh nhẹ mở bằng tay chỉ dùng được {client_agents.MAX_PER_MACHINE} client. Muốn nhiều hơn thì chọn thêm máy.")
     try:
         started = await run_in_threadpool(flower_demo.start, body.clients, body.rounds, body.light)
     except flower_demo.DemoError as error:

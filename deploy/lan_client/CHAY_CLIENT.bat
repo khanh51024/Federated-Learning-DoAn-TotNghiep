@@ -4,8 +4,13 @@ rem Mở các client Flower cùng một lúc trên máy này và nối vào máy
 rem   CHAY_CLIENT.bat                    : một client số 1 (như bản cũ của phép đo 2 laptop)
 rem   CHAY_CLIENT.bat 0 5                : 5 client, số 0 đến 4
 rem   CHAY_CLIENT.bat 5 5 149.118.51.118 : 5 client, số 5 đến 9, máy chủ ở địa chỉ đã cho (không hỏi lại)
-rem   CHAY_CLIENT.bat 0 10 149.118.51.118 tmp\mini10 : thêm thư mục dữ liệu (bộ ảnh nhẹ)
+rem   CHAY_CLIENT.bat 0 5 149.118.51.118 tmp\mini10 : thêm thư mục dữ liệu (bộ ảnh nhẹ)
+rem Mỗi máy tối đa 5 client: mỗi client tốn 0,6-0,9 GB RAM và tranh CPU. Muốn nhiều client hơn thì dùng thêm máy.
 rem Máy chủ chỉ bắt đầu học khi ĐỦ client của cả hai máy đã nối; client nào nối trước sẽ đợi, không ai bị lệch vòng.
+if not "%~2"=="" if %~2 GTR 5 (
+  echo [LỖI] Mỗi máy chạy tối đa 5 client, lệnh này đòi %~2. Nếu bấm từ nút trên web, chạy lại CAI_NUT_WEB.bat một lần để cập nhật nút.
+  goto :fail
+)
 cd /d "%~dp0"
 set PYTHONUTF8=1
 if not defined OMP_NUM_THREADS set OMP_NUM_THREADS=1
