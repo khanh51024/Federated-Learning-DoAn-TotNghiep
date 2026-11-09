@@ -1,0 +1,370 @@
+{
+ "source": "E5 (N4.1) PC campaign, spec E5_SPEC r1 e5ea64c2, script e5_int8.py 27c1a905; result E5_RESULT.json d8f983d3",
+ "protocol": "release pv_pd_v3, alpha 0.1, seed 42, last epoch/round; validation 4613 (PV 4344 + PD 269); CPU eval",
+ "quantization": "torch.ao.quantization.quantize_dynamic({nn.Linear}, qint8); conv layers stay fp32; frozen TorchScript (torch.jit.trace + freeze)",
+ "torch": "2.6.0+cu124",
+ "quant_engine": "x86",
+ "cpu": "13th Gen Intel(R) Core(TM) i5-13400F",
+ "latency_protocol": {
+  "batch": 1,
+  "input": "1x3x224x224 randn(seed 0), preprocessing excluded",
+  "warmup": 20,
+  "timed": 200,
+  "threads": [
+   1,
+   4
+  ]
+ },
+ "static_ptq_not_shipped": {
+  "centralized_adamw": {
+   "val_macro_f1": 0.05564883802729498,
+   "fp32": 0.9628784156215774
+  },
+  "centralized_sgd": {
+   "val_macro_f1": 0.029094664591362385,
+   "fp32": 0.9549424217948812
+  },
+  "fedavg": {
+   "val_macro_f1": 0.02703599708947372,
+   "fp32": 0.8832238935204458
+  },
+  "scaffold": {
+   "val_macro_f1": 0.04443479965669582,
+   "fp32": 0.9013210378523886
+  }
+ },
+ "models": {
+  "centralized_adamw": {
+   "fp32_checkpoint_sha256": "0a8293a34cd3c52b0993d63a9cd9646e30672c2e5f1d21928af1c50495902815",
+   "int8_file": "centralized_adamw/model_int8_dynamic_torchscript.pt",
+   "int8_sha256": "ee6a1349c4782ed30986e5e9b2725ca596cc42f06d5bab3d6731fbf0b3248828",
+   "int8_bytes": 4355758,
+   "fp32_torchscript_bytes": 6239796,
+   "fp32_checkpoint_bytes": 19068722,
+   "val_fp32": {
+    "macro_f1": 0.9628784156215774,
+    "accuracy": 0.968567092998049,
+    "macro_f1_supported": 0.9628784156215774,
+    "plantdoc": {
+     "count": 269,
+     "accuracy": 0.5428,
+     "macro_f1": 0.1859,
+     "raw_accuracy": 0.5427509293680297,
+     "raw_macro_f1": 0.18593601792931902,
+     "macro_f1_supported": 0.5435,
+     "raw_macro_f1_supported": 0.5435052831780095
+    }
+   },
+   "val_int8": {
+    "macro_f1": 0.9626511173407015,
+    "accuracy": 0.96835031432907,
+    "macro_f1_supported": 0.9626511173407015,
+    "plantdoc": {
+     "count": 269,
+     "accuracy": 0.539,
+     "macro_f1": 0.1856,
+     "raw_accuracy": 0.5390334572490706,
+     "raw_macro_f1": 0.1856071569244799,
+     "macro_f1_supported": 0.5425,
+     "raw_macro_f1_supported": 0.5425439971638644
+    }
+   },
+   "delta_int8_minus_fp32": {
+    "macro_f1": -0.000227298280875865,
+    "accuracy": -0.00021677866897895637
+   },
+   "reload_check": {
+    "argmax_equal": true,
+    "max_abs_logit_diff": 7.62939453125e-06
+   },
+   "latency_ms_torchscript": {
+    "fp32": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 8.294800005387515,
+      "p90_ms": 10.579800000414252,
+      "min_ms": 3.003499936312437,
+      "max_ms": 17.430400010198355
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 13.620099984109402,
+      "p90_ms": 14.863100019283593,
+      "min_ms": 6.980800069868565,
+      "max_ms": 19.800500012934208
+     }
+    ],
+    "int8": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 7.8987000160850585,
+      "p90_ms": 9.059000061824918,
+      "min_ms": 5.906799924559891,
+      "max_ms": 14.012099942192435
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 13.012850016821176,
+      "p90_ms": 14.756400021724403,
+      "min_ms": 7.098899921402335,
+      "max_ms": 20.66839998587966
+     }
+    ]
+   },
+   "web_rule_a": "PASS (G_FP32_REPRO pass, reload argmax equal, delta macro-F1 >= -0.01)"
+  },
+  "centralized_sgd": {
+   "fp32_checkpoint_sha256": "7bf7cd8081b0ad9f0d928bf8d227980ddc1517e7e5cb6cfce00f2dba37981aa5",
+   "int8_file": "centralized_sgd/model_int8_dynamic_torchscript.pt",
+   "int8_sha256": "156d92407a269a8de89c467aef6a756ae25063051659cefaf63eb94d0165c084",
+   "int8_bytes": 4355758,
+   "fp32_torchscript_bytes": 6239798,
+   "fp32_checkpoint_bytes": 6512134,
+   "val_fp32": {
+    "macro_f1": 0.9549424217948812,
+    "accuracy": 0.9629308476045957,
+    "macro_f1_supported": 0.9549424217948812,
+    "plantdoc": {
+     "count": 269,
+     "accuracy": 0.5056,
+     "macro_f1": 0.1618,
+     "raw_accuracy": 0.5055762081784386,
+     "raw_macro_f1": 0.16177584700677416,
+     "macro_f1_supported": 0.4729,
+     "raw_macro_f1_supported": 0.4728832450967246
+    }
+   },
+   "val_int8": {
+    "macro_f1": 0.9554391124174739,
+    "accuracy": 0.9631476262735746,
+    "macro_f1_supported": 0.9554391124174739,
+    "plantdoc": {
+     "count": 269,
+     "accuracy": 0.5056,
+     "macro_f1": 0.1616,
+     "raw_accuracy": 0.5055762081784386,
+     "raw_macro_f1": 0.16155501520699503,
+     "macro_f1_supported": 0.4722,
+     "raw_macro_f1_supported": 0.4722377367589085
+    }
+   },
+   "delta_int8_minus_fp32": {
+    "macro_f1": 0.0004966906225927215,
+    "accuracy": 0.00021677866897895637
+   },
+   "reload_check": {
+    "argmax_equal": true,
+    "max_abs_logit_diff": 2.288818359375e-05
+   },
+   "latency_ms_torchscript": {
+    "fp32": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 8.059449959546328,
+      "p90_ms": 10.843100026249886,
+      "min_ms": 7.301699952222407,
+      "max_ms": 17.6372000714764
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 13.543799985200167,
+      "p90_ms": 14.724500011652708,
+      "min_ms": 10.345799964852631,
+      "max_ms": 17.466000048443675
+     }
+    ],
+    "int8": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 8.16639995900914,
+      "p90_ms": 9.708600002340972,
+      "min_ms": 7.468199939467013,
+      "max_ms": 18.278099945746362
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 13.603549974504858,
+      "p90_ms": 14.944600057788193,
+      "min_ms": 5.56940003298223,
+      "max_ms": 18.25650001410395
+     }
+    ]
+   },
+   "web_rule_a": "PASS (G_FP32_REPRO pass, reload argmax equal, delta macro-F1 >= -0.01)"
+  },
+  "fedavg": {
+   "fp32_checkpoint_sha256": "5f923b6d5b1eabc6517880c92e67af7346c04187b9790f64f97124d7a1ce4723",
+   "int8_file": "fedavg/model_int8_dynamic_torchscript.pt",
+   "int8_sha256": "69ca4217c76311199ace2ed09d6228af19aaf390cfc6b3ab85a38d8656740a2b",
+   "int8_bytes": 4355758,
+   "fp32_torchscript_bytes": 6239798,
+   "fp32_checkpoint_bytes": 8607366,
+   "val_fp32": {
+    "macro_f1": 0.8832238935204458,
+    "accuracy": 0.9115543030565793,
+    "macro_f1_supported": 0.8832238935204458,
+    "plantdoc": {
+     "count": 269,
+     "accuracy": 0.4758,
+     "macro_f1": 0.1591,
+     "raw_accuracy": 0.4758364312267658,
+     "raw_macro_f1": 0.15913097201330623,
+     "macro_f1_supported": 0.4652,
+     "raw_macro_f1_supported": 0.46515207203889514
+    }
+   },
+   "val_int8": {
+    "macro_f1": 0.883206317902235,
+    "accuracy": 0.9113375243876003,
+    "macro_f1_supported": 0.883206317902235,
+    "plantdoc": {
+     "count": 269,
+     "accuracy": 0.4721,
+     "macro_f1": 0.1584,
+     "raw_accuracy": 0.4721189591078067,
+     "raw_macro_f1": 0.15841987141199554,
+     "macro_f1_supported": 0.4631,
+     "raw_macro_f1_supported": 0.46307347028121754
+    }
+   },
+   "delta_int8_minus_fp32": {
+    "macro_f1": -1.7575618210807775e-05,
+    "accuracy": -0.00021677866897895637
+   },
+   "reload_check": {
+    "argmax_equal": true,
+    "max_abs_logit_diff": 3.814697265625e-06
+   },
+   "latency_ms_torchscript": {
+    "fp32": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 8.613700047135353,
+      "p90_ms": 11.098600109107792,
+      "min_ms": 7.4760999996215105,
+      "max_ms": 21.288900054059923
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 12.500900018494576,
+      "p90_ms": 14.023700030520558,
+      "min_ms": 10.322600021027029,
+      "max_ms": 16.809800057671964
+     }
+    ],
+    "int8": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 8.103500003926456,
+      "p90_ms": 10.037300060503185,
+      "min_ms": 2.81360000371933,
+      "max_ms": 23.37970002554357
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 12.62629998382181,
+      "p90_ms": 13.947000028565526,
+      "min_ms": 10.278900037519634,
+      "max_ms": 15.39680000860244
+     }
+    ]
+   },
+   "web_rule_a": "PASS (G_FP32_REPRO pass, reload argmax equal, delta macro-F1 >= -0.01)"
+  },
+  "scaffold": {
+   "fp32_checkpoint_sha256": "4817fbaceff086a64d3af79484c761743baa64b917c5e595131070944927bb05",
+   "int8_file": "scaffold/model_int8_dynamic_torchscript.pt",
+   "int8_sha256": "6e6ca73a2528726720563baad15c02982348769a89e27ab34960cde61a13a3e5",
+   "int8_bytes": 4355758,
+   "fp32_torchscript_bytes": 6239798,
+   "fp32_checkpoint_bytes": 8607686,
+   "val_fp32": {
+    "macro_f1": 0.9013210378523886,
+    "accuracy": 0.9206590071536961,
+    "macro_f1_supported": 0.9013210378523886,
+    "plantdoc": {
+     "count": 269,
+     "accuracy": 0.5093,
+     "macro_f1": 0.1654,
+     "raw_accuracy": 0.5092936802973977,
+     "raw_macro_f1": 0.16536278520911912,
+     "macro_f1_supported": 0.4834,
+     "raw_macro_f1_supported": 0.48336814138050194
+    }
+   },
+   "val_int8": {
+    "macro_f1": 0.9027591918819299,
+    "accuracy": 0.921742900498591,
+    "macro_f1_supported": 0.9027591918819299,
+    "plantdoc": {
+     "count": 269,
+     "accuracy": 0.513,
+     "macro_f1": 0.1658,
+     "raw_accuracy": 0.5130111524163569,
+     "raw_macro_f1": 0.16579366944839505,
+     "macro_f1_supported": 0.4846,
+     "raw_macro_f1_supported": 0.4846276491568471
+    }
+   },
+   "delta_int8_minus_fp32": {
+    "macro_f1": 0.0014381540295412831,
+    "accuracy": 0.0010838933448948929
+   },
+   "reload_check": {
+    "argmax_equal": true,
+    "max_abs_logit_diff": 1.9073486328125e-06
+   },
+   "latency_ms_torchscript": {
+    "fp32": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 8.211550011765212,
+      "p90_ms": 9.566200082190335,
+      "min_ms": 7.45539995841682,
+      "max_ms": 13.871599920094013
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 12.786349980160594,
+      "p90_ms": 14.281700015999377,
+      "min_ms": 10.043299989774823,
+      "max_ms": 20.410299999639392
+     }
+    ],
+    "int8": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 8.253650041297078,
+      "p90_ms": 10.843700030818582,
+      "min_ms": 7.200799998827279,
+      "max_ms": 23.43279996421188
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 12.587349978275597,
+      "p90_ms": 14.352699974551797,
+      "min_ms": 5.938599933870137,
+      "max_ms": 20.707499934360385
+     }
+    ]
+   },
+   "web_rule_a": "PASS (G_FP32_REPRO pass, reload argmax equal, delta macro-F1 >= -0.01)"
+  }
+ }
+}

@@ -372,17 +372,20 @@ def build_published_demo() -> list[dict[str, Any]]:
         local = item["model_id"].startswith("local_")
         name = f"Local-only client {item['model_id'][-2:]}" if local else item["display_name"]
         rel = f"local/client_{item['model_id'][-2:]}" if local else item["dir"]
-        specs.append((item["registry_id"], f"{name} {suffix}", rel, item["dir"]))
+        # Tên tệp mô hình: Local-only giữ đường cũ client_xx/checkpoint_best.pt; mục khác lấy "file" của manifest (mặc định checkpoint_best.pt,
+        # mục int8 là tệp TorchScript, vd model_int8_dynamic_torchscript.pt).
+        file_name = "checkpoint_best.pt" if local else item["file"]
+        specs.append((item["registry_id"], f"{name} {suffix}", rel, item["dir"], file_name, item["format"]))
 
     models: list[dict[str, Any]] = []
-    for model_id, display_name, rel_dir, branch_dir in specs:
+    for model_id, display_name, rel_dir, branch_dir, file_name, model_format in specs:
         m = base_model(model_id, reg.FAMILY_PUBLISHED_DEMO, display_name)
-        ckpt_rel = f"{reg.DEMO_BUNDLE_DIR}/{rel_dir}/checkpoint_best.pt"
+        ckpt_rel = f"{reg.DEMO_BUNDLE_DIR}/{rel_dir}/{file_name}"
         art_manifest = load_json(f"{reg.DEMO_BUNDLE_DIR}/{branch_dir}/artifact_manifest.json")
         if branch_dir == "local":
             art_manifest = load_json(f"{reg.DEMO_BUNDLE_DIR}/local/artifact_manifest.json")
-        expected = _find_in_artifact_manifest(art_manifest, f"{rel_dir.split('/')[-1]}/checkpoint_best.pt") or \
-            _find_in_artifact_manifest(art_manifest, "checkpoint_best.pt")
+        expected = _find_in_artifact_manifest(art_manifest, f"{rel_dir.split('/')[-1]}/{file_name}") or \
+            _find_in_artifact_manifest(art_manifest, file_name)
         insp = inspect_checkpoint(ckpt_rel, expected_sha256=(expected or {}).get("sha256"))
         validation = load_json(f"{reg.DEMO_BUNDLE_DIR}/{rel_dir}/validation_metrics.json")
         m.update(
@@ -418,6 +421,12 @@ def build_published_demo() -> list[dict[str, Any]]:
                  "Chưa đánh giá lại cục bộ (evidence_level=" f"{import_manifest.get('evidence_level')}).")
             ),
         )
+        if model_format == bundle.FORMAT_TORCHSCRIPT_INT8:
+            m.update(
+                model_format=model_format,
+                notes=m["notes"] + " Mô hình int8 động (chỉ lớp Linear, conv vẫn fp32), TorchScript; không có Grad-CAM; "
+                                   "cần torch có engine x86/fbgemm (CPU x86_64).",
+            )
         models.append(m)
     return models
 

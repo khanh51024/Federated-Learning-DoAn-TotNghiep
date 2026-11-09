@@ -67,6 +67,33 @@ def _verified_manifest(root: Path, name: str, branch: str, release: str, validat
     return manifest
 
 
+def _check_int8_specs(specs: list[dict[str, Any]]) -> None:
+    """Mục int8 phải trỏ về một mô hình fp32 (state_dict) có trong CÙNG gói; định dạng lạ bị từ chối (fail-closed)."""
+    by_id = {s["model_id"]: s for s in specs}
+    for spec in specs:
+        if spec["format"] not in bundle.MODEL_FORMATS:
+            raise ValueError(f"{spec['model_id']}: unknown model format {spec['format']!r}")
+        if spec["format"] != bundle.FORMAT_TORCHSCRIPT_INT8:
+            continue
+        parent = by_id.get(spec.get("fp32_of") or "")
+        if parent is None or parent["format"] != bundle.FORMAT_STATE_DICT:
+            raise ValueError(f"{spec['model_id']}: int8 model needs fp32_of = an fp32 model of the same bundle")
+        if not _is_sha256(spec.get("fp32_checkpoint_sha256")):
+            raise ValueError(f"{spec['model_id']}: int8 model needs fp32_checkpoint_sha256")
+
+
+def _check_int8_parents(specs: list[dict[str, Any]], manifests: dict[str, dict[str, Any]]) -> None:
+    """Ràng buộc nguồn gốc của mô hình int8: TorchScript không mang metadata release/seed như checkpoint fp32, nên nó được buộc vào
+    checkpoint fp32 gốc đã kiểm hash (fp32_checkpoint_sha256 phải đúng SHA của tệp gốc trong artifact_manifest của gói)."""
+    by_id = {s["model_id"]: s for s in specs}
+    for spec in specs:
+        if spec["format"] != bundle.FORMAT_TORCHSCRIPT_INT8:
+            continue
+        parent = by_id[spec["fp32_of"]]
+        if manifests[parent["dir"]]["files"][parent["file"]]["sha256"] != spec["fp32_checkpoint_sha256"]:
+            raise ValueError(f"{spec['model_id']}: fp32_checkpoint_sha256 differs from the fp32 checkpoint of {parent['model_id']}")
+
+
 def load_evidence(root: Path = STORE) -> dict[str, Any]:
     """Fail closed: return no metrics or selectable models on any mismatch."""
     try:
@@ -88,6 +115,7 @@ def load_evidence(root: Path = STORE) -> dict[str, Any]:
         specs = bundle.model_specs(metadata)
         if len({s["model_id"] for s in specs}) != len(specs) or len({s["display_name"] for s in specs}) != len(specs):
             raise ValueError("duplicate model ids or display names in bundle manifest")
+        _check_int8_specs(specs)
         sources = metadata.get("sources") or {}
         for name in {s["dir"] for s in specs}:
             ref = sources.get(name) or {}
@@ -106,6 +134,7 @@ def load_evidence(root: Path = STORE) -> dict[str, Any]:
 
         dirs = list(dict.fromkeys(s["dir"] for s in specs))
         manifests = {name: _verified_manifest(root, name, sources[name]["branch"], release, validation) for name in dirs}
+        _check_int8_parents(specs, manifests)
         comparison_hashes = {
             item["files"]["validation_comparison.csv"]["sha256"] for item in manifests.values()
         }
@@ -151,7 +180,7 @@ def load_evidence(root: Path = STORE) -> dict[str, Any]:
         for spec in specs:
             source = sources[spec["dir"]]
             checkpoint_sha = manifests[spec["dir"]]["files"][spec["file"]]["sha256"]
-            models.append({
+            item = {
                 "model_id": spec["model_id"],
                 "name": spec["display_name"],
                 "phase": spec["phase"],
@@ -161,7 +190,11 @@ def load_evidence(root: Path = STORE) -> dict[str, Any]:
                 "checkpoint_sha256": checkpoint_sha,
                 "checkpoint_relative_path": f"{spec['dir']}/{spec['file']}",
                 "metrics": by_name[spec["display_name"]],
-            })
+            }
+            if spec["format"] == bundle.FORMAT_TORCHSCRIPT_INT8:
+                # Khóa chỉ có ở mục int8: mục fp32 giữ nguyên đúng các khóa cũ (các test hợp đồng so khớp tập khóa).
+                item.update(format=spec["format"], fp32_of=spec["fp32_of"], quantization=spec["quantization"])
+            models.append(item)
         return {
             "available": True,
             "bundle_id": metadata.get("bundle_id"),
@@ -201,8 +234,53 @@ _MODEL_LOCK = threading.Lock()
 _TRANSFORM: Any = None
 
 
+INT8_ENGINES = ("x86", "fbgemm")   # engine lượng tử hoá dùng khi xuất mô hình int8 (CPU x86_64)
+
+
+def select_quantized_engine(supported: list[str] | None = None) -> str:
+    """Bật engine int8 x86/fbgemm của torch; ném ValueError nếu bản torch này không có (vd. CPU ARM chỉ có qnnpack).
+
+    `supported` chỉ để test giả lập máy không có engine; bình thường lấy từ torch."""
+    import torch
+
+    if supported is None:
+        supported = list(torch.backends.quantized.supported_engines)
+    for name in INT8_ENGINES:
+        if name in supported:
+            if torch.backends.quantized.engine != name:
+                torch.backends.quantized.engine = name
+            return name
+    raise ValueError(f"torch {torch.__version__} has no x86/fbgemm quantized engine (supported: {supported}); "
+                     "int8 models need an x86_64 CPU build of torch")
+
+
+def _build_torchscript_int8(source: Any, num_classes: int) -> Any:
+    """Nạp TorchScript int8 (đã freeze) từ ĐÚNG các byte đã băm, rồi chạy thử một lượt để chắc đầu ra là 1 x num_classes logits hữu hạn."""
+    import torch
+
+    select_quantized_engine()
+    try:
+        model = torch.jit.load(source, map_location="cpu")
+    except RuntimeError as exc:  # thường do torch trên server cũ hơn bản đã xuất mô hình
+        raise ValueError(f"int8 TorchScript could not be loaded by torch {torch.__version__}: {exc}") from exc
+    model.eval()
+    with torch.inference_mode():
+        out = model(torch.zeros(1, 3, 224, 224))
+    if tuple(out.shape) != (1, num_classes) or not bool(torch.isfinite(out).all()):
+        raise ValueError(f"int8 TorchScript output {tuple(out.shape)} is not 1 x {num_classes} finite logits")
+    return model
+
+
+def is_int8(evidence: dict[str, Any], model_id: str) -> bool:
+    info = next((m for m in evidence.get("models", []) if m["model_id"] == model_id), None) or {}
+    return info.get("format") == bundle.FORMAT_TORCHSCRIPT_INT8
+
+
 def _build_model(source: Any, model_id: str, evidence: dict[str, Any]) -> Any:
     """`source`: đường dẫn hoặc file-like chứa ĐÚNG các byte đã băm (xem `_published_model`). Nhận dạng cần khớp lấy từ `evidence` (manifest của gói)."""
+    if is_int8(evidence, model_id):
+        # Nguồn gốc đã được buộc vào checkpoint fp32 gốc ở load_evidence (_check_int8_parents); tệp này là TorchScript, không có metadata.
+        return _build_torchscript_int8(source, len(evidence["classes"]))
     from torch import nn
     from torchvision.models import mobilenet_v3_small
 
@@ -336,6 +414,13 @@ def predict_published(image: Any, model_id: str, root: Path = STORE, temperature
         "evidence_level": evidence["evidence_level"],
         "scope": "single cropped leaf image; validation is not an external-photo accuracy estimate",
     }
+    if model_info.get("format") == bundle.FORMAT_TORCHSCRIPT_INT8:
+        result["model_format"] = model_info["format"]
+        result["quantization"] = {
+            "method": model_info.get("quantization"),
+            "fp32_of": model_info.get("fp32_of"),
+            "note": "int8 động, chỉ lớp Linear (classifier); các lớp conv vẫn fp32. Số đo validation của mục này là của chính tệp int8.",
+        }
     if keep is not None:
         result["crop_restricted"] = {
             "crop": crop,
@@ -367,6 +452,8 @@ def explain_published(image: Any, model_id: str, class_name: str, root: Path = S
         raise ValueError(evidence["reason"])
     if class_name not in evidence["classes"]:
         raise ValueError("Lớp không thuộc taxonomy 38 lớp")
+    if is_int8(evidence, model_id):
+        raise ValueError("Grad-CAM không hỗ trợ mô hình int8 (TorchScript lượng tử hoá không có gradient); hãy dùng mô hình fp32 gốc")
     from web.services import explain_service
 
     _, model = _published_model(evidence, model_id, root)
