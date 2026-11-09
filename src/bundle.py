@@ -99,14 +99,29 @@ def holdout(manifest: dict[str, Any]) -> dict[str, Any]:
     return manifest.get("holdout") or LEGACY_HOLDOUT
 
 
+# Định dạng tệp mô hình trong gói (khóa "format" của từng mục models[] trong import_manifest.json; thiếu khóa = state_dict như mọi gói cũ).
+#   state_dict        : checkpoint torch.save {"model_state": ...} nạp vào mobilenet_v3_small (đường cũ, không đổi).
+#   torchscript_int8  : TorchScript đã freeze của mô hình int8 (torch.ao quantize_dynamic, chỉ lớp Linear). Bắt buộc có "fp32_of" (model_id của
+#                       mô hình fp32 gốc trong CÙNG gói) và "fp32_checkpoint_sha256" (SHA-256 checkpoint gốc đó). Xem docs/TICH_HOP_INT8_PC_V3.md.
+FORMAT_STATE_DICT = "state_dict"
+FORMAT_TORCHSCRIPT_INT8 = "torchscript_int8"
+MODEL_FORMATS = (FORMAT_STATE_DICT, FORMAT_TORCHSCRIPT_INT8)
+
+
 def model_specs(manifest: dict[str, Any]) -> list[dict[str, str]]:
-    """Danh sách mô hình của gói: model_id, dir (thư mục con), file (đường dẫn trong thư mục con), display_name, phase, method, registry_id."""
+    """Danh sách mô hình của gói: model_id, dir (thư mục con), file (đường dẫn trong thư mục con), display_name, phase, method, registry_id, format.
+
+    Mục int8 có thêm fp32_of, fp32_checkpoint_sha256, quantization. Ở đây chỉ chép khóa; kiểm hợp lệ (fail-closed) nằm ở web/demo_evidence.load_evidence."""
     specs = manifest.get("models") or LEGACY_MODELS
     out = []
     for s in specs:
-        out.append({"model_id": s["model_id"], "dir": s["dir"], "file": s.get("file", "checkpoint_best.pt"),
-                    "display_name": s["display_name"], "phase": s.get("phase", ""), "method": s.get("method", s["display_name"]),
-                    "registry_id": s.get("registry_id", f"web_{s['model_id']}")})
+        entry = {"model_id": s["model_id"], "dir": s["dir"], "file": s.get("file", "checkpoint_best.pt"),
+                 "display_name": s["display_name"], "phase": s.get("phase", ""), "method": s.get("method", s["display_name"]),
+                 "registry_id": s.get("registry_id", f"web_{s['model_id']}"), "format": s.get("format", FORMAT_STATE_DICT)}
+        if entry["format"] == FORMAT_TORCHSCRIPT_INT8:
+            entry.update(fp32_of=s.get("fp32_of"), fp32_checkpoint_sha256=s.get("fp32_checkpoint_sha256"),
+                         quantization=s.get("quantization", "dynamic_linear_qint8"))
+        out.append(entry)
     return out
 
 
