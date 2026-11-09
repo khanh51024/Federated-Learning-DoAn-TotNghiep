@@ -234,11 +234,11 @@ _MODEL_LOCK = threading.Lock()
 _TRANSFORM: Any = None
 
 
-INT8_ENGINES = ("x86", "fbgemm")   # engine lượng tử hoá dùng khi xuất mô hình int8 (CPU x86_64)
+INT8_ENGINES = ("x86", "fbgemm", "onednn")   # engine lượng tử hoá cho int8 trên CPU x86_64 (torch mới, vd. 2.14, chỉ còn onednn)
 
 
 def select_quantized_engine(supported: list[str] | None = None) -> str:
-    """Bật engine int8 x86/fbgemm của torch; ném ValueError nếu bản torch này không có (vd. CPU ARM chỉ có qnnpack).
+    """Bật engine int8 x86/fbgemm/onednn của torch; ném ValueError nếu bản torch này không có (vd. CPU ARM chỉ có qnnpack).
 
     `supported` chỉ để test giả lập máy không có engine; bình thường lấy từ torch."""
     import torch
@@ -250,7 +250,7 @@ def select_quantized_engine(supported: list[str] | None = None) -> str:
             if torch.backends.quantized.engine != name:
                 torch.backends.quantized.engine = name
             return name
-    raise ValueError(f"torch {torch.__version__} has no x86/fbgemm quantized engine (supported: {supported}); "
+    raise ValueError(f"torch {torch.__version__} has no x86/fbgemm/onednn quantized engine (supported: {supported}); "
                      "int8 models need an x86_64 CPU build of torch")
 
 

@@ -92,7 +92,7 @@ Số đo trên tập validation 4.613 ảnh (PlantVillage 4.344 + PlantDoc 269),
 - **`_check_int8_parents()`.** TorchScript không mang metadata release / seed / W0 như checkpoint fp32, nên tệp int8 được **buộc vào
   checkpoint fp32 gốc**: `fp32_checkpoint_sha256` phải trùng SHA của tệp gốc trong `artifact_manifest.json` của gói. Bản thân tệp int8
   cũng được kiểm hash qua `artifact_manifest.json` của thư mục nó, như mọi tệp khác.
-- **`select_quantized_engine()`.** Bật engine `x86`, hoặc `fbgemm` nếu không có `x86`. Nếu bản torch không có cả hai (ví dụ CPU ARM chỉ
+- **`select_quantized_engine()`.** Bật engine `x86`, hoặc `fbgemm`, hoặc `onednn` (bản torch mới như 2.14 chỉ còn `onednn`; đã kiểm tệp fedavg int8 nạp được, ra 1×38 logits). Nếu bản torch không có engine nào trong ba (ví dụ CPU ARM chỉ
   có `qnnpack`), hàm ném `ValueError` với thông báo rõ ràng.
 - **`_build_torchscript_int8()`.** Gồm các bước:
   - nạp bằng `torch.jit.load(..., map_location="cpu")` từ **đúng các byte đã băm**, giống đường fp32;
@@ -111,7 +111,7 @@ Số đo trên tập validation 4.613 ảnh (PlantVillage 4.344 + PlantDoc 269),
 
 - Trước đây đường tệp được viết cứng là `<dir>/checkpoint_best.pt`. Nay đường tệp lấy theo khóa `file` của manifest, mặc định vẫn là
   `checkpoint_best.pt`. Local-only giữ nguyên đường `local/client_xx/checkpoint_best.pt`.
-- Mục int8 trong registry có thêm `model_format` và một câu ghi chú: không có Grad-CAM, cần engine x86/fbgemm.
+- Mục int8 trong registry có thêm `model_format` và một câu ghi chú: không có Grad-CAM, cần engine x86/fbgemm/onednn.
 
 ### 2.4 `tests/test_int8_torchscript.py` (mới, 8 test)
 
