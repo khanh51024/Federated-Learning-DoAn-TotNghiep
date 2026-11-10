@@ -78,3 +78,23 @@ Chi tiết và bảng đầy đủ: `results/KET_QUA_TONG_HOP_PC.md`. Mọi ô c
 ## 7. An toàn dữ liệu
 
 Nhánh này không chứa ảnh, manifest dữ liệu, tên ảnh của tập ngoài (EXT), logit của P6 hay các checkpoint ngoài 16 mô hình ở `models/`. Tập kiểm thử cuối chỉ được mở một lần trong P6.
+
+## 8. Hình và dữ liệu nguồn
+
+Mọi hình sinh bằng `code/pc_r9/make_report_figures.py` từ các file trong `results/` (không chạy lại mô hình): `python -I -B make_report_figures.py <thư mục pc_v3_ket_qua>`.
+Lịch sử từng vòng/epoch (`results/histories/per_round.csv`) và bảng FLW (`results/flw/`) do `code/pc_r9/build_report_data.py` đọc từ các run đã có trên máy PC (không có trong nhánh này).
+Hình dùng trung bình ± độ lệch chuẩn (ddof 1) qua seed; số validation, trừ F7 là test (P6).
+
+| Hình | Nội dung | CSV nguồn của hình | Đầu vào chính |
+|---|---|---|---|
+| `results/figures/F1_macroF1_theo_alpha.png` | Macro-F1 validation theo α: Tập trung (đường ngang, dải ±SD), FedAvg, SCAFFOLD, FedProx, FedBN (mô hình server), MOON; Local-only ở panel dưới | `F1_macroF1_theo_alpha.csv` | `histories/per_round.csv` |
+| `F2_hoi_tu_theo_vong.png` | Đường hội tụ theo vòng ở α = 0,1 và 0,5, dải ±SD | `F2_hoi_tu_theo_vong.csv` | `histories/per_round.csv` |
+| `F3_khoang_cach_theo_alpha.png` | Khoảng cách Tập trung − FedAvg theo α (AdamW và SGD) | `F3_khoang_cach_theo_alpha.csv` | `histories/per_round.csv` |
+| `F4_truyen_thong.png` | Tổng MB truyền tới R95 / R99 so với accuracy (FedAvg, fp16 uplink, SCAFFOLD) và mức ảnh thô 806 MB; số mô phỏng, không phải đo mạng | `F4_truyen_thong.csv` | `histories/per_round.csv`, `histories/payload_bytes.csv`, `e2_e3/E3_RESULT.json` |
+| `F5_int8_so_fp32.png` | int8 động so với fp32: kích thước, độ trễ CPU 1 luồng, Δ accuracy (4 mô hình, 1 seed) | `F5_int8_so_fp32.csv` | `e5/E5_RESULT.json` |
+| `F6_cong_bang_client.png` | Accuracy của FedAvg theo từng client (E1) theo α | `F6_cong_bang_client.csv` | `e1/E1_per_client.csv` |
+| `F7_P6_theo_tap.png` | Test cuối P6 theo tập (PD-172, PD-463, PV-legacy, EXT-FINAL ngoài miền) | `F7_P6_theo_tap.csv` | `p6/P6_RESULT.json` |
+
+Quy tắc điểm cuối dùng trong hình: trung bình 3 vòng cuối (Tập trung: 3 epoch cuối) của `val_macro_f1_raw` hoặc `val_accuracy`. R95 / R99 theo `docs/specs/E23_SPEC.md` (E3.3).
+Bảng FLW: `results/flw/FLW_SUMMARY.csv` (bit-exact, thời gian, rtt, byte mỗi client mỗi vòng) và `results/flw/LABEL_r2.txt` (nhãn bắt buộc, nguyên văn). Nhãn FLW-A: không viết "FedAvg chạy phân tán thật trên Flower".
+Ghi chú: ở F1, FedBN là mô hình server (BN trung bình); chỉ số chính của FedBN là mô hình có BN cục bộ, không nằm trong hình này.

@@ -1,0 +1,6 @@
+run,verdict,compare_sha256,max_abs_d_val_macro_f1_raw,endpoint_abs_diff,checkpoint_equal,total_wall_s,rtt_ms_median,payload_bytes_per_client_round,ram
+flwa_s42,"bit-exact (40/40 history rows equal, checkpoint_last tensor-equal, endpoint diff 0) vs pc_fedavg_a05_s42",ba4a930b327b248013cc3fd5f7d7bd8ec1fea8333d70582eeef9fff654eb9524,0.0,0.0,True,4068,18376,6307176,peak 4.83 min_free 2.90 GiB
+flwa_s43,"bit-exact (40/40 rows equal, checkpoint_last tensor-equal, endpoint diff 0) vs pc_fedavg_a05_s43",be54af561d19cf08012e3df057080647de7b6c1ab69c78d2570cf4e0a8669d42,0.0,0.0,True,4020,18083,,peak 4.73 min_free 3.41 GiB
+flwa_s44,"bit-exact (40/40 rows equal, checkpoint_last tensor-equal, endpoint diff 0) vs pc_fedavg_a05_s44",9e8f7920feaef3bf78d283523e951fe8bfb17902f9f3b1b89a86036e195dff2c,0.0,0.0,True,4098,18674,6307176,peak 4.82 min_free 3.05 GiB
+a3_fedprox_a01_s42,"bit-exact (v; FLW_SPEC r2 s4 rule, row 5 in full)",cd99399b37e96ecbc5f5ef3b80541f6b51403052763c796ac428be3aa3747beb,0.0,,"244/244 tensors torch.equal, max abs diff 0",,,,peak 4.66 min_free 3.37 GiB
+a3_fedbn_a01_s42,"bit-exact (v2 = verdict_excl_q8r2_r5, FLW_SPEC_ADDENDUM_A3 45fc9e3e)",f77172294476030b0143d74e70ca7468679fb65cad5564dca3772d3f38531be3,0.0,,"244/244 tensors torch.equal, max abs diff 0",,,,peak 4.70 min_free 3.05 GiB

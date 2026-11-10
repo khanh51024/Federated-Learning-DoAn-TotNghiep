@@ -1,0 +1,4 @@
+LABEL r2 (mandatory, verbatim in report): "flower_exact = equivalence gate of orchestration / transport. The client DataLoader
+(dataset + sampler), the RNG and the GradScaler are created by the harness on the server side and passed in the control blob.
+The client does not hold its own shard / independent seed. Only the ArrayRecord is the FL payload." The report must NOT say
+"FedAvg runs truly distributed on Flower" on the basis of FLW-A; the more realistic part is FLW-B (Deployment Engine).

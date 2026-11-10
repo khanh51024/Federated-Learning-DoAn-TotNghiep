@@ -1,0 +1,79 @@
+{
+ "A": "q19l\\c_m_fedprox_a01_s42_out\\c_m_fedprox_a01_s42\\run",
+ "B": "experiments\\train-improve-20261015\\flw\\a3_fedprox_a01_s42\\run",
+ "rounds_A": 40,
+ "rounds_B": 5,
+ "common_rounds": 5,
+ "rows": [
+  {
+   "round": 1,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 2,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 3,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 4,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 5,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  }
+ ],
+ "all_history_equal": true,
+ "max_abs_d_val_macro_f1_raw": 0.0,
+ "timing_list": [
+  "duration",
+  "vram",
+  "telemetry",
+  "time",
+  "_sec",
+  "elapsed",
+  "updated_at",
+  "utc",
+  "_ms"
+ ],
+ "timing_list_source": "p22_gates.py 1c5b2bd1dc2af84ceab7781ac259d3aa3eac2eadae8e5e76c8c84cd955a89e76",
+ "protected_prefixes": [
+  "val_",
+  "plantdoc_",
+  "train_",
+  "loss",
+  "acc",
+  "macro"
+ ],
+ "stripped_keys": [
+  "aggregate_ms",
+  "client_compute_wall_ms",
+  "client_load_ms",
+  "client_serialize_ms",
+  "compute_wall_ms",
+  "dispatch_ms",
+  "duration_sec",
+  "load_ms",
+  "network_one_way_ms",
+  "network_rtt_ms",
+  "peak_vram_mb",
+  "receive_ms",
+  "round_wall_ms",
+  "serialize_ms",
+  "server_prepare_ms",
+  "timestamp"
+ ]
+}

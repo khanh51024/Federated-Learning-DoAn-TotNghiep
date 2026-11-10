@@ -1,0 +1,294 @@
+{
+ "A": "q16l\\fedavg_a05_s44_out\\fedavg_a05_s44\\run",
+ "B": "experiments\\train-improve-20261015\\flw\\flwa_s44\\run",
+ "rounds_A": 40,
+ "rounds_B": 40,
+ "common_rounds": 40,
+ "rows": [
+  {
+   "round": 1,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 2,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 3,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 4,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 5,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 6,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 7,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 8,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 9,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 10,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 11,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 12,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 13,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 14,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 15,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 16,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 17,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 18,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 19,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 20,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 21,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 22,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 23,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 24,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 25,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 26,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 27,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 28,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 29,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 30,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 31,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 32,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 33,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 34,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 35,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 36,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 37,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 38,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 39,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  },
+  {
+   "round": 40,
+   "history_equal": true,
+   "first_diff": null,
+   "abs_d_val_macro_f1_raw": 0.0
+  }
+ ],
+ "all_history_equal": true,
+ "max_abs_d_val_macro_f1_raw": 0.0,
+ "timing_list": [
+  "duration",
+  "vram",
+  "telemetry",
+  "time",
+  "_sec",
+  "elapsed",
+  "updated_at",
+  "utc",
+  "_ms"
+ ],
+ "timing_list_source": "p22_gates.py 1c5b2bd1dc2af84ceab7781ac259d3aa3eac2eadae8e5e76c8c84cd955a89e76",
+ "protected_prefixes": [
+  "val_",
+  "plantdoc_",
+  "train_",
+  "loss",
+  "acc",
+  "macro"
+ ],
+ "stripped_keys": [
+  "aggregate_ms",
+  "client_compute_wall_ms",
+  "client_load_ms",
+  "client_serialize_ms",
+  "compute_wall_ms",
+  "dispatch_ms",
+  "duration_sec",
+  "load_ms",
+  "network_one_way_ms",
+  "network_rtt_ms",
+  "peak_vram_mb",
+  "receive_ms",
+  "round_wall_ms",
+  "serialize_ms",
+  "server_prepare_ms",
+  "timestamp"
+ ],
+ "checkpoint_last_tensor_equal": true,
+ "checkpoint_last_max_abs_diff": 0.0,
+ "endpoint_A": 0.9383706750597435,
+ "endpoint_B": 0.9383706750597435,
+ "endpoint_abs_diff": 0.0
+}

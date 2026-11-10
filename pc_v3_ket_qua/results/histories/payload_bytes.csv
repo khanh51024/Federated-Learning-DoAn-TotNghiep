@@ -1,0 +1,11 @@
+run,client,payload_down_bytes,payload_up_bytes
+fedavg_a01_s42,client_01,6275944,6275944
+fedavg_fp16_uplink_a01_s42,client_01,6275944,3138108
+fedavg_fp16_uplink_a01_s42,client_04,6275944,3138108
+fedavg_a01_s42,client_03,6275944,6275944
+fedavg_fp16_uplink_a01_s42,client_00,6275944,3138108
+fedavg_a01_s42,client_00,6275944,6275944
+fedavg_fp16_uplink_a01_s42,client_02,6275944,3138108
+fedavg_a01_s42,client_02,6275944,6275944
+fedavg_fp16_uplink_a01_s42,client_03,6275944,3138108
+fedavg_a01_s42,client_04,6275944,6275944

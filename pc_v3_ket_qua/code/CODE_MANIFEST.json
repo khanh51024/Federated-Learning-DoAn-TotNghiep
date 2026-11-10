@@ -324,6 +324,16 @@
    "original_sha256": "7861770362652443cde0226a770463e563aac1bceb92cec2ef3701a9374c1546",
    "committed_sha256": "d7f029ab990c73d9621e84fa080a1fa434b67e4401b7148e2a561b89fdb03685",
    "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/build_report_data.py": {
+   "original_sha256": "a4db1bf8a502607eb11225413fe194e9ee670b25b9633b20db41f178da55fad6",
+   "committed_sha256": "a4db1bf8a502607eb11225413fe194e9ee670b25b9633b20db41f178da55fad6",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/make_report_figures.py": {
+   "original_sha256": "0e628f04a984e2fbc153d9bf30f6980d1b61cb0db055dcca9b19b0ef048376e5",
+   "committed_sha256": "0e628f04a984e2fbc153d9bf30f6980d1b61cb0db055dcca9b19b0ef048376e5",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
   }
  }
 }
