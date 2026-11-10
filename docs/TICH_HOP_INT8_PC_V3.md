@@ -10,6 +10,19 @@ Nhánh này làm hai việc:
 2. Đưa lên **4 tệp mô hình int8** của chiến dịch train trên PC (release v3, α = 0,1, seed 42), kèm số đo. Các tệp nằm ở
    `artifacts/model_bundles/pc_v3_a01_s42_int8/`. **Chúng chưa được nối vào gói web đang chạy** (xem mục 4).
 
+
+> **Cập nhật 10/11/2026 (phía web).** Gói PC v3 đã được nhập thành gói web `artifacts/model_bundles/pc_v3_s42/` bằng `scripts/import_pc_package.py`
+> (13 mô hình: Centralized AdamW, Centralized SGD, FedAvg, SCAFFOLD, Local 00–04 và 4 bản int8). Bốn bản int8 giờ nằm trong gói đó
+> (`centralized_int8/`, `centralized_sgd_int8/`, `fedavg_int8/`, `scaffold_int8/`), không còn là tệp rời. Điểm cần nhớ:
+>
+> - **Chỉ đánh giá lại trên validation.** Gói ghi `evidence_scope = "validation_only"`: đồ án không chạy mô hình PC v3 trên tập kiểm thử, tập
+>   calibration niêm phong hay tập ngoài miền (nhóm train mở tập kiểm thử đúng một lần ở bước P6). Các mục báo cáo cần những tập đó bị web giữ lại.
+> - **Số của int8 do đồ án tự đo lại, từng ảnh một.** Lượng tử hóa động tính thang theo cả lô, nên đo theo lô sẽ khác cách web suy luận.
+> - **Đối chiếu với nhóm PC:** 117 phép so (13 mô hình × 3 phạm vi × 3 chỉ số) khớp tuyệt đối; xem `KIEM_LAI_VALIDATION.csv` ở nhánh
+>   `pc-v3-ket-qua-20261110`.
+> - **Engine lượng tử:** torch mới (2.14) chỉ còn `onednn`; mã đã chấp nhận `x86`, `fbgemm` và `onednn`. Máy chạy web (VM) vẫn phải kiểm trước
+>   khi triển khai (mục 4.1).
+
 ---
 
 ## 1. Mô hình được dùng

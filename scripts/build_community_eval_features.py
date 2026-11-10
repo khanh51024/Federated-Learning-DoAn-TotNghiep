@@ -65,7 +65,7 @@ def main() -> int:
     if not (release / "manifests" / "val.jsonl").is_file():
         print(f"[community] thiếu dataset ở {reg.DATASET_SOURCES_DIR}", file=sys.stderr)
         return 1
-    val_rows, _calibration = _verify_inputs(evidence, release, dataset_root)
+    val_rows, _calibration = _verify_inputs(evidence, release, dataset_root, use_calibration=False)
     # Bộ đánh giá cộng đồng chỉ có hai nguồn (mã nguồn 0/1: PlantVillage, PlantDoc): bỏ ảnh ngoài đồng từ nguồn khác của release v4
     val_rows = [r for r in val_rows if str(r["source_dataset"]).lower() in ("plantdoc", "plantvillage")]
     if args.limit:

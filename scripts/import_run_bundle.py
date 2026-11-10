@@ -246,7 +246,7 @@ def evaluate_on_cpu(plan: list[dict[str, Any]], staging: Path, rows: list[dict[s
                     batch_size: int, workers: int, cache: Path | None = None) -> dict[str, np.ndarray]:
     import torch
 
-    from scripts.evaluate_published_models import _load_contract_transforms, _load_model, collect_logits
+    from scripts.evaluate_published_models import _load_contract_transforms, collect_logits, load_published
 
     # Dấu vân tay: byte từng checkpoint + danh sách ảnh validation. Khớp thì dùng lại logits (nhập lại gói không phải suy luận lại ~10 phút).
     fingerprint = hashlib.sha256(json.dumps([{s["model_id"]: sha256_file(staging / s["dir"] / s["file"]) for s in plan},
@@ -258,9 +258,10 @@ def evaluate_on_cpu(plan: list[dict[str, Any]], staging: Path, rows: list[dict[s
                 return {s["model_id"]: data[s["model_id"]] for s in plan}
     torch.set_num_threads(max(1, min(10, torch.get_num_threads())))
     transform = _load_contract_transforms(staging)
-    models = {spec["model_id"]: _load_model(staging / spec["dir"] / spec["file"]) for spec in plan}
+    models = {spec["model_id"]: load_published(staging / spec["dir"] / spec["file"], spec.get("format", bundle.FORMAT_STATE_DICT)) for spec in plan}
+    int8_ids = frozenset(spec["model_id"] for spec in plan if spec.get("format") == bundle.FORMAT_TORCHSCRIPT_INT8)
     print(f"[bundle] đánh giá lại {len(models)} mô hình trên {len(rows)} ảnh validation (CPU)", flush=True)
-    logits = collect_logits(rows, dataset_root, transform, models, batch_size, workers)
+    logits = collect_logits(rows, dataset_root, transform, models, batch_size, workers, single_image=int8_ids)
     if cache is not None:
         cache.parent.mkdir(parents=True, exist_ok=True)
         np.savez_compressed(cache, fingerprint=fingerprint, **logits)

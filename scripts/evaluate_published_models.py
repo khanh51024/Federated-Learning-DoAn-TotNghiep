@@ -168,17 +168,19 @@ def compare_with_published(own: dict[str, Any], published: dict[str, Any]) -> di
 
 def analyze_model(
     val_logits: np.ndarray, val_targets: np.ndarray, val_sources: np.ndarray,
-    cal_logits: np.ndarray, cal_targets: np.ndarray, classes: list[str],
+    cal_logits: np.ndarray | None, cal_targets: np.ndarray | None, classes: list[str],
 ) -> dict[str, Any]:
+    """`cal_logits=None`: chế độ chỉ-validation. Không có tập calibration thì KHÔNG hiệu chỉnh nhiệt độ: `calibration` rỗng, nhiệt độ None."""
     probs = softmax(val_logits)
     preds, conf = probs.argmax(axis=1), probs.max(axis=1)
     correct = (preds == val_targets).astype(np.float64)
-    temperature = fit_temperature(cal_logits, cal_targets)
-    probs_t = softmax(val_logits, temperature)
-    conf_t = probs_t.max(axis=1)
+    calibrated = cal_logits is not None
+    if calibrated:
+        temperature = fit_temperature(cal_logits, cal_targets)
+        conf_t = softmax(val_logits, temperature).max(axis=1)
     out: dict[str, Any] = {
-        "temperature_fitted_on_calibration": round(temperature, 4),
-        "calibration_set_size": int(len(cal_targets)),
+        "temperature_fitted_on_calibration": round(temperature, 4) if calibrated else None,
+        "calibration_set_size": int(len(cal_targets)) if calibrated else 0,
         "overall": group_scores(val_targets, preds, conf, classes),
         "by_source": {}, "calibration": {},
     }
@@ -186,19 +188,20 @@ def analyze_model(
                         *((s, val_sources == s) for s in SOURCES)):
         if not mask.any():
             continue
-        e_raw, bins_raw = ece(conf[mask], correct[mask])
-        e_ts, _ = ece(conf_t[mask], correct[mask])
-        out["calibration"][scope] = {
-            "n": int(mask.sum()),
-            "accuracy": float(correct[mask].mean()),
-            "mean_confidence_raw": float(conf[mask].mean()),
-            "mean_confidence_temperature_scaled": float(conf_t[mask].mean()),
-            "ece_raw": round(e_raw, 5),
-            "ece_temperature_scaled": round(e_ts, 5),
-            "nll_raw": round(nll(val_logits[mask], val_targets[mask]), 5),
-            "nll_temperature_scaled": round(nll(val_logits[mask], val_targets[mask], temperature), 5),
-            "reliability_raw": bins_raw,
-        }
+        if calibrated:
+            e_raw, bins_raw = ece(conf[mask], correct[mask])
+            e_ts, _ = ece(conf_t[mask], correct[mask])
+            out["calibration"][scope] = {
+                "n": int(mask.sum()),
+                "accuracy": float(correct[mask].mean()),
+                "mean_confidence_raw": float(conf[mask].mean()),
+                "mean_confidence_temperature_scaled": float(conf_t[mask].mean()),
+                "ece_raw": round(e_raw, 5),
+                "ece_temperature_scaled": round(e_ts, 5),
+                "nll_raw": round(nll(val_logits[mask], val_targets[mask]), 5),
+                "nll_temperature_scaled": round(nll(val_logits[mask], val_targets[mask], temperature), 5),
+                "reliability_raw": bins_raw,
+            }
         if scope != "overall":
             out["by_source"][scope] = group_scores(val_targets[mask], preds[mask], conf[mask], classes)
             out["by_source"][scope]["per_class_recall"] = per_class_recall(val_targets[mask], preds[mask], classes)
@@ -271,7 +274,18 @@ def _load_model(path: Path):
     return model.eval()
 
 
-def collect_logits(rows, root: Path, transform, models: dict[str, Any], batch_size: int, workers: int) -> dict[str, np.ndarray]:
+def load_published(path: Path, model_format: str = "state_dict"):
+    """Nạp một mô hình của gói theo định dạng khai báo trong manifest: state_dict (fp32) hoặc TorchScript int8 động (đúng đường nạp của web)."""
+    if model_format == "torchscript_int8":
+        from web.demo_evidence import _build_torchscript_int8
+
+        return _build_torchscript_int8(path, 38)
+    return _load_model(path)
+
+
+def collect_logits(rows, root: Path, transform, models: dict[str, Any], batch_size: int, workers: int,
+                   single_image: frozenset[str] = frozenset()) -> dict[str, np.ndarray]:
+    """`single_image`: các mô hình chạy từng ảnh một. Bắt buộc với int8 động: thang kích hoạt tính trên cả lô, nên đo theo lô sẽ khác cách web suy luận (1 ảnh)."""
     import torch
     from torch.utils.data import DataLoader
 
@@ -283,7 +297,11 @@ def collect_logits(rows, root: Path, transform, models: dict[str, Any], batch_si
     with torch.inference_mode():
         for images, index in loader:
             for key, model in models.items():
-                out[key][index.numpy()] = model(images).numpy()
+                if key in single_image:
+                    for i in range(len(index)):
+                        out[key][int(index[i])] = model(images[i:i + 1]).numpy()[0]
+                else:
+                    out[key][index.numpy()] = model(images).numpy()
             done += len(index)
             if done % (batch_size * 10) < batch_size or done == len(rows):
                 rate = done / max(time.time() - started, 1e-9)
@@ -292,9 +310,9 @@ def collect_logits(rows, root: Path, transform, models: dict[str, Any], batch_si
 
 
 # --------------------------------------------------------------------------- báo cáo
-def _published_for(model_key: str, source: str) -> dict[str, Any]:
-    rel = {"centralized": "centralized", "fedavg": "fedavg"}.get(model_key) or f"local/client_{model_key[-2:]}"
-    path = reg.abs_path(f"{reg.DEMO_BUNDLE_DIR}/{rel}/validation_metrics.json")
+def _published_for(model_dir: str, source: str) -> dict[str, Any]:
+    """Khối số đã công bố của một mô hình; `model_dir` là thư mục chứa checkpoint của nó trong gói (centralized, local/client_00, fedavg_int8...)."""
+    path = reg.abs_path(f"{reg.DEMO_BUNDLE_DIR}/{model_dir}/validation_metrics.json")
     validation = json.loads(path.read_text(encoding="utf-8"))["validation"]
     block = dict(validation["by_source"][source])
     block["per_class_recall"] = (validation.get("quality", {}).get("by_source", {}).get(source, {}) or {}).get("per_class_recall")
@@ -303,24 +321,26 @@ def _published_for(model_key: str, source: str) -> dict[str, Any]:
 
 def build_report(
     evidence: dict[str, Any], val_rows, cal_rows,
-    val_logits: dict[str, np.ndarray], cal_logits: dict[str, np.ndarray],
+    val_logits: dict[str, np.ndarray], cal_logits: dict[str, np.ndarray] | None,
 ) -> dict[str, Any]:
+    """`cal_rows`/`cal_logits` = None: chế độ chỉ-validation (gói nhập từ nhóm train khác; không đụng tập calibration niêm phong)."""
     classes = evidence["classes"]
     val_targets = np.array([r["class_id"] for r in val_rows], dtype=np.int64)
-    cal_targets = np.array([r["class_id"] for r in cal_rows], dtype=np.int64)
+    cal_targets = np.array([r["class_id"] for r in cal_rows], dtype=np.int64) if cal_rows is not None else None
+    model_dirs = {m["model_id"]: Path(m["checkpoint_relative_path"]).parent.as_posix() for m in evidence["models"]}
     sources = np.array([source_group(r["source_dataset"]) for r in val_rows])
     names = {m["model_id"]: m["name"] for m in evidence["models"]}
     present = present_sources(sources)
 
     models: dict[str, Any] = {}
     for key in val_logits:
-        result = analyze_model(val_logits[key], val_targets, sources, cal_logits[key], cal_targets, classes)
+        result = analyze_model(val_logits[key], val_targets, sources, cal_logits[key] if cal_logits is not None else None, cal_targets, classes)
         result["display_name"] = names[key]
         result["vs_published"] = {}
         for source in present:
             if source not in result["by_source"]:  # --limit có thể làm một nguồn không còn ảnh
                 continue
-            published = _published_for(key, source)
+            published = _published_for(model_dirs[key], source)
             comparison = compare_with_published(result["by_source"][source], published)
             pub_recall = published.get("per_class_recall")
             if pub_recall:
@@ -377,7 +397,8 @@ def build_report(
         "release_manifest_sha256": evidence["release_manifest_sha256"],
         "validation_manifest_sha256": evidence["validation_manifest_sha256"],
         "validation_count": len(val_rows),
-        "calibration_count": len(cal_rows),
+        "calibration_count": len(cal_rows) if cal_rows is not None else 0,
+        "evidence_scope": "validation_only" if cal_rows is None else "validation_and_calibration",
         "checkpoint_sha256": {m["model_id"]: m["checkpoint_sha256"] for m in evidence["models"]},
         "classes": classes,
         "bins": BINS,
@@ -397,24 +418,27 @@ def build_report(
     }
 
 
-def _verify_inputs(evidence: dict[str, Any], release: Path, dataset_root: Path) -> tuple[list, list]:
+def _verify_inputs(evidence: dict[str, Any], release: Path, dataset_root: Path, use_calibration: bool = True) -> tuple[list, list | None]:
+    """`use_calibration=False`: chỉ kiểm và đọc val + train; KHÔNG mở calibration.jsonl (trả cal_rows=None)."""
     val_path, cal_path = release / "manifests" / "val.jsonl", release / "manifests" / "calibration.jsonl"
     manifest = json.loads((release / "release_manifest.json").read_text(encoding="utf-8"))
-    for path, key in ((val_path, "val"), (cal_path, "calibration")):
+    checks = [(val_path, "val")] + ([(cal_path, "calibration")] if use_calibration else [])
+    for path, key in checks:
         if _sha256(path) != manifest["manifest_hashes"][key]:
             raise ValueError(f"{path.name}: hash khác release_manifest.json")
     if manifest["manifest_hashes"]["val"] != evidence["validation_manifest_sha256"]:
         raise ValueError("val manifest không phải bộ validation mà bundle đã công bố")
-    val_rows, cal_rows = _jsonl(val_path), _jsonl(cal_path)
-    for name, rows in (("val", val_rows), ("calibration", cal_rows)):
+    val_rows = _jsonl(val_path)
+    cal_rows = _jsonl(cal_path) if use_calibration else None
+    for name, rows in (("val", val_rows), ("calibration", cal_rows or [])):
         for row in rows:
             if row["class_id"] < 0 or evidence["classes"][row["class_id"]] != row["target_class"]:
                 raise ValueError(f"{name}: class_id không khớp taxonomy ({row['sample_id']})")
     train_groups = {r["group_id"] for r in _jsonl(release / "manifests" / "train.jsonl")}
-    overlap = train_groups & {r["group_id"] for r in cal_rows + val_rows}
+    overlap = train_groups & {r["group_id"] for r in (cal_rows or []) + val_rows}
     if overlap:
         raise ValueError(f"train giao với val/calibration theo group_id: {len(overlap)} nhóm")
-    if {r["group_id"] for r in cal_rows} & {r["group_id"] for r in val_rows}:
+    if cal_rows is not None and {r["group_id"] for r in cal_rows} & {r["group_id"] for r in val_rows}:
         raise ValueError("calibration giao với validation — không dùng được để hiệu chuẩn")
     return val_rows, cal_rows
 
@@ -596,6 +620,19 @@ def main_holdout(args, evidence: dict[str, Any], release: Path, dataset_root: Pa
     return 0
 
 
+def _importer_logits(store: Path, evidence: dict[str, Any], val_rows: list[dict[str, Any]]) -> dict[str, np.ndarray] | None:
+    """Logits validation do scripts/import_pc_package.py (hoặc import_run_bundle.py) đã lưu cho đúng gói này; None nếu không còn khớp checkpoint/ảnh."""
+    path = store / f"bundle_{evidence.get('bundle_id')}_logits.npz"
+    if not path.is_file():
+        return None
+    fingerprint = hashlib.sha256(json.dumps([{m["model_id"]: m["checkpoint_sha256"] for m in evidence["models"]},
+                                             [r["sample_id"] for r in val_rows]], sort_keys=True).encode()).hexdigest()
+    with np.load(path, allow_pickle=False) as data:
+        if str(data["fingerprint"]) != fingerprint or any(m["model_id"] not in data for m in evidence["models"]):
+            return None
+        return {m["model_id"]: data[m["model_id"]] for m in evidence["models"]}
+
+
 def main() -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -603,6 +640,8 @@ def main() -> int:
     parser.add_argument("--holdout", action="store_true",
                         help=f"Chấm trên tập test giữ riêng {reg.HOLDOUT_SPLIT} thay vì validation")
     parser.add_argument("--reuse", action="store_true", help="Dùng logits đã lưu ở data/reeval/ nếu manifest không đổi")
+    parser.add_argument("--validation-only", action="store_true",
+                        help="Chỉ đánh giá lại trên validation: không mở tập calibration, không hiệu chỉnh nhiệt độ (gói nhập từ nhóm train khác). Không đi với --holdout")
     parser.add_argument("--limit", type=int, default=0, help="Chỉ N ảnh đầu mỗi tập (thử nhanh; không ghi artifacts/)")
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--workers", type=int, default=5)
@@ -619,17 +658,21 @@ def main() -> int:
     if not (release / "manifests" / "val.jsonl").is_file():
         print(f"[reeval] thiếu dataset ở {reg.DATASET_SOURCES_DIR} (nhánh dataset-sources của GitHub)", file=sys.stderr)
         return 1
+    if args.holdout and args.validation_only:
+        print("[reeval] --holdout và --validation-only loại trừ nhau", file=sys.stderr)
+        return 1
     if args.holdout:
         return main_holdout(args, evidence, release, dataset_root)
-    val_rows, cal_rows = _verify_inputs(evidence, release, dataset_root)
+    val_rows, cal_rows = _verify_inputs(evidence, release, dataset_root, use_calibration=not args.validation_only)
     if args.limit:
-        val_rows, cal_rows = val_rows[: args.limit], cal_rows[: args.limit]
+        val_rows = val_rows[: args.limit]
+        cal_rows = cal_rows[: args.limit] if cal_rows is not None else None
 
     store = reg.abs_path(NPZ_DIR)
     store.mkdir(parents=True, exist_ok=True)
     cache = store / "logits.npz"
     fingerprint = hashlib.sha256(
-        json.dumps([evidence["validation_manifest_sha256"], len(val_rows), len(cal_rows),
+        json.dumps([evidence["validation_manifest_sha256"], len(val_rows), len(cal_rows) if cal_rows is not None else None,
                     {m["model_id"]: m["checkpoint_sha256"] for m in evidence["models"]}], sort_keys=True).encode()
     ).hexdigest()
     keys = [m["model_id"] for m in evidence["models"]]
@@ -638,8 +681,12 @@ def main() -> int:
         with np.load(cache, allow_pickle=False) as data:
             if str(data["fingerprint"]) == fingerprint:
                 val_logits = {k: data[f"val_{k}"] for k in keys}
-                cal_logits = {k: data[f"cal_{k}"] for k in keys}
+                cal_logits = {k: data[f"cal_{k}"] for k in keys} if cal_rows is not None else None
                 print("[reeval] dùng lại logits đã lưu")
+    if val_logits is None and args.validation_only:
+        val_logits = _importer_logits(store, evidence, val_rows)
+        if val_logits is not None:
+            print("[reeval] dùng lại logits validation mà bước nhập gói đã tính (cùng checkpoint, cùng ảnh)")
     if val_logits is None:
         import torch
 
@@ -647,29 +694,36 @@ def main() -> int:
         torch.set_num_threads(torch_threads)
         transform = _load_contract_transforms(reg.abs_path(reg.DEMO_BUNDLE_DIR))
         models = {}
+        int8_ids = set()
         for item in evidence["models"]:
             path = reg.abs_path(f"{reg.DEMO_BUNDLE_DIR}/{item['checkpoint_relative_path']}")
             if _sha256(path) != item["checkpoint_sha256"]:  # load_evidence đã kiểm; kiểm lại ngay trước khi unpickle
                 raise ValueError(f"{item['model_id']}: checkpoint đổi sau khi kiểm hash")
-            models[item["model_id"]] = _load_model(path)
-        print(f"[reeval] 7 model đã nạp; val={len(val_rows)} ảnh, calibration={len(cal_rows)} ảnh, CPU threads={torch_threads}")
+            models[item["model_id"]] = load_published(path, item.get("format", "state_dict"))
+            if item.get("format") == "torchscript_int8":
+                int8_ids.add(item["model_id"])
+        print(f"[reeval] {len(models)} model đã nạp; val={len(val_rows)} ảnh, "
+              f"calibration={len(cal_rows) if cal_rows is not None else 'không dùng'}, CPU threads={torch_threads}")
         print("  validation:")
-        val_logits = collect_logits(val_rows, dataset_root, transform, models, args.batch_size, args.workers)
-        print("  calibration:")
-        cal_logits = collect_logits(cal_rows, dataset_root, transform, models, args.batch_size, args.workers)
-        np.savez_compressed(cache, fingerprint=fingerprint,
-                            **{f"val_{k}": v for k, v in val_logits.items()}, **{f"cal_{k}": v for k, v in cal_logits.items()})
+        val_logits = collect_logits(val_rows, dataset_root, transform, models, args.batch_size, args.workers, single_image=frozenset(int8_ids))
+        extra = {}
+        if cal_rows is not None:
+            print("  calibration:")
+            cal_logits = collect_logits(cal_rows, dataset_root, transform, models, args.batch_size, args.workers, single_image=frozenset(int8_ids))
+            extra = {f"cal_{k}": v for k, v in cal_logits.items()}
+        np.savez_compressed(cache, fingerprint=fingerprint, **{f"val_{k}": v for k, v in val_logits.items()}, **extra)
 
     report = build_report(evidence, val_rows, cal_rows, val_logits, cal_logits)
     for key, model in report["models"].items():
-        cal = model["calibration"]["overall"]
         vs = model["vs_published"]
         by = model["by_source"]
         pv = by.get("plantvillage", {}).get("top1_accuracy", float("nan"))
         pd = by.get("plantdoc", {}).get("top1_accuracy", float("nan"))
-        print(f"[reeval] {model['display_name']:15} PV {pv:.4f} PD {pd:.4f} | "
-              f"tái lập: PV={vs.get('plantvillage', {}).get('reproduced')} PD={vs.get('plantdoc', {}).get('reproduced')} | "
-              f"ECE {cal['ece_raw']:.4f} -> {cal['ece_temperature_scaled']:.4f} (T={model['temperature_fitted_on_calibration']})")
+        cal = model["calibration"].get("overall")
+        ece_text = (f"ECE {cal['ece_raw']:.4f} -> {cal['ece_temperature_scaled']:.4f} (T={model['temperature_fitted_on_calibration']})"
+                    if cal else "không hiệu chỉnh nhiệt độ (chỉ-validation)")
+        print(f"[reeval] {model['display_name']:24} PV {pv:.4f} PD {pd:.4f} | "
+              f"tái lập: PV={vs.get('plantvillage', {}).get('reproduced')} PD={vs.get('plantdoc', {}).get('reproduced')} | {ece_text}")
     print(f"[reeval] khớp tuyệt đối {report['comparisons_exact']}/{report['comparisons_total']} phép so; "
           f"trong ngưỡng ≤1 ảnh: {report['all_within_tolerance']}; hai model chính khớp tuyệt đối: {report['main_models_exact']}")
     if args.limit:
