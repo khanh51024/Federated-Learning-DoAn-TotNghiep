@@ -67,10 +67,10 @@ Báo cáo (đọc theo thứ tự):
 1. **Giới thiệu**: bài toán, ba câu hỏi nghiên cứu, kết quả chính.
 2. **Dữ liệu**: hai nguồn ảnh, tập học/kiểm tra/giữ riêng, mỗi client giữ phần nào của 38 nhóm; 12 cách chia dữ liệu.
 3. **Phương pháp**: ba cách huấn luyện, thuật toán FedAvg, thiết lập thí nghiệm, cách đánh giá.
-4. **Kết quả**: bảng 7 mô hình, tập giữ riêng và khoảng tin cậy, phân tích lỗi, độ tin cậy xác suất.
+4. **Kết quả**: bảng các mô hình của gói đang dùng (gói PC v3: 9 mô hình kèm 4 bản nén int8), phân tích lỗi; các mục cần tập kiểm thử (tập giữ riêng, khoảng tin cậy, độ tin cậy xác suất đã hiệu chuẩn) chỉ có khi gói có số đó.
 5. **Kết luận**: trả lời câu hỏi nghiên cứu, hạn chế, hướng phát triển.
 
-Demo: **Chẩn đoán ảnh** (một ảnh qua ba cách nhận diện ngang hàng: Local only, PlantVillage, Cộng đồng; bảy mô hình của đồ án nằm sau nút "Tổng hợp 7 mô hình"; đúng/sai và lý do, Grad-CAM) và **Học phân tán** (tham gia như một client thật từ trình duyệt, xem trọng số và độ trễ từng vòng, tải trọng số).
+Demo: **Chẩn đoán ảnh** (một ảnh qua ba cách nhận diện ngang hàng: Local only, PlantVillage, Cộng đồng; các mô hình của đồ án (gói PC v3: 9 mô hình kèm 4 bản nén int8) nằm sau nút "Tổng hợp"; đúng/sai và lý do, Grad-CAM) và **Học phân tán** (tham gia như một client thật từ trình duyệt, xem trọng số và độ trễ từng vòng, tải trọng số).
 
 **Phụ lục kỹ thuật** (liên kết ở chân trang): kiểm chứng số liệu, mã băm mô hình, và chạy thử Flower 5 client trên máy này để kiểm chứng hệ thống.
 

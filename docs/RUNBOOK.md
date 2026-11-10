@@ -16,7 +16,7 @@
 
 ## 0. Kiểm tra dataset gốc (điều kiện cho mọi run khoa học)
 
-Mục này chỉ dành cho protocol scratch cũ `stage2_scratch_clean_v3`. Protocol hiện hành (gói v4b) dùng release dữ liệu `mixed_pv_pd_v4`
+Mục này chỉ dành cho protocol scratch cũ `stage2_scratch_clean_v3`. Protocol của gói v4b (gói trước; gói PC v3 hiện hành dùng release `pv_pd_v3` và chỉ đánh giá trên validation, xem `docs/EXPERIMENT_PROTOCOL.md` mục 8) dùng release dữ liệu `mixed_pv_pd_v4`
 ở `data/dataset_sources/mixed/pv_pd_v4` (mục 6c) và được kiểm bằng `release_leakage_audit.json`; `scripts/pre_demo_check.py` tự dùng
 cách kiểm này khi gói web dựng từ `train_v4`. Thư mục PlantVillage gốc có ở `data/dataset_sources/PlantVillage-Dataset/raw/color`
 nhưng chưa chạy preflight scratch trên đó. Muốn chạy protocol scratch cũ, đặt PlantVillage ở một thư mục
@@ -106,10 +106,10 @@ bổ sung của hệ thống, không phải chức năng mặc định của Fed
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\update_status.py --full-gates   # chạy pytest toàn bộ (chậm, khoảng 10 phút vì test mạng Flower)
-.\.venv\Scripts\python.exe scripts\pre_demo_check.py               # gói v4b: không cần --dataset-root
+.\.venv\Scripts\python.exe scripts\pre_demo_check.py               # gói train_v4 hoặc PC v3: không cần --dataset-root
 ```
 
-Với gói v4b, ba cổng khoa học đã kiểm gói đang dùng (dữ liệu release, nguồn gốc gói, đủ 3 hạt giống). Cổng còn lại là run mạng Flower
+Với gói v4b, ba cổng khoa học đã kiểm gói đang dùng (dữ liệu release, nguồn gốc gói, đủ 3 hạt giống). Với gói PC v3 (chỉ validation) các cổng nguồn gốc gói, audit rò rỉ, calibration, tập kiểm thử, khoảng tin cậy và multi-seed nằm ở mức BLOCKED/chưa kiểm vì gói không kèm run của `train_v4.py` và đồ án không mở tập calibration hay kiểm thử. Cổng còn lại là run mạng Flower
 bằng dữ liệu thật (`network_global_artifact`), chưa làm. Với protocol scratch cũ vẫn dùng `--dataset-root D:\PlantVillage`.
 
 Bật hook chặn commit khi `PROJECT_STATUS.md` lệch: `git config core.hooksPath scripts/hooks`
@@ -159,7 +159,9 @@ Server demo không có dataset: các báo cáo trên được sinh ở máy này
 
 ## 7. Nhận kết quả train ngoài (bundle mới)
 
-**Cách hiện hành (đợt train từ `scripts/train_v4.py`, ví dụ v4b):** thay gói web bằng một lệnh `scripts/swap_web_models.py --runs runs/<đợt> --seed 42 --name <tên> --label <nhãn>`;
+**Gói do nhóm khác train (PC v3, chỉ validation):** `python scripts/import_pc_package.py --package <pc_v3_ket_qua> --name pc_v3_s42` rồi `python scripts/swap_web_models.py --name pc_v3_s42 --validation-only` (chi tiết ở THAY_MO_HINH_WEB.md mục 2b).
+
+**Cách dùng cho đợt train từ `scripts/train_v4.py`, ví dụ v4b:** thay gói web bằng một lệnh `scripts/swap_web_models.py --runs runs/<đợt> --seed 42 --name <tên> --label <nhãn>`;
 lùi bằng `--rollback <thư mục gói>`. Chi tiết, kiểm tra trước khi thay và cách ghim con trỏ `artifacts/active_bundle.json`: [THAY_MO_HINH_WEB.md](THAY_MO_HINH_WEB.md).
 Không sửa `src/registry.py` bằng tay.
 

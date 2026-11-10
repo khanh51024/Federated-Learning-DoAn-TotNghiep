@@ -4,7 +4,7 @@ Tài liệu này mô tả cách web nhận mô hình mới sau mỗi đợt hu�
 
 ## 1. Nguyên tắc: nhận dạng nằm ở một nơi
 
-Web phục vụ **một gói mô hình**: thư mục chứa 7 checkpoint (Centralized, FedAvg, 5 Local-only), số liệu đánh giá của chúng và `import_manifest.json`.
+Web phục vụ **một gói mô hình**: thư mục chứa 7 đến 13 mô hình (gói v4b: Centralized, FedAvg, 5 Local-only; gói PC v3: thêm Centralized SGD, SCAFFOLD và 4 bản int8), số liệu đánh giá của chúng và `import_manifest.json`.
 Mọi thông tin nhận dạng gói chỉ nằm ở `import_manifest.json`, đọc qua `src/bundle.py`:
 
 | Thông tin | Trường trong manifest |
@@ -45,6 +45,20 @@ Sau khi thay, chạy `pytest` và `python scripts/update_status.py --full-gates`
 
 Sau khi triển khai, kiểm mô hình ngay trên web bằng `python scripts/web_model_check.py` (mặc định gọi production; `--base-url http://127.0.0.1:8088` cho máy chủ cục bộ). Script gửi ảnh val, PlantWild và ảnh mẫu qua `/api/inference/all`, đối chiếu dự đoán với tính toán offline cùng đường tiền xử lý (phải trùng ~100%), đo độ chính xác theo nhóm nguồn, lọc loại cây, Grad-CAM, ảnh lớn và ảnh xấu, thời gian; kết quả ở `artifacts/web_model_check.json`.
 
+## 2b. Gói do nhóm khác huấn luyện (PC v3, chỉ đánh giá trên validation)
+
+Nhóm train giao checkpoint và số đo chứ không giao thư mục run của `train_v4.py`, nên không dùng `--runs`. Hai bước:
+
+```
+python scripts/import_pc_package.py --package <thư mục pc_v3_ket_qua> --name pc_v3_s42 --report-dir <thư mục pc_v3_ket_qua>/kiem_lai_web
+python scripts/swap_web_models.py --name pc_v3_s42 --validation-only
+```
+
+1. **Nhập gói** (`scripts/import_pc_package.py`): kiểm SHA-256 từng tệp, danh tính trong checkpoint (release, hạt giống, W0, vòng cuối), hợp đồng, thứ tự 38 lớp và n_k của phân hoạch; dựng 13 mô hình (fp32 và 4 bản int8 động, mỗi bản int8 buộc vào SHA của checkpoint fp32 gốc); đánh giá lại trên CPU **chỉ bằng tập validation** (int8 đo từng ảnh một); ghi `evidence_scope = "validation_only"`; ghi bảng đối chiếu với số của nhóm train.
+2. **Đổi gói** (`swap_web_models.py --validation-only`): bỏ mọi bước mở tập kiểm thử, tập calibration (niêm phong) hay dữ liệu ngoài miền (`SEALED_DATA_STEPS`), đánh giá lại không hiệu chỉnh nhiệt độ, và gỡ báo cáo của các bước bị bỏ khỏi chỗ web đọc (đã chụp để lùi). `--skip <bước>[,<bước>]` bỏ thêm bước tùy ý.
+
+Hệ quả trên web: không có xác suất đã hiệu chuẩn (chỉ softmax thô) và các mục cần dữ liệu kiểm thử bị giữ lại kèm lý do. Muốn mở lại các mục đó phải có quyết định mở tập calibration/kiểm thử hoặc nhận số P6 từ nhóm train. Protocol: `docs/EXPERIMENT_PROTOCOL.md` mục 8; tích hợp int8: `docs/TICH_HOP_INT8_PC_V3.md`.
+
 ## 3. Lùi về gói trước
 
 ```
@@ -64,4 +78,4 @@ Trạng thái học cộng đồng của gói đang dùng được chụp trư�
 
 ## 5. Tệp liên quan
 
-`src/bundle.py` (đọc manifest), `src/registry.py` (hằng số suy ra từ gói), `scripts/import_run_bundle.py`, `scripts/swap_web_models.py`, `web/demo_evidence.py` (kiểm tra gói khi suy luận), `.gitattributes` (`artifacts/model_bundles/** -text`: mã băm theo byte, Git không đổi LF/CRLF).
+`src/bundle.py` (đọc manifest), `src/registry.py` (hằng số suy ra từ gói), `scripts/import_run_bundle.py`, `scripts/import_pc_package.py`, `scripts/swap_web_models.py`, `web/demo_evidence.py` (kiểm tra gói khi suy luận), `.gitattributes` (`artifacts/model_bundles/** -text`: mã băm theo byte, Git không đổi LF/CRLF).

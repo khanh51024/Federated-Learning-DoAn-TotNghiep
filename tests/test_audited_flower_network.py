@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import multiprocessing
+import socket
 import time
 
 import flwr as fl
@@ -25,8 +26,15 @@ def _run_client(port: int) -> None:
     fl.client.start_client(server_address=f"127.0.0.1:{port}", client=adapter.to_client())
 
 
+def _free_port() -> int:
+    """Cổng trống do hệ điều hành cấp: cổng cố định (18100) có thể đang bị chương trình khác trên máy chiếm."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.bind(("127.0.0.1", 0))
+        return probe.getsockname()[1]
+
+
 def test_audited_server_validates_two_network_rounds(tmp_path):
-    port = 18100
+    port = _free_port()
     server = multiprocessing.Process(
         target=_run_audited_server, args=(port, str(tmp_path / "audited.json"), str(tmp_path / "audited.pt"))
     )
