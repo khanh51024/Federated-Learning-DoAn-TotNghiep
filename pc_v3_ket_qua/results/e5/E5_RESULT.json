@@ -1,0 +1,875 @@
+{
+ "spec": "pc_r9/E5_SPEC.md",
+ "mode": "full",
+ "script_sha256": "27c1a905435ca27a139d481de48011bc49748f24d9c083ca2970ab3ed5d946ff",
+ "runner_sha256": "7c29f6f6a3b164743231be4ef78075cda328d6b2b2cbb960d72a529741d0d462",
+ "plant_data_contract": "experiments\\train-improve-20261015\\q15\\sandbox\\plant_data_contract\\plant_data_contract\\dataset.py",
+ "torch": "2.6.0+cu124",
+ "quant_engine": "x86",
+ "arms": {
+  "static_ptq": "prepare_fx/convert_fx, get_default_qconfig_mapping('x86'), 512 train calib",
+  "dynamic_linear": "quantize_dynamic({nn.Linear}, qint8), no calibration"
+ },
+ "cpu": "13th Gen Intel(R) Core(TM) i5-13400F",
+ "logical_cpus": 16,
+ "eval_set": "val 4613 (manifests/val.jsonl)",
+ "calib": {
+  "n": 512,
+  "seed": 42,
+  "source": "manifests/train.jsonl",
+  "ids_sha256": "6791cfe527ef41afd1955af5f691362bacdb49116194b461855d1c4d187c94cf"
+ },
+ "latency_protocol": {
+  "batch": 1,
+  "input": "1x3x224x224 randn(seed 0), preprocessing excluded",
+  "warmup": 20,
+  "timed": 200,
+  "threads": [
+   1,
+   4
+  ]
+ },
+ "models": {
+  "centralized_adamw": {
+   "checkpoint": "<PC_PATH>/pc_transfer_r2\\web_pc_v3_a01_s42_r2\\centralized_adamw\\checkpoint_best.pt",
+   "checkpoint_sha256": "0a8293a34cd3c52b0993d63a9cd9646e30672c2e5f1d21928af1c50495902815",
+   "checkpoint_file_bytes": 19068722,
+   "G_FP32_REPRO": {
+    "ref_val_macro_f1_at_checkpoint": 0.9628784156215774,
+    "fp32_cpu": 0.9628784156215774,
+    "abs_d": 0.0,
+    "tol": 0.002,
+    "pass": true
+   },
+   "fp32": {
+    "metrics": {
+     "macro_f1": 0.9628784156215774,
+     "accuracy": 0.968567092998049,
+     "loss": 0.3081518585488131,
+     "macro_f1_supported": 0.9628784156215774,
+     "total_samples": 4613,
+     "all_keys": [
+      "accuracy",
+      "loss",
+      "macro_f1",
+      "macro_f1_supported",
+      "per_class_recall",
+      "per_source",
+      "quality",
+      "raw_accuracy",
+      "raw_loss",
+      "raw_macro_f1",
+      "raw_macro_f1_supported",
+      "total_samples"
+     ],
+     "plantdoc": {
+      "count": 269,
+      "accuracy": 0.5428,
+      "macro_f1": 0.1859,
+      "raw_accuracy": 0.5427509293680297,
+      "raw_macro_f1": 0.18593601792931902,
+      "macro_f1_supported": 0.5435,
+      "raw_macro_f1_supported": 0.5435052831780095
+     }
+    },
+    "state_dict_bytes": 6357002,
+    "torchscript_file_bytes": 6239796,
+    "torchscript_sha256": "32dc33a6753864817b8c04c7af36e8a4ef3628d2878ce0ba2291dc42c07d5063",
+    "reload_check": {
+     "argmax_equal": true,
+     "max_abs_logit_diff": 3.5762786865234375e-05
+    },
+    "latency_eager": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 11.702699994202703,
+      "p90_ms": 14.068600023165345,
+      "min_ms": 10.220900061540306,
+      "max_ms": 28.798400075174868
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 18.690149998292327,
+      "p90_ms": 20.501299994066358,
+      "min_ms": 12.808699975721538,
+      "max_ms": 23.741999990306795
+     }
+    ],
+    "latency_torchscript": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 8.294800005387515,
+      "p90_ms": 10.579800000414252,
+      "min_ms": 3.003499936312437,
+      "max_ms": 17.430400010198355
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 13.620099984109402,
+      "p90_ms": 14.863100019283593,
+      "min_ms": 6.980800069868565,
+      "max_ms": 19.800500012934208
+     }
+    ]
+   },
+   "static_ptq": {
+    "metrics": {
+     "macro_f1": 0.05564883802729498,
+     "accuracy": 0.060481248645133316,
+     "loss": 16.050721844338863,
+     "macro_f1_supported": 0.05564883802729498,
+     "total_samples": 4613,
+     "all_keys": [
+      "accuracy",
+      "loss",
+      "macro_f1",
+      "macro_f1_supported",
+      "per_class_recall",
+      "per_source",
+      "quality",
+      "raw_accuracy",
+      "raw_loss",
+      "raw_macro_f1",
+      "raw_macro_f1_supported",
+      "total_samples"
+     ],
+     "plantdoc": {
+      "count": 269,
+      "accuracy": 0.0929,
+      "macro_f1": 0.0311,
+      "raw_accuracy": 0.09293680297397769,
+      "raw_macro_f1": 0.031059478873140107,
+      "macro_f1_supported": 0.0908,
+      "raw_macro_f1_supported": 0.0907892459368711
+     }
+    },
+    "state_dict_bytes": 1861278,
+    "torchscript_file_bytes": 1824886,
+    "torchscript_sha256": "33466ed54d9d5675ecb16044e42c5220db57faa3fb976ffd1529d119c70245a0",
+    "reload_check": {
+     "argmax_equal": true,
+     "max_abs_logit_diff": 0.0
+    },
+    "latency_torchscript": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 9.34514997061342,
+      "p90_ms": 11.905400082468987,
+      "min_ms": 8.50750005338341,
+      "max_ms": 23.983500082977116
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 9.59930004319176,
+      "p90_ms": 10.985799948684871,
+      "min_ms": 3.382100025191903,
+      "max_ms": 12.06169999204576
+     }
+    ],
+    "delta_minus_fp32": {
+     "macro_f1": -0.9072295775942825,
+     "accuracy": -0.9080858443529157
+    }
+   },
+   "dynamic_linear": {
+    "metrics": {
+     "macro_f1": 0.9626511173407015,
+     "accuracy": 0.96835031432907,
+     "loss": 0.30662233403549033,
+     "macro_f1_supported": 0.9626511173407015,
+     "total_samples": 4613,
+     "all_keys": [
+      "accuracy",
+      "loss",
+      "macro_f1",
+      "macro_f1_supported",
+      "per_class_recall",
+      "per_source",
+      "quality",
+      "raw_accuracy",
+      "raw_loss",
+      "raw_macro_f1",
+      "raw_macro_f1_supported",
+      "total_samples"
+     ],
+     "plantdoc": {
+      "count": 269,
+      "accuracy": 0.539,
+      "macro_f1": 0.1856,
+      "raw_accuracy": 0.5390334572490706,
+      "raw_macro_f1": 0.1856071569244799,
+      "macro_f1_supported": 0.5425,
+      "raw_macro_f1_supported": 0.5425439971638644
+     }
+    },
+    "state_dict_bytes": 4472322,
+    "torchscript_file_bytes": 4355758,
+    "torchscript_sha256": "ee6a1349c4782ed30986e5e9b2725ca596cc42f06d5bab3d6731fbf0b3248828",
+    "reload_check": {
+     "argmax_equal": true,
+     "max_abs_logit_diff": 7.62939453125e-06
+    },
+    "latency_torchscript": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 7.8987000160850585,
+      "p90_ms": 9.059000061824918,
+      "min_ms": 5.906799924559891,
+      "max_ms": 14.012099942192435
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 13.012850016821176,
+      "p90_ms": 14.756400021724403,
+      "min_ms": 7.098899921402335,
+      "max_ms": 20.66839998587966
+     }
+    ],
+    "delta_minus_fp32": {
+     "macro_f1": -0.000227298280875865,
+     "accuracy": -0.00021677866897895637
+    }
+   },
+   "wall_s": 123.79720878601074
+  },
+  "centralized_sgd": {
+   "checkpoint": "<PC_PATH>/pc_transfer_r2\\web_pc_v3_a01_s42_r2\\centralized_sgd\\checkpoint_best.pt",
+   "checkpoint_sha256": "7bf7cd8081b0ad9f0d928bf8d227980ddc1517e7e5cb6cfce00f2dba37981aa5",
+   "checkpoint_file_bytes": 6512134,
+   "G_FP32_REPRO": {
+    "ref_val_macro_f1_at_checkpoint": 0.9549424217948812,
+    "fp32_cpu": 0.9549424217948812,
+    "abs_d": 0.0,
+    "tol": 0.002,
+    "pass": true
+   },
+   "fp32": {
+    "metrics": {
+     "macro_f1": 0.9549424217948812,
+     "accuracy": 0.9629308476045957,
+     "loss": 0.24083350517838722,
+     "macro_f1_supported": 0.9549424217948812,
+     "total_samples": 4613,
+     "all_keys": [
+      "accuracy",
+      "loss",
+      "macro_f1",
+      "macro_f1_supported",
+      "per_class_recall",
+      "per_source",
+      "quality",
+      "raw_accuracy",
+      "raw_loss",
+      "raw_macro_f1",
+      "raw_macro_f1_supported",
+      "total_samples"
+     ],
+     "plantdoc": {
+      "count": 269,
+      "accuracy": 0.5056,
+      "macro_f1": 0.1618,
+      "raw_accuracy": 0.5055762081784386,
+      "raw_macro_f1": 0.16177584700677416,
+      "macro_f1_supported": 0.4729,
+      "raw_macro_f1_supported": 0.4728832450967246
+     }
+    },
+    "state_dict_bytes": 6357002,
+    "torchscript_file_bytes": 6239798,
+    "torchscript_sha256": "cd7fdf644f22fa8a210c5cc41101779ec7d599f2e040e1482a8b505d26652536",
+    "reload_check": {
+     "argmax_equal": true,
+     "max_abs_logit_diff": 6.198883056640625e-05
+    },
+    "latency_eager": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 11.506300012115389,
+      "p90_ms": 14.699500054121017,
+      "min_ms": 10.328799951821566,
+      "max_ms": 21.330100018531084
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 18.287150014657527,
+      "p90_ms": 19.659999990835786,
+      "min_ms": 12.761100078932941,
+      "max_ms": 23.098799982108176
+     }
+    ],
+    "latency_torchscript": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 8.059449959546328,
+      "p90_ms": 10.843100026249886,
+      "min_ms": 7.301699952222407,
+      "max_ms": 17.6372000714764
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 13.543799985200167,
+      "p90_ms": 14.724500011652708,
+      "min_ms": 10.345799964852631,
+      "max_ms": 17.466000048443675
+     }
+    ]
+   },
+   "static_ptq": {
+    "metrics": {
+     "macro_f1": 0.029094664591362385,
+     "accuracy": 0.03945371775417299,
+     "loss": 10.51220162840487,
+     "macro_f1_supported": 0.029094664591362385,
+     "total_samples": 4613,
+     "all_keys": [
+      "accuracy",
+      "loss",
+      "macro_f1",
+      "macro_f1_supported",
+      "per_class_recall",
+      "per_source",
+      "quality",
+      "raw_accuracy",
+      "raw_loss",
+      "raw_macro_f1",
+      "raw_macro_f1_supported",
+      "total_samples"
+     ],
+     "plantdoc": {
+      "count": 269,
+      "accuracy": 0.0743,
+      "macro_f1": 0.022,
+      "raw_accuracy": 0.07434944237918216,
+      "raw_macro_f1": 0.021993938645161772,
+      "macro_f1_supported": 0.0643,
+      "raw_macro_f1_supported": 0.0642899745012421
+     }
+    },
+    "state_dict_bytes": 1861278,
+    "torchscript_file_bytes": 1824888,
+    "torchscript_sha256": "83b74b6aed23211641fc13a64ba3ddfdeddd8bbe79728f0581b41fa7d2b60475",
+    "reload_check": {
+     "argmax_equal": true,
+     "max_abs_logit_diff": 0.0
+    },
+    "latency_torchscript": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 9.002049977425486,
+      "p90_ms": 10.808899998664856,
+      "min_ms": 8.350700023584068,
+      "max_ms": 17.48139993287623
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 9.290899964980781,
+      "p90_ms": 10.607099975459278,
+      "min_ms": 6.794599932618439,
+      "max_ms": 11.625699931755662
+     }
+    ],
+    "delta_minus_fp32": {
+     "macro_f1": -0.9258477572035189,
+     "accuracy": -0.9234771298504227
+    }
+   },
+   "dynamic_linear": {
+    "metrics": {
+     "macro_f1": 0.9554391124174739,
+     "accuracy": 0.9631476262735746,
+     "loss": 0.2418643949967398,
+     "macro_f1_supported": 0.9554391124174739,
+     "total_samples": 4613,
+     "all_keys": [
+      "accuracy",
+      "loss",
+      "macro_f1",
+      "macro_f1_supported",
+      "per_class_recall",
+      "per_source",
+      "quality",
+      "raw_accuracy",
+      "raw_loss",
+      "raw_macro_f1",
+      "raw_macro_f1_supported",
+      "total_samples"
+     ],
+     "plantdoc": {
+      "count": 269,
+      "accuracy": 0.5056,
+      "macro_f1": 0.1616,
+      "raw_accuracy": 0.5055762081784386,
+      "raw_macro_f1": 0.16155501520699503,
+      "macro_f1_supported": 0.4722,
+      "raw_macro_f1_supported": 0.4722377367589085
+     }
+    },
+    "state_dict_bytes": 4472322,
+    "torchscript_file_bytes": 4355758,
+    "torchscript_sha256": "156d92407a269a8de89c467aef6a756ae25063051659cefaf63eb94d0165c084",
+    "reload_check": {
+     "argmax_equal": true,
+     "max_abs_logit_diff": 2.288818359375e-05
+    },
+    "latency_torchscript": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 8.16639995900914,
+      "p90_ms": 9.708600002340972,
+      "min_ms": 7.468199939467013,
+      "max_ms": 18.278099945746362
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 13.603549974504858,
+      "p90_ms": 14.944600057788193,
+      "min_ms": 5.56940003298223,
+      "max_ms": 18.25650001410395
+     }
+    ],
+    "delta_minus_fp32": {
+     "macro_f1": 0.0004966906225927215,
+     "accuracy": 0.00021677866897895637
+    }
+   },
+   "wall_s": 141.858717918396
+  },
+  "fedavg": {
+   "checkpoint": "<PC_PATH>/pc_transfer_r2\\web_pc_v3_a01_s42_r2\\fedavg\\checkpoint_best.pt",
+   "checkpoint_sha256": "5f923b6d5b1eabc6517880c92e67af7346c04187b9790f64f97124d7a1ce4723",
+   "checkpoint_file_bytes": 8607366,
+   "G_FP32_REPRO": {
+    "ref_val_macro_f1_at_checkpoint": 0.8832238935204458,
+    "fp32_cpu": 0.8832238935204458,
+    "abs_d": 0.0,
+    "tol": 0.002,
+    "pass": true
+   },
+   "fp32": {
+    "metrics": {
+     "macro_f1": 0.8832238935204458,
+     "accuracy": 0.9115543030565793,
+     "loss": 0.32999255140097,
+     "macro_f1_supported": 0.8832238935204458,
+     "total_samples": 4613,
+     "all_keys": [
+      "accuracy",
+      "loss",
+      "macro_f1",
+      "macro_f1_supported",
+      "per_class_recall",
+      "per_source",
+      "quality",
+      "raw_accuracy",
+      "raw_loss",
+      "raw_macro_f1",
+      "raw_macro_f1_supported",
+      "total_samples"
+     ],
+     "plantdoc": {
+      "count": 269,
+      "accuracy": 0.4758,
+      "macro_f1": 0.1591,
+      "raw_accuracy": 0.4758364312267658,
+      "raw_macro_f1": 0.15913097201330623,
+      "macro_f1_supported": 0.4652,
+      "raw_macro_f1_supported": 0.46515207203889514
+     }
+    },
+    "state_dict_bytes": 6357002,
+    "torchscript_file_bytes": 6239798,
+    "torchscript_sha256": "2eacb55b124af0de6e7567dc5c13e24324a9eeddb04ce7f54acc68967cff83d4",
+    "reload_check": {
+     "argmax_equal": true,
+     "max_abs_logit_diff": 4.553794860839844e-05
+    },
+    "latency_eager": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 11.873850016854703,
+      "p90_ms": 14.30479995906353,
+      "min_ms": 10.538000031374395,
+      "max_ms": 27.18460001051426
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 17.26875000167638,
+      "p90_ms": 19.27119994070381,
+      "min_ms": 12.547700083814561,
+      "max_ms": 45.64409994054586
+     }
+    ],
+    "latency_torchscript": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 8.613700047135353,
+      "p90_ms": 11.098600109107792,
+      "min_ms": 7.4760999996215105,
+      "max_ms": 21.288900054059923
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 12.500900018494576,
+      "p90_ms": 14.023700030520558,
+      "min_ms": 10.322600021027029,
+      "max_ms": 16.809800057671964
+     }
+    ]
+   },
+   "static_ptq": {
+    "metrics": {
+     "macro_f1": 0.02703599708947372,
+     "accuracy": 0.05029265120312161,
+     "loss": 6.86160481500698,
+     "macro_f1_supported": 0.02703599708947372,
+     "total_samples": 4613,
+     "all_keys": [
+      "accuracy",
+      "loss",
+      "macro_f1",
+      "macro_f1_supported",
+      "per_class_recall",
+      "per_source",
+      "quality",
+      "raw_accuracy",
+      "raw_loss",
+      "raw_macro_f1",
+      "raw_macro_f1_supported",
+      "total_samples"
+     ],
+     "plantdoc": {
+      "count": 269,
+      "accuracy": 0.026,
+      "macro_f1": 0.0042,
+      "raw_accuracy": 0.026022304832713755,
+      "raw_macro_f1": 0.0042359187442289935,
+      "macro_f1_supported": 0.0124,
+      "raw_macro_f1_supported": 0.01238191632928475
+     }
+    },
+    "state_dict_bytes": 1861278,
+    "torchscript_file_bytes": 1824888,
+    "torchscript_sha256": "741e8f8536367da7daa906ece6ab389fc7203edb42597b9794f985245f014824",
+    "reload_check": {
+     "argmax_equal": true,
+     "max_abs_logit_diff": 0.0
+    },
+    "latency_torchscript": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 9.02235001558438,
+      "p90_ms": 10.226199985481799,
+      "min_ms": 8.401300059631467,
+      "max_ms": 15.71840001270175
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 7.814050011802465,
+      "p90_ms": 9.634400019422174,
+      "min_ms": 6.4733000472188,
+      "max_ms": 11.26759999897331
+     }
+    ],
+    "delta_minus_fp32": {
+     "macro_f1": -0.8561878964309722,
+     "accuracy": -0.8612616518534576
+    }
+   },
+   "dynamic_linear": {
+    "metrics": {
+     "macro_f1": 0.883206317902235,
+     "accuracy": 0.9113375243876003,
+     "loss": 0.32996466908334987,
+     "macro_f1_supported": 0.883206317902235,
+     "total_samples": 4613,
+     "all_keys": [
+      "accuracy",
+      "loss",
+      "macro_f1",
+      "macro_f1_supported",
+      "per_class_recall",
+      "per_source",
+      "quality",
+      "raw_accuracy",
+      "raw_loss",
+      "raw_macro_f1",
+      "raw_macro_f1_supported",
+      "total_samples"
+     ],
+     "plantdoc": {
+      "count": 269,
+      "accuracy": 0.4721,
+      "macro_f1": 0.1584,
+      "raw_accuracy": 0.4721189591078067,
+      "raw_macro_f1": 0.15841987141199554,
+      "macro_f1_supported": 0.4631,
+      "raw_macro_f1_supported": 0.46307347028121754
+     }
+    },
+    "state_dict_bytes": 4472322,
+    "torchscript_file_bytes": 4355758,
+    "torchscript_sha256": "69ca4217c76311199ace2ed09d6228af19aaf390cfc6b3ab85a38d8656740a2b",
+    "reload_check": {
+     "argmax_equal": true,
+     "max_abs_logit_diff": 3.814697265625e-06
+    },
+    "latency_torchscript": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 8.103500003926456,
+      "p90_ms": 10.037300060503185,
+      "min_ms": 2.81360000371933,
+      "max_ms": 23.37970002554357
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 12.62629998382181,
+      "p90_ms": 13.947000028565526,
+      "min_ms": 10.278900037519634,
+      "max_ms": 15.39680000860244
+     }
+    ],
+    "delta_minus_fp32": {
+     "macro_f1": -1.7575618210807775e-05,
+     "accuracy": -0.00021677866897895637
+    }
+   },
+   "wall_s": 139.02353811264038
+  },
+  "scaffold": {
+   "checkpoint": "<PC_PATH>/pc_transfer_r2\\web_pc_v3_a01_s42_r2\\scaffold\\checkpoint_best.pt",
+   "checkpoint_sha256": "4817fbaceff086a64d3af79484c761743baa64b917c5e595131070944927bb05",
+   "checkpoint_file_bytes": 8607686,
+   "G_FP32_REPRO": {
+    "ref_val_macro_f1_at_checkpoint": 0.9013210378523886,
+    "fp32_cpu": 0.9013210378523886,
+    "abs_d": 0.0,
+    "tol": 0.002,
+    "pass": true
+   },
+   "fp32": {
+    "metrics": {
+     "macro_f1": 0.9013210378523886,
+     "accuracy": 0.9206590071536961,
+     "loss": 0.3060642395765332,
+     "macro_f1_supported": 0.9013210378523886,
+     "total_samples": 4613,
+     "all_keys": [
+      "accuracy",
+      "loss",
+      "macro_f1",
+      "macro_f1_supported",
+      "per_class_recall",
+      "per_source",
+      "quality",
+      "raw_accuracy",
+      "raw_loss",
+      "raw_macro_f1",
+      "raw_macro_f1_supported",
+      "total_samples"
+     ],
+     "plantdoc": {
+      "count": 269,
+      "accuracy": 0.5093,
+      "macro_f1": 0.1654,
+      "raw_accuracy": 0.5092936802973977,
+      "raw_macro_f1": 0.16536278520911912,
+      "macro_f1_supported": 0.4834,
+      "raw_macro_f1_supported": 0.48336814138050194
+     }
+    },
+    "state_dict_bytes": 6357002,
+    "torchscript_file_bytes": 6239798,
+    "torchscript_sha256": "40d93ff90862aad3a813a338eb23d4eda5f60c52c393196956be6b60de83e963",
+    "reload_check": {
+     "argmax_equal": true,
+     "max_abs_logit_diff": 5.2928924560546875e-05
+    },
+    "latency_eager": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 11.648950050584972,
+      "p90_ms": 13.524899957701564,
+      "min_ms": 10.295300045982003,
+      "max_ms": 20.941299968399107
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 18.00054998602718,
+      "p90_ms": 19.983600010164082,
+      "min_ms": 8.977600024081767,
+      "max_ms": 23.522599949501455
+     }
+    ],
+    "latency_torchscript": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 8.211550011765212,
+      "p90_ms": 9.566200082190335,
+      "min_ms": 7.45539995841682,
+      "max_ms": 13.871599920094013
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 12.786349980160594,
+      "p90_ms": 14.281700015999377,
+      "min_ms": 10.043299989774823,
+      "max_ms": 20.410299999639392
+     }
+    ]
+   },
+   "static_ptq": {
+    "metrics": {
+     "macro_f1": 0.04443479965669582,
+     "accuracy": 0.05376110990678517,
+     "loss": 8.705198705157617,
+     "macro_f1_supported": 0.04443479965669582,
+     "total_samples": 4613,
+     "all_keys": [
+      "accuracy",
+      "loss",
+      "macro_f1",
+      "macro_f1_supported",
+      "per_class_recall",
+      "per_source",
+      "quality",
+      "raw_accuracy",
+      "raw_loss",
+      "raw_macro_f1",
+      "raw_macro_f1_supported",
+      "total_samples"
+     ],
+     "plantdoc": {
+      "count": 269,
+      "accuracy": 0.026,
+      "macro_f1": 0.0075,
+      "raw_accuracy": 0.026022304832713755,
+      "raw_macro_f1": 0.0075191885964912275,
+      "macro_f1_supported": 0.022,
+      "raw_macro_f1_supported": 0.021979166666666664
+     }
+    },
+    "state_dict_bytes": 1861278,
+    "torchscript_file_bytes": 1824888,
+    "torchscript_sha256": "7fb71818488078b86360901a85cf169546ecfd9352e9ce0e3f31ae473eb2904d",
+    "reload_check": {
+     "argmax_equal": true,
+     "max_abs_logit_diff": 0.0
+    },
+    "latency_torchscript": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 8.921399945393205,
+      "p90_ms": 10.906600044108927,
+      "min_ms": 4.185600089840591,
+      "max_ms": 28.137399931438267
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 8.914550067856908,
+      "p90_ms": 10.676300036720932,
+      "min_ms": 3.9275999879464507,
+      "max_ms": 12.826899997889996
+     }
+    ],
+    "delta_minus_fp32": {
+     "macro_f1": -0.8568862381956928,
+     "accuracy": -0.8668978972469109
+    }
+   },
+   "dynamic_linear": {
+    "metrics": {
+     "macro_f1": 0.9027591918819299,
+     "accuracy": 0.921742900498591,
+     "loss": 0.30519771803014584,
+     "macro_f1_supported": 0.9027591918819299,
+     "total_samples": 4613,
+     "all_keys": [
+      "accuracy",
+      "loss",
+      "macro_f1",
+      "macro_f1_supported",
+      "per_class_recall",
+      "per_source",
+      "quality",
+      "raw_accuracy",
+      "raw_loss",
+      "raw_macro_f1",
+      "raw_macro_f1_supported",
+      "total_samples"
+     ],
+     "plantdoc": {
+      "count": 269,
+      "accuracy": 0.513,
+      "macro_f1": 0.1658,
+      "raw_accuracy": 0.5130111524163569,
+      "raw_macro_f1": 0.16579366944839505,
+      "macro_f1_supported": 0.4846,
+      "raw_macro_f1_supported": 0.4846276491568471
+     }
+    },
+    "state_dict_bytes": 4472322,
+    "torchscript_file_bytes": 4355758,
+    "torchscript_sha256": "6e6ca73a2528726720563baad15c02982348769a89e27ab34960cde61a13a3e5",
+    "reload_check": {
+     "argmax_equal": true,
+     "max_abs_logit_diff": 1.9073486328125e-06
+    },
+    "latency_torchscript": [
+     {
+      "threads": 1,
+      "n": 200,
+      "median_ms": 8.253650041297078,
+      "p90_ms": 10.843700030818582,
+      "min_ms": 7.200799998827279,
+      "max_ms": 23.43279996421188
+     },
+     {
+      "threads": 4,
+      "n": 200,
+      "median_ms": 12.587349978275597,
+      "p90_ms": 14.352699974551797,
+      "min_ms": 5.938599933870137,
+      "max_ms": 20.707499934360385
+     }
+    ],
+    "delta_minus_fp32": {
+     "macro_f1": 0.0014381540295412831,
+     "accuracy": 0.0010838933448948929
+    }
+   },
+   "wall_s": 141.65334153175354
+  }
+ },
+ "all_G_FP32_REPRO": true
+}

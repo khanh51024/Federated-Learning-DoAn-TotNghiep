@@ -1,0 +1,11 @@
+﻿alpha,phuong_phap,endpoint_tb,sd,n_seed,ghi_chu
+0.5,fedavg,0.9343,0.0044,3,doi chung
+0.5,scaffold,0.9437,0.0027,3,"R1 (3 seed): not established; cham lai bang S5 (5 seed, ~09/11)"
+0.5,fedprox,0.9345,0.0034,3,R1 (3 seed): not established; khong khac FedAvg trong pham vi do
+0.5,moon,,,0,dang chay (C-M); moi co cac seed ghi trong n_seed
+0.5,fedbn,0.9196,0.0033,3,endpoint cua mo hinh server; chi so chinh cua FedBN la CDR
+0.1,fedavg,0.8829,0.0034,3,doi chung
+0.1,scaffold,0.9008,0.0157,3,"R1 (3 seed): not established; cham lai bang S5 (5 seed, ~09/11)"
+0.1,fedprox,0.8825,0.0030,3,R1 (3 seed): not established; khong khac FedAvg trong pham vi do
+0.1,moon,0.8563,,1,dang chay (C-M); moi co cac seed ghi trong n_seed
+0.1,fedbn,0.8421,0.0067,3,endpoint cua mo hinh server; chi so chinh cua FedBN la CDR

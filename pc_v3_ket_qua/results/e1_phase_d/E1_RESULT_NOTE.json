@@ -1,0 +1,11 @@
+{
+ "about": "E1_RESULT.json 228f46d7 (harness e1_fairness_pd 0eb0fd9a)",
+ "column_alpha": "the alpha column / key holds the Phase D scenario name: qs = quantity_strat_q40, ss = source_skew_s60 (not a Dirichlet alpha)",
+ "labels": [
+  "validation",
+  "PC",
+  "descriptive",
+  "acc_k = sum_c p_k(c) recall_c, rounds 38-40"
+ ],
+ "written_after": "E1_RESULT is create-once; this note is a separate file, E1_RESULT unchanged"
+}

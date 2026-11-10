@@ -1,0 +1,132 @@
+{
+ "spec": "NONIID_DEPLOY_SELECT_SPEC r1",
+ "spec_sha256": "bfa12b54319f78c4686be26ca9ee5101d4135c66c660c4b9cb886e9620f3de61",
+ "collect_sha256": "9bacddf07c1c8ec7fc844302298d314b3bacf6f6b78622e46dee0b122cd608c7",
+ "winners_input": {
+  "s5_winner5": [],
+  "a1_winner_vs_fedavg": [],
+  "a1_included": true,
+  "sources": {
+   "s5": "S5/scores/s5_score_20261109.json ee5f05fd (0/8 WINNER5, TU VAN PASS)",
+   "a1": "A1A2/scores/q22_score_20261109.json 06376d40 (0/4 WINNER, TU VAN PASS)",
+   "a1_included_reason": "A1 6/6 finished 2026-11-09 before the 2026-11-10 08:00 cut"
+  }
+ },
+ "seeds": [
+  42,
+  43,
+  44
+ ],
+ "fedavg": {
+  "G": 0.8829223857468013,
+  "G_sd": 0.003365955946411649,
+  "G_seeds": {
+   "42": 0.8811110110820366,
+   "43": 0.8808500114946842,
+   "44": 0.8868061346636829
+  },
+  "pd": 0.47170590665014456,
+  "runs": [
+   "pc_fedavg_a01_s42",
+   "pc_fedavg_a01_s43",
+   "pc_fedavg_a01_s44"
+  ]
+ },
+ "fedavg_alpha05_G": 0.9343070025789084,
+ "candidates": {
+  "scaffold": {
+   "G": 0.9008069076261711,
+   "G_sd": 0.015741642581153046,
+   "G_seeds": {
+    "42": 0.9098274510721186,
+    "43": 0.8826301931287369,
+    "44": 0.9099630786776577
+   },
+   "pd": 0.5059892606361007,
+   "runs": [
+    "pc_scaffold_a01_s42",
+    "pc_scaffold_a01_s43",
+    "pc_scaffold_a01_s44"
+   ],
+   "dG_vs_fedavg": 0.01788452187936984,
+   "pd_drop": -0.034283353985956166,
+   "G_alpha05": 0.9436526828294063
+  },
+  "fedprox": {
+   "G": 0.8824715365528565,
+   "G_sd": 0.002972789953814183,
+   "G_seeds": {
+    "42": 0.8820688345390695,
+    "43": 0.8797206251348345,
+    "44": 0.8856251499846653
+   },
+   "pd": 0.4708798017348203,
+   "runs": [
+    "pc_c19_c_m_fedprox_a01_s42",
+    "pc_c19_c_m_fedprox_a01_s43",
+    "pc_c19_c_m_fedprox_a01_s44"
+   ],
+   "dG_vs_fedavg": -0.00045084919394478007,
+   "pd_drop": 0.000826104915324255,
+   "G_alpha05": 0.9344891929591707
+  },
+  "moon": {
+   "G": 0.8609309215495167,
+   "G_sd": 0.010878918092015613,
+   "G_seeds": {
+    "42": 0.8562634255494863,
+    "43": 0.8531645844177094,
+    "44": 0.8733647546813542
+   },
+   "pd": 0.46757538207352334,
+   "runs": [
+    "pc_c19_c_m_moon_a01_s42",
+    "pc_c19_c_m_moon_a01_s43",
+    "pc_c19_c_m_moon_a01_s44"
+   ],
+   "dG_vs_fedavg": -0.021991464197284594,
+   "pd_drop": 0.0041305245766212195,
+   "G_alpha05": 0.931971762951264
+  },
+  "fedbn": {
+   "G": 0.8421086243697483,
+   "G_sd": 0.006674523641538575,
+   "G_seeds": {
+    "42": 0.8497753334202514,
+    "43": 0.8375930344799355,
+    "44": 0.838957505209058
+   },
+   "pd": 0.43700950020652624,
+   "runs": [
+    "pc_c19_c_m_fedbn_a01_s42",
+    "pc_c19_c_m_fedbn_a01_s43",
+    "pc_c19_c_m_fedbn_a01_s44"
+   ],
+   "dG_vs_fedavg": -0.04081376137705295,
+   "pd_drop": 0.03469640644361832,
+   "G_alpha05": 0.9195573906079687
+  },
+  "scaffold_bn": {
+   "G": 0.8567254557525332,
+   "G_sd": 0.0032712596518215775,
+   "G_seeds": {
+    "42": 0.860251908382652,
+    "43": 0.856134508668409,
+    "44": 0.8537899502065386
+   },
+   "pd": 0.4572490706319703,
+   "runs": [
+    "pc_q22_a1_scaffold_bn_a01_s42",
+    "pc_q22_a1_scaffold_bn_a01_s43",
+    "pc_q22_a1_scaffold_bn_a01_s44"
+   ],
+   "dG_vs_fedavg": -0.026196929994268037,
+   "pd_drop": 0.014456836018174268,
+   "G_alpha05": 0.9225615210531876
+  }
+ },
+ "branch": "b",
+ "choice": "scaffold",
+ "label": "deployment choice by validation; NOT shown to beat FedAvg with statistical significance",
+ "shipped_checkpoint": "scaffold alpha 0.1 seed 42 checkpoint_last (round 40)"
+}

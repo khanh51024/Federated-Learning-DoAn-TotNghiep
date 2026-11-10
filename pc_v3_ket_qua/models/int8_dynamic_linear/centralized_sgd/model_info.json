@@ -1,0 +1,55 @@
+{
+ "role": "int8_dynamic_linear/centralized_sgd",
+ "format": "TorchScript, quantize_dynamic on nn.Linear only (conv stays fp32), no calibration",
+ "parent_fp32_role": "centralized_sgd",
+ "sha256": "156d92407a269a8de89c467aef6a756ae25063051659cefaf63eb94d0165c084",
+ "bytes": 4355758,
+ "source": "experiments/.../e5 (E5_RESULT d8f983d3)",
+ "metrics_validation_per_source": {
+  "all": {
+   "n": 4613,
+   "accuracy": 0.9631476262735746,
+   "macro_f1_present_classes": 0.9554041785988534
+  },
+  "plantvillage": {
+   "n": 4344,
+   "accuracy": 0.9914825046040515,
+   "macro_f1_present_classes": 0.9877180868205144
+  },
+  "plantdoc": {
+   "n": 269,
+   "accuracy": 0.5055762081784386,
+   "macro_f1_present_classes": 0.4101981947095429
+  }
+ },
+ "metrics_source": "P6 dry2 VAL logits (p6_final_test_v3 dryrun, int8 evaluated at batch 1 = one image at a time as the web does); val.jsonl 4,613 images",
+ "crop_accuracy": {
+  "overall": 0.9869932798612616,
+  "plantvillage": 0.9983885819521179,
+  "plantdoc": 0.8029739776951673
+ },
+ "crop_accuracy_note": "computed from P6 dry2 VAL logits (batch 1) with the web definition: crop(target) == crop(prediction), crop = class prefix before '___'",
+ "e5_size_and_latency": {
+  "torchscript_file_bytes": 4355758,
+  "latency_torchscript": [
+   {
+    "threads": 1,
+    "n": 200,
+    "median_ms": 8.16639995900914,
+    "p90_ms": 9.708600002340972,
+    "min_ms": 7.468199939467013,
+    "max_ms": 18.278099945746362
+   },
+   {
+    "threads": 4,
+    "n": 200,
+    "median_ms": 13.603549974504858,
+    "p90_ms": 14.944600057788193,
+    "min_ms": 5.56940003298223,
+    "max_ms": 18.25650001410395
+   }
+  ]
+ },
+ "mandatory_sentence": "int8 dong chi lop Linear: file TorchScript 4,36 so voi 6,24 MB (-30%), macro-F1 val thay doi <= 0,0015, do tre CPU tuong duong",
+ "not_included": "static PTQ (macro-F1 0,03-0,06: collapses, not for the web)"
+}

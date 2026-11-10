@@ -1,0 +1,18 @@
+{
+ "role": "centralized_sgd",
+ "description": "Tap trung SGD (cung optimizer voi FL), 40 epoch, epoch cuoi",
+ "source_run": "pc_sgd_s42",
+ "source_checkpoint": "experiments\\train-improve-20261015\\n11l\\sgd_s42_out\\run\\checkpoint_last.pt",
+ "checkpoint_key": "model_state",
+ "checkpoint_step": 40,
+ "selection_rule": "last round / last epoch (P40 endpoint rule), NOT best-on-val; file named checkpoint_best.pt only so the web loader finds it",
+ "sha256": "7bf7cd8081b0ad9f0d928bf8d227980ddc1517e7e5cb6cfce00f2dba37981aa5",
+ "bytes": 6512134,
+ "metrics_validation_pv_pd_v3": {
+  "endpoint_val_macro_f1_last3": 0.9544009281561568,
+  "plantdoc_macro_f1_last3": 0.49232316375260243,
+  "val_accuracy_last3": 0.9625333333333334,
+  "val_macro_f1_at_checkpoint": 0.9549424217948812
+ },
+ "metrics_note": "computed by the PC training run on validation (4,613 images: PlantVillage 4,344 + PlantDoc 269), not re-evaluated by the web pipeline; not a final test"
+}

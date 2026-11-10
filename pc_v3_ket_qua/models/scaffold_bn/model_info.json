@@ -1,0 +1,19 @@
+{
+ "role": "scaffold_bn",
+ "description": "SCAFFOLD-BN (A1, nhom de xuat: BN buffers duoc dieu chinh; mo hinh server), 5 client, alpha 0.1, round 40",
+ "source_run": "pc_a1_scaffold_bn_a01_s42",
+ "source_checkpoint": "experiments\\train-improve-20261015\\q22l\\a1_scaffold_bn_a01_s42_out\\a1_scaffold_bn_a01_s42\\run\\checkpoint_last.pt",
+ "checkpoint_key": "model_state",
+ "checkpoint_step": 40,
+ "selection_rule": "last round (P40 endpoint rule), NOT best-on-val; file named checkpoint_best.pt only so the web loader finds it",
+ "sha256": "67962d7610711e0ab218da01796973308d6bce9c0fed314296f08a17b64f9ed5",
+ "bytes": 8608710,
+ "note": "A1 not shown as winner (0/4 vs FedAvg on validation, TU VAN PASS); shipped as an extra comparison model",
+ "metrics_validation_pv_pd_v3": {
+  "endpoint_val_macro_f1_last3": 0.860251908382652,
+  "plantdoc_macro_f1_last3": 0.4377103814214968,
+  "plantdoc_accuracy_last3": 0.4448574969021066,
+  "val_macro_f1_at_checkpoint": 0.8587846069989156
+ },
+ "metrics_note": "computed by the PC training run on validation (4,613 images), not re-evaluated by the web pipeline; not a final test"
+}

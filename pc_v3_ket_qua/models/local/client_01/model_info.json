@@ -1,0 +1,19 @@
+{
+ "role": "local/client_01",
+ "description": "Local-only client 1, chi train tren du lieu cua client 1, alpha 0.1, epoch 40",
+ "source_run": "pc_lo17_lo_a01_s42",
+ "source_checkpoint": "experiments\\train-improve-20261015\\lo17l\\lo_a01_s42_out\\run\\client_01\\checkpoint_last.pt",
+ "checkpoint_key": "model_state_dict",
+ "checkpoint_step": 40,
+ "selection_rule": "last round / last epoch (P40 endpoint rule), NOT best-on-val; file named checkpoint_best.pt only so the web loader finds it",
+ "sha256": "772952e22014b5d6d947f5170469ebc66c17075467e43db42789cb67bb36b92d",
+ "bytes": 6365124,
+ "metrics_validation_pv_pd_v3": {
+  "endpoint_val_macro_f1_r38_40": 0.34801375065423396,
+  "plantdoc_macro_f1_r38_40": 0.10560679124981424,
+  "n_k": 7858,
+  "n_classes_in_train": 24,
+  "val_macro_f1_at_checkpoint": 0.3485213543633506
+ },
+ "metrics_note": "computed by the PC training run on validation (4,613 images: PlantVillage 4,344 + PlantDoc 269), not re-evaluated by the web pipeline; not a final test"
+}

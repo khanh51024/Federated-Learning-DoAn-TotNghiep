@@ -1,0 +1,19 @@
+{
+ "role": "scaffold",
+ "description": "SCAFFOLD (chong non-IID), 5 client, alpha 0.1, round 40",
+ "source_run": "pc_scaffold_a01_s42",
+ "source_checkpoint": "experiments\\train-improve-20261015\\q15l\\scaffold_s42_out\\scaffold_s42\\run\\checkpoint_last.pt",
+ "checkpoint_key": "model_state",
+ "checkpoint_step": 40,
+ "selection_rule": "last round / last epoch (P40 endpoint rule), NOT best-on-val; file named checkpoint_best.pt only so the web loader finds it",
+ "sha256": "4817fbaceff086a64d3af79484c761743baa64b917c5e595131070944927bb05",
+ "bytes": 8607686,
+ "metrics_validation_pv_pd_v3": {
+  "endpoint_val_macro_f1_last3": 0.9098274510721186,
+  "plantdoc_macro_f1_last3": 0.4906915256226031,
+  "val_accuracy_last3": 0.9281666666666666,
+  "val_macro_f1_at_checkpoint": 0.9013210378523886,
+  "plantdoc_accuracy_last3": 0.5154894671623296
+ },
+ "metrics_note": "computed by the PC training run on validation (4,613 images: PlantVillage 4,344 + PlantDoc 269), not re-evaluated by the web pipeline; not a final test"
+}

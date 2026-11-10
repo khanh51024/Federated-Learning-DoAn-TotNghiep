@@ -1,0 +1,19 @@
+{
+ "role": "fedavg",
+ "description": "FedAvg, 5 client, alpha 0.1, round 40",
+ "source_run": "pc_fedavg_a01_s42",
+ "source_checkpoint": "experiments\\train-improve-20261015\\q15l\\fedavg_s42_out\\fedavg_s42\\run\\checkpoint_last.pt",
+ "checkpoint_key": "model_state",
+ "checkpoint_step": 40,
+ "selection_rule": "last round / last epoch (P40 endpoint rule), NOT best-on-val; file named checkpoint_best.pt only so the web loader finds it",
+ "sha256": "5f923b6d5b1eabc6517880c92e67af7346c04187b9790f64f97124d7a1ce4723",
+ "bytes": 8607366,
+ "metrics_validation_pv_pd_v3": {
+  "endpoint_val_macro_f1_last3": 0.8811110110820366,
+  "plantdoc_macro_f1_last3": 0.46106565884741424,
+  "val_accuracy_last3": 0.9097,
+  "val_macro_f1_at_checkpoint": 0.8832238935204458,
+  "plantdoc_accuracy_last3": 0.46964064436183395
+ },
+ "metrics_note": "computed by the PC training run on validation (4,613 images: PlantVillage 4,344 + PlantDoc 269), not re-evaluated by the web pipeline; not a final test"
+}

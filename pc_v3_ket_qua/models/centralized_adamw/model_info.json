@@ -1,0 +1,18 @@
+{
+ "role": "centralized_adamw",
+ "description": "Tap trung AdamW (tran), 35 epoch, epoch cuoi",
+ "source_run": "pc_r3_ctrl",
+ "source_checkpoint": "experiments\\train-improve-20261015\\r3l\\ctrl_out\\run\\checkpoint_last.pt",
+ "checkpoint_key": "model_state",
+ "checkpoint_step": 35,
+ "selection_rule": "last round / last epoch (P40 endpoint rule), NOT best-on-val; file named checkpoint_best.pt only so the web loader finds it",
+ "sha256": "0a8293a34cd3c52b0993d63a9cd9646e30672c2e5f1d21928af1c50495902815",
+ "bytes": 19068722,
+ "metrics_validation_pv_pd_v3": {
+  "endpoint_val_macro_f1_last3": 0.9632459435454738,
+  "plantdoc_macro_f1_last3": 0.5475864124306635,
+  "val_accuracy_last3": 0.9686666666666667,
+  "val_macro_f1_at_checkpoint": 0.9628784156215774
+ },
+ "metrics_note": "computed by the PC training run on validation (4,613 images: PlantVillage 4,344 + PlantDoc 269), not re-evaluated by the web pipeline; not a final test"
+}

@@ -1,0 +1,329 @@
+{
+ "code": {
+  "code/pc_r9/e1_fairness.py": {
+   "original_sha256": "86e1d66459b3db2746205119772b8cf22f26e8b2f7664cd1844b12b0709f02f1",
+   "committed_sha256": "b6d958cae450eb1cb5e9f0d7a8758508d3ce6a6aaf09a0afc457f8fc5bc9d508",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/e1_fairness_pd.py": {
+   "original_sha256": "0eb0fd9a6ffbf703cc73639e0dca9c44267013dfcad5f29d369785d0651be61e",
+   "committed_sha256": "8f74befb0fff0f7a80d19ccf5c896bc1b1a0c5b3d617dd44c0d5d6abdfb51241",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/e4_divergence_r2.py": {
+   "original_sha256": "d22e34971dc3a4473973555454b7c0da0f9b5ec5fb6508d97791bbe9249ed97a",
+   "committed_sha256": "5c7a9f5c686ab8a366a5e2910db03d6256e53c8f62af4f8915f1eac786ffdcb0",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/e5_int8.py": {
+   "original_sha256": "27c1a905435ca27a139d481de48011bc49748f24d9c083ca2970ab3ed5d946ff",
+   "committed_sha256": "a8cad8b5455a6fc0e99f07f3dc46234b38dc1845130c68da987f53a65428f8cf",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/e23_predict.py": {
+   "original_sha256": "3fb0679c2611a3b3cfc1f59440ebf7a6228beaf40cec7e081b4117638d49f372",
+   "committed_sha256": "c1810f5c01c19e0e7ada1816e084f8404cb1691909b137b153eb0906b98215cf",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/e23_analysis.py": {
+   "original_sha256": "ceddad5d65eb5dc75668ee4475f42a0a32670a902e5ef6e329059be3f64fe466",
+   "committed_sha256": "4a58e623dc134920946c44085295934862cd98bff8a30ace78eb2d417f52ed5c",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/p6_final_test_v3.py": {
+   "original_sha256": "acbdec8bcc69d68f51ccbb7982a85217e4cf16454a9d46c292a76252e3277a5d",
+   "committed_sha256": "98ad02f2d9ffcaf29116eff898c67bcc1c323b32f8685ba6f77236c5bcb16fdf",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/build_p6_list.py": {
+   "original_sha256": "5c959c97c2ef778cfbf3a846ff8370de9ad4fb7bdb1112b89bb5ad132031e752",
+   "committed_sha256": "7e975d93c5c48ac9ce8ac598981983e804d317055150c379761f9ca825528eb8",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/build_web_pkg_r4.py": {
+   "original_sha256": "0ac1478ea83ecb6041bbbd07a97fbeefe873df4063e01952d3599d206955274e",
+   "committed_sha256": "e3f6a0c8a58e38f6ff014af39e51dd827c218f86bb8fb2e2a6261ae13da97559",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/build_rdiag.py": {
+   "original_sha256": "bc964bf5c198f360fd4388a72eef6b5666afa39cfd327dfc46ce06f7df04e0f7",
+   "committed_sha256": "14b5ad1e04d92b3778ef9529622ca8673849efec16dd628a5428600be8ba4635",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/rdiag_laptop_driver.py": {
+   "original_sha256": "041988940cc13d7ae91b38e638059a943becc62c54f036dc79588514078c73d2",
+   "committed_sha256": "447573973111256f6eaa372926d9c5df025d9edc04d473d358776d2ec23915fc",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/rdiag_laptop_kaggle.py": {
+   "original_sha256": "d3a2f6d1f2a1b5d89b9c57c843329ad8dd32e24f1f7a29220965b7e87b657508",
+   "committed_sha256": "3f3f674ecee107112ac076d134f2cebee4ec814e863e593cfcb3171902814e23",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/q19_laptop_driver.py": {
+   "original_sha256": "4e31e3af1695e65a00aa01fe6ca6a20f52676e50ebf368be6570478e74b49d15",
+   "committed_sha256": "713474928a4e123305fa87b8a2d0fbf855d65b7d1106698f8fe1e91de8517845",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/q19_laptop_kaggle.py": {
+   "original_sha256": "6aa699263454529b6710f964894f57df4413e7beea94faf79069219d666cf05a",
+   "committed_sha256": "706373dd2bac1b011b611f62f42e3a1ab51c4e267774e51fcafa14ee34d68172",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/q21_laptop_driver.py": {
+   "original_sha256": "37311e4e928910404650c7c611a5ab5807c2eb5e052362483b0f7ff4d8fda23d",
+   "committed_sha256": "2b3cbe5c249cf0020c861df8c20b35813eb44dfd283fa476b87068f1ce12d23f",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/q21_laptop_kaggle.py": {
+   "original_sha256": "73bed5573167e305f0a368abbbe211699bd19218a2772e9a9b2ea81800c6913d",
+   "committed_sha256": "19b1c108e15e2a1be9843b5b99020a3fa64c2fef5504620c5be0e8cbb61b8b09",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/q22_laptop_driver.py": {
+   "original_sha256": "5dc2127889c435328b2b0c6d06a26ab7a5c2ddfdb25209b97c13911e7313728d",
+   "committed_sha256": "6db72a77626afe64e61bbd027afcbcb9d19dcc5c71a044061bab42af93030d1b",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/q22_laptop_kaggle.py": {
+   "original_sha256": "d40e5c5f1873e3d622db7e32011af78658b00768e672734568805db027777f3a",
+   "committed_sha256": "1bbb693a12099ac4e76448becc38ba1398008a21cf53d06ef5f10fc233eafaa0",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/n11s5_laptop_driver.py": {
+   "original_sha256": "1cccdadb5c9c43b080906b1cbfe8c211523fce64dcc6888726bbe761aeae545b",
+   "committed_sha256": "a1616ba9f44e6a4a24250aadf8e96d76ae4958789601dc045ba0fd1c99154cfd",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/flw_exact_r3.py": {
+   "original_sha256": "978c143eb5b6a30657db498da9c10c2c31215c2bb1b6f0cb61ed1b256696ac06",
+   "committed_sha256": "978c143eb5b6a30657db498da9c10c2c31215c2bb1b6f0cb61ed1b256696ac06",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/flw_compare.py": {
+   "original_sha256": "872ee9ba947d06d94789d8d21e306231b590297d92f89e37821433cae66bfe0c",
+   "committed_sha256": "872ee9ba947d06d94789d8d21e306231b590297d92f89e37821433cae66bfe0c",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/fedbn_compare.py": {
+   "original_sha256": "fa229ea5d43f071bf24f78566ebcb9bf92b6a972ca36282fc1f9f92ed63900bd",
+   "committed_sha256": "5855c906fc31f778bcb04112667ab8144aa15225438c5349a24f75bff16b8f34",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/fl_exit_check.py": {
+   "original_sha256": "c64a12962f867330054be45f3d4235e2b03aaa6cc0c66debda7f2b79598056c9",
+   "committed_sha256": "ab9551065128625e8531c6ed54ebfae105418be382ad853ec62041c73e27df2f",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/lo_exit_check.py": {
+   "original_sha256": "02519b3623ec688be022450bce1d377e677b9b81761d1643f21e64f390081776",
+   "committed_sha256": "ddd705530039af0cad25e09d7ea0202e8359ce4f3f4886529efca669da1612ce",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/q19_score.py": {
+   "original_sha256": "db91b43dc590965fb90c122fba272769d97eedf521d84e6b0b454e56fe9e5d84",
+   "committed_sha256": "bf43f7a19f21dd780b0eed3ec791e3fbe69c4671026e5384fab883f30589b14e",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/q22_score.py": {
+   "original_sha256": "2287f2a339c06968d3ad82a227d7acade962060586ebaebe2471366faec6f8b1",
+   "committed_sha256": "d2772100608bbf7e55c6b66637e3c144ffa07595b6fd0eda820ffee7e2a9db7f",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/s5_score.py": {
+   "original_sha256": "61188a9eb04091c0b0cdc581bdd3ab79b986cbaa008df774cdca0414d32cb744",
+   "committed_sha256": "79f6c43d0d72b1ceea5e8b1c8f24364fba381dd694e10f0e331a963170e3871a",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/ram_guard_launcher.py": {
+   "original_sha256": "97e02b9f56b411b9d0b5484a13fae9f54b623d9ad32c33afe9c678adc49120f6",
+   "committed_sha256": "97e02b9f56b411b9d0b5484a13fae9f54b623d9ad32c33afe9c678adc49120f6",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/queue_watch_r2.py": {
+   "original_sha256": "9d434e3988d17850ad8cffe937e1bd1a5a5ee315fc9398f4217bfbdf9171efa9",
+   "committed_sha256": "bd1dcbf78b7f771c43eb05ad02b0956fcdf7a753ed4f9369379ac2accd12dd67",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/eco_watch.py": {
+   "original_sha256": "834f6ead93e0a627f54ce75dd73b6edab5aa49b1dd88ebe1c68ea5bdd2d343f8",
+   "committed_sha256": "563fd9d7992601e76c25eb93ea98add77e3681eb8ec43903a8073d18c92061d0",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/thermal_builtin_logger.py": {
+   "original_sha256": "15a7ef81440dac09706966f19f4ca65a25e0d21efc8d9e76e73211387e38e578",
+   "committed_sha256": "0259e5f9436c514e3a7dbfc6dc570d125d5822c92be73d8f6236b72f380a9733",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/ext_sel_eval_pc.py": {
+   "original_sha256": "61b1d8009a5b8459128acbabf87b45f86675ba1728ae5bdc185d890de50ebbf6",
+   "committed_sha256": "3968c3492272a67c7d43deba762f03f99edca252b0ad9c99d44306ecea4e66d2",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/r4_sel_eval_pc.py": {
+   "original_sha256": "582ce0add2160e3a71abdd97663770a3c533c7bf6256c8e37772335cba73ac42",
+   "committed_sha256": "3896a7db88d56191317080cb2b6bb4c0b449de9701772dcbc8647726a44dafa3",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/deploy_gates_pc.py": {
+   "original_sha256": "0adb0ccf8bffdb3497d2cda3f712a0a58adea11beb36538283218dc0a2fd2d6e",
+   "committed_sha256": "eb85933673805e62085c04dc337d81821736fd67574e1dc9d9dafdeffc5372cc",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/pc_r9/laptop_sched_v2s4.py": {
+   "original_sha256": "1d622987ddaa883b38e69cf902791e05ba662a221606c01a3e43e59d3cbb7903",
+   "committed_sha256": "88a9c34d9c8f0c65e3d7092c701de0e87c6f2ae52d6d3bd9844fae70e0e56cad",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/runners_q17/fedavg_mixed_runner.py": {
+   "original_sha256": "c310f11483e11f12c861939bd88d93b8d94548246960087f504e51dfac218efd",
+   "committed_sha256": "c310f11483e11f12c861939bd88d93b8d94548246960087f504e51dfac218efd",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/runners_q17/local_only_mixed_runner.py": {
+   "original_sha256": "16f5aa3bc7a598ec51c0f3723379fd838a49e47a1050e2900fdc9604680dfd24",
+   "committed_sha256": "16f5aa3bc7a598ec51c0f3723379fd838a49e47a1050e2900fdc9604680dfd24",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/runners_q17/q8_methods.py": {
+   "original_sha256": "aa261e3dc28533cf6666d4ae3a65a932e1ae27a22208a9dcaeb619e6fa2f90ca",
+   "committed_sha256": "aa261e3dc28533cf6666d4ae3a65a932e1ae27a22208a9dcaeb619e6fa2f90ca",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/runners_q17/q8r2_methods.py": {
+   "original_sha256": "8fda0c67431a49f411e1d780aae7b919fdca17a4ce38cc1ef7c3e136dcdc78ad",
+   "committed_sha256": "8fda0c67431a49f411e1d780aae7b919fdca17a4ce38cc1ef7c3e136dcdc78ad",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/runners_q18/fedavg_mixed_runner.py": {
+   "original_sha256": "47b31c6a467b3f01e3d7ca4b895ea9cc9386fcc7a5f29d5f9a42330489223c4e",
+   "committed_sha256": "47b31c6a467b3f01e3d7ca4b895ea9cc9386fcc7a5f29d5f9a42330489223c4e",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/runners_q18/local_only_mixed_runner.py": {
+   "original_sha256": "16f5aa3bc7a598ec51c0f3723379fd838a49e47a1050e2900fdc9604680dfd24",
+   "committed_sha256": "16f5aa3bc7a598ec51c0f3723379fd838a49e47a1050e2900fdc9604680dfd24",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/runners_q18/q18_methods.py": {
+   "original_sha256": "032d820eed22ef0fa6b13c51bc67d49e6fc39d70e8e01c5ec667bde9c4af3550",
+   "committed_sha256": "032d820eed22ef0fa6b13c51bc67d49e6fc39d70e8e01c5ec667bde9c4af3550",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/runners_q18/q8_methods.py": {
+   "original_sha256": "aa261e3dc28533cf6666d4ae3a65a932e1ae27a22208a9dcaeb619e6fa2f90ca",
+   "committed_sha256": "aa261e3dc28533cf6666d4ae3a65a932e1ae27a22208a9dcaeb619e6fa2f90ca",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/runners_q18/q8r2_methods.py": {
+   "original_sha256": "8fda0c67431a49f411e1d780aae7b919fdca17a4ce38cc1ef7c3e136dcdc78ad",
+   "committed_sha256": "8fda0c67431a49f411e1d780aae7b919fdca17a4ce38cc1ef7c3e136dcdc78ad",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/__init__.py": {
+   "original_sha256": "a698d2ea0ece767ca1fb0e44996692376c0f4a896e992df668f257eb7a1752d6",
+   "committed_sha256": "a698d2ea0ece767ca1fb0e44996692376c0f4a896e992df668f257eb7a1752d6",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/colab_drive_destination.py": {
+   "original_sha256": "696bdde9d5fbf8e60f295ec936e4eb544633e89b1564e48f955b0f53eae51178",
+   "committed_sha256": "696bdde9d5fbf8e60f295ec936e4eb544633e89b1564e48f955b0f53eae51178",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/colab_sync.py": {
+   "original_sha256": "edc7c486718c8e047e88f0ff829dba0c3adeeab9e835f66e77a3c567c0b26ecd",
+   "committed_sha256": "edc7c486718c8e047e88f0ff829dba0c3adeeab9e835f66e77a3c567c0b26ecd",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/contract_pin.py": {
+   "original_sha256": "828ffe0af320d2c509f2bb36ed1aebd78db1bf52a537167ab6dff13ee3775976",
+   "committed_sha256": "828ffe0af320d2c509f2bb36ed1aebd78db1bf52a537167ab6dff13ee3775976",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/crop_geometry.py": {
+   "original_sha256": "7b19a5d9fd78d4a501362c391d94c045eda870485ff5ca5711a44969e08b5743",
+   "committed_sha256": "7b19a5d9fd78d4a501362c391d94c045eda870485ff5ca5711a44969e08b5743",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/crop_training_contract.py": {
+   "original_sha256": "da2f06d3e9fb3cd372b71211f03d6abf91cf3f102d5a0e6c1e70f9e5204386ef",
+   "committed_sha256": "da2f06d3e9fb3cd372b71211f03d6abf91cf3f102d5a0e6c1e70f9e5204386ef",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/dataset.py": {
+   "original_sha256": "7728d9f15ebab577a9e97599d2dc9c23f2eaa32c1f110231c3ae78984800db0f",
+   "committed_sha256": "7728d9f15ebab577a9e97599d2dc9c23f2eaa32c1f110231c3ae78984800db0f",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/full_gate.py": {
+   "original_sha256": "ee67092d9050d76a591b589e6cb51c291e0097a77a5bc29a337ca649a710ada6",
+   "committed_sha256": "ee67092d9050d76a591b589e6cb51c291e0097a77a5bc29a337ca649a710ada6",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/image_rgb.py": {
+   "original_sha256": "5f3f8f45638f0dc47a72d5ad14bb4d5b13484c871ca6d3967ca6d68ab262e56a",
+   "committed_sha256": "5f3f8f45638f0dc47a72d5ad14bb4d5b13484c871ca6d3967ca6d68ab262e56a",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/integrity.py": {
+   "original_sha256": "94a17e0d970f381f812b892222de9db1a265134913bf7f0b6f30576ce3fcb251",
+   "committed_sha256": "94a17e0d970f381f812b892222de9db1a265134913bf7f0b6f30576ce3fcb251",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/models.py": {
+   "original_sha256": "2601dea80484813b35afb745b7b02bc2083e79a7766821a39e3175601df9c8ed",
+   "committed_sha256": "2601dea80484813b35afb745b7b02bc2083e79a7766821a39e3175601df9c8ed",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/partitions.py": {
+   "original_sha256": "06c9d7a826e5f224dfc8f913c450ae6de4094b57f69a6ac226c0b5fbb27c1b7a",
+   "committed_sha256": "06c9d7a826e5f224dfc8f913c450ae6de4094b57f69a6ac226c0b5fbb27c1b7a",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/path_resolver.py": {
+   "original_sha256": "bf9188368a168df84be2ed3e65826671ef9b3d6cfa129f405350334b5d0ec765",
+   "committed_sha256": "bf9188368a168df84be2ed3e65826671ef9b3d6cfa129f405350334b5d0ec765",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/quality_control.py": {
+   "original_sha256": "2b27d5d8bea1ad5f755a3383aec2710848810a78cd7adcdfe9d1d58102604831",
+   "committed_sha256": "2b27d5d8bea1ad5f755a3383aec2710848810a78cd7adcdfe9d1d58102604831",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/quality_metrics.py": {
+   "original_sha256": "1895527ec97d3d3924a2ce87f24540f51fada3ce37d591038014e5c6582557f4",
+   "committed_sha256": "1895527ec97d3d3924a2ce87f24540f51fada3ce37d591038014e5c6582557f4",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/resume_guard.py": {
+   "original_sha256": "12ea20279baaa6c333efa012d4c84e1e716cdbb8ac17b9f993fa2df274abfc09",
+   "committed_sha256": "12ea20279baaa6c333efa012d4c84e1e716cdbb8ac17b9f993fa2df274abfc09",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/schema.py": {
+   "original_sha256": "c11cfe7fe8419b91393458504b7d0902777b064a741d31b1aab65d0ebfcd6c30",
+   "committed_sha256": "c11cfe7fe8419b91393458504b7d0902777b064a741d31b1aab65d0ebfcd6c30",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/taxonomy.py": {
+   "original_sha256": "4d31f9d3d35026ab8adc3d7567e82e231827e380316f194e89ab6f785210a712",
+   "committed_sha256": "4d31f9d3d35026ab8adc3d7567e82e231827e380316f194e89ab6f785210a712",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/training_progress.py": {
+   "original_sha256": "042062e3285889e9e406086ecf031844e5882ebc1116875f200f2cafcd47e344",
+   "committed_sha256": "042062e3285889e9e406086ecf031844e5882ebc1116875f200f2cafcd47e344",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/plant_data_contract/plant_data_contract/transforms.py": {
+   "original_sha256": "4693c538310f95402caf55584781b1f31f7adaf25e673d05450f889ee021048f",
+   "committed_sha256": "4693c538310f95402caf55584781b1f31f7adaf25e673d05450f889ee021048f",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  },
+  "code/partition/gen_alpha100_v5.py": {
+   "original_sha256": "7861770362652443cde0226a770463e563aac1bceb92cec2ef3701a9374c1546",
+   "committed_sha256": "d7f029ab990c73d9621e84fa080a1fa434b67e4401b7148e2a561b89fdb03685",
+   "transform": "absolute paths -> relative / <WORKSPACE_ROOT> / <PC_PATH>"
+  }
+ }
+}

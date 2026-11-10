@@ -1,0 +1,409 @@
+{
+ "sentences": {
+  "i": "Lua chon trien khai dua tren validation; tren EXT-FINAL, aug2_lap (0.145) va bal_lap (0.141) cao hon r3data_pc (0.105) co y nghia sau Holm (p_holm 0.045); lua chon khong doi.",
+  "ii": "EXT-FINAL (anh hien truong, ngoai mien): accuracy moi nhom (>= 3 seed) 0.10-0.17 (cat xuong 2 chu so), tuc mo hinh KHONG tong quat hoa tot ra anh hien truong. Nhom mo ta 1 seed: d4_descriptive|fedavg|0.1 0.130; d4_descriptive|p1|0.1 0.132; d4_descriptive|p2|0.1 0.127; d4_descriptive|p3|0.1 0.080; d4_descriptive|scaffold|0.1 0.120.",
+  "iii": "PV-legacy la 'legacy test da dung 3 lan (Q5 / Q6 / Q11b)'; PD-172 va PD-463 cung la tap legacy da lo.",
+  "iv": "int8 (chi lop Linear): |delta accuracy| <= 0.006 tren moi tap so voi fp32 CPU cung mo hinh.",
+  "scaffold": "Giai phap duoc chon: SCAFFOLD (nhanh b), G = 0.9008 ± 0.0157 (3 seed, alpha 0,1) so voi FedAvg 0.8829 ± 0.0034; dG = +0.0179.",
+  "e2": "E2 (PD val 269 anh): khong bac bo H0 sau Holm (min p_holm 0.135); khong viet 'khong co khac biet'.",
+  "e3": "FedAvg 40 vong truyen 3.1x dung luong anh tho (2510 MB so voi 806 MB); khong phai tiet kiem bang thong, ma vi rieng tu.",
+  "rdiag": "R-DIAG (chan doan mo ta, 3 seed, khong kiem dinh): o alpha 100, lay mau PD theo ti le tu nhien thay vi 0,25 doi PD macro-F1 +0.014 ± 0.016 (2/3 seed duong); FedBN (BN cuc bo) doi -0.003 ± 0.009 (runner q18 so voi baseline runner q17).",
+  "flwa": "FLW-A: 3/3 seed bit-exact (40 round + checkpoint cuoi); Flower 1.42.0 trong venv rieng; flower_exact = cong tuong duong cua dieu phoi va truyen tai; harness giao DataLoader, RNG va GradScaler (khong phai trien khai Flower doc lap).",
+  "int8_e5": "int8 dong chi lop Linear: file TorchScript 4,36 so voi 6,24 MB (-30%), macro-F1 val thay doi <= 0,0015, do tre CPU tuong duong."
+ },
+ "p6_groups": [
+  [
+   "central|adamw|None",
+   5,
+   "0.551 ± 0.036",
+   "0.523 ± 0.015",
+   "0.995 ± 0.000",
+   "0.115 ± 0.016"
+  ],
+  [
+   "central|sgd|None",
+   5,
+   "0.538 ± 0.019",
+   "0.527 ± 0.012",
+   "0.991 ± 0.003",
+   "0.150 ± 0.011"
+  ],
+  [
+   "d4_descriptive|fedavg|0.1",
+   1,
+   "0.436",
+   "0.408",
+   "0.939",
+   "0.130"
+  ],
+  [
+   "d4_descriptive|p1|0.1",
+   1,
+   "0.529",
+   "0.508",
+   "0.915",
+   "0.132"
+  ],
+  [
+   "d4_descriptive|p2|0.1",
+   1,
+   "0.488",
+   "0.464",
+   "0.918",
+   "0.127"
+  ],
+  [
+   "d4_descriptive|p3|0.1",
+   1,
+   "0.436",
+   "0.428",
+   "0.928",
+   "0.080"
+  ],
+  [
+   "d4_descriptive|scaffold|0.1",
+   1,
+   "0.465",
+   "0.449",
+   "0.934",
+   "0.120"
+  ],
+  [
+   "fl_phase_d|fedavg|qs",
+   3,
+   "0.504 ± 0.013",
+   "0.513 ± 0.019",
+   "0.981 ± 0.001",
+   "0.139 ± 0.018"
+  ],
+  [
+   "fl_phase_d|fedavg|ss",
+   3,
+   "0.525 ± 0.009",
+   "0.505 ± 0.008",
+   "0.982 ± 0.002",
+   "0.145 ± 0.008"
+  ],
+  [
+   "fl|fedavg_fp16_uplink|0.1",
+   3,
+   "0.492 ± 0.033",
+   "0.438 ± 0.020",
+   "0.941 ± 0.004",
+   "0.106 ± 0.009"
+  ],
+  [
+   "fl|fedavg|0.1",
+   5,
+   "0.477 ± 0.028",
+   "0.438 ± 0.019",
+   "0.940 ± 0.004",
+   "0.112 ± 0.009"
+  ],
+  [
+   "fl|fedavg|0.5",
+   5,
+   "0.456 ± 0.023",
+   "0.493 ± 0.013",
+   "0.973 ± 0.002",
+   "0.163 ± 0.012"
+  ],
+  [
+   "fl|fedavg|1.0",
+   3,
+   "0.486 ± 0.027",
+   "0.515 ± 0.009",
+   "0.978 ± 0.001",
+   "0.170 ± 0.010"
+  ],
+  [
+   "fl|fedavg|10.0",
+   3,
+   "0.502 ± 0.007",
+   "0.512 ± 0.009",
+   "0.980 ± 0.001",
+   "0.141 ± 0.018"
+  ],
+  [
+   "fl|fedavg|100.0",
+   3,
+   "0.525 ± 0.027",
+   "0.528 ± 0.016",
+   "0.981 ± 0.001",
+   "0.161 ± 0.019"
+  ],
+  [
+   "fl|fedbn|0.1",
+   5,
+   "0.453 ± 0.022",
+   "0.418 ± 0.007",
+   "0.917 ± 0.005",
+   "0.110 ± 0.018"
+  ],
+  [
+   "fl|fedbn|0.5",
+   5,
+   "0.456 ± 0.024",
+   "0.493 ± 0.018",
+   "0.966 ± 0.001",
+   "0.155 ± 0.010"
+  ],
+  [
+   "fl|fedprox|0.1",
+   5,
+   "0.484 ± 0.022",
+   "0.440 ± 0.016",
+   "0.941 ± 0.002",
+   "0.111 ± 0.008"
+  ],
+  [
+   "fl|fedprox|0.5",
+   5,
+   "0.463 ± 0.025",
+   "0.497 ± 0.018",
+   "0.974 ± 0.002",
+   "0.163 ± 0.012"
+  ],
+  [
+   "fl|moon|0.1",
+   5,
+   "0.484 ± 0.019",
+   "0.448 ± 0.023",
+   "0.931 ± 0.011",
+   "0.109 ± 0.007"
+  ],
+  [
+   "fl|moon|0.5",
+   5,
+   "0.481 ± 0.029",
+   "0.511 ± 0.014",
+   "0.970 ± 0.004",
+   "0.152 ± 0.016"
+  ],
+  [
+   "fl|scaffold_bn|0.1",
+   3,
+   "0.469 ± 0.007",
+   "0.443 ± 0.011",
+   "0.914 ± 0.006",
+   "0.107 ± 0.008"
+  ],
+  [
+   "fl|scaffold_bn|0.5",
+   3,
+   "0.436 ± 0.010",
+   "0.500 ± 0.013",
+   "0.960 ± 0.006",
+   "0.167 ± 0.014"
+  ],
+  [
+   "fl|scaffold|0.1",
+   5,
+   "0.487 ± 0.025",
+   "0.464 ± 0.021",
+   "0.944 ± 0.026",
+   "0.122 ± 0.012"
+  ],
+  [
+   "fl|scaffold|0.5",
+   5,
+   "0.484 ± 0.013",
+   "0.498 ± 0.021",
+   "0.981 ± 0.002",
+   "0.159 ± 0.011"
+  ],
+  [
+   "rdiag_descriptive|fedavg_pd_natural|100.0",
+   3,
+   "0.541 ± 0.029",
+   "0.539 ± 0.028",
+   "0.987 ± 0.003",
+   "0.128 ± 0.007"
+  ],
+  [
+   "rdiag_descriptive|fedbn|100.0",
+   3,
+   "0.500 ± 0.036",
+   "0.522 ± 0.014",
+   "0.979 ± 0.002",
+   "0.155 ± 0.026"
+  ]
+ ],
+ "deploy_holm4": [
+  {
+   "test": "r3data_pc_vs_q5_reference",
+   "n": 440,
+   "acc_r3data_pc": 0.10454545454545454,
+   "acc_other": 0.12272727272727273,
+   "b_r3data_only": 13,
+   "c_other_only": 21,
+   "p": 0.22948101302608848,
+   "platform_other": "laptop",
+   "p_holm": 0.45896202605217695,
+   "reject": false
+  },
+  {
+   "test": "r3data_pc_vs_r4_per_leaf",
+   "n": 86,
+   "acc_r3data_pc": 0.27906976744186046,
+   "acc_other": 0.313953488372093,
+   "b_r3data_only": 2,
+   "c_other_only": 5,
+   "p": 0.453125,
+   "platform_other": "PC",
+   "p_holm": 0.45896202605217695,
+   "reject": false
+  },
+  {
+   "test": "r3data_pc_vs_aug2_lap",
+   "n": 440,
+   "acc_r3data_pc": 0.10454545454545454,
+   "acc_other": 0.14545454545454545,
+   "b_r3data_only": 14,
+   "c_other_only": 32,
+   "p": 0.011351591436778108,
+   "platform_other": "laptop",
+   "p_holm": 0.04540636574711243,
+   "reject": true
+  },
+  {
+   "test": "r3data_pc_vs_bal_lap",
+   "n": 440,
+   "acc_r3data_pc": 0.10454545454545454,
+   "acc_other": 0.1409090909090909,
+   "b_r3data_only": 11,
+   "c_other_only": 27,
+   "p": 0.013852965261321515,
+   "platform_other": "laptop",
+   "p_holm": 0.04540636574711243,
+   "reject": true
+  }
+ ],
+ "scaffold_G": {
+  "G": 0.9008069076261711,
+  "G_sd": 0.015741642581153046,
+  "G_seeds": {
+   "42": 0.9098274510721186,
+   "43": 0.8826301931287369,
+   "44": 0.9099630786776577
+  },
+  "pd": 0.5059892606361007,
+  "runs": [
+   "pc_scaffold_a01_s42",
+   "pc_scaffold_a01_s43",
+   "pc_scaffold_a01_s44"
+  ],
+  "dG_vs_fedavg": 0.01788452187936984,
+  "pd_drop": -0.034283353985956166,
+  "G_alpha05": 0.9436526828294063
+ },
+ "fedavg_G": {
+  "G": 0.8829223857468013,
+  "G_sd": 0.003365955946411649,
+  "G_seeds": {
+   "42": 0.8811110110820366,
+   "43": 0.8808500114946842,
+   "44": 0.8868061346636829
+  },
+  "pd": 0.47170590665014456,
+  "runs": [
+   "pc_fedavg_a01_s42",
+   "pc_fedavg_a01_s43",
+   "pc_fedavg_a01_s44"
+  ]
+ },
+ "int8_val_per_source": {
+  "centralized_adamw": {
+   "all": {
+    "n": 4613,
+    "accuracy": 0.9690006503360069,
+    "macro_f1_present_classes": 0.9635483182399432
+   },
+   "plantvillage": {
+    "n": 4344,
+    "accuracy": 0.9951657458563536,
+    "macro_f1_present_classes": 0.9936470198716294
+   },
+   "plantdoc": {
+    "n": 269,
+    "accuracy": 0.5464684014869888,
+    "macro_f1_present_classes": 0.39467776486984096
+   }
+  },
+  "centralized_sgd": {
+   "all": {
+    "n": 4613,
+    "accuracy": 0.9631476262735746,
+    "macro_f1_present_classes": 0.9554041785988534
+   },
+   "plantvillage": {
+    "n": 4344,
+    "accuracy": 0.9914825046040515,
+    "macro_f1_present_classes": 0.9877180868205144
+   },
+   "plantdoc": {
+    "n": 269,
+    "accuracy": 0.5055762081784386,
+    "macro_f1_present_classes": 0.4101981947095429
+   }
+  },
+  "fedavg": {
+   "all": {
+    "n": 4613,
+    "accuracy": 0.9113375243876003,
+    "macro_f1_present_classes": 0.883346618800315
+   },
+   "plantvillage": {
+    "n": 4344,
+    "accuracy": 0.9387661141804788,
+    "macro_f1_present_classes": 0.914833997820066
+   },
+   "plantdoc": {
+    "n": 269,
+    "accuracy": 0.4684014869888476,
+    "macro_f1_present_classes": 0.35295399294009566
+   }
+  },
+  "scaffold": {
+   "all": {
+    "n": 4613,
+    "accuracy": 0.9219596791675699,
+    "macro_f1_present_classes": 0.9034934574355697
+   },
+   "plantvillage": {
+    "n": 4344,
+    "accuracy": 0.9475138121546961,
+    "macro_f1_present_classes": 0.9313142398837255
+   },
+   "plantdoc": {
+    "n": 269,
+    "accuracy": 0.5092936802973977,
+    "macro_f1_present_classes": 0.4198054908998159
+   }
+  }
+ },
+ "result_files": {
+  "results/e1/E1_summary.csv": "ad68ba38ca0fbd7a8ecd534a5201d84ac341cfe44b01dd637c249354f04ce88e",
+  "results/e1/E1_per_client.csv": "8fb7144254724f9053f650096b85788368f6ef14866df4c535d64030b9db24f7",
+  "results/e1/E1_RESULT.json": "348114afb40da3f432f146db76e873e1a2e76e6ca5cff2777a063829e56a5109",
+  "results/e1_phase_d/E1_summary.csv": "c9ed38a1ef88af18e87b820d31019163991c3f622c24395e2dd7b625be17111c",
+  "results/e1_phase_d/E1_per_client.csv": "7e75f1640d5c7f3b2e30cb0607075bae308b4d4b8c6d1bd34ce757a69bdbb574",
+  "results/e1_phase_d/E1_RESULT.json": "228f46d7cea838655e5480cb2578644662a61acf5162bb4c73369f55889532db",
+  "results/e1_phase_d/E1_RESULT_NOTE.json": "49bde84cc2c763779f88e96501cd940b62d73e46e8cfea20677b8773b48de238",
+  "results/e5/E5_RESULT.json": "d8f983d3d699b83e9f495c13b41a87e9f430d6a2e7323a953ab49177e0acbe66",
+  "results/e2_e3/E2_RESULT.json": "74874d71659c3b1e88a532dad0a5a4b2c98287047ba25d90950ab82bb363f4d7",
+  "results/e2_e3/E3_RESULT.json": "bdec6342f5b088daa47e6cb15d0385eab116c994427a5e664f49be4a8c54425b",
+  "results/e2_e3/E3_confusion_top10.csv": "f03b451d6a8005399630c6ce701a6ef20ab83b52d7b876b8112f7f7101645468",
+  "results/p6/P6_RESULT.json": "0a7bae2a3991c13eed89350b54165ee013e8e9c01a458b05b4a1d7f61d7e3971",
+  "results/e4/E4_D1_D3_by_alpha.png": "fd468266f61ed57186167b695b52d1facdebea11de13a6d97708bf077a3b88b4",
+  "results/e4/E4_D1_D3_D4.csv": "f67f11582b609bdc461249cf3fcf92c55dfd545ad524acd8048f7701c897653a",
+  "results/e4/E4_D2_by_round_a01.png": "b5f7a552130622fd3a61b7d28267500e9c3b39c0a540326e9841e237bf0c53a1",
+  "results/e4/E4_D2_by_round_a05.png": "6a96e2e1c7e228624847745a6cc09d29fa1180ea7acfb324a414920f7910f4b4",
+  "results/e4/E4_D2_by_round_a1.png": "a9ccfe5c371f2e024195a327c91928b66103d90999fd267d3c5c6856cdd47992",
+  "results/e4/E4_D2_by_round_a10.png": "a95b200fb797d1b559e48623d6c464ca495c0400b28ac0770b39f3a4f88ca0ce",
+  "results/e4/E4_D2_by_round_a100.png": "e931d3d4af86fc17b1d55476b9d9fdf00ade6a6e7aedf29905a5155867732e5b",
+  "results/e4/E4_D2_rounds.csv": "990d0800714c2c2ed1e1bd66d1a5d95fd64edd14a7ab4188663279f63473cf63",
+  "results/e4/E4_D5.csv": "3ed7819a0329d1065f87d9a4ff1e8b38a82572d38f30ba819abf6ee2ed8bd888",
+  "results/e4/E4_RESULT.json": "4d2609ca17cc5ec05cdc404f941109eecd34991ebaa123ae998dc0587d1f3b2a"
+ }
+}

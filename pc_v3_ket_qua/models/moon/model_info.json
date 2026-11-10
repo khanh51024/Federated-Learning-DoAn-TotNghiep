@@ -1,0 +1,29 @@
+{
+ "role": "moon",
+ "description": "MOON (chong non-IID, mu 1.0, tau 0.5), 5 client, alpha 0.1, round 40",
+ "source_run": "pc_c19_c_m_moon_a01_s42",
+ "source_checkpoint": "experiments\\train-improve-20261015\\q19l\\c_m_moon_a01_s42_out\\c_m_moon_a01_s42\\run\\checkpoint_last.pt",
+ "checkpoint_key": "model_state",
+ "checkpoint_step": 40,
+ "method_config": {
+  "fedavgm_beta": null,
+  "fedavgm_server_lr": null,
+  "fedlc_tau": null,
+  "fedprox_mu": null,
+  "fl_method": "moon",
+  "moon_mu": 1.0,
+  "moon_tau": 0.5,
+  "q8r2_neutral": false
+ },
+ "selection_rule": "last round / last epoch (P40 endpoint rule), NOT best-on-val; file named checkpoint_best.pt only so the web loader finds it",
+ "sha256": "d96f99eb91bd9a892bfb002252f8f78c960fee8f895c54a00ed07bb2224345e6",
+ "bytes": 8607366,
+ "metrics_validation_pv_pd_v3": {
+  "endpoint_val_macro_f1_last3": 0.8562634255494863,
+  "plantdoc_macro_f1_last3": 0.46526269230094885,
+  "val_accuracy_last3": 0.8910333333333333,
+  "val_macro_f1_at_checkpoint": 0.8772375327713684,
+  "plantdoc_accuracy_last3": 0.4758364312267658
+ },
+ "metrics_note": "computed by the PC training run on validation (4,613 images: PlantVillage 4,344 + PlantDoc 269), not re-evaluated by the web pipeline; not a final test"
+}

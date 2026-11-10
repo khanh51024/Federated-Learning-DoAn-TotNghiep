@@ -1,0 +1,29 @@
+{
+ "role": "fedprox",
+ "description": "FedProx (chong non-IID, mu 0.01), 5 client, alpha 0.1, round 40",
+ "source_run": "pc_c19_c_m_fedprox_a01_s42",
+ "source_checkpoint": "experiments\\train-improve-20261015\\q19l\\c_m_fedprox_a01_s42_out\\c_m_fedprox_a01_s42\\run\\checkpoint_last.pt",
+ "checkpoint_key": "model_state",
+ "checkpoint_step": 40,
+ "method_config": {
+  "fedavgm_beta": null,
+  "fedavgm_server_lr": null,
+  "fedlc_tau": null,
+  "fedprox_mu": 0.01,
+  "fl_method": "fedprox",
+  "moon_mu": null,
+  "moon_tau": null,
+  "q8r2_neutral": false
+ },
+ "selection_rule": "last round / last epoch (P40 endpoint rule), NOT best-on-val; file named checkpoint_best.pt only so the web loader finds it",
+ "sha256": "5d227ac05c7719e9cbd45a0164cd6c4f1b92a2d5a2a0118f69088c2748fc0970",
+ "bytes": 8607366,
+ "metrics_validation_pv_pd_v3": {
+  "endpoint_val_macro_f1_last3": 0.8820688345390695,
+  "plantdoc_macro_f1_last3": 0.46194418715423824,
+  "val_accuracy_last3": 0.9103666666666667,
+  "val_macro_f1_at_checkpoint": 0.8840388807070203,
+  "plantdoc_accuracy_last3": 0.4721189591078067
+ },
+ "metrics_note": "computed by the PC training run on validation (4,613 images: PlantVillage 4,344 + PlantDoc 269), not re-evaluated by the web pipeline; not a final test"
+}
