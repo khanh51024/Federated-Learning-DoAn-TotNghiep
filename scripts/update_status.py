@@ -52,7 +52,7 @@ ALLOWED_DOCS = {
     "README.md", "MODEL_REGISTRY.md", "RUNBOOK.md", "EXPERIMENT_PROTOCOL.md", "ARCHITECTURE.md",
     "TONG_HOP_FEDERATED_LEARNING.md", "WEB_DEMO_GD1_GD2.md", "AWS_DEPLOYMENT_GUIDE.md",
     "SERVER_DEPLOY_20261005.md", "REFERENCES_IEEE.md", "NEXT_TRAINING_PLAN.md",
-    "UI_ACCEPTANCE_2026-10-12.md", "COMMUNITY_FL.md",
+    "UI_ACCEPTANCE_2026-10-12.md", "COMMUNITY_FL.md", "TICH_HOP_INT8_PC_V3.md",
     "UI_TRIAL_2026-10-13.md", "UI_VIEWER_REVIEW_2026-10-13.md", "UI_COMPARISON_WIDE_SCREEN_2026-10-13.md",
     "UI_UX_REVIEW_2026-10-14.md", "REVIEW_TOAN_DIEN_2026-10-16.md", "REVIEW_WEB_2026-10-19.md",
     "CAU_HOI_BAO_VE_2026-10-19.md", "DANH_GIA_DU_LIEU_MO_HINH_FEDAVG_2026-10-21.md", "HUONG_DAN_DO_TOC_DO_LAN.md",
@@ -525,9 +525,18 @@ def check_calibration(ctx: Ctx) -> Result:
             needs="ảnh validation + calibration manifest + checkpoint đã kiểm hash",
             unlock=[".\\.venv\\Scripts\\python.exe scripts\\evaluate_published_models.py"],
         )
+    wrong = len((report.get("detail", {}).get("fedavg", {}) or {}).get("high_confidence_wrong", []))
+    if report.get("evidence_scope") == "validation_only":
+        return Result(
+            BLOCKED,
+            f"gói chỉ đánh giá trên validation nên KHÔNG đo calibration/temperature scaling (cần tập calibration niêm phong, nhóm train không giao và đồ án "
+            f"không mở); {wrong} ảnh validation sai với confidence ≥ 0,9 đã liệt kê từng ảnh; UI hiển thị softmax thô",
+            needs="tập calibration của gói (không có), hoặc quyết định mở tập calibration của release",
+            unlock=["Xin nhóm train bộ logit/tập calibration của gói, hoặc quyết định mở calibration.jsonl của release; "
+                    "sau đó chạy .\\.venv\\Scripts\\python.exe scripts\\evaluate_published_models.py"],
+        )
     fed = report["models"]["fedavg"]["calibration"]
     pd = fed.get("plantdoc") or {}
-    wrong = len((report.get("detail", {}).get("fedavg", {}) or {}).get("high_confidence_wrong", []))
     return Result(
         DONE,
         f"{FED}: ECE PlantDoc {pd.get('ece_raw', 0):.3f} → {pd.get('ece_temperature_scaled', 0):.3f} sau temperature scaling "
@@ -764,13 +773,23 @@ def _reeval_lines() -> list[str]:
     report = load_json(reg.abs_path(reg.LOCAL_REEVAL_JSON))
     if not report:
         return []
-    out = [
-        "",
-        f"**Tái đánh giá CỤC BỘ trên CPU ({vn(report['validation_count'])} ảnh validation; calibration {vn(report['calibration_count'])} ảnh tách biệt val):**",
-        "",
-        "| Model | PlantVillage | PlantDoc | Khớp số công bố | ECE PV (thô → TS) | ECE PlantDoc (thô → TS) | T |",
-        "|---|---:|---:|---|---:|---:|---:|",
-    ]
+    validation_only = report.get("evidence_scope") == "validation_only"
+    if validation_only:
+        out = [
+            "",
+            f"**Tái đánh giá CỤC BỘ trên CPU ({vn(report['validation_count'])} ảnh validation; không dùng tập calibration, không hiệu chỉnh nhiệt độ):**",
+            "",
+            "| Model | PlantVillage | PlantDoc | Khớp số đã ghi trong gói |",
+            "|---|---:|---:|---|",
+        ]
+    else:
+        out = [
+            "",
+            f"**Tái đánh giá CỤC BỘ trên CPU ({vn(report['validation_count'])} ảnh validation; calibration {vn(report['calibration_count'])} ảnh tách biệt val):**",
+            "",
+            "| Model | PlantVillage | PlantDoc | Khớp số công bố | ECE PV (thô → TS) | ECE PlantDoc (thô → TS) | T |",
+            "|---|---:|---:|---|---:|---:|---:|",
+        ]
     for model in report["models"].values():
         by, vs, cal = model["by_source"], model["vs_published"], model["calibration"]
         def ok(src: str) -> str:
@@ -779,6 +798,10 @@ def _reeval_lines() -> list[str]:
                 return "tuyệt đối"
             return f"{c.get('correct_diff_images', 0):+d} ảnh" if c.get("within_tolerance") else "KHÔNG khớp"
         pv, pd = cal.get("plantvillage", {}), cal.get("plantdoc", {})
+        if validation_only:
+            out.append(f"| {model['display_name']} | {by['plantvillage']['top1_accuracy']:.2%} | {by['plantdoc']['top1_accuracy']:.2%} | "
+                       f"PV {ok('plantvillage')}, PD {ok('plantdoc')} |")
+            continue
         out.append(
             f"| {model['display_name']} | {by['plantvillage']['top1_accuracy']:.2%} | {by['plantdoc']['top1_accuracy']:.2%} | "
             f"PV {ok('plantvillage')}, PD {ok('plantdoc')} | {pv.get('ece_raw', 0):.3f} → {pv.get('ece_temperature_scaled', 0):.3f} | "
@@ -789,8 +812,9 @@ def _reeval_lines() -> list[str]:
         "",
         f"- Khớp tuyệt đối {report['comparisons_exact']}/{report['comparisons_total']} phép so; Centralized và FedAvg khớp tuyệt đối trên cả hai nguồn. "
         f"{report['known_discrepancy_note']}",
-        "- ECE đo mức lệch giữa độ tin cậy và độ đúng thật (càng thấp càng tốt); TS = temperature scaling với T fit trên tập calibration, "
-        "KHÔNG fit trên validation. Temperature scaling không đổi nhãn dự đoán, chỉ đổi độ tin cậy hiển thị.",
+        *([] if validation_only else [
+            "- ECE đo mức lệch giữa độ tin cậy và độ đúng thật (càng thấp càng tốt); TS = temperature scaling với T fit trên tập calibration, "
+            "KHÔNG fit trên validation. Temperature scaling không đổi nhãn dự đoán, chỉ đổi độ tin cậy hiển thị."]),
         f"- {len(wrong)} ảnh validation {FED} sai với confidence ≥ 0,9 đã liệt kê từng ảnh trong `{reg.LOCAL_REEVAL_JSON}` (mục `detail.fedavg.high_confidence_wrong`).",
     ]
     audit = load_json(reg.abs_path(reg.RELEASE_LEAKAGE_AUDIT_JSON))

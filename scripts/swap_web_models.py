@@ -69,6 +69,18 @@ STEPS: list[tuple[str, list[str], bool]] = [
 ]
 
 
+# Gói nhập từ nhóm train khác (PC v3) chỉ được đánh giá trên validation: tập kiểm thử đã mở đúng một lần ở bước P6 của họ, tập calibration niêm phong,
+# dữ liệu ngoài miền không được chạy thêm. Các bước dưới đây mở một trong ba loại đó nên `--validation-only` bỏ chúng.
+SEALED_DATA_STEPS = ("leakage_audit", "reeval_holdout", "training_protocol", "statistics", "client_fairness", "plantvillage_reference",
+                     "community_sim_features", "community_simulation", "fullframe", "external_eval")
+# Báo cáo mà web đọc do từng bước bỏ: sau khi đã chụp gói cũ thì xóa, để web báo "chưa có" thay vì hiện số của gói cũ dưới tên gói mới
+SKIPPED_STEP_OUTPUTS = {
+    "leakage_audit": reg.RELEASE_LEAKAGE_AUDIT_JSON, "reeval_holdout": reg.HOLDOUT_EVAL_JSON, "training_protocol": reg.TRAINING_PROTOCOL_REPORT_JSON,
+    "statistics": reg.STATISTICS_JSON, "client_fairness": reg.CLIENT_FAIRNESS_JSON, "plantvillage_reference": reg.PLANTVILLAGE_EVAL_JSON,
+    "community_simulation": reg.COMMUNITY_SIMULATION_JSON, "fullframe": reg.FULLFRAME_EVAL_JSON, "external_eval": reg.EXTERNAL_EVAL_RESULTS_JSON,
+}
+
+
 def sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -189,15 +201,29 @@ def run_step(name: str, command: list[str], log: Path) -> bool:
     return process.returncode == 0
 
 
-def select_steps(skip_slow: bool, only: str | None, start: str | None = None) -> list[tuple[str, list[str], bool]]:
+def skipped_steps(args: argparse.Namespace) -> set[str]:
+    names = [step[0] for step in STEPS]
+    skipped = set(SEALED_DATA_STEPS) if args.validation_only else set()
+    for name in filter(None, (args.skip or "").split(",")):
+        if name not in names:
+            raise SystemExit(f"--skip: không có bước '{name}'; các bước: {names}")
+        skipped.add(name)
+    return skipped
+
+
+def select_steps(skip_slow: bool, only: str | None, start: str | None = None, skipped: set[str] = frozenset(),
+                 validation_only: bool = False) -> list[tuple[str, list[str], bool]]:
     names = [step[0] for step in STEPS]
     for label, value in (("--only", only), ("--from", start)):
         if value and value not in names:
             raise SystemExit(f"{label}: không có bước '{value}'; các bước: {names}")
-    if only:
-        return [step for step in STEPS if step[0] == only]
-    chosen = STEPS[names.index(start):] if start else STEPS
-    return [step for step in chosen if not (skip_slow and step[2])]
+    if only and only in skipped:
+        raise SystemExit(f"--only {only}: bước này bị bỏ bởi --skip/--validation-only")
+    chosen = [step for step in STEPS if step[0] == only] if only else (STEPS[names.index(start):] if start else STEPS)
+    chosen = [step for step in chosen if step[0] not in skipped and not (skip_slow and not only and step[2])]
+    if validation_only:   # đánh giá lại chỉ trên validation: không mở calibration, không hiệu chỉnh nhiệt độ
+        chosen = [(n, c + ["--validation-only"] if n == "reeval_val" else c, slow) for n, c, slow in chosen]
+    return chosen
 
 
 def swap(args: argparse.Namespace) -> int:
@@ -232,7 +258,13 @@ def swap(args: argparse.Namespace) -> int:
                 path.unlink()
             elif path.is_dir():
                 shutil.rmtree(path)
-    for name, command, _slow in select_steps(args.skip_slow, args.only, args.start):
+        # báo cáo của các bước bị bỏ cũng là của gói cũ: xóa (đã chụp ở trên; --rollback khôi phục lại)
+        for step_name in sorted(skipped_steps(args)):
+            output = SKIPPED_STEP_OUTPUTS.get(step_name)
+            if output and (ROOT / output).is_file():
+                (ROOT / output).unlink()
+                print(f"[swap] bỏ bước {step_name}: đã gỡ {output} của gói cũ khỏi chỗ web đọc", flush=True)
+    for name, command, _slow in select_steps(args.skip_slow, args.only, args.start, skipped_steps(args), args.validation_only):
         if not run_step(name, command, log):
             print(f"[swap] bước {name} lỗi: lùi về {previous}. Chi tiết: {log}", file=sys.stderr)
             write_pointer(previous)
@@ -272,6 +304,9 @@ def main() -> int:
     parser.add_argument("--label", help="nhãn hiển thị cạnh tên mô hình (ví dụ v4b)")
     parser.add_argument("--rollback", metavar="THƯ_MỤC_GÓI", help="lùi về gói đã có, ví dụ artifacts/branch_demo/20261003")
     parser.add_argument("--skip-slow", action="store_true")
+    parser.add_argument("--skip", metavar="BƯỚC[,BƯỚC]", help="bỏ các bước này (báo cáo của chúng được gỡ khỏi chỗ web đọc, web báo chưa có)")
+    parser.add_argument("--validation-only", action="store_true",
+                        help="gói chỉ được đánh giá trên validation: bỏ mọi bước mở tập kiểm thử/calibration/ngoài miền và đánh giá lại không hiệu chỉnh nhiệt độ")
     parser.add_argument("--only", help="chỉ chạy một bước của gói đã chọn (xem --steps)")
     parser.add_argument("--from", dest="start", metavar="BƯỚC", help="chạy tiếp từ một bước của gói đã chọn (sau khi sửa nguyên nhân lỗi)")
     parser.add_argument("--steps", action="store_true", help="liệt kê các bước rồi thoát")
@@ -282,8 +317,9 @@ def main() -> int:
         return 0
     if args.rollback:
         return rollback(args)
-    if not (args.name and args.label) or (not args.runs and not (ROOT / bundle.BUNDLES_DIR / (args.name or "-")).is_dir()):
-        parser.error("cần --name, --label và --runs (hoặc gói --name đã có)")
+    exists = bool(args.name) and (ROOT / bundle.BUNDLES_DIR / args.name).is_dir()
+    if not args.name or not (exists or (args.runs and args.label)):
+        parser.error("cần --name của gói đã có (artifacts/model_bundles/<tên>), hoặc --name --label --runs để nhập từ các run")
     return swap(args)
 
 

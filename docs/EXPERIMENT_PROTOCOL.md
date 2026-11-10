@@ -9,7 +9,8 @@ Tài liệu này đóng băng toàn bộ thông số kỹ thuật, cấu hình m
 
 | Protocol ID | Vai trò | Dữ liệu | Nơi train | Trạng thái |
 |---|---|---|---|---|
-| `mixed_pv_pd_v4_pretrained_seed42_validation` | **Kết quả hiện hành** (Centralized v4b, FedAvg v4b, 5 Local-only v4b; web phục vụ hạt giống 42, 3 hạt giống 42/123/2026 đã chạy) | Release `mixed_pv_pd_v4` (SHA `68e57451…`): train 52.464, validation 6.746 (4.344 PlantVillage + 269 PlantDoc + 2.133 ngoài đồng bộ khác), calibration 7.005, test giữ riêng `legacy_diagnostic_test` 13.101; pretrained; non-IID label alpha=0.1 | Máy GPU thuê (`scripts/train_v4.py`), nhập gói bằng `scripts/import_run_bundle.py`, đổi gói bằng `scripts/swap_web_models.py` | Đã kiểm hash; **đã tái đánh giá cục bộ** (21/21 phép so khớp tuyệt đối); có kết quả trên test giữ riêng và 3 hạt giống (`artifacts/train_v4_results.json`) |
+| `mixed_pv_pd_v3_pc_r4_seed42_validation` | **Kết quả hiện hành** (13 mô hình PC v3: Centralized AdamW và SGD, FedAvg, SCAFFOLD, 5 Local-only, 4 bản int8; chỉ đánh giá trên validation) | Release `pv_pd_v3`: validation 4.613 (4.344 PlantVillage + 269 PlantDoc); seed 42; pretrained; non-IID label alpha=0.1 | Máy PC của nhóm train (nhánh `pc-v3-ket-qua-20261110`), nhập bằng `scripts/import_pc_package.py`, đổi gói bằng `scripts/swap_web_models.py --validation-only` | Đã kiểm hash; **đã tái đánh giá cục bộ trên validation** (117 phép so khớp tuyệt đối với số của nhóm PC); không có số kiểm thử/calibration/ngoài miền trong đồ án |
+| `mixed_pv_pd_v4_pretrained_seed42_validation` | Gói trước, giữ để lùi (Centralized v4b, FedAvg v4b, 5 Local-only v4b; web phục vụ hạt giống 42, 3 hạt giống 42/123/2026 đã chạy) | Release `mixed_pv_pd_v4` (SHA `68e57451…`): train 52.464, validation 6.746 (4.344 PlantVillage + 269 PlantDoc + 2.133 ngoài đồng bộ khác), calibration 7.005, test giữ riêng `legacy_diagnostic_test` 13.101; pretrained; non-IID label alpha=0.1 | Máy GPU thuê (`scripts/train_v4.py`), nhập gói bằng `scripts/import_run_bundle.py`, đổi gói bằng `scripts/swap_web_models.py` | Đã kiểm hash; **đã tái đánh giá cục bộ** (21/21 phép so khớp tuyệt đối); có kết quả trên test giữ riêng và 3 hạt giống (`artifacts/train_v4_results.json`) |
 | `mixed_pv_pd_v3_pretrained_seed42_validation` | Lịch sử (gói trước, giữ để lùi: Centralized v6, FedAvg v7, 5 Local-only v7) | Mixed PlantVillage + PlantDoc; validation 4.344 PV + 269 PlantDoc; seed 42; pretrained; non-IID label alpha=0.1 | Ngoài repo (branch `train-*`), import bundle bằng `scripts/import_branch_demo.py` | Đã kiểm hash; **đã tái đánh giá cục bộ** (10/14 phép so khớp tuyệt đối, hai mô hình chính khớp hết); **có kết quả trên test giữ riêng** `legacy_diagnostic_test` (11.015 ảnh); chưa multi-seed |
 | `stage2_scratch_clean_v3` | Tái lập khoa học cục bộ GĐ2 (scratch, 5 client) | PlantVillage 54.305 ảnh, split 38.984/4.400/10.921 (`data/partitions_stage2_scratch_v3/`) | Cần dataset gốc + máy train | **BLOCKED**: chưa có run cục bộ |
 | `kaggle_pv_v1_label_skew_a0.1` | Lịch sử (run Kaggle 99,09% / 98,25% / 81,40%) | PlantVillage, partition v1, 10 client, test 10.917 ảnh | Kaggle (pipeline cũ ở `legacy/`) | Chỉ còn metrics; checkpoint mất; chỉ trích dẫn kèm nhãn "historical" |
@@ -110,13 +111,13 @@ Các mức độ thực nghiệm:
 | :--- | :--- |
 | **"Trọng số gửi về server có bị tính sai hay không?"** | Trả lời bằng Unit Test toán học độc lập (`tests/test_fedavg.py`) kiểm tra scalar $100(1) + 300(3) / 400 = 2.500000$ và tensor conv 4D. Toàn bộ quá trình kiểm soát bằng SHA-256. |
 | **"Loss khác Latency như thế nào?"** | Tách bạch rõ ràng: Loss là hàm mục tiêu toán học (CrossEntropy), Latency là thời gian vật lý (giây / ms). |
-| **"Confidence của 1 ảnh có phải Accuracy mô hình không?"** | Không. Web hiện xác suất softmax thô của ảnh đó kèm xác suất đã hiệu chuẩn (temperature scaling, T fit trên tập calibration riêng); accuracy là tỷ lệ đúng trên tập test giữ riêng 13.101 ảnh (protocol hiện hành v4, mục 8; 11.015 ảnh ở protocol v3 cũ) hoặc 10.921 ảnh (protocol scratch cũ). |
+| **"Confidence của 1 ảnh có phải Accuracy mô hình không?"** | Không. Web hiện xác suất softmax thô của ảnh đó (gói v4b còn kèm xác suất đã hiệu chuẩn bằng temperature scaling, T fit trên tập calibration riêng; gói PC v3 hiện hành chỉ có softmax thô, mục 8); accuracy là tỷ lệ đúng trên tập test giữ riêng 13.101 ảnh (protocol v4b, mục 8a; 11.015 ảnh ở protocol v3 cũ; gói PC v3 hiện hành không chạy lại trên tập này, mục 8) hoặc 10.921 ảnh (protocol scratch cũ). |
 | **"Federated Learning có bảo mật tuyệt đối không?"** | Không có bảo mật tuyệt đối; FL chỉ bảo vệ ảnh thô không rời biên, vẫn cần DP/SecAgg để chống lại tấn công tái tạo đặc trưng (Reconstruction Attack). |
 | **"Số validation có bị chọn cho đẹp không?"** | Có hiệu ứng chọn: checkpoint được chọn theo macro-F1 PlantDoc trên chính validation (Centralized: epoch 22 là epoch có accuracy PlantDoc cao nhất trong 83 epoch). Vì vậy nhóm chấm thêm trên tập test giữ riêng chưa từng dùng để chọn và báo cáo khoảng tin cậy theo cụm (mục 7). |
 
 ## 7. Hạn chế của phép đánh giá (protocol `mixed_pv_pd_v3_pretrained_seed42_validation`, bản lịch sử)
 
-> Mục này giữ nguyên để tra cứu số của gói v3 (nay chỉ dùng để lùi). Protocol hiện hành là v4: xem mục 8. Các hạn chế "một hạt giống", "so sánh chưa công bằng" và số ảnh tập giữ riêng dưới đây **không còn đúng với v4b** (3 hạt giống, cùng công thức, 13.101 ảnh).
+> Mục này giữ nguyên để tra cứu số của gói v3 (nay chỉ dùng để lùi). Protocol hiện hành là PC v3: xem mục 8 (v4b ở mục 8a). Các hạn chế "một hạt giống", "so sánh chưa công bằng" và số ảnh tập giữ riêng dưới đây **không còn đúng với v4b** (3 hạt giống, cùng công thức, 13.101 ảnh).
 
 Số liệu kiểm bằng `scripts/evaluate_published_models.py` (`--holdout`) và `scripts/report_statistics.py`; mọi con số dưới đây truy được
 về `artifacts/holdout_eval_report.json` và `artifacts/statistics_report.json`.
@@ -150,9 +151,29 @@ về `artifacts/holdout_eval_report.json` và `artifacts/statistics_report.json`
 
 ---
 
-## 8. Protocol hiện hành `mixed_pv_pd_v4_pretrained_seed42_validation`
+## 8. Protocol hiện hành `mixed_pv_pd_v3_pc_r4_seed42_validation`
 
-Mục này mô tả protocol của gói mô hình web đang dùng (`artifacts/active_bundle.json` → `artifacts/model_bundles/v4b_s42`). Cách thay gói: `docs/THAY_MO_HINH_WEB.md`.
+Mục này mô tả gói mô hình web đang dùng (`artifacts/active_bundle.json` → `artifacts/model_bundles/pc_v3_s42`), nhập từ kết quả huấn luyện PC v3 của nhóm train (nhánh `pc-v3-ket-qua-20261110`, gói `pc_v3_a01_s42_r4`). Cách thay gói: `docs/THAY_MO_HINH_WEB.md`; riêng gói này dùng `scripts/import_pc_package.py` rồi `scripts/swap_web_models.py --name pc_v3_s42 --validation-only`.
+
+**Dữ liệu.** Release `pv_pd_v3` (`data/dataset_sources/mixed/pv_pd_v3`). Validation 4.613 ảnh (4.344 PlantVillage + 269 PlantDoc). Phân vùng non-IID `label_alpha_0_1` (Dirichlet α = 0,1, 5 client, n_k = 5.434 / 7.858 / 5.376 / 8.495 / 10.075, tổng 37.238). Hạt giống 42. Mã băm release (bản có xuống dòng CRLF cuối tệp) nằm trong checkpoint và `import_manifest.json`; bản ở máy này kết thúc bằng LF và web chấp nhận cả hai.
+
+**Mô hình (13).** Centralized AdamW (id `centralized`), Centralized SGD, FedAvg, SCAFFOLD, Local 00–04 và bốn bản int8 (động, chỉ lớp Linear) của bốn mô hình đầu. Mọi checkpoint là epoch/vòng cuối, không chọn theo validation. FedProx, MOON và SCAFFOLD-BN có trong gói của nhóm PC nhưng chưa đưa lên web.
+
+**Cách học.** Do nhóm train quy định và ghi trong `resolved_config` của từng checkpoint (đặc tả ở nhánh kết quả, `pc_v3_ket_qua/docs/specs`); đồ án không huấn luyện lại. Ví dụ FedAvg: 40 vòng, 1 epoch cục bộ mỗi vòng, SGD lr 0,01 không động lượng, weight decay 1e-4, batch 32, AMP; Centralized AdamW: lr 1e-3, weight decay 1e-4, batch 32, 35 epoch.
+
+**Phạm vi bằng chứng: chỉ validation.** Tập kiểm thử cuối được nhóm train mở đúng một lần (bước P6, số ở nhánh kết quả của họ) và tập `calibration` được giữ niêm phong, nên đồ án KHÔNG chạy mô hình PC v3 trên tập kiểm thử, tập calibration hay tập ngoài miền. Hệ quả trên web: không có xác suất đã hiệu chuẩn (hiện softmax thô) và các mục holdout, khoảng tin cậy, công bằng giữa client, ảnh nguyên khung, tham chiếu PlantVillage, mô phỏng cộng đồng, audit rò rỉ và giao thức huấn luyện bị giữ lại kèm lý do; gói ghi `evidence_scope = "validation_only"` trong `import_manifest.json`.
+
+**Int8.** Bản int8 được đo từng ảnh một (lượng tử hóa động tính thang theo cả lô), nên con số khớp cách web suy luận; xem `docs/TICH_HOP_INT8_PC_V3.md`. Không gọi là nhanh hơn: độ trễ CPU tương đương, tệp nhỏ hơn khoảng 30%.
+
+**Kiểm chứng.** 117 phép so (13 mô hình × tổng/PlantDoc/PlantVillage × top-1, macro-F1, độ đúng loại cây) giữa số tính lại trên CPU của đồ án và `validation_metrics.json` của nhóm PC: cả 117 khớp tuyệt đối (`pc_v3_ket_qua/kiem_lai_web/` ở nhánh kết quả).
+
+**Hạn chế.** Số validation, không phải số kiểm thử, và không dùng để thay các số P6. Gói không kèm lịch sử huấn luyện đầy đủ như gói chạy bằng `scripts/train_v4.py` (chỉ `history` trong checkpoint nên chưa có độ lệch cập nhật từng client).
+
+---
+
+## 8a. Protocol của gói trước `mixed_pv_pd_v4_pretrained_seed42_validation` (v4b, giữ để lùi)
+
+Mục này mô tả protocol của gói v4b (`artifacts/model_bundles/v4b_s42`, lùi bằng `scripts/swap_web_models.py --rollback artifacts/model_bundles/v4b_s42`). Cách thay gói: `docs/THAY_MO_HINH_WEB.md`.
 
 **Dữ liệu.** Release `mixed_pv_pd_v4` (`data/dataset_sources/mixed/pv_pd_v4`, mô tả ở `docs/DATASET_V4.md`). Ảnh được chia theo nhóm (cùng lá, cùng cảnh, cùng phiên chụp) rồi
 kiểm trùng bằng băm byte và dHash; mã băm manifest của release và của từng tập được ghim trong `import_manifest.json` của gói và kiểm lại ở mỗi lần suy luận. Báo cáo chia ảnh theo
