@@ -163,8 +163,8 @@ Làm sau khi đã nhập gói PC v3 (fp32) thành một gói trong `artifacts/mo
 
 **Số đo cho bước 4 và 5:**
 - `INT8_E5_SUMMARY.json` đã có số tổng và số PlantDoc của từng mô hình int8 và fp32 gốc.
-- Số **PlantVillage riêng** và **crop_accuracy** theo đúng định dạng CSV của web chưa có trong tệp này. Nhóm train sẽ gửi chúng trong gói
-  PC v3 r3, tính trên cùng tập validation.
+- Số **PlantVillage riêng** và **crop_accuracy** đã có từ gói PC v3 r4: mỗi thư mục `pc_v3_a01_s42_int8/<mô hình>/` có `validation_metrics.json` đúng định dạng web (`validation.overall`, `by_source`, `quality`), và `INT8_VALIDATION_ROWS.csv` gồm 8 hàng (4 mô hình × nguồn `plantdoc` / `plantvillage`) để chép vào `validation_comparison.csv`. File CSV này chưa có hai cột `release_manifest_sha256` và `validation_manifest_sha256`; lấy giá trị từ gói fp32 cùng bundle.
+- Nguồn số: tính lại từ logit validation đã lưu (lần chạy thử P6, int8 đo ở batch 1, từng ảnh như web suy luận) trên cùng tập 4.613 ảnh. `crop_accuracy` = tỉ lệ ảnh có loại cây (tiền tố tên lớp trước `___`) dự đoán đúng.
 - **Không** chép số của fp32 sang hàng int8. Test end-to-end có chép, nhưng chỉ để kiểm cấu trúc gói.
 
 ---
