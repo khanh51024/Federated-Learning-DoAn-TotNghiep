@@ -1,0 +1,19 @@
+{
+ "branch": "pc_v3_ket_qua/models/int8_dynamic_linear/fedavg@16f0be1a4",
+ "validation_manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
+ "release_manifest_sha256": "6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252",
+ "files": {
+  "model_dynamic_linear_torchscript.pt": {
+   "bytes": 4355758,
+   "sha256": "69ca4217c76311199ace2ed09d6228af19aaf390cfc6b3ab85a38d8656740a2b"
+  },
+  "validation_comparison.csv": {
+   "bytes": 7422,
+   "sha256": "c8df12fd0882b419006fe70abee7c11920904f72a042ab27b8856d1581038193"
+  },
+  "validation_metrics.json": {
+   "bytes": 9474,
+   "sha256": "4220c2c64a7837fe32abe2178e05f812f4fc42f7d173b32c4515ab1cbb0c06c5"
+  }
+ }
+}

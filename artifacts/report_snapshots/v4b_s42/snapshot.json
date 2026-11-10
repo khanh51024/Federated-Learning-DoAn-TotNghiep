@@ -1,6 +1,6 @@
 {
  "bundle_dir": "artifacts/model_bundles/v4b_s42",
- "created_utc": "2026-10-22T08:09:03Z",
+ "created_utc": "2026-11-10T16:22:24Z",
  "reports": [
   "artifacts/local_reeval_report.json",
   "artifacts/holdout_eval_report.json",
@@ -22,6 +22,7 @@
   "artifacts/community_fl/feature_model.onnx",
   "artifacts/community_fl/base_head.npz",
   "artifacts/community_fl/eval_features.npz",
-  "artifacts/community_fl/community_manifest.json"
+  "artifacts/community_fl/community_manifest.json",
+  "artifacts/community_fl/state"
  ]
 }

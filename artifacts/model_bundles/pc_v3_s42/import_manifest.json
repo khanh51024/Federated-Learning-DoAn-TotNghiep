@@ -1,0 +1,263 @@
+{
+ "bundle_id": "pc_v3_s42",
+ "protocol_id": "mixed_pv_pd_v3_pc_r4_seed42_validation",
+ "evidence_level": "externally_trained_locally_reevaluated",
+ "evidence_scope": "validation_only",
+ "metrics_source": "validation_comparison.csv do đồ án tự tính trên CPU từ checkpoint đã băm (scripts/import_pc_package.py), cùng đường suy luận với web",
+ "test_policy": "Tập kiểm thử cuối chỉ được nhóm train mở một lần (bước P6, số nằm ở nhánh kết quả của họ). Gói này chỉ đánh giá lại trên tập kiểm định; đồ án không chạy mô hình PC v3 trên tập kiểm thử, tập niêm phong (calibration) hay tập ngoài miền.",
+ "release_manifest_sha256": "6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252",
+ "release_name": "pv_pd_v3",
+ "release_dir": "data/dataset_sources/mixed/pv_pd_v3",
+ "validation_manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
+ "validation_counts": {
+  "plantdoc": 269,
+  "plantvillage": 4344
+ },
+ "w0_fingerprint": "eaf9197b42fb39163186a7285f7f1ed4f1e728bd83522260fdc5f0f51c110850",
+ "w0_in_checkpoints": true,
+ "seed": 42,
+ "partition_scheme": "label_alpha_0_1",
+ "num_classes": 38,
+ "transform": "canonical_v1",
+ "contract_hashes": {
+  "plant_data_contract/plant_data_contract/taxonomy.py": "4d31f9d3d35026ab8adc3d7567e82e231827e380316f194e89ab6f785210a712",
+  "plant_data_contract/plant_data_contract/transforms.py": "4693c538310f95402caf55584781b1f31f7adaf25e673d05450f889ee021048f",
+  "plant_data_contract/plant_data_contract/models.py": "2601dea80484813b35afb745b7b02bc2083e79a7766821a39e3175601df9c8ed"
+ },
+ "classes": [
+  "Apple___Apple_scab",
+  "Apple___Black_rot",
+  "Apple___Cedar_apple_rust",
+  "Apple___healthy",
+  "Blueberry___healthy",
+  "Cherry_(including_sour)___Powdery_mildew",
+  "Cherry_(including_sour)___healthy",
+  "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+  "Corn_(maize)___Common_rust_",
+  "Corn_(maize)___Northern_Leaf_Blight",
+  "Corn_(maize)___healthy",
+  "Grape___Black_rot",
+  "Grape___Esca_(Black_Measles)",
+  "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)",
+  "Grape___healthy",
+  "Orange___Haunglongbing_(Citrus_greening)",
+  "Peach___Bacterial_spot",
+  "Peach___healthy",
+  "Pepper,_bell___Bacterial_spot",
+  "Pepper,_bell___healthy",
+  "Potato___Early_blight",
+  "Potato___Late_blight",
+  "Potato___healthy",
+  "Raspberry___healthy",
+  "Soybean___healthy",
+  "Squash___Powdery_mildew",
+  "Strawberry___Leaf_scorch",
+  "Strawberry___healthy",
+  "Tomato___Bacterial_spot",
+  "Tomato___Early_blight",
+  "Tomato___Late_blight",
+  "Tomato___Leaf_Mold",
+  "Tomato___Septoria_leaf_spot",
+  "Tomato___Spider_mites Two-spotted_spider_mite",
+  "Tomato___Target_Spot",
+  "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
+  "Tomato___Tomato_mosaic_virus",
+  "Tomato___healthy"
+ ],
+ "shard_total": 37238,
+ "holdout": {
+  "manifest_sha256": "61ee9f178b93aa65dcc6e41c63365c0f6098dc6f79d3dfa7b6e3a8e735f769c2",
+  "counts": {
+   "plantdoc": 172,
+   "plantvillage": 10843
+  }
+ },
+ "sources": {
+  "centralized": {
+   "branch": "pc_v3_ket_qua/models/centralized_adamw@16f0be1a4",
+   "commit": "16f0be1a44e3325d44e445ef1a759757f5324bbe"
+  },
+  "centralized_sgd": {
+   "branch": "pc_v3_ket_qua/models/centralized_sgd@16f0be1a4",
+   "commit": "16f0be1a44e3325d44e445ef1a759757f5324bbe"
+  },
+  "fedavg": {
+   "branch": "pc_v3_ket_qua/models/fedavg@16f0be1a4",
+   "commit": "16f0be1a44e3325d44e445ef1a759757f5324bbe"
+  },
+  "scaffold": {
+   "branch": "pc_v3_ket_qua/models/scaffold@16f0be1a4",
+   "commit": "16f0be1a44e3325d44e445ef1a759757f5324bbe"
+  },
+  "local": {
+   "branch": "pc_v3_ket_qua/models/local@16f0be1a4",
+   "commit": "16f0be1a44e3325d44e445ef1a759757f5324bbe"
+  },
+  "centralized_int8": {
+   "branch": "pc_v3_ket_qua/models/int8_dynamic_linear/centralized_adamw@16f0be1a4",
+   "commit": "16f0be1a44e3325d44e445ef1a759757f5324bbe"
+  },
+  "centralized_sgd_int8": {
+   "branch": "pc_v3_ket_qua/models/int8_dynamic_linear/centralized_sgd@16f0be1a4",
+   "commit": "16f0be1a44e3325d44e445ef1a759757f5324bbe"
+  },
+  "fedavg_int8": {
+   "branch": "pc_v3_ket_qua/models/int8_dynamic_linear/fedavg@16f0be1a4",
+   "commit": "16f0be1a44e3325d44e445ef1a759757f5324bbe"
+  },
+  "scaffold_int8": {
+   "branch": "pc_v3_ket_qua/models/int8_dynamic_linear/scaffold@16f0be1a4",
+   "commit": "16f0be1a44e3325d44e445ef1a759757f5324bbe"
+  }
+ },
+ "models": [
+  {
+   "model_id": "centralized",
+   "dir": "centralized",
+   "file": "checkpoint_best.pt",
+   "display_name": "Centralized AdamW",
+   "phase": "PC v3",
+   "method": "Centralized AdamW",
+   "registry_id": "web_centralized"
+  },
+  {
+   "model_id": "centralized_sgd",
+   "dir": "centralized_sgd",
+   "file": "checkpoint_best.pt",
+   "display_name": "Centralized SGD",
+   "phase": "PC v3",
+   "method": "Centralized SGD",
+   "registry_id": "web_centralized_sgd"
+  },
+  {
+   "model_id": "fedavg",
+   "dir": "fedavg",
+   "file": "checkpoint_best.pt",
+   "display_name": "FedAvg",
+   "phase": "PC v3",
+   "method": "FedAvg",
+   "registry_id": "web_fedavg"
+  },
+  {
+   "model_id": "scaffold",
+   "dir": "scaffold",
+   "file": "checkpoint_best.pt",
+   "display_name": "SCAFFOLD",
+   "phase": "PC v3",
+   "method": "SCAFFOLD",
+   "registry_id": "web_scaffold"
+  },
+  {
+   "model_id": "local_00",
+   "dir": "local",
+   "file": "client_00/checkpoint_best.pt",
+   "display_name": "Local 00",
+   "phase": "PC v3",
+   "method": "Local-only",
+   "registry_id": "web_local_00"
+  },
+  {
+   "model_id": "local_01",
+   "dir": "local",
+   "file": "client_01/checkpoint_best.pt",
+   "display_name": "Local 01",
+   "phase": "PC v3",
+   "method": "Local-only",
+   "registry_id": "web_local_01"
+  },
+  {
+   "model_id": "local_02",
+   "dir": "local",
+   "file": "client_02/checkpoint_best.pt",
+   "display_name": "Local 02",
+   "phase": "PC v3",
+   "method": "Local-only",
+   "registry_id": "web_local_02"
+  },
+  {
+   "model_id": "local_03",
+   "dir": "local",
+   "file": "client_03/checkpoint_best.pt",
+   "display_name": "Local 03",
+   "phase": "PC v3",
+   "method": "Local-only",
+   "registry_id": "web_local_03"
+  },
+  {
+   "model_id": "local_04",
+   "dir": "local",
+   "file": "client_04/checkpoint_best.pt",
+   "display_name": "Local 04",
+   "phase": "PC v3",
+   "method": "Local-only",
+   "registry_id": "web_local_04"
+  },
+  {
+   "model_id": "centralized_int8",
+   "dir": "centralized_int8",
+   "file": "model_dynamic_linear_torchscript.pt",
+   "display_name": "Centralized AdamW int8",
+   "phase": "PC v3",
+   "method": "Centralized AdamW int8 (động, chỉ lớp Linear)",
+   "registry_id": "web_centralized_int8",
+   "format": "torchscript_int8",
+   "fp32_of": "centralized",
+   "fp32_checkpoint_sha256": "0a8293a34cd3c52b0993d63a9cd9646e30672c2e5f1d21928af1c50495902815",
+   "quantization": "dynamic_linear_qint8"
+  },
+  {
+   "model_id": "centralized_sgd_int8",
+   "dir": "centralized_sgd_int8",
+   "file": "model_dynamic_linear_torchscript.pt",
+   "display_name": "Centralized SGD int8",
+   "phase": "PC v3",
+   "method": "Centralized SGD int8 (động, chỉ lớp Linear)",
+   "registry_id": "web_centralized_sgd_int8",
+   "format": "torchscript_int8",
+   "fp32_of": "centralized_sgd",
+   "fp32_checkpoint_sha256": "7bf7cd8081b0ad9f0d928bf8d227980ddc1517e7e5cb6cfce00f2dba37981aa5",
+   "quantization": "dynamic_linear_qint8"
+  },
+  {
+   "model_id": "fedavg_int8",
+   "dir": "fedavg_int8",
+   "file": "model_dynamic_linear_torchscript.pt",
+   "display_name": "FedAvg int8",
+   "phase": "PC v3",
+   "method": "FedAvg int8 (động, chỉ lớp Linear)",
+   "registry_id": "web_fedavg_int8",
+   "format": "torchscript_int8",
+   "fp32_of": "fedavg",
+   "fp32_checkpoint_sha256": "5f923b6d5b1eabc6517880c92e67af7346c04187b9790f64f97124d7a1ce4723",
+   "quantization": "dynamic_linear_qint8"
+  },
+  {
+   "model_id": "scaffold_int8",
+   "dir": "scaffold_int8",
+   "file": "model_dynamic_linear_torchscript.pt",
+   "display_name": "SCAFFOLD int8",
+   "phase": "PC v3",
+   "method": "SCAFFOLD int8 (động, chỉ lớp Linear)",
+   "registry_id": "web_scaffold_int8",
+   "format": "torchscript_int8",
+   "fp32_of": "scaffold",
+   "fp32_checkpoint_sha256": "4817fbaceff086a64d3af79484c761743baa64b917c5e595131070944927bb05",
+   "quantization": "dynamic_linear_qint8"
+  }
+ ],
+ "int8_label": "int8 động, chỉ lớp Linear (classifier); các lớp conv vẫn fp32",
+ "package": {
+  "source_bundle_id": "pc_v3_a01_s42_r4",
+  "branch_commit": "16f0be1a44e3325d44e445ef1a759757f5324bbe",
+  "selected_solution": {
+   "label": "SCAFFOLD (nhanh b), alpha 0,1, seed 42 round 40",
+   "G": 0.9008069076261711,
+   "G_sd": 0.015741642581153046,
+   "fedavg_G": 0.8829223857468013,
+   "fedavg_G_sd": 0.003365955946411649,
+   "source": "noniid_select_20261109.json 5aff812a"
+  },
+  "import_manifest_sha256": "5b21a33d04fca8a05b05fca62efe07cccf100984012851a8ebb88e6e586c4b2b"
+ },
+ "created_utc": "2026-11-10T14:49:59Z"
+}

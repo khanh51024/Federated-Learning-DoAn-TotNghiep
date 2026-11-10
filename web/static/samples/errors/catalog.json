@@ -1,36 +1,92 @@
 {
- "evidence": "ảnh validation (PlantVillage, PlantDoc) mà FedAvg v4b hoặc Centralized v4b đoán SAI với xác suất >= 0,9 (từ báo cáo tái đánh giá cục bộ)",
- "attribution": "Ảnh thuộc tập validation của release pv_pd_v4, lấy từ PlantVillage (Hughes & Salathé, 2015) và PlantDoc (Singh và cộng sự, 2020); chỉ dùng minh họa lỗi của mô hình trong đồ án.",
+ "evidence": "ảnh validation (PlantVillage, PlantDoc) mà FedAvg hoặc Centralized AdamW đoán SAI với xác suất >= 0,9 (từ báo cáo tái đánh giá cục bộ)",
+ "attribution": "Ảnh thuộc tập validation của release pv_pd_v3, lấy từ PlantVillage (Hughes & Salathé, 2015) và PlantDoc (Singh và cộng sự, 2020); chỉ dùng minh họa lỗi của mô hình trong đồ án.",
  "threshold": 0.9,
- "protocol_id": "mixed_pv_pd_v4_pretrained_seed42_validation",
- "validation_manifest_sha256": "f370f9fe873b874b7ec64a247831a951d0f9108bbd67a06f8b97cfa0d3e6f355",
+ "protocol_id": "mixed_pv_pd_v3_pc_r4_seed42_validation",
+ "validation_manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
  "checkpoint_sha256": {
-  "fedavg": "cd1c8f603bd9cd1bb485346454e83d18658a2ac08d51f35c7e29a255335fbb45",
-  "centralized": "a4ea0dcc8ef34eec529207ad1c015001f5554119e2a9eaa1f4760f200885dcbb"
+  "fedavg": "5f923b6d5b1eabc6517880c92e67af7346c04187b9790f64f97124d7a1ce4723",
+  "centralized": "0a8293a34cd3c52b0993d63a9cd9646e30672c2e5f1d21928af1c50495902815"
  },
- "count": 9,
+ "count": 175,
  "items": [
   {
-   "sample_id": "sample_pd_fd77f8de0713b3ce",
-   "thumb": "sample_pd_fd77f8de0713b3ce.jpg",
+   "sample_id": "sample_pd_5686ed6a6f860877",
+   "thumb": "sample_pd_5686ed6a6f860877.jpg",
    "source": "plantdoc",
-   "target": "Potato___Late_blight",
+   "target": "Tomato___Leaf_Mold",
    "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9998
+    },
     "centralized": {
-     "predicted": "Potato___Early_blight",
-     "confidence": 0.9496
+     "predicted": "Tomato___Late_blight",
+     "confidence": 1.0
     }
    }
   },
   {
-   "sample_id": "sample_pd_90d112674917cffe",
-   "thumb": "sample_pd_90d112674917cffe.jpg",
+   "sample_id": "sample_pd_d1f106afe840c07a",
+   "thumb": "sample_pd_d1f106afe840c07a.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Leaf_Mold",
+     "confidence": 0.9976
+    },
+    "centralized": {
+     "predicted": "Tomato___Leaf_Mold",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_82f33383601fbbec",
+   "thumb": "sample_pv_82f33383601fbbec.jpg",
+   "source": "plantvillage",
+   "target": "Potato___Late_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.997
+    },
+    "centralized": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_3d17d50ad7f62bf0",
+   "thumb": "sample_pd_3d17d50ad7f62bf0.jpg",
    "source": "plantdoc",
    "target": "Tomato___Bacterial_spot",
    "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9922
+    },
     "centralized": {
      "predicted": "Tomato___Septoria_leaf_spot",
-     "confidence": 0.949
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_201b19f4d63a2c28",
+   "thumb": "sample_pd_201b19f4d63a2c28.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Early_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9921
+    },
+    "centralized": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 1.0
     }
    }
   },
@@ -40,9 +96,865 @@
    "source": "plantdoc",
    "target": "Tomato___Bacterial_spot",
    "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9903
+    },
     "centralized": {
      "predicted": "Tomato___Septoria_leaf_spot",
-     "confidence": 0.9428
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_e6fa3bbf53124aee",
+   "thumb": "sample_pd_e6fa3bbf53124aee.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Bacterial_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9424
+    },
+    "centralized": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_b7d35de54c996d45",
+   "thumb": "sample_pv_b7d35de54c996d45.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Early_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9036
+    },
+    "centralized": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_54dd627f7263d4b4",
+   "thumb": "sample_pd_54dd627f7263d4b4.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Bacterial_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9026
+    },
+    "centralized": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_5d2b36c08ad1bafd",
+   "thumb": "sample_pv_5d2b36c08ad1bafd.jpg",
+   "source": "plantvillage",
+   "target": "Corn_(maize)___Northern_Leaf_Blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_a53cb0bc2beb1155",
+   "thumb": "sample_pd_a53cb0bc2beb1155.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Septoria_leaf_spot",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Bacterial_spot",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_4a873b37cbff92f9",
+   "thumb": "sample_pv_4a873b37cbff92f9.jpg",
+   "source": "plantvillage",
+   "target": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Corn_(maize)___Northern_Leaf_Blight",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_92867d483b0080d0",
+   "thumb": "sample_pd_92867d483b0080d0.jpg",
+   "source": "plantdoc",
+   "target": "Corn_(maize)___Common_rust_",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Corn_(maize)___healthy",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_80ff070b23211a85",
+   "thumb": "sample_pd_80ff070b23211a85.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Leaf_Mold",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Squash___Powdery_mildew",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_75630851fdc102cd",
+   "thumb": "sample_pd_75630851fdc102cd.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Early_blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Potato___Late_blight",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_53edabf72d358e67",
+   "thumb": "sample_pd_53edabf72d358e67.jpg",
+   "source": "plantdoc",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Apple___Apple_scab",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_a5777e0731e106fa",
+   "thumb": "sample_pd_a5777e0731e106fa.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Leaf_Mold",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Bacterial_spot",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_c707b819747f2a82",
+   "thumb": "sample_pd_c707b819747f2a82.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Bacterial_spot",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_d147988d93b877cf",
+   "thumb": "sample_pd_d147988d93b877cf.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Leaf_Mold",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Potato___Late_blight",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_f0f5dbdd44c14234",
+   "thumb": "sample_pd_f0f5dbdd44c14234.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_014af253b111c383",
+   "thumb": "sample_pd_014af253b111c383.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Bacterial_spot",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_af71743f99562d33",
+   "thumb": "sample_pd_af71743f99562d33.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Early_blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_90ec4bbde5b41251",
+   "thumb": "sample_pv_90ec4bbde5b41251.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Target_Spot",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Spider_mites Two-spotted_spider_mite",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_d72a2c931f7ff8da",
+   "thumb": "sample_pd_d72a2c931f7ff8da.jpg",
+   "source": "plantdoc",
+   "target": "Apple___Apple_scab",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_ef77015045c3cd55",
+   "thumb": "sample_pd_ef77015045c3cd55.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Septoria_leaf_spot",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Early_blight",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_3db1416be7295e47",
+   "thumb": "sample_pd_3db1416be7295e47.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Early_blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Potato___Late_blight",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_9975f6e71de01322",
+   "thumb": "sample_pd_9975f6e71de01322.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Early_blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Potato___Late_blight",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_c5467f269386ed54",
+   "thumb": "sample_pd_c5467f269386ed54.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Early_blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Potato___Late_blight",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_1dabc8662b4f11ac",
+   "thumb": "sample_pd_1dabc8662b4f11ac.jpg",
+   "source": "plantdoc",
+   "target": "Apple___Apple_scab",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 1.0
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_a2349f40aabeff3e",
+   "thumb": "sample_pd_a2349f40aabeff3e.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Early_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Potato___Late_blight",
+     "confidence": 0.9999
+    },
+    "centralized": {
+     "predicted": "Potato___Late_blight",
+     "confidence": 0.9999
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_fc03cc700054e5ea",
+   "thumb": "sample_pd_fc03cc700054e5ea.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Bacterial_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9978
+    },
+    "centralized": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9999
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_95e28944342dd65e",
+   "thumb": "sample_pv_95e28944342dd65e.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Early_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9998
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_90d112674917cffe",
+   "thumb": "sample_pd_90d112674917cffe.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Bacterial_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9962
+    },
+    "centralized": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9998
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_fd77f8de0713b3ce",
+   "thumb": "sample_pd_fd77f8de0713b3ce.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Late_blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Potato___Early_blight",
+     "confidence": 0.9998
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_54c2e353b4b83c9f",
+   "thumb": "sample_pd_54c2e353b4b83c9f.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Leaf_Mold",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9998
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_2dee9b97eacf2edb",
+   "thumb": "sample_pd_2dee9b97eacf2edb.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Early_blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Bacterial_spot",
+     "confidence": 0.9998
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_8dcd3fb0611b28ff",
+   "thumb": "sample_pd_8dcd3fb0611b28ff.jpg",
+   "source": "plantdoc",
+   "target": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Corn_(maize)___Northern_Leaf_Blight",
+     "confidence": 0.9998
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_014bf70c1479cc76",
+   "thumb": "sample_pd_014bf70c1479cc76.jpg",
+   "source": "plantdoc",
+   "target": "Apple___Apple_scab",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Potato___Early_blight",
+     "confidence": 0.9998
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_2d1b178b496c9c36",
+   "thumb": "sample_pd_2d1b178b496c9c36.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Early_blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9997
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_4b8499860125d20a",
+   "thumb": "sample_pd_4b8499860125d20a.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Late_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9996
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_41b3e662f91c206c",
+   "thumb": "sample_pd_41b3e662f91c206c.jpg",
+   "source": "plantdoc",
+   "target": "Apple___Apple_scab",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Potato___Late_blight",
+     "confidence": 0.9996
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_2c3c0c8006e71552",
+   "thumb": "sample_pd_2c3c0c8006e71552.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Leaf_Mold",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Grape___Black_rot",
+     "confidence": 0.9996
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_6ce1929f793c3d3a",
+   "thumb": "sample_pd_6ce1929f793c3d3a.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Bacterial_spot",
+     "confidence": 0.9995
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_1c6fa807ec3ba5cc",
+   "thumb": "sample_pd_1c6fa807ec3ba5cc.jpg",
+   "source": "plantdoc",
+   "target": "Apple___Apple_scab",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Potato___Early_blight",
+     "confidence": 0.9995
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_5c97ddd5545fe54d",
+   "thumb": "sample_pv_5c97ddd5545fe54d.jpg",
+   "source": "plantvillage",
+   "target": "Potato___Late_blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9995
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_0020f0a0f8f3bf5e",
+   "thumb": "sample_pv_0020f0a0f8f3bf5e.jpg",
+   "source": "plantvillage",
+   "target": "Pepper,_bell___Bacterial_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Pepper,_bell___healthy",
+     "confidence": 0.9994
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_cb6c2556e998b851",
+   "thumb": "sample_pv_cb6c2556e998b851.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Early_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9794
+    },
+    "centralized": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9994
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_ab4576550310e426",
+   "thumb": "sample_pv_ab4576550310e426.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Early_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9993
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_4e99de5ba6dd4af8",
+   "thumb": "sample_pv_4e99de5ba6dd4af8.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Early_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9992
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_09e5a3ba055b8c6e",
+   "thumb": "sample_pd_09e5a3ba055b8c6e.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Leaf_Mold",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Potato___Late_blight",
+     "confidence": 0.9992
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_85be1d458320d31f",
+   "thumb": "sample_pd_85be1d458320d31f.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Late_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Potato___Early_blight",
+     "confidence": 0.9991
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_d87c62ad6bd7c242",
+   "thumb": "sample_pd_d87c62ad6bd7c242.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9991
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_1efc1b9967c808da",
+   "thumb": "sample_pd_1efc1b9967c808da.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Bacterial_spot",
+     "confidence": 0.9601
+    },
+    "centralized": {
+     "predicted": "Tomato___Bacterial_spot",
+     "confidence": 0.999
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_174e5223c7e212f4",
+   "thumb": "sample_pv_174e5223c7e212f4.jpg",
+   "source": "plantvillage",
+   "target": "Corn_(maize)___Northern_Leaf_Blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+     "confidence": 0.999
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_4a3f313482c2cb88",
+   "thumb": "sample_pd_4a3f313482c2cb88.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Leaf_Mold",
+     "confidence": 0.9989
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_204ad99ffb28be86",
+   "thumb": "sample_pd_204ad99ffb28be86.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Septoria_leaf_spot",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Early_blight",
+     "confidence": 0.9983
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_67fd903040f3c8ac",
+   "thumb": "sample_pd_67fd903040f3c8ac.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Leaf_Mold",
+     "confidence": 0.9976
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_78f6738060a1ec0a",
+   "thumb": "sample_pd_78f6738060a1ec0a.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Leaf_Mold",
+     "confidence": 0.9976
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_74bb3ea57e10288c",
+   "thumb": "sample_pd_74bb3ea57e10288c.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Septoria_leaf_spot",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Early_blight",
+     "confidence": 0.9973
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_9e23be62ce4ad0c1",
+   "thumb": "sample_pv_9e23be62ce4ad0c1.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Early_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9739
+    },
+    "centralized": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9972
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_fc3327613546b6f2",
+   "thumb": "sample_pd_fc3327613546b6f2.jpg",
+   "source": "plantdoc",
+   "target": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Corn_(maize)___Common_rust_",
+     "confidence": 0.9971
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_e5218088edaff548",
+   "thumb": "sample_pv_e5218088edaff548.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "confidence": 0.9969
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_601a24f7468c801c",
+   "thumb": "sample_pd_601a24f7468c801c.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Late_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Early_blight",
+     "confidence": 0.9941
+    },
+    "centralized": {
+     "predicted": "Tomato___Early_blight",
+     "confidence": 0.9969
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_4e7c9d4c31632c47",
+   "thumb": "sample_pd_4e7c9d4c31632c47.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Late_blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Potato___Late_blight",
+     "confidence": 0.9969
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_ab6961e33a573656",
+   "thumb": "sample_pd_ab6961e33a573656.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Septoria_leaf_spot",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Early_blight",
+     "confidence": 0.9968
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_83ff71db7a955226",
+   "thumb": "sample_pd_83ff71db7a955226.jpg",
+   "source": "plantdoc",
+   "target": "Apple___Apple_scab",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9967
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_ee6247bd943c22e0",
+   "thumb": "sample_pd_ee6247bd943c22e0.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Late_blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Early_blight",
+     "confidence": 0.9966
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_bdff5063c70ba0cc",
+   "thumb": "sample_pd_bdff5063c70ba0cc.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Early_blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.996
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_b7bd732aa363248d",
+   "thumb": "sample_pv_b7bd732aa363248d.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Esca_(Black_Measles)",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Grape___Black_rot",
+     "confidence": 0.9959
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_60ba4f7e481d0291",
+   "thumb": "sample_pd_60ba4f7e481d0291.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Septoria_leaf_spot",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Potato___Early_blight",
+     "confidence": 0.9956
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_c90b1e9f83b2187b",
+   "thumb": "sample_pv_c90b1e9f83b2187b.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Leaf_Mold",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Spider_mites Two-spotted_spider_mite",
+     "confidence": 0.9955
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_488d2480e6e7e277",
+   "thumb": "sample_pd_488d2480e6e7e277.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Bacterial_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9952
+    },
+    "centralized": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9321
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_fbf9815beba03a5d",
+   "thumb": "sample_pd_fbf9815beba03a5d.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Bacterial_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Early_blight",
+     "confidence": 0.9951
+    },
+    "centralized": {
+     "predicted": "Tomato___Early_blight",
+     "confidence": 0.9499
     }
    }
   },
@@ -54,55 +966,339 @@
    "wrong_by": {
     "centralized": {
      "predicted": "Tomato___Septoria_leaf_spot",
-     "confidence": 0.9411
+     "confidence": 0.9951
     }
    }
   },
   {
-   "sample_id": "sample_pd_201b19f4d63a2c28",
-   "thumb": "sample_pd_201b19f4d63a2c28.jpg",
+   "sample_id": "sample_pd_339175b686de35c8",
+   "thumb": "sample_pd_339175b686de35c8.jpg",
    "source": "plantdoc",
-   "target": "Tomato___Early_blight",
+   "target": "Squash___Powdery_mildew",
    "wrong_by": {
     "centralized": {
-     "predicted": "Tomato___Septoria_leaf_spot",
-     "confidence": 0.9287
+     "predicted": "Tomato___Tomato_mosaic_virus",
+     "confidence": 0.9951
     }
    }
   },
   {
-   "sample_id": "sample_pd_9deb3c2405c9f773",
-   "thumb": "sample_pd_9deb3c2405c9f773.jpg",
+   "sample_id": "sample_pv_ceb74d60c3664143",
+   "thumb": "sample_pv_ceb74d60c3664143.jpg",
+   "source": "plantvillage",
+   "target": "Cherry_(including_sour)___Powdery_mildew",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Orange___Haunglongbing_(Citrus_greening)",
+     "confidence": 0.995
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_e39a2c909d4fb597",
+   "thumb": "sample_pd_e39a2c909d4fb597.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Leaf_Mold",
+     "confidence": 0.9947
+    },
+    "centralized": {
+     "predicted": "Potato___Early_blight",
+     "confidence": 0.9503
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_d8c7f79d02a8a356",
+   "thumb": "sample_pd_d8c7f79d02a8a356.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Leaf_Mold",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Black_rot",
+     "confidence": 0.9149
+    },
+    "centralized": {
+     "predicted": "Grape___Black_rot",
+     "confidence": 0.9937
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_1e4b9bc48a59da05",
+   "thumb": "sample_pd_1e4b9bc48a59da05.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Late_blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Leaf_Mold",
+     "confidence": 0.9928
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_3e70f55ddda2e102",
+   "thumb": "sample_pv_3e70f55ddda2e102.jpg",
+   "source": "plantvillage",
+   "target": "Cherry_(including_sour)___Powdery_mildew",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Orange___Haunglongbing_(Citrus_greening)",
+     "confidence": 0.9927
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_9eda930724f7d177",
+   "thumb": "sample_pv_9eda930724f7d177.jpg",
+   "source": "plantvillage",
+   "target": "Corn_(maize)___Common_rust_",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9926
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_a2c717b019cd3d9c",
+   "thumb": "sample_pd_a2c717b019cd3d9c.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Early_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Leaf_Mold",
+     "confidence": 0.9903
+    },
+    "centralized": {
+     "predicted": "Potato___Late_blight",
+     "confidence": 0.9924
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_7d4cd7117ea57341",
+   "thumb": "sample_pd_7d4cd7117ea57341.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Late_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Tomato_mosaic_virus",
+     "confidence": 0.9238
+    },
+    "centralized": {
+     "predicted": "Tomato___Early_blight",
+     "confidence": 0.9914
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_ebb024eb6c4c73d9",
+   "thumb": "sample_pd_ebb024eb6c4c73d9.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Bacterial_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Early_blight",
+     "confidence": 0.9904
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_05e1de87057a60d0",
+   "thumb": "sample_pv_05e1de87057a60d0.jpg",
+   "source": "plantvillage",
+   "target": "Corn_(maize)___Northern_Leaf_Blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+     "confidence": 0.9902
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_3852f20616d9dba4",
+   "thumb": "sample_pd_3852f20616d9dba4.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Leaf_Mold",
+     "confidence": 0.9898
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_a8d1846bf685e7ef",
+   "thumb": "sample_pd_a8d1846bf685e7ef.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Late_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Potato___Early_blight",
+     "confidence": 0.9897
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_063eabeff8bfa708",
+   "thumb": "sample_pd_063eabeff8bfa708.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Leaf_Mold",
+     "confidence": 0.9894
+    },
+    "centralized": {
+     "predicted": "Tomato___Leaf_Mold",
+     "confidence": 0.9158
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_5b30891ffb2f242a",
+   "thumb": "sample_pd_5b30891ffb2f242a.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Early_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Leaf_Mold",
+     "confidence": 0.9877
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_9ebc76e3089a3f70",
+   "thumb": "sample_pv_9ebc76e3089a3f70.jpg",
+   "source": "plantvillage",
+   "target": "Potato___Late_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9876
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_da62659943d74a9b",
+   "thumb": "sample_pv_da62659943d74a9b.jpg",
+   "source": "plantvillage",
+   "target": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Corn_(maize)___Northern_Leaf_Blight",
+     "confidence": 0.9868
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_c4b8b1abc7b5a127",
+   "thumb": "sample_pv_c4b8b1abc7b5a127.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___healthy",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Leaf_Mold",
+     "confidence": 0.9868
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_713ea0075f232999",
+   "thumb": "sample_pd_713ea0075f232999.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Leaf_Mold",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Tomato_mosaic_virus",
+     "confidence": 0.9865
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_c54164708b0d6fdc",
+   "thumb": "sample_pd_c54164708b0d6fdc.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Bacterial_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9857
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_fd9dfc5eb46f9414",
+   "thumb": "sample_pv_fd9dfc5eb46f9414.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Early_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9853
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_541b45d6f720a727",
+   "thumb": "sample_pd_541b45d6f720a727.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Early_blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Potato___Late_blight",
+     "confidence": 0.9845
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_7e97993d8dd58c00",
+   "thumb": "sample_pd_7e97993d8dd58c00.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Leaf_Mold",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9835
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_248ead6e6c1a0cff",
+   "thumb": "sample_pd_248ead6e6c1a0cff.jpg",
    "source": "plantdoc",
    "target": "Tomato___Tomato_mosaic_virus",
    "wrong_by": {
     "centralized": {
-     "predicted": "Tomato___Leaf_Mold",
-     "confidence": 0.9186
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9833
     }
    }
   },
   {
-   "sample_id": "sample_pd_e6fa3bbf53124aee",
-   "thumb": "sample_pd_e6fa3bbf53124aee.jpg",
+   "sample_id": "sample_pd_7ea01b13614f4c0b",
+   "thumb": "sample_pd_7ea01b13614f4c0b.jpg",
    "source": "plantdoc",
-   "target": "Tomato___Bacterial_spot",
+   "target": "Apple___Apple_scab",
    "wrong_by": {
     "centralized": {
      "predicted": "Tomato___Septoria_leaf_spot",
-     "confidence": 0.9183
+     "confidence": 0.9826
     }
    }
   },
   {
-   "sample_id": "sample_pd_4b8499860125d20a",
-   "thumb": "sample_pd_4b8499860125d20a.jpg",
+   "sample_id": "sample_pd_1db002ac9092878c",
+   "thumb": "sample_pd_1db002ac9092878c.jpg",
    "source": "plantdoc",
-   "target": "Potato___Late_blight",
+   "target": "Potato___Early_blight",
    "wrong_by": {
     "centralized": {
-     "predicted": "Tomato___Late_blight",
-     "confidence": 0.9178
+     "predicted": "Potato___Late_blight",
+     "confidence": 0.9802
     }
    }
   },
@@ -112,9 +1308,901 @@
    "source": "plantvillage",
    "target": "Grape___Esca_(Black_Measles)",
    "wrong_by": {
-    "fedavg": {
+    "centralized": {
      "predicted": "Grape___Black_rot",
-     "confidence": 0.9119
+     "confidence": 0.98
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_38cc3835c4d812af",
+   "thumb": "sample_pv_38cc3835c4d812af.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Leaf_Mold",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Spider_mites Two-spotted_spider_mite",
+     "confidence": 0.9791
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_5c4754e8a0f66301",
+   "thumb": "sample_pd_5c4754e8a0f66301.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Bacterial_spot",
+     "confidence": 0.9783
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_ba036ab6e6b92304",
+   "thumb": "sample_pd_ba036ab6e6b92304.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Leaf_Mold",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Early_blight",
+     "confidence": 0.9777
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_5d72f8af3c87260b",
+   "thumb": "sample_pv_5d72f8af3c87260b.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "confidence": 0.9773
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_ba7ee6cd3fbd6d0d",
+   "thumb": "sample_pv_ba7ee6cd3fbd6d0d.jpg",
+   "source": "plantvillage",
+   "target": "Cherry_(including_sour)___Powdery_mildew",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Orange___Haunglongbing_(Citrus_greening)",
+     "confidence": 0.9767
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_3ebfa28c809d432c",
+   "thumb": "sample_pv_3ebfa28c809d432c.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Early_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Tomato_Yellow_Leaf_Curl_Virus",
+     "confidence": 0.9757
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_81c1632aaeea4290",
+   "thumb": "sample_pv_81c1632aaeea4290.jpg",
+   "source": "plantvillage",
+   "target": "Cherry_(including_sour)___Powdery_mildew",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Orange___Haunglongbing_(Citrus_greening)",
+     "confidence": 0.9757
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_9c77ee9d2bd75260",
+   "thumb": "sample_pv_9c77ee9d2bd75260.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "confidence": 0.9745
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_4b00e7a221f57f7f",
+   "thumb": "sample_pv_4b00e7a221f57f7f.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "confidence": 0.9739
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_3fdb36373cef5e9d",
+   "thumb": "sample_pv_3fdb36373cef5e9d.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "confidence": 0.9736
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_0c1a7edb767737b9",
+   "thumb": "sample_pd_0c1a7edb767737b9.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Septoria_leaf_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Potato___Early_blight",
+     "confidence": 0.9733
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_2c44ba48a4753996",
+   "thumb": "sample_pv_2c44ba48a4753996.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Esca_(Black_Measles)",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)",
+     "confidence": 0.9716
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_1fa4564b0d64ca99",
+   "thumb": "sample_pd_1fa4564b0d64ca99.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Late_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Potato___Early_blight",
+     "confidence": 0.9693
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_12dfcace568d59d2",
+   "thumb": "sample_pd_12dfcace568d59d2.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Early_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Potato___Late_blight",
+     "confidence": 0.9691
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_f510b72cd8851d21",
+   "thumb": "sample_pd_f510b72cd8851d21.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Bacterial_spot",
+     "confidence": 0.9677
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_41bcfc3417c20ccd",
+   "thumb": "sample_pv_41bcfc3417c20ccd.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Early_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9666
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_d488f74af403bfcf",
+   "thumb": "sample_pv_d488f74af403bfcf.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "confidence": 0.966
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_4d1b99e251bfbbb3",
+   "thumb": "sample_pv_4d1b99e251bfbbb3.jpg",
+   "source": "plantvillage",
+   "target": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Corn_(maize)___Northern_Leaf_Blight",
+     "confidence": 0.9654
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_a09ca522372d4707",
+   "thumb": "sample_pv_a09ca522372d4707.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "confidence": 0.964
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_f533ff98ab5d4f31",
+   "thumb": "sample_pv_f533ff98ab5d4f31.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "confidence": 0.9632
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_88c19f668f4e0e79",
+   "thumb": "sample_pv_88c19f668f4e0e79.jpg",
+   "source": "plantvillage",
+   "target": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Corn_(maize)___Northern_Leaf_Blight",
+     "confidence": 0.9615
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_abe8071024f92ec3",
+   "thumb": "sample_pv_abe8071024f92ec3.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Target_Spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Spider_mites Two-spotted_spider_mite",
+     "confidence": 0.9608
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_90ab8c711f505466",
+   "thumb": "sample_pd_90ab8c711f505466.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Septoria_leaf_spot",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Strawberry___Leaf_scorch",
+     "confidence": 0.9606
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_502d4602fece2f4c",
+   "thumb": "sample_pv_502d4602fece2f4c.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Target_Spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Spider_mites Two-spotted_spider_mite",
+     "confidence": 0.9604
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_52eb311db613f5e3",
+   "thumb": "sample_pv_52eb311db613f5e3.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "confidence": 0.9603
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_42b57f566889feb7",
+   "thumb": "sample_pv_42b57f566889feb7.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Spider_mites Two-spotted_spider_mite",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Target_Spot",
+     "confidence": 0.9595
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_170eb8fb083f89b6",
+   "thumb": "sample_pv_170eb8fb083f89b6.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Bacterial_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Early_blight",
+     "confidence": 0.9591
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_4c16c0c8b1d52471",
+   "thumb": "sample_pv_4c16c0c8b1d52471.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Early_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9579
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_cf0a4ea048835e6b",
+   "thumb": "sample_pv_cf0a4ea048835e6b.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "confidence": 0.9576
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_b7da830b21c4cf39",
+   "thumb": "sample_pd_b7da830b21c4cf39.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Leaf_Mold",
+     "confidence": 0.9554
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_9deb3c2405c9f773",
+   "thumb": "sample_pd_9deb3c2405c9f773.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Potato___Early_blight",
+     "confidence": 0.9551
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_1beb074e53c0bf15",
+   "thumb": "sample_pv_1beb074e53c0bf15.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Target_Spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___healthy",
+     "confidence": 0.9537
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_a38a00e4c32c40fc",
+   "thumb": "sample_pd_a38a00e4c32c40fc.jpg",
+   "source": "plantdoc",
+   "target": "Squash___Powdery_mildew",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Leaf_Mold",
+     "confidence": 0.9535
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_2eceb23c953e0453",
+   "thumb": "sample_pv_2eceb23c953e0453.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Target_Spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Spider_mites Two-spotted_spider_mite",
+     "confidence": 0.953
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_025d504a4b208be7",
+   "thumb": "sample_pv_025d504a4b208be7.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Septoria_leaf_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Potato___Early_blight",
+     "confidence": 0.9528
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_2ea27ee2e467b520",
+   "thumb": "sample_pv_2ea27ee2e467b520.jpg",
+   "source": "plantvillage",
+   "target": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Corn_(maize)___Northern_Leaf_Blight",
+     "confidence": 0.9523
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_1b44b1e8635e0222",
+   "thumb": "sample_pd_1b44b1e8635e0222.jpg",
+   "source": "plantdoc",
+   "target": "Apple___Apple_scab",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Potato___Early_blight",
+     "confidence": 0.9501
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_2a738ef8c3a3159f",
+   "thumb": "sample_pd_2a738ef8c3a3159f.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Early_blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9496
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_0fda787cdc0e1c2a",
+   "thumb": "sample_pv_0fda787cdc0e1c2a.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Spider_mites Two-spotted_spider_mite",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Target_Spot",
+     "confidence": 0.9489
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_1242c2a8066fdea9",
+   "thumb": "sample_pd_1242c2a8066fdea9.jpg",
+   "source": "plantdoc",
+   "target": "Apple___Apple_scab",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9471
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_ceb486faac37ca10",
+   "thumb": "sample_pv_ceb486faac37ca10.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "confidence": 0.9468
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_eab3c63875945956",
+   "thumb": "sample_pd_eab3c63875945956.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Leaf_Mold",
+     "confidence": 0.9451
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_4a50199593cf7f35",
+   "thumb": "sample_pd_4a50199593cf7f35.jpg",
+   "source": "plantdoc",
+   "target": "Apple___Apple_scab",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Potato___Early_blight",
+     "confidence": 0.9448
+    },
+    "centralized": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9426
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_d7b65bb190dd20ee",
+   "thumb": "sample_pd_d7b65bb190dd20ee.jpg",
+   "source": "plantdoc",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Apple___Apple_scab",
+     "confidence": 0.9448
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_ae4db8cf80538d48",
+   "thumb": "sample_pd_ae4db8cf80538d48.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Early_blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Potato___Late_blight",
+     "confidence": 0.9446
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_231d04876156a9e4",
+   "thumb": "sample_pv_231d04876156a9e4.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Target_Spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Spider_mites Two-spotted_spider_mite",
+     "confidence": 0.9422
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_2f13c1a8c104102e",
+   "thumb": "sample_pv_2f13c1a8c104102e.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "confidence": 0.942
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_36eb2a217f0e06bd",
+   "thumb": "sample_pv_36eb2a217f0e06bd.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Target_Spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Early_blight",
+     "confidence": 0.9419
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_3269ec661ab22da4",
+   "thumb": "sample_pv_3269ec661ab22da4.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Septoria_leaf_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Strawberry___Leaf_scorch",
+     "confidence": 0.9406
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_5418ed3b6b3479fb",
+   "thumb": "sample_pv_5418ed3b6b3479fb.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "confidence": 0.9398
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_c58b381181813141",
+   "thumb": "sample_pd_c58b381181813141.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9394
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_9a83aabedb8663bd",
+   "thumb": "sample_pd_9a83aabedb8663bd.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Leaf_Mold",
+     "confidence": 0.9391
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_bf469671fa9269fb",
+   "thumb": "sample_pv_bf469671fa9269fb.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "confidence": 0.9367
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_a4a1f89d9e0558e9",
+   "thumb": "sample_pv_a4a1f89d9e0558e9.jpg",
+   "source": "plantvillage",
+   "target": "Pepper,_bell___Bacterial_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Pepper,_bell___healthy",
+     "confidence": 0.9363
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_b23391416ecea3bf",
+   "thumb": "sample_pv_b23391416ecea3bf.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "confidence": 0.9351
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_094a442ddb1f735f",
+   "thumb": "sample_pd_094a442ddb1f735f.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Late_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Early_blight",
+     "confidence": 0.9339
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_00fb35108efe02ee",
+   "thumb": "sample_pv_00fb35108efe02ee.jpg",
+   "source": "plantvillage",
+   "target": "Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Corn_(maize)___Northern_Leaf_Blight",
+     "confidence": 0.9335
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_7e3dec3ad75ea4e2",
+   "thumb": "sample_pd_7e3dec3ad75ea4e2.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Bacterial_spot",
+     "confidence": 0.9334
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_2d1affbb3291c3d4",
+   "thumb": "sample_pv_2d1affbb3291c3d4.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "confidence": 0.9333
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_e2c65cb8feaba723",
+   "thumb": "sample_pv_e2c65cb8feaba723.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Tomato_mosaic_virus",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Leaf_Mold",
+     "confidence": 0.9326
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_a41c7fdc05f05c7d",
+   "thumb": "sample_pd_a41c7fdc05f05c7d.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Early_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Septoria_leaf_spot",
+     "confidence": 0.9321
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_ad4d4e444d3a4dd4",
+   "thumb": "sample_pv_ad4d4e444d3a4dd4.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "confidence": 0.93
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_d3367b5b7b21aa69",
+   "thumb": "sample_pv_d3367b5b7b21aa69.jpg",
+   "source": "plantvillage",
+   "target": "Apple___Apple_scab",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Cherry_(including_sour)___Powdery_mildew",
+     "confidence": 0.9298
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_3204962c7eeeba8b",
+   "thumb": "sample_pv_3204962c7eeeba8b.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Septoria_leaf_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9294
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_a6a97740aa6a2f6a",
+   "thumb": "sample_pd_a6a97740aa6a2f6a.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Leaf_Mold",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Apple___Apple_scab",
+     "confidence": 0.9285
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_84ffffbd111d5bb9",
+   "thumb": "sample_pd_84ffffbd111d5bb9.jpg",
+   "source": "plantdoc",
+   "target": "Potato___Late_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9254
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_d53a4b890c7c8ba9",
+   "thumb": "sample_pd_d53a4b890c7c8ba9.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Late_blight",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Potato___Late_blight",
+     "confidence": 0.9235
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_5148092859281c44",
+   "thumb": "sample_pv_5148092859281c44.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Target_Spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Early_blight",
+     "confidence": 0.9231
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_26145de99fa9e19c",
+   "thumb": "sample_pd_26145de99fa9e19c.jpg",
+   "source": "plantdoc",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Apple___Apple_scab",
+     "confidence": 0.9215
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_74e90370aef7740a",
+   "thumb": "sample_pd_74e90370aef7740a.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Septoria_leaf_spot",
+   "wrong_by": {
+    "centralized": {
+     "predicted": "Tomato___Early_blight",
+     "confidence": 0.9159
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_4343a7a05bb231b2",
+   "thumb": "sample_pv_4343a7a05bb231b2.jpg",
+   "source": "plantvillage",
+   "target": "Grape___Black_rot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Grape___Esca_(Black_Measles)",
+     "confidence": 0.9152
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_bf680da2bd206747",
+   "thumb": "sample_pv_bf680da2bd206747.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Septoria_leaf_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Tomato___Late_blight",
+     "confidence": 0.9135
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pd_2ac5eddac83ac1fb",
+   "thumb": "sample_pd_2ac5eddac83ac1fb.jpg",
+   "source": "plantdoc",
+   "target": "Tomato___Septoria_leaf_spot",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Squash___Powdery_mildew",
+     "confidence": 0.9128
+    }
+   }
+  },
+  {
+   "sample_id": "sample_pv_2a98b5d477f072b4",
+   "thumb": "sample_pv_2a98b5d477f072b4.jpg",
+   "source": "plantvillage",
+   "target": "Tomato___Late_blight",
+   "wrong_by": {
+    "fedavg": {
+     "predicted": "Potato___Early_blight",
+     "confidence": 0.9058
     }
    }
   }

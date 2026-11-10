@@ -1,0 +1,23 @@
+{
+ "branch": "pc_v3_ket_qua/models/centralized_sgd@16f0be1a4",
+ "validation_manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
+ "release_manifest_sha256": "6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252",
+ "files": {
+  "checkpoint_best.pt": {
+   "bytes": 6512134,
+   "sha256": "7bf7cd8081b0ad9f0d928bf8d227980ddc1517e7e5cb6cfce00f2dba37981aa5"
+  },
+  "summary.json": {
+   "bytes": 11765,
+   "sha256": "c1f4c70b50703b7813b5ec1b15c8b8f87903b5c865540d27da404572aabbd332"
+  },
+  "validation_comparison.csv": {
+   "bytes": 7422,
+   "sha256": "c8df12fd0882b419006fe70abee7c11920904f72a042ab27b8856d1581038193"
+  },
+  "validation_metrics.json": {
+   "bytes": 9115,
+   "sha256": "ea4a31d33b539c8587dcf1ab01864d114b6b10122e71b5ffca086dd76cdffb9c"
+  }
+ }
+}

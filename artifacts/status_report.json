@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (0 mục BLOCKED cần dữ liệu/máy train, 4 mục kỹ thuật chưa XONG)",
+  "readiness": "DEMO KỸ THUẬT DÙNG ĐƯỢC — CHƯA nghiệm thu khoa học (7 mục BLOCKED cần dữ liệu/máy train, 4 mục kỹ thuật chưa XONG)",
   "canonical_run_id": "20260910_162528__label_skew__s42_t42__71bbb9b0__029aba62",
   "dataset_truth": {
     "source": "data/partitions_stage2_scratch_v3/suite.json",
@@ -116,24 +116,30 @@
   },
   "model_counts_by_family": {
     "scientific_canonical": 3,
-    "published_demo": 7,
+    "published_demo": 13,
     "network_demo": 4,
     "reference": 1,
     "smoke": 3
   },
   "web_visible_models": [
     "web_centralized",
+    "web_centralized_sgd",
     "web_fedavg",
+    "web_scaffold",
     "web_local_00",
     "web_local_01",
     "web_local_02",
     "web_local_03",
     "web_local_04",
+    "web_centralized_int8",
+    "web_centralized_sgd_int8",
+    "web_fedavg_int8",
+    "web_scaffold_int8",
     "plantvillage_traced_reference"
   ],
   "gates": {
     "provenance": {
-      "generated_at": "2026-11-10T16:59:42",
+      "generated_at": "2026-11-10T23:49:02",
       "status": "unverified",
       "critical_issues": [
         "fedavg_checkpoint_missing",
@@ -145,7 +151,7 @@
       "source": "artifacts/artifact_provenance_validation.json"
     },
     "pre_demo_check": {
-      "generated_at": "2026-11-10T16:59:45",
+      "generated_at": "2026-11-10T23:49:05",
       "overall": "technical_demo_ready",
       "source": "artifacts/pre_demo_check.json"
     },
@@ -165,16 +171,16 @@
       "source": "artifacts/final_acceptance.json"
     },
     "network_artifact": {
-      "generated_at": "2026-11-10T16:59:50",
+      "generated_at": "2026-11-10T23:49:08",
       "ok": false,
       "require_real_clients": false,
       "source": "artifacts/network_artifact_validation.json"
     },
     "checkpoint_catalog": {
       "status": "complete",
-      "total_pt_files": 147,
-      "in_models": 15,
-      "in_groups": 132,
+      "total_pt_files": 160,
+      "in_models": 21,
+      "in_groups": 139,
       "unclassified": [],
       "source": "quét đĩa (scripts/build_registry.py)"
     }
@@ -184,7 +190,7 @@
       "id": "registry",
       "title": "Registry v2 + danh mục mọi checkpoint trên đĩa",
       "status": "XONG",
-      "detail": "schema v2; 18 model; 147 file .pt đều có tên (15 trong model, 132 trong nhóm)",
+      "detail": "schema v2; 24 model; 160 file .pt đều có tên (21 trong model, 139 trong nhóm)",
       "unlock": []
     },
     {
@@ -219,7 +225,7 @@
       "id": "docs_clean",
       "title": "Dọn tài liệu mâu thuẫn",
       "status": "CHƯA",
-      "detail": "tài liệu ngoài danh mục: gốc=[] docs=['HUONG_DAN_DEMO_THU_CONG.md', 'TICH_HOP_INT8_PC_V3.md']",
+      "detail": "tài liệu ngoài danh mục: gốc=[] docs=['HUONG_DAN_DEMO_THU_CONG.md']",
       "unlock": []
     },
     {
@@ -260,72 +266,92 @@
     {
       "id": "provenance",
       "title": "Kiểm chứng provenance & checkpoint canonical",
-      "status": "XONG",
-      "detail": "gói v4b_s42: con trỏ ghim mã băm manifest; 7 checkpoint khớp artifact_manifest; release 68e574519a1a… và validation khớp; mã huấn luyện 9dcbcbf6684d… (commit 93c5f80fd); W0 tính lại từ hạt giống 42. Slot canonical của pipeline Kaggle cũ không còn checkpoint nhưng không phục vụ web.",
-      "unlock": []
+      "status": "BLOCKED",
+      "detail": "provenance=unverified; lỗi: ['fedavg_checkpoint_missing', 'centralized_checkpoint_missing']",
+      "unlock": [
+        "# 0) thử kéo object LFS về (chỉ được nếu remote còn giữ):",
+        "git lfs pull",
+        "# 1) nếu vẫn thiếu: tải hai file từ Kaggle, 2) đặt đúng vào slot canonical (đường mà provenance validator và registry đọc):",
+        "Copy-Item <fedavg_best.pt tải về> artifacts/checkpoints/fedavg_best.pt",
+        "Copy-Item <centralized_best.pt tải về> artifacts/checkpoints/centralized_best.pt",
+        ".\\.venv\\Scripts\\python.exe scripts\\update_status.py   # so state-hash với canonical_manifest"
+      ]
     },
     {
       "id": "leakage",
       "title": "Audit leakage theo từng run",
-      "status": "XONG",
-      "detail": "release mixed_pv_pd_v4: train 52.464 / val 6.746 / calibration 7.005 rời nhau trên 5 khóa (giao nhau tổng = 0); 2 partition đều là tập con train; 66.215 ảnh khớp byte_sha256. Phạm vi: split của release, checkpoint ràng buộc qua metadata (chưa kiểm lại từng bước train)",
-      "unlock": []
+      "status": "BLOCKED",
+      "detail": "chưa có artifacts/release_leakage_audit.json: máy không có dataset để audit split của release",
+      "unlock": [
+        ".\\.venv\\Scripts\\python.exe scripts\\audit_release_leakage.py   # sau khi có dataset"
+      ]
     },
     {
       "id": "per_class",
       "title": "Đánh giá PlantDoc theo từng lớp (từ số công bố)",
       "status": "XONG",
-      "detail": "PlantDoc phủ 13/38 lớp; 8 lớp recall<50% (204/269 ảnh); FedAvg tệ hơn Centralized ở 9/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5)",
+      "detail": "PlantDoc phủ 13/38 lớp; 5 lớp recall<50% (97/269 ảnh); FedAvg tệ hơn Centralized ở 6/13 lớp (số công bố, đã kiểm nhất quán; xem mục 5)",
       "unlock": []
     },
     {
       "id": "reeval",
       "title": "Tái đánh giá cục bộ trên ảnh validation (xác nhận số công bố)",
       "status": "XONG",
-      "detail": "6.746 ảnh validation tái đo trên CPU: Centralized v4b và FedAvg v4b khớp TUYỆT ĐỐI số ghi trong gói (số ảnh đúng, macro-F1, crop accuracy, recall theo lớp); tổng 21/21 phép so khớp tuyệt đối",
+      "detail": "4.613 ảnh validation tái đo trên CPU: Centralized AdamW và FedAvg khớp TUYỆT ĐỐI số ghi trong gói (số ảnh đúng, macro-F1, crop accuracy, recall theo lớp); tổng 26/26 phép so khớp tuyệt đối",
       "unlock": []
     },
     {
       "id": "confident_errors",
       "title": "Phân tích lỗi confidence cao (mức tổng hợp, từ số công bố)",
       "status": "XONG",
-      "detail": "mức tổng hợp từ metrics công bố — Centralized v4b: 8/269 ảnh PlantDoc sai với confidence>0.9 (7% số lỗi); FedAvg v4b: 0/269 ảnh PlantDoc sai với confidence>0.9 (0% số lỗi) (xem mục 5)",
+      "detail": "mức tổng hợp từ metrics công bố — Centralized AdamW: 77/269 ảnh PlantDoc sai với confidence>0.9 (63% số lỗi); FedAvg: 47/269 ảnh PlantDoc sai với confidence>0.9 (33% số lỗi) (xem mục 5)",
       "unlock": []
     },
     {
       "id": "calibration",
       "title": "Phân tích từng ảnh sai tự tin + đo calibration (ECE)",
-      "status": "XONG",
-      "detail": "FedAvg v4b: ECE PlantDoc 0.077 → 0.245 sau temperature scaling (T=0.5588, fit trên 7.005 ảnh calibration tách biệt val); 1 ảnh validation sai với confidence ≥ 0,9 đã liệt kê từng ảnh. UI hiển thị softmax thô kèm xác suất đã hiệu chuẩn (T)",
-      "unlock": []
+      "status": "BLOCKED",
+      "detail": "gói chỉ đánh giá trên validation nên KHÔNG đo calibration/temperature scaling (cần tập calibration niêm phong, nhóm train không giao và đồ án không mở); 108 ảnh validation sai với confidence ≥ 0,9 đã liệt kê từng ảnh; UI hiển thị softmax thô",
+      "unlock": [
+        "Xin nhóm train bộ logit/tập calibration của gói, hoặc quyết định mở calibration.jsonl của release; sau đó chạy .\\.venv\\Scripts\\python.exe scripts\\evaluate_published_models.py"
+      ]
     },
     {
       "id": "holdout",
       "title": "Đánh giá trên tập test giữ riêng (không dùng để chọn checkpoint)",
-      "status": "XONG",
-      "detail": "13.101 ảnh legacy_diagnostic_test (không dùng để chọn checkpoint): Centralized v4b PV 99.32% / PD 59.88%; FedAvg v4b PV 96.84% / PD 40.12%; Centralized so với số tự ghi trong summary.json: plantdoc +2 ảnh, plantvillage +13 ảnh, field_other không suy ra được số ảnh đúng",
-      "unlock": []
+      "status": "BLOCKED",
+      "detail": "chưa có artifacts/holdout_eval_report.json: số đang báo cáo là validation dùng để chọn checkpoint",
+      "unlock": [
+        ".\\.venv\\Scripts\\python.exe scripts\\evaluate_published_models.py --holdout   # ~6 phút trên CPU"
+      ]
     },
     {
       "id": "statistics",
       "title": "Khoảng tin cậy theo cụm + McNemar + độ nhạy 'cùng lá'",
-      "status": "XONG",
-      "detail": "khoảng tin cậy 95% bootstrap theo cụm (cảnh/nhóm lá) — val: PlantDoc Centralized 56.5% [47.4%; 66.0%], Centralized−FedAvg +19.0% [+11.2%; +26.9%], McNemar p=5.19e-09 | test: PlantDoc Centralized 59.9% [51.2%; 68.8%], Centralized−FedAvg +19.8% [+10.4%; +30.0%], McNemar p=1.21e-05",
-      "unlock": []
+      "status": "BLOCKED",
+      "detail": "chưa có artifacts/statistics_report.json: chưa có khoảng tin cậy theo cụm và kiểm định theo cặp",
+      "unlock": [
+        ".\\.venv\\Scripts\\python.exe scripts\\report_statistics.py"
+      ]
     },
     {
       "id": "multiseed",
       "title": "Chạy multi-seed non-IID (seed 42/123/2026)",
-      "status": "XONG",
-      "detail": "3 hạt giống [42, 123, 2026] × 7 mô hình (Centralized, FedAvg, 5 Local-only) cùng release 68e574519a1a…, cùng thiết lập huấn luyện; mean ± độ lệch chuẩn ở trang Kết quả (artifacts/train_v4_results.json). 7/14 ngưỡng đặt trước đạt; chưa đạt: B_centralized_plantwild_65, web1_centralized_plantwild_plus10, web2_centralized_plantdoc_holdout, A_fedavg_field_same_source, B_fedavg_plantwild_65, web1_fedavg_plantwild_plus10, web2_fedavg_plantdoc_holdout.",
-      "unlock": []
+      "status": "BLOCKED",
+      "detail": "chưa có multi-seed THẬT cho protocol đang công bố (mixed PV+PlantDoc, pretrained); chỉ có bản smoke trên ảnh nhiễu ngẫu nhiên",
+      "unlock": [
+        "# train ngoài theo protocol mixed_pv_pd_v3 rồi nhập bundle: python scripts/import_branch_demo.py (docs/MODEL_REGISTRY.md)",
+        "# LƯU Ý: scripts/run_real_multiseed_report.ps1 chạy protocol scratch PlantVillage CŨ, không thay được mục này"
+      ]
     },
     {
       "id": "reports_synced",
       "title": "Đồng bộ báo cáo & artifacts sau khi có run mới",
-      "status": "XONG",
-      "detail": "5 báo cáo (tái đánh giá, test giữ riêng, thống kê, cấu hình huấn luyện, shard) khớp protocol và release của gói v4b_s42",
-      "unlock": []
+      "status": "BLOCKED",
+      "detail": "phụ thuộc multi-seed thật",
+      "unlock": [
+        ".\\.venv\\Scripts\\python.exe scripts\\update_status.py"
+      ]
     },
     {
       "id": "release",

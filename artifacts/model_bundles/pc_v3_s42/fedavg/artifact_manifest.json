@@ -1,0 +1,23 @@
+{
+ "branch": "pc_v3_ket_qua/models/fedavg@16f0be1a4",
+ "validation_manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
+ "release_manifest_sha256": "6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252",
+ "files": {
+  "checkpoint_best.pt": {
+   "bytes": 8607366,
+   "sha256": "5f923b6d5b1eabc6517880c92e67af7346c04187b9790f64f97124d7a1ce4723"
+  },
+  "summary.json": {
+   "bytes": 48667,
+   "sha256": "551f2e72b3da1056dba11bc00ff619ce4824d7b654fdfbf8e4d8edda993d3ec5"
+  },
+  "validation_comparison.csv": {
+   "bytes": 7422,
+   "sha256": "c8df12fd0882b419006fe70abee7c11920904f72a042ab27b8856d1581038193"
+  },
+  "validation_metrics.json": {
+   "bytes": 9317,
+   "sha256": "bdbfc2155bce5e6cd5634c471456925985b68e872083c325312ebfe1ced4dc5e"
+  }
+ }
+}

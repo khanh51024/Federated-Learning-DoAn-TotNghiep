@@ -1,0 +1,23 @@
+{
+ "branch": "pc_v3_ket_qua/models/scaffold@16f0be1a4",
+ "validation_manifest_sha256": "5094123650efd6d47e7922e0111401ad8bc60bd6b20ee39d619d4105f9bd9f6f",
+ "release_manifest_sha256": "6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252",
+ "files": {
+  "checkpoint_best.pt": {
+   "bytes": 8607686,
+   "sha256": "4817fbaceff086a64d3af79484c761743baa64b917c5e595131070944927bb05"
+  },
+  "summary.json": {
+   "bytes": 48664,
+   "sha256": "a68504f0e4a29c503d678843b9048580c64077becc50f8571dfc4883d7bd4216"
+  },
+  "validation_comparison.csv": {
+   "bytes": 7422,
+   "sha256": "c8df12fd0882b419006fe70abee7c11920904f72a042ab27b8856d1581038193"
+  },
+  "validation_metrics.json": {
+   "bytes": 9294,
+   "sha256": "b8f65ea2f8951fc1d18cf0db367e0a6bd7b9a11c4ee261be8c096cc78ee6247b"
+  }
+ }
+}

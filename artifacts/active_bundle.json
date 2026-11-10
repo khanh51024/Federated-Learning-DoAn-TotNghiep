@@ -1,6 +1,6 @@
 {
- "bundle_dir": "artifacts/model_bundles/v4b_s42",
- "manifest_sha256": "e0d1ec1b54b9f5450c65c65f7fb3cdb7e7d58960860e712fb7772be64032709b",
- "previous_bundle_dir": null,
- "updated_utc": "2026-10-22T08:11:16Z"
+ "bundle_dir": "artifacts/model_bundles/pc_v3_s42",
+ "manifest_sha256": "f40f05be7fc602de2e23b671d3284fff75e962a43861634a2406148cb62e3cbf",
+ "previous_bundle_dir": "artifacts/model_bundles/v4b_s42",
+ "updated_utc": "2026-11-10T16:22:24Z"
 }

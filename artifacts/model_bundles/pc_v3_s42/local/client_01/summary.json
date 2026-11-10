@@ -1,0 +1,9 @@
+{
+ "seed": 42,
+ "w0_fingerprint": "eaf9197b42fb39163186a7285f7f1ed4f1e728bd83522260fdc5f0f51c110850",
+ "release_manifest_sha256": "6d2c6b406b329e5016b3244c0079d1ef35103af5e73efe5b0f39c7ce1943d252",
+ "client": 1,
+ "n_k": 7858,
+ "history": [],
+ "selection": "checkpoint cuối (epoch/vòng cuối), không chọn theo validation"
+}
