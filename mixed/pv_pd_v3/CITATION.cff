@@ -1,0 +1,43 @@
+cff-version: 1.2.0
+message: "Bộ dữ liệu pv_pd_v3 được dựng từ PlantDoc và PlantVillage. Nếu dùng, hãy trích dẫn cả hai nguồn dưới đây."
+title: "pv_pd_v3 (PlantVillage + PlantDoc, nhãn 38 lớp)"
+type: dataset
+references:
+  - type: conference-paper
+    title: "PlantDoc: A Dataset for Visual Plant Disease Detection"
+    authors:
+      - family-names: "Singh"
+        given-names: "Davinder"
+      - family-names: "Jain"
+        given-names: "Naman"
+      - family-names: "Jain"
+        given-names: "Pranjali"
+      - family-names: "Kayal"
+        given-names: "Pratik"
+      - family-names: "Kumawat"
+        given-names: "Sudhakar"
+      - family-names: "Batra"
+        given-names: "Nipun"
+    collection-title: "Proceedings of the 7th ACM IKDD CoDS and 25th COMAD (CoDS COMAD 2020)"
+    year: 2020
+    start: 249
+    end: 253
+    doi: "10.1145/3371158.3371196"
+    publisher:
+      name: "Association for Computing Machinery"
+    url: "https://github.com/pratikkayal/PlantDoc-Dataset"
+    license: CC-BY-4.0
+  - type: article
+    title: "Using deep learning for image-based plant disease detection"
+    authors:
+      - family-names: "Mohanty"
+        given-names: "Sharada P."
+      - family-names: "Hughes"
+        given-names: "David P."
+      - family-names: "Salathé"
+        given-names: "Marcel"
+    journal: "Frontiers in Plant Science"
+    volume: 7
+    year: 2016
+    doi: "10.3389/fpls.2016.01419"
+    url: "https://github.com/spMohanty/PlantVillage-Dataset"
