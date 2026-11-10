@@ -9,22 +9,23 @@ from src import bundle
 from web.demo_evidence import STORE, load_evidence
 
 
-def test_published_bundle_has_seven_independent_models_and_shared_split():
+def test_published_bundle_has_the_independent_models_of_its_manifest_and_shared_split():
+    """Danh sách mô hình lấy từ manifest của gói đang dùng (gói v4b: 7 mô hình; gói PC v3: 13 gồm bản int8), không viết cứng."""
     evidence = load_evidence()
     assert evidence["available"], evidence.get("reason")
-    assert len(evidence["models"]) == 7
-    assert {m["model_id"] for m in evidence["models"]} == {
-        "centralized", "fedavg", *(f"local_{i:02d}" for i in range(5))
-    }
     manifest = bundle.load_manifest(STORE)
+    specs = {spec["model_id"]: spec for spec in bundle.model_specs(manifest)}
+    assert [m["model_id"] for m in evidence["models"]] == list(specs)
+    # mô hình cốt lõi luôn có: Centralized, FedAvg và năm Local-only
+    assert {"centralized", "fedavg", *(f"local_{i:02d}" for i in range(5))} <= set(specs)
     assert evidence["validation_counts"] == bundle.validation_counts(manifest)
     assert evidence["scientific_stage2_complete"] is False
-    assert all(
-        model["commit"] == manifest["sources"][
-            "local" if model["model_id"].startswith("local_") else model["model_id"]
-        ]["commit"]
-        for model in evidence["models"]
-    )
+    assert evidence["evidence_scope"] == manifest.get("evidence_scope")
+    assert all(model["commit"] == manifest["sources"][specs[model["model_id"]]["dir"]]["commit"] for model in evidence["models"])
+    for model in evidence["models"]:
+        is_int8 = specs[model["model_id"]]["format"] == bundle.FORMAT_TORCHSCRIPT_INT8
+        assert (model.get("format") == bundle.FORMAT_TORCHSCRIPT_INT8) is is_int8
+        assert ("fp32_of" in model) is is_int8 and (model.get("fp32_of") in specs if is_int8 else True)
 
 
 def test_missing_or_tampered_bytes_and_wrong_contract_hide_all_results(tmp_path):

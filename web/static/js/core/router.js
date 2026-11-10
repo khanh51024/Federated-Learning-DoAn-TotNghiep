@@ -24,7 +24,7 @@ export const ROUTES = [
   {
     id: "ket-qua", step: 4, group: "Báo cáo", chapter: 4, label: "Kết quả",
     title: "Kết quả đánh giá mô hình",
-    desc: "So sánh độ chính xác của bảy mô hình, kiểm tra trên tập giữ riêng và phân tích các lỗi còn lại",
+    desc: "So sánh độ chính xác của các mô hình, kiểm tra trên tập giữ riêng và phân tích các lỗi còn lại",
     load: () => import("../pages/results.js"),
   },
   {

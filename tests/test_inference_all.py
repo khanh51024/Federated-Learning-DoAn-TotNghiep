@@ -13,11 +13,14 @@ from PIL import Image
 from src import bundle, registry as reg
 from web import demo_evidence
 from web.app import app
-from web.routers.inference import _gated_evidence
-from web.services import explain_service
+from web.routers.inference import ALL_MODELS, INT8_MODELS, INT8_NO_GRADCAM, _gated_evidence
+from web.services import evidence_service, explain_service
 
 GALLERY = reg.abs_path(reg.DEMO_GALLERY_DIR)
-SOURCES = ("fedavg", "local_00", "local_01", "local_02", "local_03", "local_04")
+# Mô hình của gói đang dùng lấy từ manifest (gói v4b: 7 mô hình; gói PC v3: 13 gồm Centralized SGD, SCAFFOLD và 4 bản int8)
+KEYS = [key for key, _ in ALL_MODELS]
+# /api/inference (từng cặp) chỉ nhận FedAvg và Local-only làm mô hình liên kết
+SOURCES = [key for key in KEYS if key == "fedavg" or key.startswith("local_")]
 
 
 @pytest.fixture(scope="module")
@@ -37,24 +40,32 @@ def test_all_endpoint_matches_the_pairwise_endpoint_on_every_gallery_image(clien
         response = client.post("/api/inference/all", files={"file": (name, data, "image/jpeg")}, params={"true_class": label})
         assert response.status_code == 200, (name, response.text)
         body = response.json()
-        assert body["order"] == ["centralized", *SOURCES]
+        assert body["order"] == KEYS and KEYS[0] == "centralized"
+        for key in KEYS:   # mô hình fp32 phải có kết quả; bản int8 có thể báo lỗi riêng nhưng không làm hỏng cả yêu cầu
+            assert body["models"][key]["ready"] is True or key in INT8_MODELS, (name, key)
         for source in SOURCES:
             pair = client.post("/api/inference", files={"file": (name, data, "image/jpeg")},
                                params={"federated_source": source}).json()
             for key, result in (("centralized", pair["centralized"]), (source, pair["federated"])):
                 assert body["models"][key]["predicted_class"] == result["predicted_class"], (name, key)
                 assert body["models"][key]["top3"] == result["top3"], (name, key)
-        assert set(body["shard_context"]) == set(SOURCES)
+        assert set(body["shard_context"]) == {key for key in KEYS if not key.startswith("centralized")}
         assert body["shard_context"]["local_02"]["client"] == "client_02"
 
 
 def test_calibrated_probabilities_keep_the_prediction(client):
     name, data, label = _gallery_images()[11]
     body = client.post("/api/inference/all", files={"file": (name, data, "image/jpeg")}).json()
-    assert body["calibration_available"] is True
+    temperatures = evidence_service.temperatures(_gated_evidence())   # gói chỉ có tập kiểm định không có nhiệt độ: khi đó không mô hình nào có khối `calibrated`
+    assert body["calibration_available"] is bool(temperatures)
     for key, result in body["models"].items():
-        calibrated = result["calibrated"]
+        if not result.get("ready"):
+            continue
         assert result["confidence_calibrated"] is False  # confidence_pct vẫn là softmax thô
+        if key not in temperatures:
+            assert "calibrated" not in result, key
+            continue
+        calibrated = result["calibrated"]
         assert [t["class"] for t in calibrated["top3"]] == [t["class"] for t in result["top3"]], key
         assert calibrated["confidence_pct"] == calibrated["top3"][0]["confidence"]
         assert 0 < calibrated["temperature"] < 20
@@ -68,7 +79,10 @@ def test_explain_returns_one_gradcam_overlay_per_model(client):
     body = client.post("/api/inference/all", files={"file": (name, data, "image/jpeg")}, params={"explain": "true"}).json()
     assert set(body["explain"]) == set(body["order"])
     for key, item in body["explain"].items():
-        # Router cố tình nuốt lỗi Grad-CAM thành {"error": ...} để một model hỏng không mất 7 kết quả
+        if key in INT8_MODELS:   # bản int8 không có gradient: router không gọi mô hình mà trả lý do rõ ràng
+            assert item == {"error": INT8_NO_GRADCAM}, key
+            continue
+        # Router cố tình nuốt lỗi Grad-CAM thành {"error": ...} để một model hỏng không mất các kết quả
         # dự đoán; không chặn ở đây thì test chỉ hỏng vì thiếu khóa, không cho biết nguyên nhân thật.
         assert "error" not in item, f"{key}: {item['error']}"
         assert item["class"] == body["models"][key]["predicted_class"]

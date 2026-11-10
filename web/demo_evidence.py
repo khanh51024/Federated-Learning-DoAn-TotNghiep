@@ -201,6 +201,8 @@ def load_evidence(root: Path = STORE) -> dict[str, Any]:
             "protocol_id": protocol_id,
             "evidence_level": metadata.get("evidence_level") or "published_artifact_hash_verified_not_locally_reevaluated",
             "metrics_source": metadata.get("metrics_source") or "published validation_comparison.csv; no local image release",
+            # "validation_only": gói chỉ đánh giá trên tập kiểm định, các mục cần test/dữ liệu ngoài bị giữ lại (web/services/evidence_service.py); None = gói cũ
+            "evidence_scope": metadata.get("evidence_scope"),
             "release_manifest_sha256": release,
             "validation_manifest_sha256": validation,
             "w0_fingerprint": w0,

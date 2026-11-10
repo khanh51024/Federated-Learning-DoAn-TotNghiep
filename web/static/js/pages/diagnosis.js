@@ -1,15 +1,22 @@
-// Demo · Chẩn đoán ảnh: một ảnh, bảy mô hình, đúng/sai và lý do (ảnh train của lớp đó trong shard).
+// Demo · Chẩn đoán ảnh: một ảnh qua mọi mô hình của gói, đúng/sai và lý do (ảnh train của lớp đó trong shard).
 import { mountDemoTrail, renderModelCompare } from "../core/demo-compare.js";
 import { getEvidence, getGallery, getModels, getSummary } from "../core/store.js";
 import { ApiError, isAbort, postForm } from "../core/api.js";
 import {
   $$, MODEL_LABELS, MODEL_ORDER, NARROW_QUERY, SOURCE_GROUPS, byId, cropOf, diseaseOf, esc, fmtInt, fmtNum, fmtPct, fmtPctValue, formatApiError,
-  formatDiseaseName, modelPill, notify, pillarOf, prefersReducedMotion, revealItems, setBar, setDisabled, setHtml,
+  formatDiseaseName, isInt8, modelPill, notify, pillarOf, prefersReducedMotion, revealItems, setBar, setDisabled, setHtml,
   openOnWide, setText, toggleHidden,
 } from "../core/dom.js";
 
 const LOCAL_SOURCES = ["local_00", "local_01", "local_02", "local_03", "local_04"];
 const ALL_SOURCES = ["fedavg", ...LOCAL_SOURCES];
+// Nhãn bắt buộc của bản nén (docs/TICH_HOP_INT8_PC_V3.md mục 1.3): không gọi tắt là "mô hình int8", không nói int8 nhanh hơn.
+const INT8_WORDING = "int8 động, chỉ lớp Linear (classifier); các lớp conv vẫn fp32";
+const PHASE = { centralized: "Gom ảnh", fedavg: "Học phân tán", scaffold: "Học phân tán", local: "Học riêng", other: "" };
+const PILLAR_NAME = { centralized: "Centralized", fedavg: "FedAvg", scaffold: "SCAFFOLD", local: "Local-only", other: "Khác" };
+const phaseOf = modelId => (isInt8(modelId) ? `${PHASE[pillarOf(modelId)]} · ${INT8_WORDING}`.replace(/^ · /, "") : PHASE[pillarOf(modelId)]);
+/** Mô hình fp32 trong danh sách: bản int8 là biến thể phụ, không tính vào "x/N đồng ý", số mô hình đúng hay biểu đồ. */
+const comparedModels = ids => ids.filter(id => !isInt8(id));
 const LEVEL_LABEL = { very_easy: "Nhận đúng rất cao", easy: "Nhận đúng cao", medium: "Nhận đúng trung bình", hard: "Nhận đúng thấp", very_hard: "Nhận đúng rất thấp" };
 // Nhãn theo tỉ lệ nhận đúng của nhóm bệnh (recall lớp ở FedAvg), không phải độ khó của riêng ảnh
 const levelText = item => LEVEL_LABEL[item.difficulty_key] || item.difficulty;
@@ -246,7 +253,8 @@ function shardInfo(modelId, classKey) {
     const n = row.per_client[modelId.replace("local_", "client_")];
     return { count: n, total: row.total, scope: "ảnh của nơi này" };
   }
-  return { count: row.total, total: row.total, scope: modelId === "fedavg" ? "gộp từ 5 nơi" : "toàn bộ ảnh" };
+  const federated = ["fedavg", "scaffold"].includes(pillarOf(modelId)); // học phân tán: tổng ảnh của cả 5 client
+  return { count: row.total, total: row.total, scope: federated ? "gộp từ 5 nơi" : "toàn bộ ảnh" };
 }
 
 function targetClass() {
@@ -261,8 +269,7 @@ function verdict(result, trueClass) {
 
 function rowHtml(modelId, expanded = false) {
   const result = state.rows.get(modelId);
-  const label = MODEL_LABELS[modelId];
-  const phase = modelId === "centralized" ? "Gom ảnh" : modelId === "fedavg" ? "Học phân tán" : "Học riêng";
+  const phase = phaseOf(modelId);
   if (!result) {
     return `<th scope="row">${modelPill(modelId)}<span class="row-sub">${phase}</span></th>
       <td colspan="3"><span class="skeleton skeleton-line"></span></td>`;
@@ -309,14 +316,26 @@ function detailHtml(modelId) {
       }).join("")}</ol>
       <p class="field-hint">Độ chính xác công bố của mô hình này trên tập kiểm tra: ${SOURCE_GROUPS.filter(g => val?.[g.id]).map(g => `${esc(g.label)} ${fmtPct(val[g.id].top1_accuracy)}`).join(" · ")}.
         ${result.calibrated ? `Số hiệu chuẩn chia logit cho T = ${fmtNum(result.calibrated.temperature, 2)}; thứ tự các nhóm không đổi.` : result.crop_restricted ? cropRestrictedHint(result.crop_restricted) : "Xác suất softmax chưa hiệu chuẩn."}</p>
+      ${int8NoteHtml(modelId, result)}
     </div></td>`;
 }
 
-// Ba cách huấn luyện của đồ án, theo thứ tự đọc: mức tham chiếu, phương pháp đề xuất, các nơi tự học riêng.
+/** Ghi chú của bản nén: nhãn bắt buộc, bản fp32 gốc, và nói thẳng rằng đây là minh họa nén mô hình (kích thước), không phải tăng tốc. */
+function int8NoteHtml(modelId, result) {
+  if (!isInt8(modelId)) return "";
+  const parent = result.quantization?.fp32_of;
+  const note = result.quantization?.note || `${INT8_WORDING}.`;
+  return `<p class="field-hint">${esc(note)}${parent ? ` Bản nén của ${esc(MODEL_LABELS[parent] || parent)}.` : ""} Dùng để minh họa nén mô hình: tệp nhỏ hơn khoảng 30%, tốc độ suy luận tương đương bản fp32. Không có Grad-CAM cho bản này.</p>`;
+}
+
+// Các cách huấn luyện của đồ án, theo thứ tự đọc: mức tham chiếu, phương pháp đề xuất, giải pháp non-IID, các nơi tự học riêng.
+// Nhóm không có mô hình nào (gói cũ không có SCAFFOLD) tự ẩn; "other" gom id lạ để không mô hình nào biến mất khỏi bảng.
 const GROUPS = [
   { pillar: "centralized", title: "Centralized", sub: "Gom ảnh về một chỗ · mức tham chiếu" },
   { pillar: "fedavg", title: "FedAvg · học phân tán", sub: "Phương pháp đề xuất · ảnh ở lại client" },
+  { pillar: "scaffold", title: "SCAFFOLD · giải pháp non-IID", sub: "Học phân tán, sửa lệch giữa các client · chọn theo tập kiểm định" },
   { pillar: "local", title: "Local-only", sub: "Mỗi nơi tự học riêng, không chia sẻ trọng số" },
+  { pillar: "other", title: "Mô hình khác", sub: "" },
 ];
 
 /** Dòng tóm tắt của nhóm Local-only khi đang thu gọn: số nơi nhận đúng, hoặc nhóm được dự đoán nhiều nhất khi chưa biết nhãn thật. */
@@ -340,8 +359,11 @@ function groupRowHtml(group, ids) {
     ? `<span class="group-summary-text">${esc(localSummaryText(ids))}</span>
        <button type="button" class="btn btn-ghost btn-sm" data-toggle-locals aria-expanded="${state.showLocals}" aria-controls="diag-body">${state.showLocals ? "Thu gọn" : `Xem ${ids.length} mô hình Local`}</button>`
     : "";
+  const full = comparedModels(ids).length;
+  const small = ids.length - full;
+  const count = ids.length > 1 ? ` · ${full} mô hình${small ? ` + ${small} bản nén int8` : ""}` : "";
   return `<tr class="group-row group-${group.pillar}"><th scope="colgroup" colspan="4">
-      <span class="group-head"><span class="group-title">${esc(group.title)}${ids.length > 1 ? ` · ${ids.length} mô hình` : ""}</span><span class="group-sub">${esc(group.sub)}</span></span>
+      <span class="group-head"><span class="group-title">${esc(group.title)}${count}</span><span class="group-sub">${esc(group.sub)}</span></span>
       ${summary}</th></tr>`;
 }
 
@@ -376,7 +398,7 @@ function toggleLocals() {
 /** Số mô hình (trong các mô hình đang hiển thị) trùng với mô hình chính về loại cây và về nhóm bệnh. */
 function agreement(refId) {
   const ref = state.rows.get(refId);
-  const rows = plannedModels().map(id => state.rows.get(id)).filter(r => r && !r.error);
+  const rows = comparedModels(plannedModels()).map(id => state.rows.get(id)).filter(r => r && !r.error); // bản int8 không tính vào "x/N đồng ý"
   const refCrop = cropOf(ref.predicted_class);
   return {
     total: rows.length,
@@ -416,7 +438,8 @@ function headlineHtml(trueClass) {
 
 function summarize(modelIds) {
   const trueClass = targetClass();
-  const results = modelIds.map(id => [id, state.rows.get(id)]).filter(([, r]) => r && !r.error);
+  // Đối chiếu chỉ tính mô hình fp32; bản int8 hiện ở bảng chi tiết nhưng không làm đổi "x/N nhận đúng" hay phiếu bầu
+  const results = comparedModels(modelIds).map(id => [id, state.rows.get(id)]).filter(([, r]) => r && !r.error);
   const box = byId("diag-summary");
   const explain = byId("diag-explain");
   if (!results.length) {
@@ -430,20 +453,17 @@ function summarize(modelIds) {
 
   if (trueClass) {
     const ok = results.filter(([id, r]) => verdict(r, trueClass) === "correct");
-    const locals = results.filter(([id]) => id.startsWith("local_"));
-    const localsOk = locals.filter(([, r]) => verdict(r, trueClass) === "correct");
-    const mark = id => {
-      const r = state.rows.get(id);
-      if (!r || r.error) return "—";
-      return verdict(r, trueClass) === "correct" ? "✓" : "✕";
-    };
+    // Mỗi trụ cột một viên: một mô hình thì ✓/✕, nhiều mô hình (Local-only, hai Centralized) thì "đúng/tổng"
+    const pills = ["centralized", "fedavg", "scaffold", "local", "other"].map(pillar => {
+      const members = results.filter(([id]) => pillarOf(id) === pillar);
+      if (!members.length) return "";
+      const right = members.filter(([, r]) => verdict(r, trueClass) === "correct").length;
+      const text = members.length === 1 ? (right ? "✓" : "✕") : `${right}/${members.length}`;
+      return `<span class="summary-pill ${pillar}">${esc(PILLAR_NAME[pillar])} ${text}</span>`;
+    }).join("");
     box.innerHTML = `${pre}${headlineHtml(trueClass)}
       <p class="summary-big">Đối chiếu: <b>${ok.length}/${results.length}</b> mô hình nhận đúng ảnh này</p>
-      <div class="summary-pillars">
-        ${state.rows.has("centralized") ? `<span class="summary-pill centralized">Centralized ${mark("centralized")}</span>` : ""}
-        ${state.rows.has("fedavg") || state.mode === "quick" ? `<span class="summary-pill fedavg">${state.mode === "quick" && state.quickModel !== "fedavg" ? MODEL_LABELS[state.quickModel] : "FedAvg"} ${mark(state.mode === "quick" ? state.quickModel : "fedavg")}</span>` : ""}
-        ${locals.length ? `<span class="summary-pill local">Local-only ${localsOk.length}/${locals.length}</span>` : ""}
-      </div>`;
+      <div class="summary-pillars">${pills}</div>`;
     explain.innerHTML = explanation(results, trueClass);
     toggleHidden(explain, !explain.innerHTML);
     box.insertAdjacentHTML("beforeend", timingHtml());
@@ -508,7 +528,7 @@ function plannedModels() {
 function timingHtml() {
   const t = state.timing;
   if (!t) return "";
-  const parts = [`${fmtNum(t.predict / 1000, 2)} s cho 7 mô hình`];
+  const parts = [`${fmtNum(t.predict / 1000, 2)} s cho ${plannedModels().length} mô hình`];
   if (t.explain !== undefined) parts.push(`${fmtNum(t.explain / 1000, 2)} s cho Grad-CAM`);
   return `<p class="field-hint">Máy chủ xử lý: ${parts.join(" · ")}.</p>`;
 }
@@ -520,6 +540,7 @@ function renderGradcam(models) {
     toggleHidden(box, true);
     return;
   }
+  toggleHidden(byId("diag-gradcam-int8"), !models.some(isInt8));
   byId("diag-gradcam-grid").innerHTML = shown.map(id => {
     const item = state.explanations.get(id);
     return `<figure class="gradcam-card row-${pillarOf(id)}">
@@ -626,9 +647,18 @@ function renderCropNote(models) {
   summary.appendChild(note);
 }
 
+/** Chú thích dưới bảng: chỉ nói "đã hiệu chuẩn" khi kết quả thật sự có khối hiệu chuẩn (gói chỉ có tập kiểm định thì không có). */
+function renderCalibrationNote(models) {
+  const calibrated = models.some(id => state.rows.get(id)?.calibrated);
+  setText(byId("diag-calibration-note"), calibrated
+    ? "Số “hiệu chuẩn” là xác suất sau khi chia logit cho nhiệt độ T, học trên tập hiệu chuẩn riêng; còn lại là softmax thô."
+    : "Xác suất dự đoán là softmax thô, chưa hiệu chuẩn.");
+}
+
 function renderAll({ animate = false } = {}) {
   const models = plannedModels();
   renderTable(models, { animateIds: animate ? models : [] });
+  renderCalibrationNote(models);
   summarize(models);
   renderCropNote(models);
   renderGradcam(models);
@@ -675,9 +705,9 @@ function finishRun() {
   renderTabBadges();
 }
 
-/** Một yêu cầu cho cả 7 mô hình (mỗi mô hình chạy đúng một lần trên máy chủ). Trả false nếu máy chủ cũ không có endpoint. */
+/** Một yêu cầu cho mọi mô hình của gói (mỗi mô hình chạy đúng một lần trên máy chủ). Trả false nếu máy chủ cũ không có endpoint. */
 async function runAll(runId, controller, form) {
-  setText(byId("diag-progress-badge"), state.explain ? "Đang chạy 7 mô hình + Grad-CAM" : "Đang chạy 7 mô hình");
+  setText(byId("diag-progress-badge"), `Đang chạy ${MODEL_ORDER.length} mô hình${state.explain ? " + Grad-CAM" : ""}`);
   try {
     const cropQuery = state.runCrop ? `&crop=${encodeURIComponent(state.runCrop)}` : "";
     const data = await postForm(`/api/inference/all?explain=${state.explain ? "true" : "false"}${cropQuery}`, form, { signal: controller.signal, timeoutMs: 120000 });
@@ -762,7 +792,7 @@ async function run() {
   form.append("file", state.file);
   startRun(models);
   const file = state.file;
-  runPv(runId, file); // PlantVillage và mô hình cộng đồng chạy song song với bảy mô hình; mỗi cách có trạng thái riêng
+  runPv(runId, file); // PlantVillage và mô hình cộng đồng chạy song song với các mô hình của gói; mỗi cách có trạng thái riêng
   runCommunity(runId, file);
   try {
     const handled = state.allEndpoint !== false && await runAll(runId, controller, form);
@@ -775,7 +805,8 @@ async function run() {
 /** Đã có đủ kết quả cho chế độ xem hiện tại (và Grad-CAM nếu đang bật) thì chỉ cần vẽ lại. */
 function haveResultsFor(models) {
   const complete = models.every(id => state.rows.has(id));
-  const gradcamOk = !state.explain || state.allEndpoint === false || models.every(id => state.explanations.has(id) || state.rows.get(id)?.error);
+  // bản int8 không có Grad-CAM: thiếu ảnh của nó không phải lý do để gọi lại máy chủ
+  const gradcamOk = !state.explain || state.allEndpoint === false || models.every(id => isInt8(id) || state.explanations.has(id) || state.rows.get(id)?.error);
   return complete && gradcamOk;
 }
 
@@ -1000,7 +1031,7 @@ function renderCommunity() {
   setBadge("community", v === "correct" ? "✓" : v ? "✕" : "xong", v === "correct" ? "ok" : v ? "bad" : "");
 }
 
-/** Hai cách còn lại chạy song song với bảy mô hình; mỗi cách có trạng thái riêng nên một cách lỗi không kéo theo cách khác. */
+/** Hai cách còn lại chạy song song với các mô hình của gói; mỗi cách có trạng thái riêng nên một cách lỗi không kéo theo cách khác. */
 async function runPv(runId, file) {
   state.pv = { loading: true };
   renderPv();
@@ -1083,12 +1114,28 @@ function bindDiagTabs() {
 function rerender() {
   if (!state.file || (!state.busy && !state.rows.size)) return; // chưa chẩn đoán lần nào
   if (state.busy) {
-    // yêu cầu "cả 7 mô hình" đang chạy sẽ vẽ theo chế độ xem mới; chỉ chạy lại khi cần Grad-CAM mà yêu cầu đó không có
+    // yêu cầu "mọi mô hình của gói" đang chạy sẽ vẽ theo chế độ xem mới; chỉ chạy lại khi cần Grad-CAM mà yêu cầu đó không có
     if (state.allEndpoint === false || (state.explain && !state.runExplain)) run();
     return;
   }
   if (haveResultsFor(plannedModels())) renderAll();
   else run();
+}
+
+/** Số mô hình theo trụ cột lấy từ danh sách của gói (không viết cứng "7 mô hình"): nút, tiêu đề và mô tả của hộp tổng hợp. */
+function renderModelCounts() {
+  const ids = comparedModels(MODEL_ORDER);
+  const small = MODEL_ORDER.length - ids.length;
+  const count = pillar => ids.filter(id => pillarOf(id) === pillar).length;
+  const parts = [
+    [count("centralized"), "Centralized (gom ảnh về một chỗ, mức tham chiếu)"],
+    [count("fedavg"), "FedAvg (học phân tán, phương pháp đề xuất)"],
+    [count("scaffold"), "SCAFFOLD (học phân tán, giải pháp cho dữ liệu lệch giữa các client)"],
+    [count("local"), "Local-only (mỗi client tự học)"],
+  ].filter(([n]) => n > 0).map(([n, text]) => `${n} ${text}`);
+  setText(byId("btn-all-models"), `Tổng hợp ${ids.length} mô hình`);
+  setText(byId("diag-all-title"), `Tổng hợp ${ids.length} mô hình của đồ án`);
+  setText(byId("diag-all-desc"), `Cùng một ảnh qua ${parts.join(", ")}${small ? `, kèm ${small} bản nén (${INT8_WORDING}), chỉ để minh họa nén mô hình` : ""}.`);
 }
 
 /** Dải "Mô hình nhận được gì": số nhóm/loại cây từ danh sách nhóm; độ chính xác từ số liệu đã kiểm hash. */
@@ -1135,6 +1182,7 @@ export async function mount() {
   state.gallery = gallery.items || [];
   state.pvEvidence = summary?.plantvillage_reference || null;
   state.showStats = evidence?.available === true && gallery.validation_membership?.status === "verified";
+  renderModelCounts();
   renderBrief(evidence, summary);
   openOnWide(byId("diag-model-details")); // màn rộng: bảng dự đoán từng mô hình mở sẵn (in ấn vẫn khôi phục đúng nhờ beforeprint)
   if (!state.showStats) {

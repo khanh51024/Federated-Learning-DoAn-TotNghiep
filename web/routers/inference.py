@@ -1,7 +1,8 @@
-"""Router inference: dual inference, 7 mô hình một lần, PlantVillage reference, demo evidence, compare."""
+"""Router inference: dual inference, mọi mô hình của gói một lần, PlantVillage reference, demo evidence, compare."""
 from __future__ import annotations
 
 import io
+import logging
 import time
 from typing import Any, Dict, Optional
 
@@ -10,16 +11,20 @@ from fastapi.routing import APIRouter
 from PIL import Image
 from starlette.concurrency import run_in_threadpool
 
-from src import registry as reg
+from src import bundle, registry as reg
 from src.common.image_io import to_rgb
 from web.demo_evidence import PROTOCOL_ID, load_evidence
 from web.services import evidence_service, model_service, verification_service
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
-# Bảy mô hình của gói đang dùng: (khóa hiển thị, model_id trong registry); tên và id lấy từ import_manifest.json của gói
+# Mọi mô hình của gói đang dùng: (khóa hiển thị, model_id trong registry); tên và id lấy từ import_manifest.json của gói
 ALL_MODELS = tuple(reg.WEB_REGISTRY_IDS.items())
+# Khóa hiển thị của các mô hình int8 (TorchScript lượng tử hóa): lỗi của chúng không được làm hỏng kết quả của mô hình fp32.
+INT8_MODELS = frozenset(spec["model_id"] for spec in bundle.model_specs(bundle.load_manifest()) if spec["format"] == bundle.FORMAT_TORCHSCRIPT_INT8)
+INT8_NO_GRADCAM = "Bản int8 không có Grad-CAM (mô hình lượng tử hóa không có gradient); hãy xem Grad-CAM của mô hình fp32 gốc."
 # Giới hạn ảnh tải lên. MAX_UPLOAD_BYTES phải khớp MAX_UPLOAD_BYTES trong web/static/js/pages/diagnosis.js
 # (tests/test_web_static_frontend.py kiểm hai số này bằng nhau). Mô hình chỉ cần 224 px nên 40 triệu điểm ảnh là dư.
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
@@ -61,6 +66,21 @@ def _explain(model_id: str, image: Image.Image, class_name: str) -> Dict[str, An
         return model_service.explain(model_id, image, class_name)
     except (model_service.UnknownModel, model_service.ModelNotAllowed, model_service.RegistryUnavailable) as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        # ví dụ bản int8 không có Grad-CAM: lý do đã được viết rõ ở nơi ném lỗi, trả nguyên văn cho giao diện
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+def _predict_isolating_int8(key: str, registry_id: str, image: Image.Image, temperature: Optional[float], crop: Optional[str]) -> Dict[str, Any]:
+    """fp32: lỗi đi tiếp (fail-closed như trước). int8 là biến thể phụ: lỗi của nó chỉ ghi vào mục của nó, các mô hình khác vẫn có kết quả."""
+    if key not in INT8_MODELS:
+        return _predict(registry_id, image, temperature, crop)
+    try:
+        return _predict(registry_id, image, temperature, crop)
+    except (ValueError, RuntimeError, OSError, HTTPException) as exc:
+        logger.warning("Mô hình int8 %s không chạy được: %s", key, exc)
+        detail = exc.detail if isinstance(exc, HTTPException) else str(exc)
+        return {"ready": False, "model_id": key, "error": f"Bản int8 chưa chạy được: {detail}"}
 
 
 def _reject_oversized(data: bytes) -> None:
@@ -225,23 +245,27 @@ def run_all_inference(
     explain: bool = Query(False, description="Kèm ảnh Grad-CAM cho lớp mà từng mô hình dự đoán"),
     crop: str | None = Query(None, description="Loại cây do người dùng chọn (vd Tomato): chỉ xét bệnh của cây đó"),
 ) -> Dict[str, Any]:
-    """Một ảnh qua cả 7 mô hình (mỗi mô hình đúng một lần, qua cổng registry). Hàm đồng bộ: FastAPI chạy trong threadpool
-    nên poll /api/status không bị chặn khi đang suy luận."""
+    """Một ảnh qua mọi mô hình của gói (mỗi mô hình đúng một lần, qua cổng registry). Hàm đồng bộ: FastAPI chạy trong threadpool
+    nên poll /api/status không bị chặn khi đang suy luận. Mô hình fp32 lỗi thì cả yêu cầu lỗi (503); mô hình int8 lỗi thì chỉ mục của nó
+    là `{"ready": false, "error": ...}`."""
     image = _read_image(file)
     _check_true_class(true_class)
     _check_crop(crop)
     temperatures = _temperatures()
     started = time.perf_counter()
     try:
-        results = {key: _predict(registry_id, image, temperatures.get(key), crop) for key, registry_id in ALL_MODELS}
+        results = {key: _predict_isolating_int8(key, registry_id, image, temperatures.get(key), crop) for key, registry_id in ALL_MODELS}
     except ValueError as exc:
         raise HTTPException(status_code=503, detail=f"Artifact suy luận chưa sẵn sàng: {exc}") from exc
     predict_ms = (time.perf_counter() - started) * 1000
     explanations: Dict[str, Any] = {}
     if explain:
         started_explain = time.perf_counter()
-        # Grad-CAM là phần phụ: lỗi của một mô hình chỉ ghi vào mục của mô hình đó, không bỏ 7 kết quả dự đoán
+        # Grad-CAM là phần phụ: lỗi của một mô hình chỉ ghi vào mục của mô hình đó, không bỏ các kết quả dự đoán
         for key, registry_id in ALL_MODELS:
+            if results[key].get("model_format") == bundle.FORMAT_TORCHSCRIPT_INT8 or key in INT8_MODELS:
+                explanations[key] = {"error": INT8_NO_GRADCAM}  # không gọi mô hình: bản lượng tử hóa không có gradient
+                continue
             try:
                 explanations[key] = _explain(registry_id, image, results[key]["predicted_class"])
             except HTTPException as exc:
@@ -257,7 +281,7 @@ def run_all_inference(
         "models": results,
         "shard_context": {
             key: model_service.shard_context(key, results[key].get("top3") or [], true_class or None)
-            for key, _ in ALL_MODELS if key != "centralized"
+            for key, _ in ALL_MODELS if not key.startswith("centralized")   # Centralized (AdamW, SGD và bản int8) học trên toàn bộ ảnh, không có shard
         },
         "explain": explanations,
         "calibration_available": bool(temperatures),

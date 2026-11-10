@@ -791,3 +791,69 @@ def test_dialog_is_centered_despite_the_global_margin_reset():
     """`* { margin: 0 }` xóa lề tự căn giữa của <dialog>, nên hộp phải tự khai margin: auto, nếu không sẽ dính vào góc trên bên trái."""
     rule = re.search(r"\.diag-dialog \{([^}]*)\}", re.sub(r"/\*.*?\*/", "", CSS, flags=re.S))
     assert rule and "margin: auto" in rule.group(1)
+
+
+# ───────── Gói nhiều mô hình: SCAFFOLD, Centralized SGD và bản int8 ─────────
+INT8_WORDING = "int8 động, chỉ lớp Linear (classifier); các lớp conv vẫn fp32"
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="cần Node.js để nạp mô-đun JS")
+def test_pillar_mapping_and_model_order_are_built_from_the_evidence():
+    url = (JS_DIR / "core" / "dom.js").resolve().as_uri()
+    manifest = ["centralized", "centralized_sgd", "fedavg", "scaffold", *[f"local_{i:02d}" for i in range(5)]]
+    models = [{"model_id": m, "name": m.title()} for m in manifest] + [
+        {"model_id": f"{m}_int8", "name": f"{m} int8", "format": "torchscript_int8", "fp32_of": m}
+        for m in ("centralized", "centralized_sgd", "fedavg", "scaffold")]
+    script = (
+        f"import {{ pillarOf, isInt8, setModelLabels, buildModelOrder, MODEL_ORDER, MODEL_META, fp32Models, methodsText }} from {json.dumps(url)};"
+        f"const models = {json.dumps(models)};"
+        "const before = [...MODEL_ORDER];"
+        "const unknown = pillarOf('mystery_model');"
+        "const scrambled = buildModelOrder([{model_id:'local_00'},{model_id:'scaffold'},{model_id:'fedavg_int8',fp32_of:'fedavg'},{model_id:'fedavg'},{model_id:'centralized'}]);"
+        "setModelLabels(models);"
+        "console.log(JSON.stringify({ before, unknown, scrambled, order: [...MODEL_ORDER], fp32: fp32Models(), methods: methodsText(),"
+        " pillars: Object.fromEntries(MODEL_ORDER.map(id => [id, pillarOf(id)])), int8: MODEL_ORDER.filter(isInt8), meta: MODEL_META.scaffold_int8 }));"
+    )
+    done = subprocess.run(["node", "--input-type=module", "-e", script], capture_output=True, text=True, encoding="utf-8", timeout=30)
+    assert done.returncode == 0, done.stderr
+    out = json.loads(done.stdout)
+    assert out["before"] == ["centralized", "fedavg", *[f"local_{i:02d}" for i in range(5)]]   # trước khi nạp evidence: bảy mô hình cốt lõi
+    assert out["unknown"] == "other", "id lạ không được gộp nhầm vào Local-only"
+    assert out["scrambled"] == ["centralized", "fedavg", "fedavg_int8", "scaffold", "local_00"]
+    # theo trụ cột (centralized, fedavg, scaffold, local), thứ tự manifest trong trụ cột, int8 ngay sau mô hình fp32 gốc
+    assert out["order"] == ["centralized", "centralized_int8", "centralized_sgd", "centralized_sgd_int8", "fedavg", "fedavg_int8",
+                            "scaffold", "scaffold_int8", *[f"local_{i:02d}" for i in range(5)]]
+    assert out["fp32"] == [m for m in out["order"] if not m.endswith("_int8")] and len(out["fp32"]) == 9
+    assert out["pillars"]["centralized_sgd"] == "centralized" and out["pillars"]["centralized_sgd_int8"] == "centralized"
+    assert out["pillars"]["scaffold"] == out["pillars"]["scaffold_int8"] == "scaffold"
+    assert out["pillars"]["fedavg_int8"] == "fedavg" and out["pillars"]["local_03"] == "local"
+    assert out["int8"] == ["centralized_int8", "centralized_sgd_int8", "fedavg_int8", "scaffold_int8"]
+    assert out["meta"] == {"format": "torchscript_int8", "fp32_of": "scaffold"}
+    assert out["methods"] == "Centralized, FedAvg, SCAFFOLD và 5 Local-only"
+
+
+def test_scaffold_has_its_own_style_and_int8_wording_is_exact_and_never_claims_speed():
+    for selector in (".model-pill.scaffold", ".row-scaffold", ".summary-pill.scaffold", ".group-scaffold th", ".conf-fill.scaffold"):
+        assert _rule_bodies(selector), f"thiếu CSS cho {selector}"
+    assert "--chart-3" in "".join(_rule_bodies(".row-scaffold")) and "--accent-purple" in "".join(_rule_bodies(".model-pill.scaffold"))
+    assert "scaffold: cssVar(" in JS_BY_REL["core/charts.js"]
+    for rel in ("pages/diagnosis.js", "pages/results.js"):
+        assert f'"{INT8_WORDING}"' in JS_BY_REL[rel], f"{rel}: thiếu nhãn bắt buộc của bản int8"
+    visible = _visible_source()
+    assert not re.search(r"mô hình int8", visible), "không gọi tắt là “mô hình int8”: phải kèm nhãn int8 động, chỉ lớp Linear"
+    for sentence in re.findall(r"[^.\n]*int8[^.\n]*", visible):
+        assert not re.search(r"nhanh hơn|tăng tốc|nhanh gấp", sentence), f"không được nói int8 nhanh hơn: {sentence.strip()}"
+    diagnosis = JS_BY_REL["pages/diagnosis.js"]
+    assert "Bản int8 không có Grad-CAM" in HTML, "ghi chú dưới lưới Grad-CAM"
+    assert "isInt8(id) || state.explanations.has(id)" in diagnosis, "bản int8 không có Grad-CAM không được ép gọi lại máy chủ"
+    assert "comparedModels(plannedModels())" in diagnosis and "comparedModels(modelIds)" in diagnosis, "bản int8 không tính vào đồng ý/đúng"
+
+
+def test_model_counts_are_not_hard_coded_and_calibration_is_not_claimed():
+    visible = _visible_source()
+    assert not re.search(r"\b[Bb]ảy mô hình\b", visible), "số mô hình phải lấy từ danh sách của gói"
+    assert not re.search(r"\b7 mô hình\b", visible)
+    assert "đã được hiệu chuẩn qua nhiệt độ softmax" not in HTML, "gói không có tập hiệu chuẩn thì không được khẳng định xác suất đã hiệu chuẩn"
+    assert 'id="diag-calibration-note"' in HTML and "renderCalibrationNote" in JS_BY_REL["pages/diagnosis.js"]
+    results = JS_BY_REL["pages/results.js"]
+    assert "function notReady(section)" in results and "section?.reason" in results, "mục bị giữ lại phải hiện lý do máy chủ ghi"

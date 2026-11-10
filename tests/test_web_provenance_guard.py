@@ -6,13 +6,14 @@ import pytest
 
 from src import registry as reg
 from web.app import get_comparison_table, get_metrics, get_system_status
+from web.demo_evidence import load_evidence
 
 
 def test_comparison_table_does_not_expose_unverified_historical_scores_as_current_results():
     result = get_comparison_table()
     assert result["available"] is True
     assert result["scientific_stage2_complete"] is False
-    assert len(result["rows"]) == 14
+    assert len(result["rows"]) == len(load_evidence()["models"]) * 2          # mỗi mô hình một hàng cho PlantDoc và một cho PlantVillage
     assert {row["source"] for row in result["rows"]} == {"plantdoc", "plantvillage"}
     assert {row["seed"] for row in result["rows"]} == {42}
     assert all(row["protocol_id"] == result["protocol_id"] for row in result["rows"])

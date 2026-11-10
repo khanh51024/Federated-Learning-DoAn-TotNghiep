@@ -301,14 +301,14 @@
                         <option value="">Không biết (tự đoán)</option>
                       </select>
                     </div>
-                    <p class="field-hint" id="inference-crop-hint">Chọn loại cây thì bảy mô hình chỉ xét bệnh của cây đó; chọn sai cây thì kết quả sai.</p>
+                    <p class="field-hint" id="inference-crop-hint">Chọn loại cây thì các mô hình chỉ xét bệnh của cây đó; chọn sai cây thì kết quả sai.</p>
                   </div>
                   <div class="diag-actions">
                     <button type="button" class="btn btn-primary" id="btn-diagnose" disabled>
                       <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                       Chẩn đoán bằng cả 3 cách
                     </button>
-                    <button type="button" class="btn btn-secondary btn-sm" id="btn-all-models" disabled aria-haspopup="dialog">Tổng hợp 7 mô hình</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-all-models" disabled aria-haspopup="dialog">Tổng hợp các mô hình</button>
                     <span class="status-badge hidden" id="diag-progress-badge">Đang chạy</span>
                     <button type="button" class="btn btn-ghost btn-sm hidden" id="btn-print">In kết quả</button>
                   </div>
@@ -352,13 +352,13 @@
             </div>
           </div>
 
-          <!-- Tổng hợp 7 mô hình (Centralized, FedAvg, năm Local): mở khi cần đối chiếu, không chiếm chỗ ở ba cách chính -->
+          <!-- Tổng hợp các mô hình của gói (Centralized, FedAvg, SCAFFOLD nếu có, Local-only, bản nén int8 nếu có): mở khi cần đối chiếu, không chiếm chỗ ở ba cách chính -->
           <dialog class="diag-dialog" id="diag-all-dialog" aria-labelledby="diag-all-title">
             <div class="diag-dialog-head">
-              <h3 class="panel-title panel-title-sm" id="diag-all-title">Tổng hợp bảy mô hình của đồ án</h3>
+              <h3 class="panel-title panel-title-sm" id="diag-all-title">Tổng hợp các mô hình của đồ án</h3>
               <button type="button" class="btn btn-ghost btn-sm" id="btn-all-close">Đóng</button>
             </div>
-            <p class="panel-desc">Cùng một ảnh qua 1 Centralized (gom ảnh về một chỗ, mức tham chiếu), 1 FedAvg (học phân tán, phương pháp đề xuất) và 5 Local-only (mỗi client tự học).</p>
+            <p class="panel-desc" id="diag-all-desc">Cùng một ảnh qua Centralized (gom ảnh về một chỗ, mức tham chiếu), FedAvg (học phân tán, phương pháp đề xuất) và Local-only (mỗi client tự học).</p>
             <div id="diag-all-body">
               <div class="diag-summary mt-3" id="diag-summary" role="status" aria-live="polite"></div>
               <div class="callout mt-3 hidden" id="diag-explain" role="note"></div>
@@ -381,8 +381,9 @@
                 <h4 class="subhead">Vùng mỗi mô hình dựa vào (Grad-CAM)</h4>
                 <p class="field-hint">Màu đỏ/vàng là vùng ảnh ảnh hưởng mạnh tới nhóm mà mô hình chọn. Đây là gợi ý trực quan, không phải bằng chứng nhân quả.</p>
                 <div class="gradcam-grid mt-2" id="diag-gradcam-grid"></div>
+                <p class="field-hint mt-2 hidden" id="diag-gradcam-int8">Bản int8 không có Grad-CAM (mô hình lượng tử hóa không có gradient); xem vùng ảnh ở mô hình fp32 gốc.</p>
               </div>
-              <p class="field-hint mt-2">Xác suất dự đoán đã được hiệu chuẩn qua nhiệt độ softmax.</p>
+              <p class="field-hint mt-2" id="diag-calibration-note">Xác suất dự đoán là softmax thô, chưa hiệu chuẩn.</p>
             </div>
           </dialog>
         </div>

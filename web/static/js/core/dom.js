@@ -227,10 +227,46 @@ export const MODEL_LABELS = {
   local_04: "Local 04",
 };
 
+/** Định dạng và mô hình fp32 gốc của từng model_id (điền từ evidence): { format: "state_dict" | "torchscript_int8", fp32_of: string | null }. */
+export const MODEL_META = {};
+
+const PILLAR_RANK = { centralized: 0, fedavg: 1, scaffold: 2, local: 3, other: 4 };
+
+/** Trụ cột (cách huấn luyện) của một mô hình. Mô hình int8 thuộc cùng trụ cột với mô hình fp32 gốc (fp32_of, hoặc bỏ đuôi `_int8`).
+ *  Id lạ trả "other", không gộp nhầm vào Local-only. */
+export function pillarOf(modelId, fp32Of = MODEL_META[modelId]?.fp32_of) {
+  const base = String(fp32Of || modelId).replace(/_int8$/, "");
+  if (base.startsWith("centralized")) return "centralized";
+  if (base === "fedavg") return "fedavg";
+  if (base === "scaffold") return "scaffold";
+  if (base.startsWith("local_")) return "local";
+  return "other";
+}
+
+/** Bản int8 (TorchScript, lượng tử hóa động chỉ lớp Linear): không có Grad-CAM, không tính vào đối chiếu giữa các mô hình. */
+export function isInt8(modelId) {
+  const format = MODEL_META[modelId]?.format;
+  return format ? format === "torchscript_int8" : /_int8$/.test(String(modelId));
+}
+
+/** Thứ tự trình bày: theo trụ cột (centralized, fedavg, scaffold, local), trong trụ cột giữ thứ tự manifest, int8 đứng ngay sau mô hình fp32 gốc của nó. */
+export function buildModelOrder(models) {
+  const list = (models || []).filter(m => m && m.model_id);
+  const ids = list.map(m => m.model_id);
+  const parentOf = id => list.find(m => m.model_id === id)?.fp32_of || null;
+  const parents = ids.filter(id => !parentOf(id) || !ids.includes(parentOf(id)));
+  parents.sort((a, b) => PILLAR_RANK[pillarOf(a, parentOf(a))] - PILLAR_RANK[pillarOf(b, parentOf(b))]); // sort ổn định: giữ thứ tự manifest trong cùng trụ cột
+  return parents.flatMap(id => [id, ...ids.filter(child => child !== id && parentOf(child) === id)]);
+}
+
 export function setModelLabels(models) {
   for (const m of models || []) {
-    if (m && m.model_id && m.name) MODEL_LABELS[m.model_id] = m.name;
+    if (!m || !m.model_id) continue;
+    if (m.name) MODEL_LABELS[m.model_id] = m.name;
+    MODEL_META[m.model_id] = { format: m.format || "state_dict", fp32_of: m.fp32_of || null };
   }
+  const order = buildModelOrder(models);
+  if (order.length) MODEL_ORDER.splice(0, MODEL_ORDER.length, ...order); // sửa tại chỗ để mọi nơi đã import MODEL_ORDER thấy bản mới
 }
 
 /** Nhóm nguồn khi đo của gói đang dùng, theo thứ tự trình bày: [{ id, label, short, kind: "lab" | "field", val_count, holdout_count }].
@@ -247,16 +283,23 @@ export function setSourceGroups(groups) {
 export const sourceGroup = id => SOURCE_GROUPS.find(g => g.id === id) || { id, label: id, inline: id, short: id, kind: "field", val_count: 0, holdout_count: 0 };
 export const sourceLabel = id => sourceGroup(id).label;
 
+/** Mọi mô hình của gói đang dùng (kể cả bản int8), theo thứ tự trình bày. Giá trị ban đầu là bảy mô hình cốt lõi; `setModelLabels` thay bằng danh sách thật của gói. */
 export const MODEL_ORDER = ["centralized", "fedavg", "local_00", "local_01", "local_02", "local_03", "local_04"];
 
-export function pillarOf(modelId) {
-  if (modelId === "centralized") return "centralized";
-  if (modelId === "fedavg") return "fedavg";
-  return "local";
+/** Các mô hình fp32 (không tính bản int8): dùng cho biểu đồ, tô đậm "tốt nhất", đếm đồng ý. */
+export const fp32Models = () => MODEL_ORDER.filter(id => !isInt8(id));
+
+/** "Centralized, FedAvg, SCAFFOLD và 5 Local-only": các cách huấn luyện có trong gói đang dùng (Local-only đếm theo số client). */
+export function methodsText() {
+  const ids = fp32Models();
+  const has = pillar => ids.some(id => pillarOf(id) === pillar);
+  const locals = ids.filter(id => pillarOf(id) === "local").length;
+  const names = [has("centralized") && "Centralized", has("fedavg") && "FedAvg", has("scaffold") && "SCAFFOLD", locals && `${locals} Local-only`].filter(Boolean);
+  return names.length > 1 ? `${names.slice(0, -1).join(", ")} và ${names[names.length - 1]}` : names[0] || "các mô hình";
 }
 
 export function modelPill(modelId, label) {
-  return `<span class="model-pill ${pillarOf(modelId)}">${esc(label || MODEL_LABELS[modelId] || modelId)}</span>`;
+  return `<span class="model-pill ${pillarOf(modelId)}${isInt8(modelId) ? " int8" : ""}">${esc(label || MODEL_LABELS[modelId] || modelId)}</span>`;
 }
 
 export function clientIdOfModel(modelId) {

@@ -1,6 +1,6 @@
 // Chương 5 · Kết luận: trả lời câu hỏi nghiên cứu, hạn chế (nói thẳng, hiện sẵn), hướng phát triển.
 import { getEvidence, getSummary, modelsById } from "../core/store.js";
-import { SOURCE_GROUPS, byId, esc, fmtInt, fmtNum, fmtPct, revealItems, sectionHead } from "../core/dom.js";
+import { SOURCE_GROUPS, byId, esc, fmtInt, fmtNum, fmtPct, methodsText, revealItems, sectionHead } from "../core/dom.js";
 import { alphaText, calibrationShift, factsOf, runsText, scopeText } from "../core/facts-text.js";
 
 const LOCALS = ["local_00", "local_01", "local_02", "local_03", "local_04"];
@@ -184,7 +184,7 @@ export async function mount() {
     <section class="panel report-section mt-4" aria-labelledby="c-progress">
       ${sectionHead("5.4", "Tiến độ và nguồn tham khảo", { id: "c-progress" })}
       <div tabindex="0" role="region" aria-label="Tiến độ theo giai đoạn" class="table-responsive mt-3"><table class="data-table wrap-head"><thead><tr><th scope="col">Giai đoạn</th><th scope="col">Đã có</th><th scope="col">Còn thiếu</th></tr></thead><tbody>
-        <tr><th scope="row">Mốc so sánh</th><td>Centralized, FedAvg và 5 Local-only; ${facts?.same_recipe === true ? "cùng công thức, cùng số bước, " : ""}cùng validation; đánh giá bổ sung trên tập test giữ riêng</td><td>${facts?.same_recipe === true ? "Dò riêng tốc độ học cho FedAvg trên dữ liệu lệch" : "Đối chứng cùng bộ tối ưu và ngân sách"}</td></tr>
+        <tr><th scope="row">Mốc so sánh</th><td>${esc(methodsText())}; ${facts?.same_recipe === true ? "cùng công thức, cùng số bước, " : ""}cùng validation; đánh giá bổ sung trên tập test giữ riêng</td><td>${facts?.same_recipe === true ? "Dò riêng tốc độ học cho FedAvg trên dữ liệu lệch" : "Đối chứng cùng bộ tối ưu và ngân sách"}</td></tr>
         <tr><th scope="row">Non-IID</th><td>Các phân hoạch của release; FedAvg 5 mức α với 3 hạt giống (<a href="#ket-qua">mục 4.7</a>); Local-only ${esc(alphaText(facts) || "một mức lệch")}</td><td>Local-only ở các mức α còn lại; kết quả lệch số lượng và lệch nguồn ảnh</td></tr>
         <tr><th scope="row">Flower</th><td>FedAvg trên Flower 3 hạt giống ở α = 0,1 và chia đều (<a href="#ket-qua">mục 4.7</a>); lần đo qua Internet với máy chủ tách riêng ở <a href="#flower">trang Đo qua mạng</a>; phiên thử localhost dùng ảnh nhiễu trên web</td><td>Làm rõ chênh lệch với bản tự cài trên ảnh ngoài đồng</td></tr>
         <tr><th scope="row">Thuật toán chịu non-IID</th><td>FedProx, FedBN, SCAFFOLD, FedAvgM và MOON đã cài trong mã nguồn, có kiểm thử đơn vị</td><td>Chạy thí nghiệm trên cùng phân hoạch và so với FedAvg</td></tr>

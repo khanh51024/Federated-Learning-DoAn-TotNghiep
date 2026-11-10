@@ -57,6 +57,35 @@ def _withheld(reason: str) -> Dict[str, Any]:
     return {"available": False, "reason": reason}
 
 
+# Gói chỉ đánh giá trên tập kiểm định (import_manifest.json: "evidence_scope": "validation_only"): các mục cần tập kiểm thử niêm phong hoặc
+# dữ liệu ngoài không được chạy lại, nên khi mục đó bị giữ lại thì lý do là câu này (thay cho "chưa có báo cáo, hãy chạy script…").
+VALIDATION_ONLY = "validation_only"
+VALIDATION_ONLY_REASON = ("Gói này chỉ đánh giá trên tập kiểm định; mục này cần tập kiểm thử/niêm phong nên không chạy lại "
+                          "(quy tắc test mở một lần).")
+_NEEDS_TEST_DATA = ("holdout", "statistics", "fullframe", "fairness", "plantvillage_reference", "community_simulation", "leakage",
+                    "training", "gd4")
+# Báo cáo không buộc vào danh tính gói (không kiểm release/checkpoint) và dùng tập test: với gói validation-only luôn bị giữ lại,
+# kể cả khi tệp báo cáo của gói khác còn nằm trên đĩa, để không hiện số của gói khác cạnh gói này.
+_UNBOUND_TEST_REPORTS = ("community_simulation",)
+
+
+def _apply_evidence_scope(evidence: Dict[str, Any], result: Dict[str, Any]) -> Dict[str, Any]:
+    """Gói validation-only: mục cần dữ liệu test/ngoài mà đang bị giữ lại (cả mục, hoặc riêng phần `test` của mục có `splits`) mang lý do phạm vi."""
+    if evidence.get("evidence_scope") != VALIDATION_ONLY:
+        return result
+    for name in _NEEDS_TEST_DATA:
+        section = result.get(name)
+        if not isinstance(section, dict):
+            continue
+        if section.get("available") is False or name in _UNBOUND_TEST_REPORTS:
+            result[name] = _withheld(VALIDATION_ONLY_REASON)
+            continue
+        test_split = (section.get("splits") or {}).get("test")
+        if isinstance(test_split, dict) and test_split.get("available") is False:
+            section["splits"]["test"] = _withheld(VALIDATION_ONLY_REASON)
+    return result
+
+
 def _identity_problems(report: Dict[str, Any], evidence: Dict[str, Any]) -> List[str]:
     problems = []
     for key in ("protocol_id", "release_manifest_sha256", "validation_manifest_sha256"):
@@ -203,9 +232,7 @@ def _reeval(evidence: Dict[str, Any]) -> Dict[str, Any]:
     published = _published_by_id(evidence)
     sources = all_sources(evidence)
     problems = _identity_problems(report, evidence)
-    expected = {mid: m["checkpoint_sha256"] for mid, m in published.items()}
-    if (report.get("checkpoint_sha256") or {}) != expected:
-        problems.append("SHA-256 checkpoint trong báo cáo không khớp bundle")
+    problems += _checkpoint_problems(report, evidence)
     if problems:
         return _withheld("báo cáo tái đánh giá không khớp bundle: " + "; ".join(problems))
 
@@ -492,8 +519,13 @@ def _shards(evidence: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _checkpoint_problems(report: Dict[str, Any], evidence: Dict[str, Any]) -> List[str]:
+    """Báo cáo phải khớp SHA-256 của MỌI mô hình cốt lõi và không được nêu mô hình nào lệch/lạ. Mô hình bổ sung của gói (Centralized SGD,
+    SCAFFOLD, bản int8) mà báo cáo không đo thì được bỏ qua: báo cáo vẫn đúng cho các mô hình nó đã đo."""
     expected = {m["model_id"]: m["checkpoint_sha256"] for m in evidence.get("models", [])}
-    return [] if (report.get("checkpoint_sha256") or {}) == expected else ["SHA-256 checkpoint trong báo cáo không khớp bundle"]
+    reported = report.get("checkpoint_sha256") or {}
+    core_ok = all(reported.get(mid) == sha for mid, sha in expected.items() if mid in MODEL_ORDER)
+    only_known = all(expected.get(mid) == sha for mid, sha in reported.items())
+    return [] if reported and core_ok and only_known else ["SHA-256 checkpoint trong báo cáo không khớp bundle"]
 
 
 def _holdout_report(evidence: Dict[str, Any]) -> tuple[Optional[Dict[str, Any]], str]:
@@ -1052,7 +1084,10 @@ def _facts(evidence: Dict[str, Any], seeds: Dict[str, Any], training: Dict[str, 
     """Dữ kiện mà giao diện dùng để VIẾT các câu phạm vi / hạn chế (cùng điều kiện huấn luyện chưa? mấy hạt giống? độ trôi client đã ghi chưa?).
 
     Mọi câu khẳng định trong giao diện về cách huấn luyện đọc từ đây, nên đổi gói mô hình thì câu chữ tự đổi theo (không viết sẵn trong JS)."""
-    trainings = evidence.get("training") or {}
+    all_trainings = evidence.get("training") or {}
+    # Chỉ so công thức giữa các mô hình cốt lõi (Centralized, FedAvg, Local-only) mà gói thật sự khai: mô hình bổ sung (Centralized SGD
+    # dùng bộ tối ưu khác, SCAFFOLD, bản int8) có công thức riêng, không được làm `same_recipe` của cả bộ đổi theo.
+    trainings = {mid: all_trainings[mid] for mid in MODEL_ORDER if all_trainings.get(mid)}
     same: Optional[bool] = None
     differences: List[str] = []
     if trainings.get("centralized") and trainings.get("fedavg"):
@@ -1117,7 +1152,7 @@ def summary(evidence: Dict[str, Any]) -> Dict[str, Any]:
     training = _guard("cấu hình huấn luyện", lambda: training_report(evidence, _load_json))
     seeds = _guard("các hạt giống", lambda: _seeds(evidence))
     leakage = _guard("audit rò rỉ", lambda: _leakage(evidence))
-    return {
+    return _apply_evidence_scope(evidence, {
         "available": True,
         "identity": _identity(evidence),
         "facts": _guard("dữ kiện", lambda: _facts(evidence, seeds, training, leakage)),
@@ -1137,4 +1172,4 @@ def summary(evidence: Dict[str, Any]) -> Dict[str, Any]:
         "gd4": _guard("nén và lượng tử hóa (GĐ4)", lambda: _gd4(evidence)),
         "network_run": _guard("run Flower qua mạng", _network_run),
         "checklist": _guard("checklist", _checklist),
-    }
+    })

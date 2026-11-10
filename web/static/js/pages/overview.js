@@ -179,7 +179,7 @@ export async function mount() {
       <div class="toc-grid mt-3">
         <a class="toc-card" href="#du-lieu"><span class="toc-no">2</span><b>Dữ liệu</b><span>Bộ ảnh, cách chia tập học, kiểm tra, giữ riêng và dữ liệu lệch giữa các client.</span></a>
         <a class="toc-card" href="#phuong-phap"><span class="toc-no">3</span><b>Phương pháp</b><span>Ba cách huấn luyện, thuật toán FedAvg, thiết lập thí nghiệm và cách đánh giá.</span></a>
-        <a class="toc-card" href="#ket-qua"><span class="toc-no">4</span><b>Kết quả</b><span>Bảy mô hình, tập giữ riêng và thống kê, phân tích lỗi, độ tin cậy của xác suất.</span></a>
+        <a class="toc-card" href="#ket-qua"><span class="toc-no">4</span><b>Kết quả</b><span>Các mô hình của đồ án, tập giữ riêng và thống kê, phân tích lỗi, độ tin cậy của xác suất.</span></a>
         <a class="toc-card" href="#ket-luan"><span class="toc-no">5</span><b>Kết luận</b><span>Trả lời câu hỏi nghiên cứu, hạn chế và hướng phát triển.</span></a>
         <a class="toc-card is-demo" href="#chan-doan"><span class="toc-no">Demo</span><b>Chẩn đoán ảnh</b><span>Tải ảnh lá, ba cách nhận diện (Local only, PlantVillage, Cộng đồng) trả lời cùng lúc.</span></a>
         <a class="toc-card is-demo" href="#hoc-lien-ket"><span class="toc-no">Demo</span><b>Học phân tán</b><span>Tham gia như một client thật từ trình duyệt của bạn.</span></a>

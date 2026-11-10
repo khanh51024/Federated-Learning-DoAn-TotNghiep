@@ -194,6 +194,8 @@ a { color: var(--accent-sky); }
 .model-pill.centralized { background: var(--tint-sky); color: var(--accent-sky); border-color: var(--line-sky); }
 .model-pill.fedavg { background: var(--tint-emerald); color: var(--accent-emerald-strong); border-color: var(--line-emerald); }
 .model-pill.local { background: var(--tint-amber); color: var(--accent-amber); border-color: var(--line-amber); }
+.model-pill.scaffold { background: var(--tint-purple); color: var(--accent-purple); border-color: var(--line-purple); }
+.model-pill.int8 { border-style: dashed; } /* bản nén: viền nét đứt, cùng màu với mô hình fp32 gốc */
 
 .pill-flag {
   display: inline-block;
@@ -542,6 +544,7 @@ body[data-route="gioi-thieu"] .top-header .eyebrow { margin-bottom: 0; }
 .row-centralized { box-shadow: inset 3px 0 0 var(--chart-2); }
 .row-fedavg { box-shadow: inset 3px 0 0 var(--chart-1); }
 .row-local { box-shadow: inset 3px 0 0 var(--chart-4); }
+.row-scaffold { box-shadow: inset 3px 0 0 var(--chart-3); }
 .data-table td.is-best { font-weight: 700; color: var(--accent-emerald-strong); }
 
 .repro { font-size: var(--fs-xs); font-weight: 600; white-space: nowrap; }
@@ -742,6 +745,7 @@ body[data-route="gioi-thieu"] .top-header .eyebrow { margin-bottom: 0; }
 .summary-pill.centralized { background: var(--tint-sky); color: var(--accent-sky); border-color: var(--line-sky); }
 .summary-pill.fedavg { background: var(--tint-emerald); color: var(--accent-emerald-strong); border-color: var(--line-emerald); }
 .summary-pill.local { background: var(--tint-amber); color: var(--accent-amber); border-color: var(--line-amber); }
+.summary-pill.scaffold { background: var(--tint-purple); color: var(--accent-purple); border-color: var(--line-purple); }
 
 /* gom bảy mô hình theo ba cách huấn luyện: hàng tiêu đề nhóm (có chữ, màu chỉ là phụ) và năm hàng Local thu gọn được */
 .group-row th { text-align: left; font-weight: 600; padding: var(--space-2) var(--space-3); border-top: 2px solid var(--border-color); }
@@ -753,6 +757,8 @@ body[data-route="gioi-thieu"] .top-header .eyebrow { margin-bottom: 0; }
 .group-centralized th { background: var(--tint-sky); border-top-color: var(--line-sky); }
 .group-fedavg th { background: var(--tint-emerald); border-top-color: var(--line-emerald); }
 .group-local th { background: var(--tint-amber); border-top-color: var(--line-amber); }
+.group-scaffold th { background: var(--tint-purple); border-top-color: var(--line-purple); }
+.group-other th { background: var(--bg-subtle); }
 .diag-table tr.is-collapsed { display: none; }
 .diag-tabs { margin-bottom: 0; }
 .diag-tabpanel:not(.hidden) { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
@@ -834,6 +840,7 @@ body[data-route="chan-doan"] .top-header { margin-bottom: var(--space-2); }
 .conf-fill { display: block; width: 100%; height: 100%; border-radius: 999px; transform: scaleX(0); transform-origin: left center; transition: transform 400ms var(--ease); will-change: transform; background: var(--chart-1); }
 .conf-fill.centralized { background: var(--chart-2); }
 .conf-fill.local { background: var(--chart-4); }
+.conf-fill.scaffold { background: var(--chart-3); }
 .verdict { font-weight: 700; font-size: var(--fs-sm); white-space: nowrap; }
 .verdict.ok { color: var(--accent-emerald-strong); }
 .verdict.mid { color: var(--accent-amber); }

@@ -40,6 +40,20 @@ def test_same_recipe_is_derived_from_the_bundle_training_block():
     assert unknown["same_recipe"] is None and unknown["recipe"] is None
 
 
+def test_extra_models_with_their_own_recipe_do_not_flip_same_recipe():
+    """Centralized SGD (bộ tối ưu khác), SCAFFOLD và bản int8 có công thức riêng: chỉ so giữa các mô hình cốt lõi mà gói thật sự khai."""
+    core = {"centralized": _training(optimizer="AdamW", lr=0.001), "fedavg": _training(optimizer="AdamW", lr=0.001), "local_00": _training(optimizer="AdamW", lr=0.001)}
+    extra = {"centralized_sgd": _training(optimizer="SGD", lr=0.02), "scaffold": _training(lr=0.05, steps_total=80), "scaffold_int8": _training(optimizer=None)}
+    facts = _facts({**core, **extra})
+    assert facts["same_recipe"] is True and facts["recipe_differences"] == []
+    assert facts["recipe"]["optimizer"] == "AdamW", "công thức hiển thị là của FedAvg"
+    # khác nhau giữa các mô hình cốt lõi vẫn bị phát hiện, dù có mô hình bổ sung
+    differ = _facts({**core, "local_00": _training(lr=0.5), **extra})
+    assert differ["same_recipe"] is False and differ["recipe_differences"] == ["optimizer", "lr"]
+    # chỉ có mô hình bổ sung (không có Centralized/FedAvg trong khối training): không khẳng định gì
+    assert _facts(extra)["same_recipe"] is None
+
+
 def test_facts_report_seeds_and_what_was_not_recorded():
     facts = _facts({"centralized": _training(), "fedavg": _training()}, seeds=(42, 123, 2026), delta=False)
     assert facts["seeds_run"] == [42, 123, 2026] and facts["seed_served"] == 42
@@ -51,11 +65,13 @@ def test_facts_of_the_active_bundle(evidence):
     summary = es.summary(evidence)
     facts = summary["facts"]
     assert facts["available"] is True
-    assert facts["seed_served"] == evidence["seed"] and facts["seeds_run"] == summary["seeds"]["seeds"]
+    assert facts["seed_served"] == evidence["seed"]
+    if summary["seeds"].get("available", True):            # gói validation-only không có báo cáo nhiều hạt giống
+        assert facts["seeds_run"] == summary["seeds"]["seeds"]
     match = re.search(r"alpha_(\d+)_(\d+)", facts["partition_scheme"])
     assert (facts["alpha"] is None) == (match is None)
     if facts["same_recipe"] is not None:
-        trainings = evidence["training"].values()
+        trainings = [evidence["training"][mid] for mid in es.MODEL_ORDER if evidence["training"].get(mid)]   # chỉ mô hình cốt lõi
         lr_values = {t.get("lr") for t in trainings}
         assert (len(lr_values) == 1) or facts["same_recipe"] is False
 
@@ -84,8 +100,9 @@ def test_every_source_of_the_bundle_reaches_the_api(evidence):
         for source in sources:
             assert model[source]["count"] == evidence["validation_counts"][source]
             assert source in model["calibration"]
-    for model in summary["holdout"]["models"]:
-        assert all(source in model for source in sources)
+    if summary["holdout"].get("available", True):          # gói validation-only giữ lại báo cáo tập kiểm thử
+        for model in summary["holdout"]["models"]:
+            assert all(source in model for source in sources)
 
 
 def test_ui_text_does_not_claim_what_only_the_data_can_say():

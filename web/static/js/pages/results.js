@@ -1,4 +1,4 @@
-// Chương 4 · Kết quả: tổng hợp 7 mô hình, tập giữ riêng và thống kê, phân tích lỗi, độ tin cậy của xác suất.
+// Chương 4 · Kết quả: tổng hợp các mô hình của gói, tập giữ riêng và thống kê, phân tích lỗi, độ tin cậy của xác suất.
 import { centralizedNoteHtml, holdoutPlantdocHtml, modelTraining, overallHtml, seedsHtml, telemetryHtml, trainingHistoryHtml } from "../core/report-training.js";
 import { getDetails, getEvidence, getSummary, modelsById } from "../core/store.js";
 import { attachCrosshair } from "../core/crosshair.js";
@@ -9,14 +9,28 @@ import { chartHtml } from "../core/comm-weights.js";
 import { factsOf, scopeText } from "../core/facts-text.js";
 import {
   applyStyleData, $$, MODEL_LABELS, MODEL_ORDER, SOURCE_GROUPS, byId, diseaseOf, cropOf, esc, fmtInt, fmtNum, fmtPct,
-  formatDiseaseName, modelPill, notify, pillarOf, sectionHead, sourceLabel, withAlpha,
+  formatDiseaseName, fp32Models, isInt8, modelPill, notify, pillarOf, sectionHead, sourceLabel, withAlpha,
 } from "../core/dom.js";
+
+// Nhãn bắt buộc của bản nén (docs/TICH_HOP_INT8_PC_V3.md mục 1.3)
+const INT8_WORDING = "int8 động, chỉ lớp Linear (classifier); các lớp conv vẫn fp32";
+const PILLAR_COUNT_TEXT = { centralized: "gom ảnh", fedavg: "học phân tán", scaffold: "SCAFFOLD (học phân tán, sửa lệch giữa client)", local: "học riêng", other: "khác" };
+
+/** "2 mô hình gom ảnh · 1 mô hình học phân tán · 5 mô hình học riêng": đếm từ danh sách của gói, chỉ mô hình fp32. */
+function pillarCountsText() {
+  return ["centralized", "fedavg", "scaffold", "local", "other"]
+    .map(pillar => [pillar, fp32Models().filter(id => pillarOf(id) === pillar).length])
+    .filter(([, n]) => n > 0)
+    .map(([pillar, n]) => `${n} mô hình ${PILLAR_COUNT_TEXT[pillar]}`).join(" · ");
+}
 
 const built = new Set();
 let ctx = null; // { evidence, summary }
 
-function notReady() {
-  return '<div class="callout callout-warn" role="note"><b>Phần này chưa có dữ liệu.</b> Báo cáo tương ứng chưa được sinh trên máy chủ.</div>';
+/** Phần chưa có dữ liệu. `section` là khối `{ available: false, reason }` của /api/evidence/summary: lý do máy chủ ghi (ví dụ gói chỉ đánh giá trên tập kiểm định) được hiện nguyên văn. */
+function notReady(section) {
+  const reason = typeof section?.reason === "string" && section.reason ? section.reason : "Báo cáo tương ứng chưa được sinh trên máy chủ.";
+  return `<div class="callout callout-warn" role="note"><b>Phần này chưa có dữ liệu.</b> ${esc(reason)}</div>`;
 }
 
 // ───────── Tab 1: Tổng hợp ─────────
@@ -25,13 +39,14 @@ function buildSummary() {
   const root = byId("result-summary");
   const byModel = modelsById(evidence);
   const groups = SOURCE_GROUPS.filter(g => byModel.centralized.metrics[g.id]);   // nhóm nguồn mà gói có số đo (gói v4: ba nhóm, gói cũ: hai)
-  const best = Object.fromEntries(groups.map(g => [g.id, Math.max(...MODEL_ORDER.map(id => byModel[id].metrics[g.id].top1_accuracy))]));
+  const best = Object.fromEntries(groups.map(g => [g.id, Math.max(...fp32Models().map(id => byModel[id].metrics[g.id].top1_accuracy))])); // bản int8 không tham gia chọn "cao nhất"
   const rows = MODEL_ORDER.map(id => {
     const mm = byModel[id].metrics;
-    const bold = (value, top) => (value === top ? ' class="is-best"' : "");
+    const bold = (value, top) => (!isInt8(id) && value === top ? ' class="is-best"' : "");
     const cells = groups.map(g => `<td${bold(mm[g.id].top1_accuracy, best[g.id])}>${fmtPct(mm[g.id].top1_accuracy)}</td><td>${fmtNum(mm[g.id].macro_f1_supported, 4)}</td>`).join("");
+    const sub = isInt8(id) ? `<span class="row-sub">${esc(INT8_WORDING)}</span>` : "";
     return `<tr class="row-${pillarOf(id)}">
-      <th scope="row">${modelPill(id)}</th>
+      <th scope="row">${modelPill(id)}${sub}</th>
       ${cells}
       <td>${fmtPct(mm.plantdoc.crop_accuracy, 1)}</td>
     </tr>`;
@@ -43,7 +58,7 @@ function buildSummary() {
   const covered = summary?.plantdoc?.available ? summary.plantdoc.classes_covered : null;
   root.innerHTML = `
     <section class="panel">
-      <div class="panel-header-flex"><div>${sectionHead("4.1", "Tổng hợp: so sánh ba phương pháp huấn luyện")}<p class="panel-desc">1 mô hình gom ảnh · 1 mô hình học phân tán · 5 mô hình học riêng</p></div>
+      <div class="panel-header-flex"><div>${sectionHead("4.1", "Tổng hợp: so sánh các phương pháp huấn luyện")}<p class="panel-desc">${esc(pillarCountsText())}</p></div>
         <div class="segmented" role="radiogroup" aria-label="Nguồn ảnh so sánh">
           ${groups.map((g, i) => `<button type="button" class="segmented-option${i === 0 ? " is-active" : ""}" role="radio" aria-checked="${i === 0}" data-result-source="${esc(g.id)}">${esc(g.label)}${g.kind === "field" && !/ngoài đồng/i.test(g.label) ? " · ngoài đồng" : ""}</button>`).join("")}
         </div>
@@ -56,16 +71,16 @@ function buildSummary() {
 
     <section class="panel mt-4" aria-labelledby="result-chart-title">
       <div class="overview-section-heading">
-        <div><h4 class="panel-title" id="result-chart-title">Bảy mô hình trên ${groupNames} nguồn ảnh</h4></div>
+        <div><h4 class="panel-title" id="result-chart-title">${fp32Models().length} mô hình trên ${groupNames} nguồn ảnh</h4></div>
         <span class="overview-chart-unit">Tỉ lệ đoán đúng · %</span>
       </div>
-      <div class="chart-container chart-tall mt-3"><canvas id="chart-overview" aria-label="So sánh tỉ lệ đoán đúng của bảy mô hình"></canvas></div>
+      <div class="chart-container chart-tall mt-3"><canvas id="chart-overview" aria-label="So sánh tỉ lệ đoán đúng của ${fp32Models().length} mô hình fp32"></canvas></div>
       <p class="field-hint mt-2">Trong mỗi mô hình, các cột theo thứ tự: ${groups.map((g, i) => `${i === 0 ? "đậm nhất" : i === groups.length - 1 ? "nhạt nhất" : "nhạt vừa"}: ${esc(g.label)} (${fmtInt(evidence.validation_counts[g.id])} ảnh)`).join(" · ")}.</p>
     </section>
 
     <section class="panel mt-4" id="result-full-table" aria-labelledby="result-table-title">
-      <h4 class="panel-title" id="result-table-title">Bảng đầy đủ của 7 mô hình</h4>
-      <p class="panel-desc">${groupCounts}. Số đậm là cao nhất mỗi cột.</p>
+      <h4 class="panel-title" id="result-table-title">Bảng đầy đủ của ${MODEL_ORDER.length} mô hình</h4>
+      <p class="panel-desc">${groupCounts}. Số đậm là cao nhất mỗi cột${MODEL_ORDER.length > fp32Models().length ? " trong các mô hình fp32. Bản nén int8 là biến thể phụ: số đo là của chính tệp int8 và không dùng để chọn mô hình tốt nhất" : ""}.</p>
       <div tabindex="0" role="group" aria-label="Bảng số liệu, cuộn được bằng phím mũi tên" class="table-responsive mt-3">
         <table class="data-table result-table">
           <thead>
@@ -164,17 +179,18 @@ function buildSummary() {
   const val = evidence.validation_counts || {};
   makeChartWhenVisible(byId("chart-overview"), () => {
     const colors = pillarColors();
-    const colorOf = id => (id === "centralized" ? colors.centralized : id === "fedavg" ? colors.fedavg : colors.local);
+    const colorOf = id => colors[pillarOf(id)] || colors.other;
+    const plotted = fp32Models(); // bản int8 không vẽ vào biểu đồ so sánh
     return {
       type: "bar",
       data: {
-        labels: MODEL_ORDER.map(id => MODEL_LABELS[id]),
+        labels: plotted.map(id => MODEL_LABELS[id]),
         datasets: groups.map((g, i) => ({
           label: g.label,
-          data: MODEL_ORDER.map(id => +(byModel[id].metrics[g.id].top1_accuracy * 100).toFixed(2)),
+          data: plotted.map(id => +(byModel[id].metrics[g.id].top1_accuracy * 100).toFixed(2)),
           // nhóm đầu đặc, các nhóm sau nhạt dần và có viền để vẫn đọc được màu của mô hình
-          backgroundColor: MODEL_ORDER.map(id => (i === 0 ? colorOf(id) : withAlpha(colorOf(id), i === 1 && groups.length > 2 ? 0.7 : 0.45))),
-          ...(i === 0 ? {} : { borderColor: MODEL_ORDER.map(colorOf), borderWidth: 1.5 }),
+          backgroundColor: plotted.map(id => (i === 0 ? colorOf(id) : withAlpha(colorOf(id), i === 1 && groups.length > 2 ? 0.7 : 0.45))),
+          ...(i === 0 ? {} : { borderColor: plotted.map(colorOf), borderWidth: 1.5 }),
           borderRadius: 6,
         })),
       },
@@ -189,9 +205,9 @@ function buildSummary() {
           tooltip: {
             callbacks: {
               title: items => {
-                const id = MODEL_ORDER[items[0].dataIndex];
-                const role = id === "centralized" ? "gom ảnh về một chỗ" : id === "fedavg" ? "học phân tán" : "mỗi nơi tự học";
-                return `${MODEL_LABELS[id]} · ${role}`;
+                const id = plotted[items[0].dataIndex];
+                const role = { centralized: "gom ảnh về một chỗ", fedavg: "học phân tán", scaffold: "học phân tán, giải pháp non-IID", local: "mỗi nơi tự học" }[pillarOf(id)] || "";
+                return role ? `${MODEL_LABELS[id]} · ${role}` : MODEL_LABELS[id];
               },
               label: ctx => `${ctx.dataset.label}: ${fmtNum(ctx.parsed.y, 2)}%`,
               footer: () => `Tập kiểm tra: ${groups.map(g => `${fmtInt(val[g.id])} ảnh ${g.label}`).join(" · ")}`,
@@ -256,7 +272,7 @@ function buildPlantdoc() {
   const root = byId("errors-plantdoc");
   const pd = summary?.plantdoc;
   if (!pd?.available) {
-    root.innerHTML = notReady();
+    root.innerHTML = notReady(pd);
     return;
   }
   const gap = summary?.domain_gap?.available ? summary.domain_gap.models : null;
@@ -318,7 +334,12 @@ function buildCalibration() {
   const root = byId("result-calibration");
   const re = summary?.reeval;
   if (!re?.available) {
-    root.innerHTML = notReady();
+    root.innerHTML = notReady(re);
+    return;
+  }
+  if (!re.models.some(m => m.temperature)) {
+    // gói không có nhiệt độ hiệu chuẩn (cần tập hiệu chuẩn riêng): không dựng bảng ECE rỗng, nói thẳng xác suất là softmax thô
+    root.innerHTML = notReady({ reason: "Gói này không có nhiệt độ hiệu chuẩn nên xác suất hiển thị là softmax thô, chưa hiệu chuẩn; một ảnh có độ tin cậy cao không có nghĩa là chắc đúng." });
     return;
   }
   const groups = SOURCE_GROUPS.filter(g => re.models[0].calibration[g.id]);
@@ -451,7 +472,7 @@ function buildHoldout() {
   const ho = summary?.holdout;
   const st = summary?.statistics;
   if (!ho?.available && !st?.available) {
-    root.innerHTML = notReady();
+    root.innerHTML = notReady(ho);
     return;
   }
   const byModel = modelsById(evidence);
@@ -474,8 +495,9 @@ function buildHoldout() {
   }).join("");
   const tableHead = `<tr><th scope="col">Mô hình</th>${groups.map(g => `<th scope="col">${esc(g.label)} · tập kiểm tra</th><th scope="col">${esc(g.label)} · tập giữ riêng</th>`).join("")}</tr>`;
   const nComparisons = groups.length * 2 * ((val ? 1 : 0) + (test ? 1 : 0));
-  const rows = renderRows(["centralized", "fedavg"]);
-  const localRows = renderRows(MODEL_ORDER.filter(id => id.startsWith("local_")));
+  const rows = renderRows(fp32Models().filter(id => pillarOf(id) !== "local")); // Centralized (kể cả bản SGD), FedAvg, SCAFFOLD nếu gói có
+  const localIds = MODEL_ORDER.filter(id => id.startsWith("local_"));
+  const localRows = renderRows(localIds);
 
   const bestLocal = st?.best_local_chosen_on_val || {};
   // so val với test của Centralized trên PlantDoc: câu nhận xét đi theo số liệu, không viết cứng
@@ -518,7 +540,7 @@ function buildHoldout() {
           <tbody>${rows}</tbody>
         </table>
       </div>
-      <details class="fold mt-3"><summary>Xem thêm 5 mô hình học riêng</summary>
+      <details class="fold mt-3"><summary>Xem thêm ${localIds.length} mô hình học riêng</summary>
         <div class="table-responsive mt-3" tabindex="0" role="group" aria-label="Kết quả các mô hình học riêng">
           <table class="data-table result-table"><thead>${tableHead}</thead><tbody>${localRows}</tbody></table>
         </div>
@@ -603,7 +625,7 @@ async function buildConfusion() {
   root.innerHTML = '<div class="skeleton skeleton-block"></div>';
   const details = await getDetails();
   if (!details.available || !details.confusion?.val) {
-    root.innerHTML = notReady();
+    root.innerHTML = notReady(details);
     return;
   }
   const state = { model: "fedavg", source: "plantdoc", split: "val" };
@@ -676,7 +698,7 @@ async function buildErrors() {
   const details = await getDetails();
   const errors = details.errors;
   if (!details.available || !errors?.available) {
-    root.innerHTML = notReady();
+    root.innerHTML = notReady(details.available ? errors : details);
     return;
   }
   const items = errors.items;
@@ -792,7 +814,7 @@ function pvSplitRow(label, block) {
 }
 
 function pvSection(pv) {
-  if (!pv?.available) return `<section class="report-sub mt-5">${sectionHead("4.5.2", "PlantVillage", { tag: "h4" })}${notReady()}</section>`;
+  if (!pv?.available) return `<section class="report-sub mt-5">${sectionHead("4.5.2", "PlantVillage", { tag: "h4" })}${notReady(pv)}</section>`;
   const h = pv.holdout.by_source;
   const v = pv.validation.by_source;
   const cmp = pv.vs_fedavg_on_holdout || {};
@@ -836,7 +858,7 @@ function simTable(sim) {
 }
 
 function simSection(sim) {
-  if (!sim?.available) return `<section class="report-sub mt-5">${sectionHead("4.5.3", "Cộng đồng", { tag: "h4" })}${notReady()}</section>`;
+  if (!sim?.available) return `<section class="report-sub mt-5">${sectionHead("4.5.3", "Cộng đồng", { tag: "h4" })}${notReady(sim)}</section>`;
   const base = sim.base_test;
   const noGate = sim.runs.filter(r => !r.gate);
   const gateOf = r => sim.runs.find(g => g.gate && g.scenario === r.scenario && g.k === r.k);
@@ -977,7 +999,7 @@ function buildCompression() {
   const root = byId("result-compression");
   const gd4 = ctx.summary?.gd4;
   if (!gd4?.available) {
-    root.innerHTML = notReady();
+    root.innerHTML = notReady(gd4);
     return;
   }
   const order = ["fedavg", "centralized"].filter(id => gd4.models[id]);

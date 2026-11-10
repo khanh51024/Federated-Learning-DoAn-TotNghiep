@@ -259,7 +259,7 @@ function verificationHtml(summary) {
         <p class="verify-big mono">${fmtInt(ho.counts_by_source?.plantdoc)}</p>
         <p>ảnh PlantDoc không dùng để chọn mô hình; mẫu nhỏ nên kết quả còn dao động rộng.</p>
         <details class="fold mt-3"><summary>Xem toàn bộ tập giữ riêng</summary>
-        <p class="field-hint mt-2">Tổng ${fmtInt(ho.count)} ảnh (${fmtInt(ho.counts_by_source?.plantvillage)} PlantVillage, ${fmtInt(ho.counts_by_source?.plantdoc)} PlantDoc), không dùng để chọn mô hình; cả 7 mô hình được chấm lại trên máy này. Đây là bộ chẩn đoán có sẵn của bộ dữ liệu (legacy), chưa phải bài kiểm tra cuối được khóa trước, và chưa nằm trong phép kiểm tra trùng ảnh bên cạnh.</p>
+        <p class="field-hint mt-2">Tổng ${fmtInt(ho.count)} ảnh (${fmtInt(ho.counts_by_source?.plantvillage)} PlantVillage, ${fmtInt(ho.counts_by_source?.plantdoc)} PlantDoc), không dùng để chọn mô hình; các mô hình được chấm lại trên máy này. Đây là bộ chẩn đoán có sẵn của bộ dữ liệu (legacy), chưa phải bài kiểm tra cuối được khóa trước, và chưa nằm trong phép kiểm tra trùng ảnh bên cạnh.</p>
         <ul>
           ${line("centralized")}${line("fedavg")}
           ${reproduced.length ? `<li>Số Centralized do nhóm huấn luyện tự ghi: ${reproduced.every(v => v.reproduced) ? "tái lập khớp" : "CÓ lệch"} trên ${reproduced.length} nguồn.</li>` : ""}

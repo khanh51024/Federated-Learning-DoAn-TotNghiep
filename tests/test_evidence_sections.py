@@ -25,6 +25,8 @@ def evidence() -> dict:
 
 def _tamper(monkeypatch, relative: str, mutate: Callable[[dict[str, Any]], None]) -> None:
     real = es._load_json
+    if real(relative) is None:
+        pytest.skip("gói đang dùng chỉ đánh giá trên validation nên không có báo cáo này (cần tập kiểm thử/niêm phong)")
 
     def fake(rel: str):
         data = real(rel)
@@ -38,6 +40,12 @@ def _tamper(monkeypatch, relative: str, mutate: Callable[[dict[str, Any]], None]
 
 def test_new_sections_are_available_with_the_real_reports(evidence):
     result = es.summary(evidence)
+    if evidence.get("evidence_scope") == es.VALIDATION_ONLY:
+        # gói chỉ đánh giá trên tập kiểm định: không có test giữ riêng, không có nhiệt độ hiệu chuẩn; các mục đó bị giữ lại với lý do phạm vi
+        assert result["holdout"] == {"available": False, "reason": es.VALIDATION_ONLY_REASON}
+        assert es.temperatures(evidence) == {}
+        assert es.partitions(evidence)["available"] is True
+        return
     assert result["holdout"]["available"] is True
     assert result["holdout"]["count"] == sum(reg.HOLDOUT_COUNTS.values())
     stats = result["statistics"]
@@ -88,6 +96,8 @@ def test_statistics_is_withheld_on_checkpoint_mismatch(evidence, monkeypatch):
 
 
 def test_fullframe_section_reports_real_numbers_and_matches_the_artifact(evidence):
+    if es._load_json(reg.FULLFRAME_EVAL_JSON) is None:
+        pytest.skip("gói đang dùng chỉ đánh giá trên validation nên không có báo cáo này (cần tập kiểm thử/niêm phong)")
     section = es.summary(evidence)["fullframe"]
     assert section["available"] is True and section["crop_policy"] == reg.FULLFRAME_CROP_POLICY
     raw = es._load_json(reg.FULLFRAME_EVAL_JSON)

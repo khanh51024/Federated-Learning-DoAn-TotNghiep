@@ -96,12 +96,14 @@ function registerOnce() {
   });
 }
 
-/** Màu theo trụ cột: Centralized xanh dương, FedAvg xanh lá, Local-only cam (cố định ở mọi nơi). */
+/** Màu theo trụ cột: Centralized xanh dương, FedAvg xanh lá, SCAFFOLD tím, Local-only cam (cố định ở mọi nơi). */
 export function pillarColors() {
   return {
     centralized: cssVar("--chart-2", "#0284c7"),
     fedavg: cssVar("--chart-1", "#059669"),
+    scaffold: cssVar("--chart-3", "#7c3aed"),
     local: cssVar("--chart-4", "#d97706"),
+    other: cssVar("--text-muted", "#6b7280"),
     danger: cssVar("--chart-5", "#e11d48"),
     violet: cssVar("--chart-3", "#7c3aed"),
     neutral: cssVar("--text-muted", "#6b7280"),

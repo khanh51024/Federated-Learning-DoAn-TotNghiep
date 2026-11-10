@@ -46,7 +46,7 @@ def training_report(evidence: dict[str, Any], load_json) -> dict[str, Any]:
         if overall["count"] != sum(evidence["validation_counts"].values()):
             raise ValueError("training report: số ảnh validation khác bundle")
         hist = model["history"]
-        key = "epoch" if model["model_id"] == "centralized" else "round"
+        key = "epoch" if model["model_id"].startswith("centralized") else "round"   # mọi biến thể Centralized (AdamW, SGD) tính theo epoch
         if hist and [h[key] for h in hist] != list(range(1, len(hist) + 1)):
             raise ValueError("training report: lịch sử bị đứt vòng")
     fed = next(m for m in models if m["model_id"] == "fedavg")
@@ -81,6 +81,6 @@ def training_report(evidence: dict[str, Any], load_json) -> dict[str, Any]:
     # Local checkpoints carry no history; Centralized (83 epochs) and FedAvg (27 rounds) are small enough to serve whole.
     # The page draws Centralized only from these fields; per-epoch duration stays in the committed report.
     projected_models = _rounded([{**m, "history": [{k: v for k, v in row.items() if k != "duration_sec"} for row in m["history"]]}
-                                 if m["model_id"] == "centralized" else m for m in models])
+                                 if m["model_id"].startswith("centralized") else m for m in models])
     return {"available": True, "models": projected_models, "delta_l2_recorded": delta_recorded, "note": report.get("note"),
             **{k: report[k] for k in ("transport_mode", "release", "checkpoint_sha256", "seed")}}

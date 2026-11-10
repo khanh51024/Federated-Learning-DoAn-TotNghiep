@@ -2,7 +2,7 @@
 // Không vẽ độ chính xác của ba demo trên cùng một trục: Chẩn đoán và Cộng đồng chấm trên cùng tập kiểm tra, còn lần đo qua mạng chấm trên tập nhỏ của chính nó.
 import { getJson } from "./api.js";
 import { makeChart, pillarColors } from "./charts.js";
-import { byId, esc, fmtInt, fmtNum, MODEL_LABELS, MODEL_ORDER, sourceLabel } from "./dom.js";
+import { byId, esc, fmtInt, fmtNum, isInt8, MODEL_LABELS, MODEL_ORDER, sourceLabel } from "./dom.js";
 import { getEvidence } from "./store.js";
 
 const TIMEOUT_MS = 15000;
@@ -75,7 +75,8 @@ function unavailable(host, title, text) {
 
 function modelRows(evidence, community) {
   const byModel = new Map((evidence.models || []).map(model => [model.model_id, model.metrics]));
-  const order = MODEL_ORDER.slice().sort((a, b) => Number(/^local/.test(b)) - Number(/^local/.test(a)));   // học riêng trước, rồi tới FedAvg và Centralized
+  // bản nén int8 không vẽ vào biểu đồ so sánh; học riêng trước, rồi tới FedAvg và Centralized
+  const order = MODEL_ORDER.filter(id => !isInt8(id)).sort((a, b) => Number(/^local/.test(b)) - Number(/^local/.test(a)));
   const rows = order.filter(id => byModel.has(id)).map(id => ({
     label: MODEL_LABELS[id] || id,
     plantvillage: percent(byModel.get(id).plantvillage?.top1_accuracy),
@@ -229,7 +230,7 @@ async function loadFacts() {
 
 function factText(id, data) {
   if (id === "chan-doan") {
-    const count = data.evidence?.available ? (data.evidence.models || []).length : 0;
+    const count = data.evidence?.available ? (data.evidence.models || []).filter(model => !isInt8(model.model_id)).length : 0;
     return count ? `${count} mô hình của đề tài, cùng một tập kiểm tra` : "chưa đọc được số";
   }
   if (id === "hoc-lien-ket") {

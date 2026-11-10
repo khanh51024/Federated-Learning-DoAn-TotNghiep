@@ -207,7 +207,7 @@ async function mountExplorer() {
     const scheme = partitions.schemes[select.value];
     if (!scheme) return;
     byId("scheme-badge").innerHTML = scheme.has_trained_models
-      ? '<span class="status-badge success">Có 7 mô hình đã huấn luyện</span>'
+      ? '<span class="status-badge success">Có mô hình đã huấn luyện</span>'
       : '<span class="status-badge is-neutral">Chỉ có dữ liệu, chưa huấn luyện</span>';
     byId("scheme-desc").textContent = `Độ lệch phân bố nhóm trung bình giữa client và toàn bộ (Jensen–Shannon): ${scheme.mean_js_divergence === null ? "0 (chia đều)" : fmtNum(scheme.mean_js_divergence, 3)} — càng lớn càng non-IID. Tổng ${fmtInt(partitions.total_train)} ảnh huấn luyện.`;
     byId("scheme-clients").innerHTML = schemeSummary(scheme);

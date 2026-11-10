@@ -14,6 +14,8 @@ from web.services.training_evidence import training_report
 def source():
     evidence = _gated_evidence()
     assert evidence["available"], evidence.get("reason")
+    if evidence.get("evidence_scope") == evidence_service.VALIDATION_ONLY:
+        pytest.skip("gói chỉ đánh giá trên tập kiểm định: báo cáo cấu hình cần tập kiểm thử nên bị giữ lại (xem test_validation_only_scope.py)")
     result = evidence_service.summary(evidence)["training"]
     assert result["available"], result.get("reason")
     return evidence, evidence_service._load_json(evidence_service.reg.TRAINING_PROTOCOL_REPORT_JSON)
@@ -30,9 +32,11 @@ def test_report_contains_verified_history_configs_and_release(source):
     evidence, report = source
     manifest, training = _bundle_training()
     models = {m["model_id"]: m for m in report["models"]}
-    assert len(models) == 7
+    assert list(models) == [m["model_id"] for m in evidence["models"]]
     central, fed = models["centralized"], models["fedavg"]
     for mid, model in models.items():
+        if mid not in training:  # bản int8 không có lần huấn luyện riêng
+            continue
         assert model["selected_step"] == training[mid]["best_step"], mid
         assert model["completed_steps"] == training[mid]["budget"], mid
     assert central["config"]["optimizer"] == training["centralized"]["optimizer"]

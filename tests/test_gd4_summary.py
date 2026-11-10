@@ -54,6 +54,8 @@ def test_gd4_is_withheld_when_identity_or_counts_differ(evidence, monkeypatch):
     original = es._load_json(es.reg.GD4_COMPRESSION_JSON)
     if original is None:
         pytest.skip("chưa có báo cáo GĐ4")
+    if es.summary({**evidence, "evidence_scope": None})["gd4"].get("available") is not True:
+        pytest.skip("báo cáo GĐ4 trên đĩa không thuộc gói đang dùng (gói validation-only không đo lại GĐ4 trên tập kiểm thử)")
 
     forged = copy.deepcopy(original)
     forged["models"]["fedavg"]["checkpoint_sha256"] = "0" * 64     # số đo của một checkpoint khác
