@@ -1,0 +1,22 @@
+{
+ "bundle": "pc_v3_s42",
+ "source_bundle_id": "pc_v3_a01_s42_r4",
+ "package_commit": "16f0be1a44e3325d44e445ef1a759757f5324bbe",
+ "validation_images": 4613,
+ "device": "cpu",
+ "torch": "2.14.0+cpu",
+ "int8_evaluated_per_image": true,
+ "created_utc": "2026-11-10T14:49:59Z",
+ "tolerance": 0.002,
+ "comparisons": 117,
+ "out_of_tolerance": 0,
+ "worst": {
+  "model_id": "centralized",
+  "source": "overall",
+  "metric": "top1_accuracy",
+  "pc_value": 0.968567092998049,
+  "web_value": 0.968567092998049,
+  "diff": 0.0
+ },
+ "out_of_tolerance_rows": []
+}

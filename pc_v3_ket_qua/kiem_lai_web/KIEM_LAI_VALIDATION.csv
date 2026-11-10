@@ -1,0 +1,118 @@
+model_id,model,source,count,metric,pc_value,web_value,diff,within_tolerance
+centralized,Centralized AdamW,overall,4613,top1_accuracy,0.968567092998049,0.968567092998049,0.0,True
+centralized,Centralized AdamW,overall,4613,macro_f1_supported,0.9628784156215774,0.9628784156215774,0.0,True
+centralized,Centralized AdamW,overall,4613,crop_accuracy,0.9872100585302406,0.9872100585302406,0.0,True
+centralized,Centralized AdamW,plantdoc,269,top1_accuracy,0.5427509293680297,0.5427509293680297,0.0,True
+centralized,Centralized AdamW,plantdoc,269,macro_f1_supported,0.5435052831780094,0.5435052831780094,0.0,True
+centralized,Centralized AdamW,plantdoc,269,crop_accuracy,0.7992565055762082,0.7992565055762082,0.0,True
+centralized,Centralized AdamW,plantvillage,4344,top1_accuracy,0.9949355432780848,0.9949355432780848,0.0,True
+centralized,Centralized AdamW,plantvillage,4344,macro_f1_supported,0.9933479671550922,0.9933479671550922,0.0,True
+centralized,Centralized AdamW,plantvillage,4344,crop_accuracy,0.9988489871086557,0.9988489871086557,0.0,True
+centralized_sgd,Centralized SGD,overall,4613,top1_accuracy,0.9629308476045957,0.9629308476045957,0.0,True
+centralized_sgd,Centralized SGD,overall,4613,macro_f1_supported,0.9549424217948812,0.9549424217948812,0.0,True
+centralized_sgd,Centralized SGD,overall,4613,crop_accuracy,0.9869932798612616,0.9869932798612616,0.0,True
+centralized_sgd,Centralized SGD,plantdoc,269,top1_accuracy,0.5055762081784386,0.5055762081784386,0.0,True
+centralized_sgd,Centralized SGD,plantdoc,269,macro_f1_supported,0.4728832450967246,0.4728832450967246,0.0,True
+centralized_sgd,Centralized SGD,plantdoc,269,crop_accuracy,0.8029739776951673,0.8029739776951673,0.0,True
+centralized_sgd,Centralized SGD,plantvillage,4344,top1_accuracy,0.9912523020257827,0.9912523020257827,0.0,True
+centralized_sgd,Centralized SGD,plantvillage,4344,macro_f1_supported,0.9872094853917115,0.9872094853917115,0.0,True
+centralized_sgd,Centralized SGD,plantvillage,4344,crop_accuracy,0.9983885819521179,0.9983885819521179,0.0,True
+fedavg,FedAvg,overall,4613,top1_accuracy,0.9115543030565793,0.9115543030565793,0.0,True
+fedavg,FedAvg,overall,4613,macro_f1_supported,0.8832238935204458,0.8832238935204458,0.0,True
+fedavg,FedAvg,overall,4613,crop_accuracy,0.9737697810535443,0.9737697810535443,0.0,True
+fedavg,FedAvg,plantdoc,269,top1_accuracy,0.4758364312267658,0.4758364312267658,0.0,True
+fedavg,FedAvg,plantdoc,269,macro_f1_supported,0.46515207203889514,0.46515207203889514,0.0,True
+fedavg,FedAvg,plantdoc,269,crop_accuracy,0.7509293680297398,0.7509293680297398,0.0,True
+fedavg,FedAvg,plantvillage,4344,top1_accuracy,0.93853591160221,0.93853591160221,0.0,True
+fedavg,FedAvg,plantvillage,4344,macro_f1_supported,0.9143342379775441,0.9143342379775441,0.0,True
+fedavg,FedAvg,plantvillage,4344,crop_accuracy,0.9875690607734806,0.9875690607734806,0.0,True
+scaffold,SCAFFOLD,overall,4613,top1_accuracy,0.9206590071536961,0.9206590071536961,0.0,True
+scaffold,SCAFFOLD,overall,4613,macro_f1_supported,0.9013210378523884,0.9013210378523884,0.0,True
+scaffold,SCAFFOLD,overall,4613,crop_accuracy,0.9774550184261869,0.9774550184261869,0.0,True
+scaffold,SCAFFOLD,plantdoc,269,top1_accuracy,0.5092936802973977,0.5092936802973977,0.0,True
+scaffold,SCAFFOLD,plantdoc,269,macro_f1_supported,0.48336814138050194,0.48336814138050194,0.0,True
+scaffold,SCAFFOLD,plantdoc,269,crop_accuracy,0.79182156133829,0.79182156133829,0.0,True
+scaffold,SCAFFOLD,plantvillage,4344,top1_accuracy,0.9461325966850829,0.9461325966850829,0.0,True
+scaffold,SCAFFOLD,plantvillage,4344,macro_f1_supported,0.9289184901425777,0.9289184901425777,0.0,True
+scaffold,SCAFFOLD,plantvillage,4344,crop_accuracy,0.988950276243094,0.988950276243094,0.0,True
+local_00,Local 00,overall,4613,top1_accuracy,0.44114459137220896,0.44114459137220896,0.0,True
+local_00,Local 00,overall,4613,macro_f1_supported,0.273946539873243,0.273946539873243,0.0,True
+local_00,Local 00,overall,4613,crop_accuracy,0.7899414697593756,0.7899414697593756,0.0,True
+local_00,Local 00,plantdoc,269,top1_accuracy,0.25650557620817843,0.25650557620817843,0.0,True
+local_00,Local 00,plantdoc,269,macro_f1_supported,0.18910460452957095,0.18910460452957095,0.0,True
+local_00,Local 00,plantdoc,269,crop_accuracy,0.5539033457249071,0.5539033457249071,0.0,True
+local_00,Local 00,plantvillage,4344,top1_accuracy,0.4525782688766114,0.4525782688766114,0.0,True
+local_00,Local 00,plantvillage,4344,macro_f1_supported,0.2737115021792818,0.2737115021792818,0.0,True
+local_00,Local 00,plantvillage,4344,crop_accuracy,0.8045580110497238,0.8045580110497238,0.0,True
+local_01,Local 01,overall,4613,top1_accuracy,0.4977238239757208,0.4977238239757208,0.0,True
+local_01,Local 01,overall,4613,macro_f1_supported,0.3485213543633507,0.3485213543633507,0.0,True
+local_01,Local 01,overall,4613,crop_accuracy,0.740732711901149,0.740732711901149,0.0,True
+local_01,Local 01,plantdoc,269,top1_accuracy,0.2342007434944238,0.2342007434944238,0.0,True
+local_01,Local 01,plantdoc,269,macro_f1_supported,0.09783566701880586,0.09783566701880586,0.0,True
+local_01,Local 01,plantdoc,269,crop_accuracy,0.5539033457249071,0.5539033457249071,0.0,True
+local_01,Local 01,plantvillage,4344,top1_accuracy,0.5140423572744015,0.5140423572744015,0.0,True
+local_01,Local 01,plantvillage,4344,macro_f1_supported,0.34964804806820776,0.34964804806820776,0.0,True
+local_01,Local 01,plantvillage,4344,crop_accuracy,0.7523020257826888,0.7523020257826888,0.0,True
+local_02,Local 02,overall,4613,top1_accuracy,0.535226533709083,0.535226533709083,0.0,True
+local_02,Local 02,overall,4613,macro_f1_supported,0.3422623531761761,0.3422623531761761,0.0,True
+local_02,Local 02,overall,4613,crop_accuracy,0.8040320832430089,0.8040320832430089,0.0,True
+local_02,Local 02,plantdoc,269,top1_accuracy,0.2788104089219331,0.2788104089219331,0.0,True
+local_02,Local 02,plantdoc,269,macro_f1_supported,0.20311638804947746,0.20311638804947746,0.0,True
+local_02,Local 02,plantdoc,269,crop_accuracy,0.5910780669144982,0.5910780669144982,0.0,True
+local_02,Local 02,plantvillage,4344,top1_accuracy,0.5511049723756906,0.5511049723756906,0.0,True
+local_02,Local 02,plantvillage,4344,macro_f1_supported,0.3443630204588351,0.3443630204588351,0.0,True
+local_02,Local 02,plantvillage,4344,crop_accuracy,0.817219152854512,0.817219152854512,0.0,True
+local_03,Local 03,overall,4613,top1_accuracy,0.5584218512898331,0.5584218512898331,0.0,True
+local_03,Local 03,overall,4613,macro_f1_supported,0.36676376552661344,0.36676376552661344,0.0,True
+local_03,Local 03,overall,4613,crop_accuracy,0.7964448298287449,0.7964448298287449,0.0,True
+local_03,Local 03,plantdoc,269,top1_accuracy,0.26022304832713755,0.26022304832713755,0.0,True
+local_03,Local 03,plantdoc,269,macro_f1_supported,0.2370080023749934,0.2370080023749934,0.0,True
+local_03,Local 03,plantdoc,269,crop_accuracy,0.5092936802973977,0.5092936802973977,0.0,True
+local_03,Local 03,plantvillage,4344,top1_accuracy,0.5768876611418048,0.5768876611418048,0.0,True
+local_03,Local 03,plantvillage,4344,macro_f1_supported,0.37125472129085146,0.37125472129085146,0.0,True
+local_03,Local 03,plantvillage,4344,crop_accuracy,0.8142265193370166,0.8142265193370166,0.0,True
+local_04,Local 04,overall,4613,top1_accuracy,0.5330587470192933,0.5330587470192933,0.0,True
+local_04,Local 04,overall,4613,macro_f1_supported,0.36702775307972957,0.36702775307972957,0.0,True
+local_04,Local 04,overall,4613,crop_accuracy,0.7788857576414481,0.7788857576414481,0.0,True
+local_04,Local 04,plantdoc,269,top1_accuracy,0.21189591078066913,0.21189591078066913,0.0,True
+local_04,Local 04,plantdoc,269,macro_f1_supported,0.165307080050427,0.165307080050427,0.0,True
+local_04,Local 04,plantdoc,269,crop_accuracy,0.5018587360594795,0.5018587360594795,0.0,True
+local_04,Local 04,plantvillage,4344,top1_accuracy,0.5529465930018416,0.5529465930018416,0.0,True
+local_04,Local 04,plantvillage,4344,macro_f1_supported,0.3794237259159418,0.3794237259159418,0.0,True
+local_04,Local 04,plantvillage,4344,crop_accuracy,0.7960405156537753,0.7960405156537753,0.0,True
+centralized_int8,Centralized AdamW int8,overall,4613,top1_accuracy,0.9690006503360069,0.9690006503360069,0.0,True
+centralized_int8,Centralized AdamW int8,overall,4613,macro_f1_supported,0.9635483182399432,0.9635483182399432,0.0,True
+centralized_int8,Centralized AdamW int8,overall,4613,crop_accuracy,0.9874268371992196,0.9874268371992196,0.0,True
+centralized_int8,Centralized AdamW int8,plantdoc,269,top1_accuracy,0.5464684014869888,0.5464684014869888,0.0,True
+centralized_int8,Centralized AdamW int8,plantdoc,269,macro_f1_supported,0.5464769052043952,0.5464769052043952,0.0,True
+centralized_int8,Centralized AdamW int8,plantdoc,269,crop_accuracy,0.7992565055762082,0.7992565055762082,0.0,True
+centralized_int8,Centralized AdamW int8,plantvillage,4344,top1_accuracy,0.9951657458563536,0.9951657458563536,0.0,True
+centralized_int8,Centralized AdamW int8,plantvillage,4344,macro_f1_supported,0.9936470198716294,0.9936470198716294,0.0,True
+centralized_int8,Centralized AdamW int8,plantvillage,4344,crop_accuracy,0.9990791896869244,0.9990791896869244,0.0,True
+centralized_sgd_int8,Centralized SGD int8,overall,4613,top1_accuracy,0.9631476262735746,0.9631476262735746,0.0,True
+centralized_sgd_int8,Centralized SGD int8,overall,4613,macro_f1_supported,0.9554041785988534,0.9554041785988534,0.0,True
+centralized_sgd_int8,Centralized SGD int8,overall,4613,crop_accuracy,0.9869932798612616,0.9869932798612616,0.0,True
+centralized_sgd_int8,Centralized SGD int8,plantdoc,269,top1_accuracy,0.5055762081784386,0.5055762081784386,0.0,True
+centralized_sgd_int8,Centralized SGD int8,plantdoc,269,macro_f1_supported,0.4733056092802418,0.4733056092802418,0.0,True
+centralized_sgd_int8,Centralized SGD int8,plantdoc,269,crop_accuracy,0.8029739776951673,0.8029739776951673,0.0,True
+centralized_sgd_int8,Centralized SGD int8,plantvillage,4344,top1_accuracy,0.9914825046040515,0.9914825046040515,0.0,True
+centralized_sgd_int8,Centralized SGD int8,plantvillage,4344,macro_f1_supported,0.9877180868205144,0.9877180868205144,0.0,True
+centralized_sgd_int8,Centralized SGD int8,plantvillage,4344,crop_accuracy,0.9983885819521179,0.9983885819521179,0.0,True
+fedavg_int8,FedAvg int8,overall,4613,top1_accuracy,0.9113375243876003,0.9113375243876003,0.0,True
+fedavg_int8,FedAvg int8,overall,4613,macro_f1_supported,0.883346618800315,0.883346618800315,0.0,True
+fedavg_int8,FedAvg int8,overall,4613,crop_accuracy,0.9735530023845653,0.9735530023845653,0.0,True
+fedavg_int8,FedAvg int8,plantdoc,269,top1_accuracy,0.4684014869888476,0.4684014869888476,0.0,True
+fedavg_int8,FedAvg int8,plantdoc,269,macro_f1_supported,0.4615552215370481,0.4615552215370481,0.0,True
+fedavg_int8,FedAvg int8,plantdoc,269,crop_accuracy,0.7472118959107806,0.7472118959107806,0.0,True
+fedavg_int8,FedAvg int8,plantvillage,4344,top1_accuracy,0.9387661141804788,0.9387661141804788,0.0,True
+fedavg_int8,FedAvg int8,plantvillage,4344,macro_f1_supported,0.914833997820066,0.914833997820066,0.0,True
+fedavg_int8,FedAvg int8,plantvillage,4344,crop_accuracy,0.9875690607734806,0.9875690607734806,0.0,True
+scaffold_int8,SCAFFOLD int8,overall,4613,top1_accuracy,0.9219596791675699,0.9219596791675699,0.0,True
+scaffold_int8,SCAFFOLD int8,overall,4613,macro_f1_supported,0.9034934574355697,0.9034934574355697,0.0,True
+scaffold_int8,SCAFFOLD int8,overall,4613,crop_accuracy,0.9783221331021027,0.9783221331021027,0.0,True
+scaffold_int8,SCAFFOLD int8,plantdoc,269,top1_accuracy,0.5092936802973977,0.5092936802973977,0.0,True
+scaffold_int8,SCAFFOLD int8,plantdoc,269,macro_f1_supported,0.4843909510382491,0.4843909510382491,0.0,True
+scaffold_int8,SCAFFOLD int8,plantdoc,269,crop_accuracy,0.7992565055762082,0.7992565055762082,0.0,True
+scaffold_int8,SCAFFOLD int8,plantvillage,4344,top1_accuracy,0.9475138121546961,0.9475138121546961,0.0,True
+scaffold_int8,SCAFFOLD int8,plantvillage,4344,macro_f1_supported,0.9313142398837255,0.9313142398837255,0.0,True
+scaffold_int8,SCAFFOLD int8,plantvillage,4344,crop_accuracy,0.9894106813996317,0.9894106813996317,0.0,True
