@@ -84,20 +84,20 @@ fig, (ax, axl) = plt.subplots(2, 1, figsize=(6.6, 5.6), sharex=True, gridspec_kw
 data = []
 for opt, col, lab in (("adamw", "black", "Tập trung AdamW"), ("sgd", "dimgray", "Tập trung SGD")):
     m, s = cen[opt]
-    ax.axhline(m, color=col, lw=1, ls="-" if opt == "adamw" else ":", label=lab)
+    ax.axhline(m, color=col, lw=1, ls="-" if opt == "adamw" else ":", label=lab + " (n=5)")
     ax.axhspan(m - s, m + s, color=col, alpha=0.10)
     data.append([lab, "", m, s, 5])
 for meth, lab, sty, col in METH:
-    xs, ms_, ss = [], [], []
+    xs, ms_, ss, ns = [], [], [], []
     for a in ALPHAS:
         d = ep_by_seed(meth, a, family="local_only" if meth == "local_only" else None)
         if len(d) >= 3:
             m, s = ms(list(d.values()))
-            xs.append(a); ms_.append(m); ss.append(s)
+            xs.append(a); ms_.append(m); ss.append(s); ns.append(len(d))
             data.append([lab, a, m, s, len(d)])
     if xs:
         tgt = axl if meth == "local_only" else ax
-        tgt.errorbar(xs, ms_, yerr=ss, marker={"fedavg": "o", "scaffold": "s", "fedprox": "^", "fedbn": "v", "moon": "D", "local_only": "x"}[meth], color=col, label=lab, capsize=2, lw=1.2, ms=4,
+        tgt.errorbar(xs, ms_, yerr=ss, marker={"fedavg": "o", "scaffold": "s", "fedprox": "^", "fedbn": "v", "moon": "D", "local_only": "x"}[meth], color=col, label=lab + (f" (n={min(ns)})" if min(ns) == max(ns) else f" (n={min(ns)}–{max(ns)})"), capsize=2, lw=1.2, ms=4,
                      linestyle="-" if meth in ("fedavg", "local_only") else "none")
 ax.set_xscale("log")
 axl.set_xlabel("α (Dirichlet, nhỏ = lệch nhãn mạnh)")
@@ -106,7 +106,9 @@ axl.set_ylabel("Local-only")
 ax.set_title("F1. Macro-F1 validation theo mức non-IID (TB ± SD qua seed)")
 ax.legend(fontsize=7, loc="lower right")
 axl.legend(fontsize=7, loc="upper left")
-fig.tight_layout(); fig.savefig(OUT / "F1_macroF1_theo_alpha.png"); plt.close(fig)
+fig.tight_layout(rect=(0, 0.04, 1, 1))
+fig.text(0.01, 0.01, "n = số seed (S5 gộp seed 42–46 ở α 0,1 và 0,5). Giá trị chọn giải pháp (G, 3 seed 42–44) xem results/noniid_deploy_select_20261109.json; F1 là mô tả. FedBN ở α=100 là R-DIAG (runner q18).", fontsize=6, ha="left")
+fig.savefig(OUT / "F1_macroF1_theo_alpha.png"); plt.close(fig)
 write_csv("F1_macroF1_theo_alpha.csv", ["nhom", "alpha", "mean", "sd", "n_seed"], data)
 
 # ---------------- F2

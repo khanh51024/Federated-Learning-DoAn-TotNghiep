@@ -95,6 +95,6 @@ Hình dùng trung bình ± độ lệch chuẩn (ddof 1) qua seed; số validati
 | `F6_cong_bang_client.png` | Accuracy của FedAvg theo từng client (E1) theo α | `F6_cong_bang_client.csv` | `e1/E1_per_client.csv` |
 | `F7_P6_theo_tap.png` | Test cuối P6 theo tập (PD-172, PD-463, PV-legacy, EXT-FINAL ngoài miền) | `F7_P6_theo_tap.csv` | `p6/P6_RESULT.json` |
 
-Quy tắc điểm cuối dùng trong hình: trung bình 3 vòng cuối (Tập trung: 3 epoch cuối) của `val_macro_f1_raw` hoặc `val_accuracy`. R95 / R99 theo `docs/specs/E23_SPEC.md` (E3.3).
+Quy tắc điểm cuối dùng trong hình: trung bình 3 vòng cuối (Tập trung: 3 epoch cuối) của `val_macro_f1_raw` hoặc `val_accuracy`. R95 / R99 theo `docs/specs/E23_SPEC.md` (E3.3): với E = trung bình `val_macro_f1_raw` của các vòng 38–40, R95 (R99) là vòng nhỏ nhất đạt ít nhất 95% (99%) của E; trong F4, MB = vòng × MB mỗi vòng của 5 client (hai chiều).
 Bảng FLW: `results/flw/FLW_SUMMARY.csv` (bit-exact, thời gian, rtt, byte mỗi client mỗi vòng) và `results/flw/LABEL_r2.txt` (nhãn bắt buộc, nguyên văn). Nhãn FLW-A: không viết "FedAvg chạy phân tán thật trên Flower".
-Ghi chú: ở F1, FedBN là mô hình server (BN trung bình); chỉ số chính của FedBN là mô hình có BN cục bộ, không nằm trong hình này.
+Ghi chú: F1 là mô tả; giá trị dùng để chọn giải pháp (G, 3 seed 42–44) nằm ở `results/noniid_deploy_select_20261109.json`, còn F1 gộp thêm seed 45–46 của S5 ở α 0,1 và 0,5 (chú thích n trong legend). Ở F1, FedBN là mô hình server (BN trung bình), điểm α = 100 là R-DIAG (runner q18); chỉ số chính của FedBN là mô hình có BN cục bộ, không nằm trong hình này.
